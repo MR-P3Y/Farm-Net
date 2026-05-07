@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 30
     jwt_refresh_token_expire_days: int = 30
+    super_admin_email: str = "admin@example.com"
+    super_admin_phone: str = "09120000000"
+    super_admin_password: str = "change-me"
 
     cors_origins: str = "http://localhost:3000,http://localhost:8080"
 
