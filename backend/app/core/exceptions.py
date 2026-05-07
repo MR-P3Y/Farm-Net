@@ -1,9 +1,10 @@
-from fastapi import Request
+from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.responses import error_response
+from app.modules.auth.exceptions import AuthError
 
 
 class AppException(Exception):
@@ -36,6 +37,43 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     )
 
 
+async def auth_error_handler(request: Request, exc: AuthError) -> JSONResponse:
+    status_code = status.HTTP_400_BAD_REQUEST
+
+    if exc.code in {
+        "AUTH_INVALID_CREDENTIALS",
+        "AUTH_OTP_INVALID",
+        "AUTH_OTP_EXPIRED",
+        "AUTH_OTP_TOO_MANY_ATTEMPTS",
+    }:
+        status_code = status.HTTP_401_UNAUTHORIZED
+
+    if exc.code in {
+        "USER_SUSPENDED",
+    }:
+        status_code = status.HTTP_403_FORBIDDEN
+
+    if exc.code in {
+        "AUTH_USER_NOT_FOUND",
+    }:
+        status_code = status.HTTP_404_NOT_FOUND
+
+    if exc.code in {
+        "AUTH_USER_ALREADY_EXISTS",
+    }:
+        status_code = status.HTTP_409_CONFLICT
+
+    return JSONResponse(
+        status_code=status_code,
+        content=error_response(
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+            meta=_trace_meta(request),
+        ),
+    )
+
+
 async def http_exception_handler(
     request: Request,
     exc: StarletteHTTPException,
@@ -48,6 +86,13 @@ async def http_exception_handler(
             meta=_trace_meta(request),
         ),
     )
+
+
+def register_exception_handlers(app) -> None:
+    app.add_exception_handler(AppException, app_exception_handler)
+    app.add_exception_handler(AuthError, auth_error_handler)
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 
 async def validation_exception_handler(

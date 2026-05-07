@@ -1,4 +1,18 @@
-from pydantic import BaseModel, EmailStr, Field
+from email_validator import EmailNotValidError, validate_email
+from pydantic import BaseModel, Field, field_validator
+
+
+def normalize_email(value: str) -> str:
+    try:
+        validation = validate_email(
+            value,
+            check_deliverability=False,
+            test_environment=True,
+        )
+    except EmailNotValidError as exc:
+        raise ValueError(str(exc)) from exc
+
+    return validation.normalized.lower()
 
 
 class AuthUserOut(BaseModel):
@@ -18,13 +32,23 @@ class TokenPairOut(BaseModel):
 
 
 class EmailRegisterIn(BaseModel):
-    email: EmailStr
+    email: str
     password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        return normalize_email(value)
 
 
 class EmailLoginIn(BaseModel):
-    email: EmailStr
+    email: str
     password: str = Field(min_length=1, max_length=128)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        return normalize_email(value)
 
 
 class OtpRequestIn(BaseModel):

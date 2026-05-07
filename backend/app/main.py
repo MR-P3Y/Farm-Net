@@ -1,18 +1,12 @@
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import get_settings
-from app.core.exceptions import (
-    AppException,
-    app_exception_handler,
-    http_exception_handler,
-    validation_exception_handler,
-)
+from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
 from app.core.middleware import trace_id_middleware
 from app.core.rate_limit import create_rate_limit_middleware
+from app.modules.auth.router import router as auth_router
 from app.modules.health.router import router as health_router
 
 
@@ -47,10 +41,9 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
     app.include_router(health_router, prefix=settings.api_v1_prefix)
+    app.include_router(auth_router, prefix=settings.api_v1_prefix)
 
-    app.add_exception_handler(AppException, app_exception_handler)
-    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    register_exception_handlers(app)
 
     return app
 
