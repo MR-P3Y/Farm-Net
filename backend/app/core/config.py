@@ -14,6 +14,12 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://redis:6379/0"
 
+    auth_dev_otp_enabled: bool = True
+    auth_dev_otp_code: str = "111111"
+    otp_expire_minutes: int = 2
+    otp_max_attempts: int = 5
+    otp_rate_limit_seconds: int = 60
+
     jwt_secret_key: str = "change-me"
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 30
