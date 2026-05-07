@@ -56,6 +56,7 @@ class AuthUser(Base):
     roles: Mapped[list["AuthUserRole"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
+        foreign_keys="AuthUserRole.user_id",
     )
     sessions: Mapped[list["AuthSession"]] = relationship(
         back_populates="user",
