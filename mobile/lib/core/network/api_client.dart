@@ -4,20 +4,19 @@ import '../config/app_config.dart';
 import '../storage/token_storage.dart';
 
 class ApiClient {
-  ApiClient({
-    Dio? dio,
-    TokenStorage? tokenStorage,
-  })  : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: AppConfig.apiBaseUrl,
-                connectTimeout: AppConfig.requestTimeout,
-                receiveTimeout: AppConfig.requestTimeout,
-                sendTimeout: AppConfig.requestTimeout,
-                headers: {'Accept': 'application/json'},
-              ),
+  ApiClient({String? baseUrl, Dio? dio, TokenStorage? tokenStorage})
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: baseUrl ?? AppConfig.apiBaseUrl,
+              connectTimeout: AppConfig.requestTimeout,
+              receiveTimeout: AppConfig.requestTimeout,
+              sendTimeout: AppConfig.requestTimeout,
+              headers: {'Accept': 'application/json'},
             ),
-        _tokenStorage = tokenStorage ?? TokenStorage() {
+          ),
+      _tokenStorage = tokenStorage ?? TokenStorage() {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -33,6 +32,17 @@ class ApiClient {
 
   final Dio _dio;
   final TokenStorage _tokenStorage;
+
+  Dio get dio => _dio;
+
+  void setToken(String? token) {
+    if (token == null || token.isEmpty) {
+      _dio.options.headers.remove('Authorization');
+      return;
+    }
+
+    _dio.options.headers['Authorization'] = 'Bearer $token';
+  }
 
   Future<Response<dynamic>> get(
     String path, {

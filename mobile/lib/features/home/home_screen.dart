@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/utils/dates.dart';
 import '../../core/widgets/farm_app_bar.dart';
 import '../../core/widgets/farm_price_text.dart';
+import '../auth/state/auth_controller.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final auth = ref.watch(authControllerProvider);
+    final user = auth.user;
 
     return Scaffold(
-      appBar: FarmAppBar(
-        title: l10n.appName,
-        showBack: false,
-      ),
+      appBar: FarmAppBar(title: l10n.appName, showBack: false),
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {
           return Center(
@@ -39,6 +40,20 @@ class HomeScreen extends StatelessWidget {
                     Text(
                       formatJalaliDate(DateTime.now()),
                       textAlign: TextAlign.center,
+                    ),
+                    if (user != null) ...[
+                      SizedBox(height: r.v(12)),
+                      Text(
+                        user.email ?? user.phone ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    SizedBox(height: r.v(24)),
+                    OutlinedButton(
+                      onPressed: () {
+                        ref.read(authControllerProvider.notifier).logout();
+                      },
+                      child: const Text('خروج'),
                     ),
                   ],
                 ),
