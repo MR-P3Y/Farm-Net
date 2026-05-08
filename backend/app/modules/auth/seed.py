@@ -49,6 +49,8 @@ BASE_ROLES: list[RoleSeed] = [
 
 
 BASE_PERMISSIONS: list[PermissionSeed] = [
+    PermissionSeed("dashboard.read", "Read dashboard", "dashboard", "View admin dashboard"),
+
     PermissionSeed("users.read", "Read users", "users", "View users list"),
     PermissionSeed("users.read_detail", "Read user detail", "users", "View user details"),
     PermissionSeed("users.update_status", "Update user status", "users", "Suspend/restore users"),
@@ -370,6 +372,7 @@ def assign_default_permissions(
             "social.reports.resolve",
         ],
         "admin": [
+            "dashboard.read",
             "users.read",
             "users.read_detail",
             "shops.read",

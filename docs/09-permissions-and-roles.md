@@ -781,9 +781,10 @@ data_access.logs.read
 
 ---
 
-# 27. Permissionهای Reports
+# 27. Permissionهای Dashboard و Reports
 
 ```text
+dashboard.read
 reports.read
 reports.export
 reports.finance
@@ -946,6 +947,7 @@ social.reports.resolve
 پیشنهاد:
 
 ```text
+dashboard.read
 users.read
 shops.read
 products.read

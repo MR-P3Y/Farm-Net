@@ -24,7 +24,7 @@ final GoRouter adminRouter = GoRouter(
           name: 'admin-dashboard',
           builder: (context, state) {
             return const AdminPermissionGuard(
-              permission: 'users.read',
+              permission: 'dashboard.read',
               child: AdminDashboardPage(),
             );
           },
