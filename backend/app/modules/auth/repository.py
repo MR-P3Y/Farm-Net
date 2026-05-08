@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.models import (
     AuthOtpCode,
+    AuthPermission,
     AuthRefreshToken,
     AuthRole,
+    AuthRolePermission,
     AuthSession,
     AuthUser,
     AuthUserRole,
@@ -53,6 +55,31 @@ class AuthRepository:
 
     def get_role_by_code(self, code: str) -> AuthRole | None:
         return self.db.query(AuthRole).filter(AuthRole.code == code).one_or_none()
+
+    def get_user_role_codes(self, user_id: int) -> list[str]:
+        rows = (
+            self.db.query(AuthRole.code)
+            .join(AuthUserRole, AuthUserRole.role_id == AuthRole.id)
+            .filter(AuthUserRole.user_id == user_id)
+            .all()
+        )
+        return [row[0] for row in rows]
+
+    def get_user_permission_codes(self, user_id: int) -> list[str]:
+        rows = (
+            self.db.query(AuthPermission.code)
+            .join(AuthRolePermission, AuthRolePermission.permission_id == AuthPermission.id)
+            .join(AuthRole, AuthRole.id == AuthRolePermission.role_id)
+            .join(AuthUserRole, AuthUserRole.role_id == AuthRole.id)
+            .filter(
+                AuthUserRole.user_id == user_id,
+                AuthPermission.is_active.is_(True),
+                AuthRole.is_active.is_(True),
+            )
+            .distinct()
+            .all()
+        )
+        return [row[0] for row in rows]
 
     def assign_role_to_user(
         self,
@@ -129,6 +156,26 @@ class AuthRepository:
             .filter(AuthRefreshToken.token_hash == token_hash)
             .one_or_none()
         )
+
+    def revoke_refresh_token(self, token: AuthRefreshToken, revoked_at: datetime) -> None:
+        token.status = "revoked"
+        token.revoked_at = revoked_at
+
+    def revoke_session(self, session_id: int | None, revoked_at: datetime) -> None:
+        if session_id is None:
+            return
+
+        session = (
+            self.db.query(AuthSession)
+            .filter(AuthSession.id == session_id)
+            .one_or_none()
+        )
+
+        if session is None:
+            return
+
+        session.status = "revoked"
+        session.revoked_at = revoked_at
 
     def create_otp_code(
         self,

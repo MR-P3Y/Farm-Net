@@ -45,11 +45,14 @@ async def auth_error_handler(request: Request, exc: AuthError) -> JSONResponse:
         "AUTH_OTP_INVALID",
         "AUTH_OTP_EXPIRED",
         "AUTH_OTP_TOO_MANY_ATTEMPTS",
+        "AUTH_TOKEN_INVALID",
+        "AUTH_TOKEN_EXPIRED",
     }:
         status_code = status.HTTP_401_UNAUTHORIZED
 
     if exc.code in {
         "USER_SUSPENDED",
+        "PERMISSION_DENIED",
     }:
         status_code = status.HTTP_403_FORBIDDEN
 

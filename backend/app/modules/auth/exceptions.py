@@ -65,3 +65,27 @@ class OtpTooManyAttemptsError(AuthError):
             code="AUTH_OTP_TOO_MANY_ATTEMPTS",
             message="Too many OTP attempts",
         )
+
+
+class TokenInvalidError(AuthError):
+    def __init__(self) -> None:
+        super().__init__(
+            code="AUTH_TOKEN_INVALID",
+            message="Invalid token",
+        )
+
+
+class TokenExpiredError(AuthError):
+    def __init__(self) -> None:
+        super().__init__(
+            code="AUTH_TOKEN_EXPIRED",
+            message="Token has expired",
+        )
+
+
+class PermissionDeniedError(AuthError):
+    def __init__(self) -> None:
+        super().__init__(
+            code="PERMISSION_DENIED",
+            message="You do not have permission to perform this action",
+        )

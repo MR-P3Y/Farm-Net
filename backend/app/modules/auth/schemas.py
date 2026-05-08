@@ -69,4 +69,19 @@ class OtpVerifyIn(BaseModel):
 
 
 class RefreshTokenIn(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(min_length=20)
+
+
+class LogoutIn(BaseModel):
+    refresh_token: str | None = None
+
+
+class CurrentUserOut(BaseModel):
+    id: int
+    email: str | None = None
+    phone: str | None = None
+    status: str
+    is_email_verified: bool
+    is_phone_verified: bool
+    roles: list[str] = Field(default_factory=list)
+    permissions: list[str] = Field(default_factory=list)

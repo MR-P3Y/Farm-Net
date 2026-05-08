@@ -6,6 +6,8 @@ from app.core.config import get_settings
 from app.core.security import (
     create_access_token,
     create_refresh_token,
+    decode_token,
+    ensure_token_type,
     hash_password,
     hash_token,
     verify_password,
@@ -22,13 +24,14 @@ from app.modules.auth.exceptions import (
     OtpExpiredError,
     OtpInvalidError,
     OtpTooManyAttemptsError,
+    TokenInvalidError,
     UserAlreadyExistsError,
     UserNotFoundError,
     UserSuspendedError,
 )
 from app.modules.auth.models import AuthUser
 from app.modules.auth.repository import AuthRepository
-from app.modules.auth.schemas import AuthUserOut, OtpRequestOut, TokenPairOut
+from app.modules.auth.schemas import AuthUserOut, CurrentUserOut, OtpRequestOut, TokenPairOut
 from app.modules.auth.utils import normalize_iran_phone
 
 
@@ -209,6 +212,88 @@ class AuthService:
         self.repo.commit()
         return token_pair
 
+    def refresh_access_token(
+        self,
+        *,
+        refresh_token: str,
+    ) -> TokenPairOut:
+        try:
+            payload = decode_token(refresh_token)
+            ensure_token_type(payload, "refresh")
+        except (KeyError, TypeError, ValueError) as exc:
+            raise TokenInvalidError() from exc
+
+        try:
+            user_id = int(payload["sub"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise TokenInvalidError() from exc
+
+        token_hash = hash_token(refresh_token)
+        stored_token = self.repo.get_refresh_token_by_hash(token_hash)
+
+        if stored_token is None:
+            raise TokenInvalidError()
+
+        if stored_token.status != TokenStatus.ACTIVE.value:
+            raise TokenInvalidError()
+
+        if stored_token.expires_at < datetime.utcnow():
+            stored_token.status = TokenStatus.EXPIRED.value
+            self.repo.commit()
+            raise TokenInvalidError()
+
+        user = self.repo.get_user_by_id(user_id)
+        if user is None:
+            raise UserNotFoundError()
+
+        self._ensure_user_can_login(user)
+
+        access_token = create_access_token(subject=user.id)
+
+        # Refresh token rotation is intentionally deferred to the stricter auth phase.
+        self.repo.commit()
+
+        return TokenPairOut(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user=self._user_out(user),
+        )
+
+    def logout(
+        self,
+        *,
+        refresh_token: str | None,
+    ) -> None:
+        if not refresh_token:
+            return
+
+        token_hash = hash_token(refresh_token)
+        stored_token = self.repo.get_refresh_token_by_hash(token_hash)
+
+        if stored_token is None:
+            return
+
+        now = datetime.utcnow()
+
+        self.repo.revoke_refresh_token(stored_token, revoked_at=now)
+        self.repo.revoke_session(stored_token.session_id, revoked_at=now)
+        self.repo.commit()
+
+    def get_current_user_out(self, user: AuthUser) -> CurrentUserOut:
+        roles = self.repo.get_user_role_codes(user.id)
+        permissions = self.repo.get_user_permission_codes(user.id)
+
+        return CurrentUserOut(
+            id=user.id,
+            email=user.email,
+            phone=user.phone,
+            status=user.status,
+            is_email_verified=user.is_email_verified,
+            is_phone_verified=user.is_phone_verified,
+            roles=roles,
+            permissions=permissions,
+        )
+
     def _assign_base_user_role(self, user: AuthUser) -> None:
         role = self.repo.get_role_by_code("user")
         if role is None:
@@ -263,14 +348,17 @@ class AuthService:
         return TokenPairOut(
             access_token=access_token,
             refresh_token=refresh_token,
-            user=AuthUserOut(
-                id=user.id,
-                email=user.email,
-                phone=user.phone,
-                status=user.status,
-                is_email_verified=user.is_email_verified,
-                is_phone_verified=user.is_phone_verified,
-            ),
+            user=self._user_out(user),
+        )
+
+    def _user_out(self, user: AuthUser) -> AuthUserOut:
+        return AuthUserOut(
+            id=user.id,
+            email=user.email,
+            phone=user.phone,
+            status=user.status,
+            is_email_verified=user.is_email_verified,
+            is_phone_verified=user.is_phone_verified,
         )
 
     def _get_dev_otp_code(self) -> str:

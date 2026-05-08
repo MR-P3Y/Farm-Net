@@ -3,11 +3,15 @@ from sqlalchemy.orm import Session
 
 from app.core.responses import success_response
 from app.db.session import get_db
+from app.modules.auth.dependencies import get_current_active_user
+from app.modules.auth.models import AuthUser
 from app.modules.auth.schemas import (
     EmailLoginIn,
     EmailRegisterIn,
+    LogoutIn,
     OtpRequestIn,
     OtpVerifyIn,
+    RefreshTokenIn,
 )
 from app.modules.auth.service import AuthService
 
@@ -118,5 +122,60 @@ def verify_otp(
     return success_response(
         data=result.model_dump(),
         message="OTP verified successfully",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/refresh")
+def refresh_token(
+    payload: RefreshTokenIn,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    service = AuthService(db)
+
+    result = service.refresh_access_token(
+        refresh_token=payload.refresh_token,
+    )
+
+    return success_response(
+        data=result.model_dump(),
+        message="Token refreshed successfully",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/logout")
+def logout(
+    payload: LogoutIn,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    service = AuthService(db)
+
+    service.logout(
+        refresh_token=payload.refresh_token,
+    )
+
+    return success_response(
+        data=None,
+        message="Logout successful",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/me")
+def me(
+    request: Request,
+    current_user: AuthUser = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    service = AuthService(db)
+
+    result = service.get_current_user_out(current_user)
+
+    return success_response(
+        data=result.model_dump(),
+        message="OK",
         meta={"trace_id": request.state.trace_id},
     )
