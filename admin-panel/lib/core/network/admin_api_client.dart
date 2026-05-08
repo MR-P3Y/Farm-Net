@@ -1,22 +1,17 @@
 import 'package:dio/dio.dart';
 
-import '../config/admin_config.dart';
-
 class AdminApiClient {
-  AdminApiClient({
-    String baseUrl = AdminConfig.apiBaseUrl,
-    Dio? dio,
-  }) : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: baseUrl,
-                connectTimeout: AdminConfig.requestTimeout,
-                receiveTimeout: AdminConfig.requestTimeout,
-                headers: {
-                  'Accept': 'application/json',
-                },
-              ),
-            );
+  AdminApiClient({required String baseUrl, Dio? dio})
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: baseUrl,
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 15),
+              headers: {'Accept': 'application/json'},
+            ),
+          );
 
   final Dio _dio;
 

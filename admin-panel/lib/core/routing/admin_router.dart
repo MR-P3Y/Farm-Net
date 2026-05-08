@@ -1,12 +1,13 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/admin_auth_gate.dart';
 import '../../features/auth/admin_login_page.dart';
 import '../../features/dashboard/admin_dashboard_page.dart';
 import '../auth/admin_permission_guard.dart';
 import '../widgets/admin_app_shell.dart';
 
 final GoRouter adminRouter = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/dashboard',
   routes: [
     GoRoute(
       path: '/login',
@@ -15,7 +16,7 @@ final GoRouter adminRouter = GoRouter(
     ),
     ShellRoute(
       builder: (context, state, child) {
-        return AdminAppShell(child: child);
+        return AdminAuthGate(child: AdminAppShell(child: child));
       },
       routes: [
         GoRoute(
@@ -23,7 +24,7 @@ final GoRouter adminRouter = GoRouter(
           name: 'admin-dashboard',
           builder: (context, state) {
             return const AdminPermissionGuard(
-              permission: 'dashboard.read',
+              permission: 'users.read',
               child: AdminDashboardPage(),
             );
           },

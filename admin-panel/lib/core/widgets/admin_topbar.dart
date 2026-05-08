@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/auth/state/admin_auth_controller.dart';
+import '../auth/admin_auth_state.dart';
 import '../localization/admin_localizations.dart';
 
-class AdminTopbar extends StatelessWidget {
+class AdminTopbar extends ConsumerWidget {
   const AdminTopbar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AdminLocalizations.of(context);
+    final auth = ref.watch(adminAuthStateProvider);
+    final user = auth.user;
 
     return Container(
       height: 64,
@@ -22,19 +27,28 @@ class AdminTopbar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(
-            l10n.appName,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text(l10n.appName, style: Theme.of(context).textTheme.titleMedium),
           const Spacer(),
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.notifications_none),
           ),
           const SizedBox(width: 8),
-          const CircleAvatar(
-            child: Icon(Icons.person_outline),
+          if (user != null)
+            Text(
+              user.email ?? user.phone ?? '',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          const SizedBox(width: 12),
+          IconButton(
+            tooltip: 'Logout',
+            onPressed: () {
+              ref.read(adminAuthControllerProvider).logout();
+            },
+            icon: const Icon(Icons.logout),
           ),
+          const SizedBox(width: 8),
+          const CircleAvatar(child: Icon(Icons.person_outline)),
         ],
       ),
     );
