@@ -89,3 +89,16 @@ class PermissionDeniedError(AuthError):
             code="PERMISSION_DENIED",
             message="You do not have permission to perform this action",
         )
+
+
+class ValidationAuthError(AuthError):
+    def __init__(
+        self,
+        message: str = "Validation error",
+        details: dict | None = None,
+    ) -> None:
+        super().__init__(
+            code="VALIDATION_ERROR",
+            message=message,
+            details=details or {},
+        )
