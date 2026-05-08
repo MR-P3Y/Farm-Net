@@ -1,0 +1,473 @@
+{
+  "info": {
+    "name": "Farm Net - Auth API",
+    "_postman_id": "farm-net-auth-api",
+    "description": "Manual tests for Farm Net Auth and basic Admin Auth APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "email",
+      "value": "postman-test@example.com"
+    },
+    {
+      "key": "password",
+      "value": "Test@123456"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@example.com"
+    },
+    {
+      "key": "admin_password",
+      "value": "change-me"
+    },
+    {
+      "key": "phone",
+      "value": "09123456789"
+    },
+    {
+      "key": "otp_code",
+      "value": "111111"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "admin_access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_refresh_token",
+      "value": ""
+    },
+    {
+      "key": "test_user_id",
+      "value": "2"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Register Email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/register/email",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "register", "email"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{$timestamp}}-{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Login Email",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.success && json.data) {",
+              "  pm.collectionVariables.set('access_token', json.data.access_token);",
+              "  pm.collectionVariables.set('refresh_token', json.data.refresh_token);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/login/email",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login", "email"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Login Wrong Password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/login/email",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login", "email"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"wrong-password\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - OTP Request",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.success && json.data && json.data.dev_code) {",
+              "  pm.collectionVariables.set('otp_code', json.data.dev_code);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/otp/request",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "otp", "request"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"purpose\": \"login\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - OTP Verify",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.success && json.data) {",
+              "  pm.collectionVariables.set('access_token', json.data.access_token);",
+              "  pm.collectionVariables.set('refresh_token', json.data.refresh_token);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/otp/verify",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "otp", "verify"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"{{otp_code}}\",\n  \"purpose\": \"login\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - OTP Verify Wrong Code",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/otp/verify",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "otp", "verify"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"code\": \"999999\",\n  \"purpose\": \"login\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Me",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/me",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "me"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Refresh",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.success && json.data) {",
+              "  pm.collectionVariables.set('access_token', json.data.access_token);",
+              "  pm.collectionVariables.set('refresh_token', json.data.refresh_token);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/refresh",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "refresh"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Logout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/logout",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "logout"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin - Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.success && json.data) {",
+              "  pm.collectionVariables.set('admin_access_token', json.data.access_token);",
+              "  pm.collectionVariables.set('admin_refresh_token', json.data.refresh_token);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/login/email",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login", "email"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin - Users List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/users?page=1&page_size=20",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "users"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin - User Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/users/{{test_user_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "users", "{{test_user_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Admin - Update User Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/users/{{test_user_id}}/status",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "users", "{{test_user_id}}", "status"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"active\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin - Roles",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/roles",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "roles"]
+        }
+      }
+    },
+    {
+      "name": "Admin - Permissions",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/permissions",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "permissions"]
+        }
+      }
+    },
+    {
+      "name": "Admin - Permissions By Module Users",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/permissions?module=users",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "permissions"],
+          "query": [
+            {
+              "key": "module",
+              "value": "users"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin - Users Without Token",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/admin/users",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "users"]
+        }
+      }
+    }
+  ]
+}
