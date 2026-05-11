@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import get_settings
 from app.db.base import Base
 from app.modules.auth import models as auth_models  # noqa: F401
+from app.modules.geo import models as geo_models  # noqa: F401
 
 
 config = context.config
