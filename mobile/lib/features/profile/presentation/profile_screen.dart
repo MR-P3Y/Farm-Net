@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_loading_view.dart';
@@ -115,6 +116,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           },
                           icon: const Icon(Icons.edit_outlined),
                           label: const Text('ویرایش پروفایل'),
+                        ),
+                        SizedBox(height: r.v(12)),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            context.push('/verifications');
+                          },
+                          icon: const Icon(Icons.verified_user_outlined),
+                          label: const Text('درخواست‌های تأیید من'),
                         ),
                       ],
                     ),
