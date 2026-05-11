@@ -10,6 +10,7 @@ from app.modules.admin.router import router as admin_router
 from app.modules.auth.router import router as auth_router
 from app.modules.geo.router import router as geo_router
 from app.modules.health.router import router as health_router
+from app.modules.profiles.router import router as profile_router
 
 
 settings = get_settings()
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_router, prefix=settings.api_v1_prefix)
     app.include_router(geo_router, prefix=settings.api_v1_prefix)
+    app.include_router(profile_router, prefix=settings.api_v1_prefix)
 
     register_exception_handlers(app)
 
