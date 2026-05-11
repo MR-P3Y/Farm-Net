@@ -110,3 +110,64 @@ class DocumentOut(BaseModel):
     reject_reason: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class VerificationCreateIn(BaseModel):
+    target_role: str = Field(min_length=3, max_length=80)
+    request_note: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("target_role", "request_note", mode="before")
+    @classmethod
+    def normalize_verification_create_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class VerificationAttachDocumentIn(BaseModel):
+    document_id: int = Field(ge=1)
+
+
+class VerificationCancelIn(BaseModel):
+    note: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("note", mode="before")
+    @classmethod
+    def normalize_cancel_note(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class VerificationDocumentOut(BaseModel):
+    id: int
+    document_id: int
+    document_type: str
+    file_name: str
+    status: str
+
+
+class VerificationReviewOut(BaseModel):
+    id: int
+    reviewer_id: int | None = None
+    action: str
+    note: str | None = None
+    created_at: datetime
+
+
+class VerificationRequestOut(BaseModel):
+    id: int
+    user_id: int
+    target_role: str
+    status: str
+    request_note: str | None = None
+    admin_note: str | None = None
+    submitted_at: datetime | None = None
+    reviewed_at: datetime | None = None
+    reviewed_by: int | None = None
+    created_at: datetime
+    updated_at: datetime
+    documents: list[VerificationDocumentOut] = Field(default_factory=list)
+    reviews: list[VerificationReviewOut] = Field(default_factory=list)

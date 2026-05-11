@@ -8,7 +8,13 @@ from app.modules.geo.models import (
     GeoRuralDistrict,
     GeoVillage,
 )
-from app.modules.profiles.models import UserDocument, UserProfile
+from app.modules.profiles.models import (
+    UserDocument,
+    UserProfile,
+    VerificationRequest,
+    VerificationRequestDocument,
+    VerificationReview,
+)
 
 
 class ProfileRepository:
@@ -138,6 +144,124 @@ class ProfileRepository:
             )
             .one_or_none()
         )
+
+    def get_active_verification_request(
+        self,
+        *,
+        user_id: int,
+        target_role: str,
+        active_statuses: set[str],
+    ) -> VerificationRequest | None:
+        return (
+            self.db.query(VerificationRequest)
+            .filter(
+                VerificationRequest.user_id == user_id,
+                VerificationRequest.target_role == target_role,
+                VerificationRequest.status.in_(active_statuses),
+            )
+            .order_by(VerificationRequest.created_at.desc())
+            .first()
+        )
+
+    def create_verification_request(
+        self,
+        *,
+        user_id: int,
+        target_role: str,
+        status: str,
+        request_note: str | None,
+    ) -> VerificationRequest:
+        request = VerificationRequest(
+            user_id=user_id,
+            target_role=target_role,
+            status=status,
+            request_note=request_note,
+        )
+        self.db.add(request)
+        self.db.flush()
+        return request
+
+    def list_user_verification_requests(
+        self,
+        *,
+        user_id: int,
+    ) -> list[VerificationRequest]:
+        return (
+            self.db.query(VerificationRequest)
+            .filter(VerificationRequest.user_id == user_id)
+            .order_by(VerificationRequest.created_at.desc())
+            .all()
+        )
+
+    def get_user_verification_request(
+        self,
+        *,
+        user_id: int,
+        request_id: int,
+    ) -> VerificationRequest | None:
+        return (
+            self.db.query(VerificationRequest)
+            .filter(
+                VerificationRequest.id == request_id,
+                VerificationRequest.user_id == user_id,
+            )
+            .one_or_none()
+        )
+
+    def get_verification_request_document_link(
+        self,
+        *,
+        request_id: int,
+        document_id: int,
+    ) -> VerificationRequestDocument | None:
+        return (
+            self.db.query(VerificationRequestDocument)
+            .filter(
+                VerificationRequestDocument.verification_request_id == request_id,
+                VerificationRequestDocument.document_id == document_id,
+            )
+            .one_or_none()
+        )
+
+    def attach_document_to_verification_request(
+        self,
+        *,
+        request_id: int,
+        document_id: int,
+    ) -> VerificationRequestDocument:
+        existing = self.get_verification_request_document_link(
+            request_id=request_id,
+            document_id=document_id,
+        )
+
+        if existing is not None:
+            return existing
+
+        link = VerificationRequestDocument(
+            verification_request_id=request_id,
+            document_id=document_id,
+        )
+        self.db.add(link)
+        self.db.flush()
+        return link
+
+    def create_verification_review(
+        self,
+        *,
+        request_id: int,
+        reviewer_id: int | None,
+        action: str,
+        note: str | None,
+    ) -> VerificationReview:
+        review = VerificationReview(
+            verification_request_id=request_id,
+            reviewer_id=reviewer_id,
+            action=action,
+            note=note,
+        )
+        self.db.add(review)
+        self.db.flush()
+        return review
 
     def commit(self) -> None:
         self.db.commit()

@@ -6,7 +6,14 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
-from app.modules.profiles.enums import DocumentStatus, DocumentType, Gender
+from app.modules.profiles.enums import (
+    DocumentStatus,
+    DocumentType,
+    Gender,
+    VerificationReviewAction,
+    VerificationStatus,
+    VerificationTargetRole,
+)
 from app.modules.profiles.models import UserDocument, UserProfile
 from app.modules.profiles.repository import ProfileRepository
 from app.modules.profiles.schemas import (
@@ -14,6 +21,12 @@ from app.modules.profiles.schemas import (
     DocumentOut,
     ProfileMeOut,
     ProfileUpdateIn,
+    VerificationAttachDocumentIn,
+    VerificationCancelIn,
+    VerificationCreateIn,
+    VerificationDocumentOut,
+    VerificationRequestOut,
+    VerificationReviewOut,
 )
 
 
@@ -146,6 +159,252 @@ class ProfileService:
 
         document.deleted_at = datetime.utcnow()
         self.repo.commit()
+
+    def create_my_verification_request(
+        self,
+        *,
+        user: AuthUser,
+        payload: VerificationCreateIn,
+    ) -> VerificationRequestOut:
+        target_role = self._validate_target_role(payload.target_role)
+
+        active_statuses = {
+            VerificationStatus.DRAFT.value,
+            VerificationStatus.SUBMITTED.value,
+            VerificationStatus.UNDER_REVIEW.value,
+            VerificationStatus.NEEDS_REVISION.value,
+        }
+
+        existing = self.repo.get_active_verification_request(
+            user_id=user.id,
+            target_role=target_role,
+            active_statuses=active_statuses,
+        )
+
+        if existing is not None:
+            raise ValidationAuthError(
+                message="Active verification request already exists for this role",
+                details={
+                    "target_role": target_role,
+                    "existing_request_id": existing.id,
+                    "existing_status": existing.status,
+                },
+            )
+
+        request = self.repo.create_verification_request(
+            user_id=user.id,
+            target_role=target_role,
+            status=VerificationStatus.DRAFT.value,
+            request_note=payload.request_note,
+        )
+
+        self.repo.create_verification_review(
+            request_id=request.id,
+            reviewer_id=None,
+            action=VerificationReviewAction.SUBMITTED.value,
+            note="Verification request created as draft",
+        )
+
+        self.repo.commit()
+        self.repo.refresh(request)
+
+        return self._verification_request_out(request)
+
+    def list_my_verification_requests(
+        self,
+        *,
+        user: AuthUser,
+    ) -> list[VerificationRequestOut]:
+        requests = self.repo.list_user_verification_requests(user_id=user.id)
+        return [self._verification_request_out(item) for item in requests]
+
+    def get_my_verification_request(
+        self,
+        *,
+        user: AuthUser,
+        request_id: int,
+    ) -> VerificationRequestOut:
+        request = self.repo.get_user_verification_request(
+            user_id=user.id,
+            request_id=request_id,
+        )
+
+        if request is None:
+            raise ValidationAuthError(
+                message="Verification request not found",
+                details={"request_id": request_id},
+            )
+
+        return self._verification_request_out(request)
+
+    def attach_document_to_my_verification_request(
+        self,
+        *,
+        user: AuthUser,
+        request_id: int,
+        payload: VerificationAttachDocumentIn,
+    ) -> VerificationRequestOut:
+        request = self.repo.get_user_verification_request(
+            user_id=user.id,
+            request_id=request_id,
+        )
+
+        if request is None:
+            raise ValidationAuthError(
+                message="Verification request not found",
+                details={"request_id": request_id},
+            )
+
+        if request.status not in {
+            VerificationStatus.DRAFT.value,
+            VerificationStatus.NEEDS_REVISION.value,
+        }:
+            raise ValidationAuthError(
+                message="Documents can only be attached to draft or needs_revision requests",
+                details={"current_status": request.status},
+            )
+
+        document = self.repo.get_user_document(
+            user_id=user.id,
+            document_id=payload.document_id,
+        )
+
+        if document is None:
+            raise ValidationAuthError(
+                message="Document not found or deleted",
+                details={"document_id": payload.document_id},
+            )
+
+        if document.status == DocumentStatus.REJECTED.value:
+            raise ValidationAuthError(
+                message="Rejected document cannot be attached",
+                details={"document_id": payload.document_id},
+            )
+
+        self.repo.attach_document_to_verification_request(
+            request_id=request.id,
+            document_id=document.id,
+        )
+
+        self.repo.commit()
+        self.repo.refresh(request)
+
+        return self._verification_request_out(request)
+
+    def submit_my_verification_request(
+        self,
+        *,
+        user: AuthUser,
+        request_id: int,
+    ) -> VerificationRequestOut:
+        request = self.repo.get_user_verification_request(
+            user_id=user.id,
+            request_id=request_id,
+        )
+
+        if request is None:
+            raise ValidationAuthError(
+                message="Verification request not found",
+                details={"request_id": request_id},
+            )
+
+        if request.status not in {
+            VerificationStatus.DRAFT.value,
+            VerificationStatus.NEEDS_REVISION.value,
+        }:
+            raise ValidationAuthError(
+                message="Only draft or needs_revision requests can be submitted",
+                details={"current_status": request.status},
+            )
+
+        profile = self.repo.get_profile_by_user_id(user.id)
+
+        if profile is None or not self._is_profile_completed(profile):
+            raise ValidationAuthError(
+                message="Profile must be completed before submitting verification request",
+                details={
+                    "required": [
+                        "first_name",
+                        "last_name",
+                        "province_id",
+                        "county_id",
+                        "address",
+                    ],
+                },
+            )
+
+        if not profile.national_id:
+            raise ValidationAuthError(
+                message="national_id is required for verification request",
+                details={"field": "national_id"},
+            )
+
+        active_documents = [
+            link for link in request.documents if link.document.deleted_at is None
+        ]
+
+        if not active_documents:
+            raise ValidationAuthError(
+                message="At least one document is required before submit",
+                details={"request_id": request.id},
+            )
+
+        request.status = VerificationStatus.SUBMITTED.value
+        request.submitted_at = datetime.utcnow()
+
+        self.repo.create_verification_review(
+            request_id=request.id,
+            reviewer_id=None,
+            action=VerificationReviewAction.SUBMITTED.value,
+            note="Verification request submitted by user",
+        )
+
+        self.repo.commit()
+        self.repo.refresh(request)
+
+        return self._verification_request_out(request)
+
+    def cancel_my_verification_request(
+        self,
+        *,
+        user: AuthUser,
+        request_id: int,
+        payload: VerificationCancelIn,
+    ) -> VerificationRequestOut:
+        request = self.repo.get_user_verification_request(
+            user_id=user.id,
+            request_id=request_id,
+        )
+
+        if request is None:
+            raise ValidationAuthError(
+                message="Verification request not found",
+                details={"request_id": request_id},
+            )
+
+        if request.status not in {
+            VerificationStatus.DRAFT.value,
+            VerificationStatus.SUBMITTED.value,
+            VerificationStatus.NEEDS_REVISION.value,
+        }:
+            raise ValidationAuthError(
+                message="This verification request cannot be cancelled",
+                details={"current_status": request.status},
+            )
+
+        request.status = VerificationStatus.CANCELLED.value
+
+        self.repo.create_verification_review(
+            request_id=request.id,
+            reviewer_id=None,
+            action=VerificationReviewAction.CANCELLED.value,
+            note=payload.note or "Verification request cancelled by user",
+        )
+
+        self.repo.commit()
+        self.repo.refresh(request)
+
+        return self._verification_request_out(request)
 
     def _validate_payload(self, payload: ProfileUpdateIn) -> None:
         if payload.gender is not None:
@@ -367,6 +626,17 @@ class ProfileService:
                     details={"max_size_bytes": max_size},
                 )
 
+    def _validate_target_role(self, target_role: str) -> str:
+        allowed_roles = {item.value for item in VerificationTargetRole}
+
+        if target_role not in allowed_roles:
+            raise ValidationAuthError(
+                message="Invalid verification target_role",
+                details={"allowed": sorted(allowed_roles)},
+            )
+
+        return target_role
+
     def _profile_out(self, profile: UserProfile) -> ProfileMeOut:
         return ProfileMeOut(
             id=profile.id,
@@ -413,4 +683,40 @@ class ProfileService:
             reject_reason=document.reject_reason,
             created_at=document.created_at,
             updated_at=document.updated_at,
+        )
+
+    def _verification_request_out(self, request) -> VerificationRequestOut:
+        return VerificationRequestOut(
+            id=request.id,
+            user_id=request.user_id,
+            target_role=request.target_role,
+            status=request.status,
+            request_note=request.request_note,
+            admin_note=request.admin_note,
+            submitted_at=request.submitted_at,
+            reviewed_at=request.reviewed_at,
+            reviewed_by=request.reviewed_by,
+            created_at=request.created_at,
+            updated_at=request.updated_at,
+            documents=[
+                VerificationDocumentOut(
+                    id=link.id,
+                    document_id=link.document.id,
+                    document_type=link.document.document_type,
+                    file_name=link.document.file_name,
+                    status=link.document.status,
+                )
+                for link in request.documents
+                if link.document.deleted_at is None
+            ],
+            reviews=[
+                VerificationReviewOut(
+                    id=review.id,
+                    reviewer_id=review.reviewer_id,
+                    action=review.action,
+                    note=review.note,
+                    created_at=review.created_at,
+                )
+                for review in request.reviews
+            ],
         )
