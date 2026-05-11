@@ -193,6 +193,37 @@ class ProfileRepository:
             .all()
         )
 
+    def list_verification_requests(
+        self,
+        *,
+        status: str | None = None,
+        target_role: str | None = None,
+        user_id: int | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[VerificationRequest], int]:
+        query = self.db.query(VerificationRequest)
+
+        if status:
+            query = query.filter(VerificationRequest.status == status)
+
+        if target_role:
+            query = query.filter(VerificationRequest.target_role == target_role)
+
+        if user_id:
+            query = query.filter(VerificationRequest.user_id == user_id)
+
+        total = query.count()
+
+        items = (
+            query.order_by(VerificationRequest.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
     def get_user_verification_request(
         self,
         *,
@@ -205,6 +236,16 @@ class ProfileRepository:
                 VerificationRequest.id == request_id,
                 VerificationRequest.user_id == user_id,
             )
+            .one_or_none()
+        )
+
+    def get_verification_request_by_id(
+        self,
+        request_id: int,
+    ) -> VerificationRequest | None:
+        return (
+            self.db.query(VerificationRequest)
+            .filter(VerificationRequest.id == request_id)
             .one_or_none()
         )
 
