@@ -8,7 +8,7 @@ from app.modules.geo.models import (
     GeoRuralDistrict,
     GeoVillage,
 )
-from app.modules.profiles.models import UserProfile
+from app.modules.profiles.models import UserDocument, UserProfile
 
 
 class ProfileRepository:
@@ -84,6 +84,57 @@ class ProfileRepository:
             .filter(
                 GeoVillage.id == village_id,
                 GeoVillage.is_active.is_(True),
+            )
+            .one_or_none()
+        )
+
+    def create_document(
+        self,
+        *,
+        user_id: int,
+        document_type: str,
+        file_path: str,
+        file_name: str,
+        mime_type: str | None,
+        size_bytes: int | None,
+        status: str,
+    ) -> UserDocument:
+        document = UserDocument(
+            user_id=user_id,
+            document_type=document_type,
+            file_path=file_path,
+            file_name=file_name,
+            mime_type=mime_type,
+            size_bytes=size_bytes,
+            status=status,
+        )
+        self.db.add(document)
+        self.db.flush()
+        return document
+
+    def list_user_documents(self, *, user_id: int) -> list[UserDocument]:
+        return (
+            self.db.query(UserDocument)
+            .filter(
+                UserDocument.user_id == user_id,
+                UserDocument.deleted_at.is_(None),
+            )
+            .order_by(UserDocument.created_at.desc())
+            .all()
+        )
+
+    def get_user_document(
+        self,
+        *,
+        user_id: int,
+        document_id: int,
+    ) -> UserDocument | None:
+        return (
+            self.db.query(UserDocument)
+            .filter(
+                UserDocument.id == document_id,
+                UserDocument.user_id == user_id,
+                UserDocument.deleted_at.is_(None),
             )
             .one_or_none()
         )

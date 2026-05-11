@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 
 from sqlalchemy.exc import IntegrityError
@@ -5,10 +6,15 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
-from app.modules.profiles.enums import Gender
-from app.modules.profiles.models import UserProfile
+from app.modules.profiles.enums import DocumentStatus, DocumentType, Gender
+from app.modules.profiles.models import UserDocument, UserProfile
 from app.modules.profiles.repository import ProfileRepository
-from app.modules.profiles.schemas import ProfileMeOut, ProfileUpdateIn
+from app.modules.profiles.schemas import (
+    DocumentCreateIn,
+    DocumentOut,
+    ProfileMeOut,
+    ProfileUpdateIn,
+)
 
 
 class ProfileService:
@@ -74,6 +80,72 @@ class ProfileService:
         self.repo.refresh(profile)
 
         return self._profile_out(profile)
+
+    def create_my_document(
+        self,
+        *,
+        user: AuthUser,
+        payload: DocumentCreateIn,
+    ) -> DocumentOut:
+        self._validate_document_payload(payload)
+
+        document = self.repo.create_document(
+            user_id=user.id,
+            document_type=payload.document_type,
+            file_path=payload.file_path,
+            file_name=payload.file_name,
+            mime_type=payload.mime_type,
+            size_bytes=payload.size_bytes,
+            status=DocumentStatus.PENDING.value,
+        )
+
+        self.repo.commit()
+        self.repo.refresh(document)
+
+        return self._document_out(document)
+
+    def list_my_documents(self, user: AuthUser) -> list[DocumentOut]:
+        documents = self.repo.list_user_documents(user_id=user.id)
+        return [self._document_out(item) for item in documents]
+
+    def get_my_document(
+        self,
+        *,
+        user: AuthUser,
+        document_id: int,
+    ) -> DocumentOut:
+        document = self.repo.get_user_document(
+            user_id=user.id,
+            document_id=document_id,
+        )
+
+        if document is None:
+            raise ValidationAuthError(
+                message="Document not found",
+                details={"document_id": document_id},
+            )
+
+        return self._document_out(document)
+
+    def delete_my_document(
+        self,
+        *,
+        user: AuthUser,
+        document_id: int,
+    ) -> None:
+        document = self.repo.get_user_document(
+            user_id=user.id,
+            document_id=document_id,
+        )
+
+        if document is None:
+            raise ValidationAuthError(
+                message="Document not found",
+                details={"document_id": document_id},
+            )
+
+        document.deleted_at = datetime.utcnow()
+        self.repo.commit()
 
     def _validate_payload(self, payload: ProfileUpdateIn) -> None:
         if payload.gender is not None:
@@ -267,6 +339,34 @@ class ProfileService:
 
         _ = (province, county, district, rural_district, city, village)
 
+    def _validate_document_payload(self, payload: DocumentCreateIn) -> None:
+        allowed_document_types = {item.value for item in DocumentType}
+
+        if payload.document_type not in allowed_document_types:
+            raise ValidationAuthError(
+                message="Invalid document_type",
+                details={"allowed": sorted(allowed_document_types)},
+            )
+
+        if payload.mime_type is not None:
+            if not (
+                payload.mime_type.startswith("image/")
+                or payload.mime_type == "application/pdf"
+            ):
+                raise ValidationAuthError(
+                    message="Invalid mime_type",
+                    details={"allowed": ["image/*", "application/pdf"]},
+                )
+
+        if payload.size_bytes is not None:
+            max_size = 15 * 1024 * 1024
+
+            if payload.size_bytes > max_size:
+                raise ValidationAuthError(
+                    message="Document file is too large",
+                    details={"max_size_bytes": max_size},
+                )
+
     def _profile_out(self, profile: UserProfile) -> ProfileMeOut:
         return ProfileMeOut(
             id=profile.id,
@@ -296,3 +396,21 @@ class ProfileService:
         has_address = bool(profile.address)
 
         return has_name and has_location and has_address
+
+    def _document_out(self, document: UserDocument) -> DocumentOut:
+        return DocumentOut(
+            id=document.id,
+            user_id=document.user_id,
+            document_type=document.document_type,
+            file_path=document.file_path,
+            file_name=document.file_name,
+            mime_type=document.mime_type,
+            size_bytes=document.size_bytes,
+            status=document.status,
+            uploaded_at=document.uploaded_at,
+            reviewed_at=document.reviewed_at,
+            reviewed_by=document.reviewed_by,
+            reject_reason=document.reject_reason,
+            created_at=document.created_at,
+            updated_at=document.updated_at,
+        )

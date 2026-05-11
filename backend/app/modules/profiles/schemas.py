@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -71,3 +71,42 @@ class ProfileUpdateIn(BaseModel):
             value = value.strip()
             return value or None
         return value
+
+
+class DocumentCreateIn(BaseModel):
+    document_type: str = Field(max_length=80)
+    file_path: str = Field(min_length=1, max_length=500)
+    file_name: str = Field(min_length=1, max_length=255)
+    mime_type: str | None = Field(default=None, max_length=150)
+    size_bytes: int | None = Field(default=None, ge=1)
+
+    @field_validator(
+        "document_type",
+        "file_path",
+        "file_name",
+        "mime_type",
+        mode="before",
+    )
+    @classmethod
+    def normalize_document_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class DocumentOut(BaseModel):
+    id: int
+    user_id: int
+    document_type: str
+    file_path: str
+    file_name: str
+    mime_type: str | None = None
+    size_bytes: int | None = None
+    status: str
+    uploaded_at: datetime
+    reviewed_at: datetime | None = None
+    reviewed_by: int | None = None
+    reject_reason: str | None = None
+    created_at: datetime
+    updated_at: datetime

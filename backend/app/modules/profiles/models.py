@@ -166,6 +166,8 @@ class UserDocument(Base):
     )
     reject_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
