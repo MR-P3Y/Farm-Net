@@ -8,6 +8,7 @@ class FarmTextField extends StatelessWidget {
     this.keyboardType,
     this.validator,
     this.obscureText = false,
+    this.maxLines = 1,
   });
 
   final TextEditingController controller;
@@ -15,6 +16,7 @@ class FarmTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final bool obscureText;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +25,7 @@ class FarmTextField extends StatelessWidget {
       keyboardType: keyboardType,
       validator: validator,
       obscureText: obscureText,
+      maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),

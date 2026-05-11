@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../core/responsive/responsive.dart';
@@ -49,6 +50,14 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ],
                     SizedBox(height: r.v(24)),
+                    FilledButton.icon(
+                      onPressed: () {
+                        context.push('/profile');
+                      },
+                      icon: const Icon(Icons.person_outline),
+                      label: const Text('پروفایل من'),
+                    ),
+                    SizedBox(height: r.v(12)),
                     OutlinedButton(
                       onPressed: () {
                         ref.read(authControllerProvider.notifier).logout();
