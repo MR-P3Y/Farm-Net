@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/admin_auth_gate.dart';
 import '../../features/auth/admin_login_page.dart';
 import '../../features/dashboard/admin_dashboard_page.dart';
+import '../../features/verifications/presentation/admin_verifications_page.dart';
 import '../auth/admin_permission_guard.dart';
 import '../widgets/admin_app_shell.dart';
 
@@ -26,6 +27,16 @@ final GoRouter adminRouter = GoRouter(
             return const AdminPermissionGuard(
               permission: 'dashboard.read',
               child: AdminDashboardPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/verifications',
+          name: 'admin-verifications',
+          builder: (context, state) {
+            return const AdminPermissionGuard(
+              permission: 'verification.read',
+              child: AdminVerificationsPage(),
             );
           },
         ),

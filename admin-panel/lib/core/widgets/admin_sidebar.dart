@@ -59,6 +59,12 @@ class AdminSidebar extends StatelessWidget {
                   compact: isCompact,
                   onTap: () {},
                 ),
+                _SidebarItem(
+                  icon: Icons.verified_user_outlined,
+                  label: 'درخواست‌های تأیید',
+                  compact: isCompact,
+                  onTap: () => context.go('/verifications'),
+                ),
                 const Spacer(),
                 _SidebarItem(
                   icon: Icons.settings_outlined,
