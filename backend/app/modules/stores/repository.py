@@ -57,6 +57,38 @@ class StoreRepository:
             .one_or_none()
         )
 
+    def list_stores(
+        self,
+        *,
+        status: str | None = None,
+        owner_user_id: int | None = None,
+        q: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[Store], int]:
+        query = self.db.query(Store).filter(Store.deleted_at.is_(None))
+
+        if status:
+            query = query.filter(Store.status == status)
+
+        if owner_user_id:
+            query = query.filter(Store.owner_user_id == owner_user_id)
+
+        if q:
+            pattern = f"%{q}%"
+            query = query.filter((Store.name.like(pattern)) | (Store.slug.like(pattern)))
+
+        total = query.count()
+
+        items = (
+            query.order_by(Store.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
     def get_user_by_id(self, *, user_id: int) -> AuthUser | None:
         return self.db.query(AuthUser).filter(AuthUser.id == user_id).one_or_none()
 
