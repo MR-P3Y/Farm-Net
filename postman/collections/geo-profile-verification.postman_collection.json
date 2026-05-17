@@ -1,0 +1,389 @@
+{
+  "info": {
+    "name": "Farm Net - Geo Profile Verification",
+    "_postman_id": "7b29a7c3-8b2c-4a11-9a11-geo-profile-verification",
+    "description": "Manual tests for Farm Net Phase 6: Geo, Profile, Documents, Verification, Admin Verification.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_access_token",
+      "value": ""
+    },
+    {
+      "key": "document_id",
+      "value": ""
+    },
+    {
+      "key": "verification_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Admin Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/login/email",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login", "email"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"change-me\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Geo - Provinces",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/geo/provinces",
+          "host": ["{{base_url}}"],
+          "path": ["geo", "provinces"]
+        }
+      }
+    },
+    {
+      "name": "Geo - Counties",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/geo/counties?province_id=1",
+          "host": ["{{base_url}}"],
+          "path": ["geo", "counties"],
+          "query": [
+            {
+              "key": "province_id",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Geo - Cities Search",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/geo/cities?q=تبریز",
+          "host": ["{{base_url}}"],
+          "path": ["geo", "cities"],
+          "query": [
+            {
+              "key": "q",
+              "value": "تبریز"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Geo - Villages Paginated",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/geo/villages?page=1&page_size=20",
+          "host": ["{{base_url}}"],
+          "path": ["geo", "villages"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Profile - Get Me",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/profile/me",
+          "host": ["{{base_url}}"],
+          "path": ["profile", "me"]
+        }
+      }
+    },
+    {
+      "name": "Profile - Update Me",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/profile/me",
+          "host": ["{{base_url}}"],
+          "path": ["profile", "me"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"first_name\": \"Peyman\",\n  \"last_name\": \"FarmNet\",\n  \"display_name\": \"Peyman FarmNet\",\n  \"national_id\": \"1234567890\",\n  \"birth_date\": \"1995-01-01\",\n  \"gender\": \"male\",\n  \"province_id\": 1,\n  \"county_id\": 307,\n  \"city_id\": 1,\n  \"address\": \"Test address\",\n  \"postal_code\": \"1234567890\",\n  \"bio\": \"Farm Net test profile\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Documents - Create",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/documents",
+          "host": ["{{base_url}}"],
+          "path": ["documents"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"document_type\": \"national_card\",\n  \"file_path\": \"storage/documents/users/1/national-card.jpg\",\n  \"file_name\": \"national-card.jpg\",\n  \"mime_type\": \"image/jpeg\",\n  \"size_bytes\": 345000\n}"
+        }
+      }
+    },
+    {
+      "name": "Documents - List Mine",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/documents/me",
+          "host": ["{{base_url}}"],
+          "path": ["documents", "me"]
+        }
+      }
+    },
+    {
+      "name": "Verifications - Create",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/verifications",
+          "host": ["{{base_url}}"],
+          "path": ["verifications"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"target_role\": \"consultant\",\n  \"request_note\": \"درخواست تأیید مشاور کشاورزی\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Verifications - Attach Document",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/verifications/{{verification_id}}/documents",
+          "host": ["{{base_url}}"],
+          "path": ["verifications", "{{verification_id}}", "documents"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"document_id\": {{document_id}}\n}"
+        }
+      }
+    },
+    {
+      "name": "Verifications - Submit",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/verifications/{{verification_id}}/submit",
+          "host": ["{{base_url}}"],
+          "path": ["verifications", "{{verification_id}}", "submit"]
+        }
+      }
+    },
+    {
+      "name": "Verifications - List Mine",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/verifications/me",
+          "host": ["{{base_url}}"],
+          "path": ["verifications", "me"]
+        }
+      }
+    },
+    {
+      "name": "Admin Verifications - List",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/admin/verifications?page=1&page_size=20",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "verifications"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Verifications - Update Status",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/verifications/{{verification_id}}/status",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "verifications", "{{verification_id}}", "status"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"under_review\",\n  \"note\": \"در حال بررسی\"\n}"
+        }
+      }
+    }
+  ]
+}
