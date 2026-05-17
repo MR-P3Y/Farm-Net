@@ -1,0 +1,562 @@
+{
+  "info": {
+    "name": "Farm Net - Store Foundation",
+    "_postman_id": "c75c06a0-7b70-4e70-8a6f-store-foundation",
+    "description": "Manual tests for Farm Net Phase 7 Store Foundation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_access_token",
+      "value": ""
+    },
+    {
+      "key": "store_id",
+      "value": ""
+    },
+    {
+      "key": "store_slug",
+      "value": ""
+    },
+    {
+      "key": "member_user_id",
+      "value": ""
+    },
+    {
+      "key": "member_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Admin Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/login/email",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "auth",
+            "login",
+            "email"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"change-me\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Stores - Create My Store",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/stores",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Farm Net Test Store\",\n  \"slug\": \"farmnet-test-store-001\",\n  \"description\": \"Test store for Phase 7\",\n  \"store_type\": \"mixed\",\n  \"phone\": \"989120000000\",\n  \"email\": \"store@example.com\",\n  \"province_id\": 1,\n  \"county_id\": 5,\n  \"city_id\": 10,\n  \"address\": \"Test address\",\n  \"postal_code\": \"1234567890\",\n  \"latitude\": 35.6892,\n  \"longitude\": 51.389\n}"
+        }
+      }
+    },
+    {
+      "name": "Stores - Get My Store",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/stores/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores",
+            "me"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stores - Get Own Store By ID",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/stores/{{store_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores",
+            "{{store_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stores - Update Own Store",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/stores/{{store_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores",
+            "{{store_id}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Farm Net Test Store Updated\",\n  \"description\": \"Updated description\",\n  \"address\": \"Updated address\",\n  \"postal_code\": \"1234567890\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Stores - Submit Own Store",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/stores/{{store_id}}/submit",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores",
+            "{{store_id}}",
+            "submit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stores - Status History",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/stores/{{store_id}}/status-history",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores",
+            "{{store_id}}",
+            "status-history"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Store Members - List",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/stores/{{store_id}}/members",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores",
+            "{{store_id}}",
+            "members"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Store Members - Add",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/stores/{{store_id}}/members",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores",
+            "{{store_id}}",
+            "members"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": {{member_user_id}},\n  \"role\": \"staff\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Store Members - Update",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/stores/{{store_id}}/members/{{member_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores",
+            "{{store_id}}",
+            "members",
+            "{{member_id}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"manager\",\n  \"status\": \"active\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Store Members - Remove",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/stores/{{store_id}}/members/{{member_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "stores",
+            "{{store_id}}",
+            "members",
+            "{{member_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Stores - List",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/admin/stores?page=1&page_size=20",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "admin",
+            "stores"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Stores - List Pending Review",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/admin/stores?status=pending_review",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "admin",
+            "stores"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "pending_review"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Stores - Detail",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/admin/stores/{{store_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "admin",
+            "stores",
+            "{{store_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Stores - Update Status",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/admin/stores/{{store_id}}/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "admin",
+            "stores",
+            "{{store_id}}",
+            "status"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"approved\",\n  \"note\": \"Approved from Postman\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Public Stores - List",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/public/stores",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "public",
+            "stores"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Public Stores - Filter By Type",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/public/stores?store_type=mixed",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "public",
+            "stores"
+          ],
+          "query": [
+            {
+              "key": "store_type",
+              "value": "mixed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Public Stores - Detail By Slug",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/public/stores/{{store_slug}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "public",
+            "stores",
+            "{{store_slug}}"
+          ]
+        }
+      }
+    }
+  ]
+}
