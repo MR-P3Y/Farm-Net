@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'admin_colors.dart';
+import 'admin_typography.dart';
 
 class AdminTheme {
   const AdminTheme._();
 
-  static ThemeData get light {
+  static ThemeData light(Locale locale) {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -15,11 +16,12 @@ class AdminTheme {
         error: AdminColors.error,
       ),
       scaffoldBackgroundColor: AdminColors.lightBackground,
-      fontFamily: 'Roboto',
+      fontFamily: AdminTypography.primaryFamily(locale),
+      fontFamilyFallback: AdminTypography.fallbackFamilies(locale),
     );
   }
 
-  static ThemeData get dark {
+  static ThemeData dark(Locale locale) {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -29,7 +31,8 @@ class AdminTheme {
         error: AdminColors.error,
       ),
       scaffoldBackgroundColor: AdminColors.darkBackground,
-      fontFamily: 'Roboto',
+      fontFamily: AdminTypography.primaryFamily(locale),
+      fontFamilyFallback: AdminTypography.fallbackFamilies(locale),
     );
   }
 }

@@ -23,8 +23,8 @@ class FarmNetAdminApp extends ConsumerWidget {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'Farm Net Admin',
-          theme: AdminTheme.light,
-          darkTheme: AdminTheme.dark,
+          theme: AdminTheme.light(locale),
+          darkTheme: AdminTheme.dark(locale),
           themeMode: ThemeMode.system,
           locale: locale,
           supportedLocales: AdminLocalizations.supportedLocales,

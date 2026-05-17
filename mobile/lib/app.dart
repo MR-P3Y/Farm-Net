@@ -23,8 +23,8 @@ class FarmNetApp extends ConsumerWidget {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'Farm Net',
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
+          theme: AppTheme.light(locale),
+          darkTheme: AppTheme.dark(locale),
           themeMode: ThemeMode.system,
           locale: locale,
           supportedLocales: AppLocalizations.supportedLocales,

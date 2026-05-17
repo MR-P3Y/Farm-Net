@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_typography.dart';
 
 class AppTheme {
   const AppTheme._();
 
-  static ThemeData get light {
+  static ThemeData light(Locale locale) {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -15,11 +16,12 @@ class AppTheme {
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.lightBackground,
-      fontFamily: 'Roboto',
+      fontFamily: AppTypography.primaryFamily(locale),
+      fontFamilyFallback: AppTypography.fallbackFamilies(locale),
     );
   }
 
-  static ThemeData get dark {
+  static ThemeData dark(Locale locale) {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -29,7 +31,8 @@ class AppTheme {
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.darkBackground,
-      fontFamily: 'Roboto',
+      fontFamily: AppTypography.primaryFamily(locale),
+      fontFamilyFallback: AppTypography.fallbackFamilies(locale),
     );
   }
 }
