@@ -58,6 +58,22 @@ class HomeScreen extends ConsumerWidget {
                       label: const Text('پروفایل من'),
                     ),
                     SizedBox(height: r.v(12)),
+                    FilledButton.icon(
+                      onPressed: () {
+                        context.push('/stores');
+                      },
+                      icon: const Icon(Icons.storefront_outlined),
+                      label: const Text('مشاهده فروشگاه‌ها'),
+                    ),
+                    SizedBox(height: r.v(12)),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        context.push('/my-store');
+                      },
+                      icon: const Icon(Icons.add_business_outlined),
+                      label: const Text('فروشگاه من'),
+                    ),
+                    SizedBox(height: r.v(12)),
                     OutlinedButton(
                       onPressed: () {
                         ref.read(authControllerProvider.notifier).logout();
