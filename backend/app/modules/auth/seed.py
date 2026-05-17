@@ -157,9 +157,6 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("products.unpublish", "Unpublish products", "products", "Unpublish own store products"),
     PermissionSeed("products.manage_images", "Manage product images", "products", "Manage product image metadata"),
     PermissionSeed("products.admin_read", "Admin read products", "products", "Admin can list and inspect products"),
-    PermissionSeed("products.read_detail", "Read product detail", "store", "View product details"),
-    PermissionSeed("products.approve", "Approve products", "store", "Approve products"),
-    PermissionSeed("products.reject", "Reject products", "store", "Reject products"),
     PermissionSeed("products.suspend", "Suspend products", "products", "Admin can suspend products for violations"),
     PermissionSeed("products.restore", "Restore products", "products", "Admin can restore suspended products"),
     PermissionSeed("products.public_read", "Public read products", "products", "Read public published products"),
@@ -241,6 +238,25 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("feature_flags.read", "Read feature flags", "settings", "View feature flags"),
     PermissionSeed("feature_flags.update", "Update feature flags", "settings", "Update feature flags"),
 ]
+
+RETIRED_PERMISSION_CODES = {
+    "products.read_detail",
+    "products.approve",
+    "products.reject",
+}
+
+RETIRED_ROLE_PERMISSION_CODES: dict[str, set[str]] = {
+    "support": {
+        "products.read",
+        "products.read_detail",
+    },
+    "admin": {
+        "products.read",
+        "products.read_detail",
+        "products.approve",
+        "products.reject",
+    },
+}
 
 
 def seed_roles(db: Session) -> dict[str, AuthRole]:
@@ -327,6 +343,60 @@ def assign_all_permissions_to_super_admin(
             )
 
 
+def retire_permissions(db: Session) -> None:
+    retired = (
+        db.query(AuthPermission)
+        .filter(AuthPermission.code.in_(RETIRED_PERMISSION_CODES))
+        .all()
+    )
+
+    if not retired:
+        return
+
+    retired_ids = [permission.id for permission in retired]
+
+    (
+        db.query(AuthRolePermission)
+        .filter(AuthRolePermission.permission_id.in_(retired_ids))
+        .delete(synchronize_session=False)
+    )
+
+    for permission in retired:
+        permission.is_active = False
+
+
+def remove_retired_role_permissions(
+    db: Session,
+    roles_by_code: dict[str, AuthRole],
+) -> None:
+    for role_code, permission_codes in RETIRED_ROLE_PERMISSION_CODES.items():
+        role = roles_by_code.get(role_code)
+
+        if role is None:
+            continue
+
+        permission_ids = [
+            row[0]
+            for row in (
+                db.query(AuthPermission.id)
+                .filter(AuthPermission.code.in_(permission_codes))
+                .all()
+            )
+        ]
+
+        if not permission_ids:
+            continue
+
+        (
+            db.query(AuthRolePermission)
+            .filter(
+                AuthRolePermission.role_id == role.id,
+                AuthRolePermission.permission_id.in_(permission_ids),
+            )
+            .delete(synchronize_session=False)
+        )
+
+
 def assign_default_permissions(
     db: Session,
     roles_by_code: dict[str, AuthRole],
@@ -344,8 +414,6 @@ def assign_default_permissions(
             "users.read_detail",
             "shops.read",
             "shops.read_detail",
-            "products.read",
-            "products.read_detail",
             "verification.read",
             "notifications.read",
         ],
@@ -419,8 +487,6 @@ def assign_default_permissions(
             "products.restore",
             "shops.read",
             "shops.read_detail",
-            "products.read",
-            "products.read_detail",
             "verification.read",
             "finance.invoices.read",
             "notifications.read",
@@ -529,6 +595,8 @@ def create_or_update_super_admin(
 def seed_auth(db: Session) -> dict[str, int | str]:
     roles_by_code = seed_roles(db)
     permissions_by_code = seed_permissions(db)
+    retire_permissions(db)
+    remove_retired_role_permissions(db, roles_by_code)
 
     super_admin_role = roles_by_code["super_admin"]
 
