@@ -143,3 +143,41 @@ class StoreStatusHistoryOut(BaseModel):
     to_status: str
     note: str | None = None
     created_at: str
+
+
+class StoreMemberCreateIn(BaseModel):
+    user_id: int = Field(ge=1)
+    role: str = Field(default="staff", min_length=3, max_length=50)
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def normalize_role(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class StoreMemberUpdateIn(BaseModel):
+    role: str | None = Field(default=None, min_length=3, max_length=50)
+    status: str | None = Field(default=None, min_length=3, max_length=50)
+
+    @field_validator("role", "status", mode="before")
+    @classmethod
+    def normalize_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class StoreMemberOut(BaseModel):
+    id: int
+    store_id: int
+    user_id: int
+    role: str
+    status: str
+    invited_by: int | None = None
+    joined_at: str | None = None
+    created_at: str
+    updated_at: str

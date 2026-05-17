@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.modules.auth.models import AuthUser
 from app.modules.geo.models import (
     GeoCity,
     GeoCounty,
@@ -52,6 +53,47 @@ class StoreRepository:
             .filter(
                 Store.slug == slug,
                 Store.deleted_at.is_(None),
+            )
+            .one_or_none()
+        )
+
+    def get_user_by_id(self, *, user_id: int) -> AuthUser | None:
+        return self.db.query(AuthUser).filter(AuthUser.id == user_id).one_or_none()
+
+    def list_store_members(self, *, store_id: int) -> list[StoreMember]:
+        return (
+            self.db.query(StoreMember)
+            .filter(StoreMember.store_id == store_id)
+            .order_by(StoreMember.created_at.asc())
+            .all()
+        )
+
+    def get_store_member_by_id(
+        self,
+        *,
+        store_id: int,
+        member_id: int,
+    ) -> StoreMember | None:
+        return (
+            self.db.query(StoreMember)
+            .filter(
+                StoreMember.store_id == store_id,
+                StoreMember.id == member_id,
+            )
+            .one_or_none()
+        )
+
+    def get_store_member_by_user_id(
+        self,
+        *,
+        store_id: int,
+        user_id: int,
+    ) -> StoreMember | None:
+        return (
+            self.db.query(StoreMember)
+            .filter(
+                StoreMember.store_id == store_id,
+                StoreMember.user_id == user_id,
             )
             .one_or_none()
         )

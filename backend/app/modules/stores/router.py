@@ -5,7 +5,12 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
-from app.modules.stores.schemas import StoreCreateIn, StoreUpdateIn
+from app.modules.stores.schemas import (
+    StoreCreateIn,
+    StoreMemberCreateIn,
+    StoreMemberUpdateIn,
+    StoreUpdateIn,
+)
 from app.modules.stores.service import StoreService
 
 
@@ -138,4 +143,99 @@ def list_store_status_history(
             "count": len(result),
             "trace_id": request.state.trace_id,
         },
+    )
+
+
+@router.get("/{store_id}/members")
+def list_store_members(
+    store_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("stores.manage_members")),
+):
+    service = StoreService(db)
+
+    result = service.list_store_members(
+        user=current_user,
+        store_id=store_id,
+    )
+
+    return success_response(
+        data=[item.model_dump(mode="json") for item in result],
+        message="OK",
+        meta={
+            "count": len(result),
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.post("/{store_id}/members")
+def add_store_member(
+    store_id: int,
+    payload: StoreMemberCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("stores.manage_members")),
+):
+    service = StoreService(db)
+
+    result = service.add_store_member(
+        user=current_user,
+        store_id=store_id,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Store member added",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.patch("/{store_id}/members/{member_id}")
+def update_store_member(
+    store_id: int,
+    member_id: int,
+    payload: StoreMemberUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("stores.manage_members")),
+):
+    service = StoreService(db)
+
+    result = service.update_store_member(
+        user=current_user,
+        store_id=store_id,
+        member_id=member_id,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Store member updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.delete("/{store_id}/members/{member_id}")
+def remove_store_member(
+    store_id: int,
+    member_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("stores.manage_members")),
+):
+    service = StoreService(db)
+
+    result = service.remove_store_member(
+        user=current_user,
+        store_id=store_id,
+        member_id=member_id,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Store member removed",
+        meta={"trace_id": request.state.trace_id},
     )

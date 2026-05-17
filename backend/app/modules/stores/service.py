@@ -13,10 +13,13 @@ from app.modules.stores.enums import (
     StoreStatus,
     StoreType,
 )
-from app.modules.stores.models import Store, StoreStatusHistory
+from app.modules.stores.models import Store, StoreMember, StoreStatusHistory
 from app.modules.stores.repository import StoreRepository
 from app.modules.stores.schemas import (
     StoreCreateIn,
+    StoreMemberCreateIn,
+    StoreMemberOut,
+    StoreMemberUpdateIn,
     StoreOut,
     StoreStatusHistoryOut,
     StoreUpdateIn,
@@ -124,17 +127,7 @@ class StoreService:
         user: AuthUser,
         store_id: int,
     ) -> StoreOut:
-        store = self.repo.get_user_store_by_id(
-            user_id=user.id,
-            store_id=store_id,
-        )
-
-        if store is None:
-            raise ValidationAuthError(
-                message="Store not found",
-                details={"store_id": store_id},
-            )
-
+        store = self._get_owned_store(user=user, store_id=store_id)
         return self._store_out(store)
 
     def update_my_store(
@@ -144,16 +137,7 @@ class StoreService:
         store_id: int,
         payload: StoreUpdateIn,
     ) -> StoreOut:
-        store = self.repo.get_user_store_by_id(
-            user_id=user.id,
-            store_id=store_id,
-        )
-
-        if store is None:
-            raise ValidationAuthError(
-                message="Store not found",
-                details={"store_id": store_id},
-            )
+        store = self._get_owned_store(user=user, store_id=store_id)
 
         if store.status not in {
             StoreStatus.DRAFT.value,
@@ -264,16 +248,7 @@ class StoreService:
         user: AuthUser,
         store_id: int,
     ) -> StoreOut:
-        store = self.repo.get_user_store_by_id(
-            user_id=user.id,
-            store_id=store_id,
-        )
-
-        if store is None:
-            raise ValidationAuthError(
-                message="Store not found",
-                details={"store_id": store_id},
-            )
+        store = self._get_owned_store(user=user, store_id=store_id)
 
         if store.status not in {
             StoreStatus.DRAFT.value,
@@ -332,6 +307,154 @@ class StoreService:
         user: AuthUser,
         store_id: int,
     ) -> list[StoreStatusHistoryOut]:
+        store = self._get_owned_store(user=user, store_id=store_id)
+        rows = self.repo.list_status_history(store_id=store.id)
+        return [self._history_out(item) for item in rows]
+
+    def list_store_members(
+        self,
+        *,
+        user: AuthUser,
+        store_id: int,
+    ) -> list[StoreMemberOut]:
+        store = self._get_owned_store(user=user, store_id=store_id)
+        members = self.repo.list_store_members(store_id=store.id)
+        return [self._member_out(item) for item in members]
+
+    def add_store_member(
+        self,
+        *,
+        user: AuthUser,
+        store_id: int,
+        payload: StoreMemberCreateIn,
+    ) -> StoreMemberOut:
+        store = self._get_owned_store(user=user, store_id=store_id)
+        self._ensure_store_owner(user=user, store=store)
+
+        role = self._validate_new_member_role(payload.role)
+
+        target_user = self.repo.get_user_by_id(user_id=payload.user_id)
+        if target_user is None:
+            raise ValidationAuthError(
+                message="User not found",
+                details={"user_id": payload.user_id},
+            )
+
+        if payload.user_id == store.owner_user_id:
+            raise ValidationAuthError(
+                message="Store owner is already a member",
+                details={"user_id": payload.user_id},
+            )
+
+        existing = self.repo.get_store_member_by_user_id(
+            store_id=store.id,
+            user_id=payload.user_id,
+        )
+
+        if existing is not None:
+            if existing.status == StoreMemberStatus.REMOVED.value:
+                existing.role = role
+                existing.status = StoreMemberStatus.ACTIVE.value
+                existing.invited_by = user.id
+                existing.joined_at = datetime.utcnow()
+                self.repo.commit()
+                self.repo.refresh(existing)
+                return self._member_out(existing)
+
+            raise ValidationAuthError(
+                message="User is already a store member",
+                details={
+                    "user_id": payload.user_id,
+                    "member_id": existing.id,
+                    "status": existing.status,
+                },
+            )
+
+        member = self.repo.create_store_member(
+            store_id=store.id,
+            user_id=payload.user_id,
+            role=role,
+            status=StoreMemberStatus.ACTIVE.value,
+            invited_by=user.id,
+            joined_at=datetime.utcnow(),
+        )
+
+        self.repo.commit()
+        self.repo.refresh(member)
+
+        return self._member_out(member)
+
+    def update_store_member(
+        self,
+        *,
+        user: AuthUser,
+        store_id: int,
+        member_id: int,
+        payload: StoreMemberUpdateIn,
+    ) -> StoreMemberOut:
+        store = self._get_owned_store(user=user, store_id=store_id)
+        self._ensure_store_owner(user=user, store=store)
+
+        member = self.repo.get_store_member_by_id(
+            store_id=store.id,
+            member_id=member_id,
+        )
+
+        if member is None:
+            raise ValidationAuthError(
+                message="Store member not found",
+                details={"member_id": member_id},
+            )
+
+        self._ensure_not_owner_member(member)
+
+        if payload.role is not None:
+            member.role = self._validate_new_member_role(payload.role)
+
+        if payload.status is not None:
+            member.status = self._validate_member_status(payload.status)
+
+        self.repo.commit()
+        self.repo.refresh(member)
+
+        return self._member_out(member)
+
+    def remove_store_member(
+        self,
+        *,
+        user: AuthUser,
+        store_id: int,
+        member_id: int,
+    ) -> StoreMemberOut:
+        store = self._get_owned_store(user=user, store_id=store_id)
+        self._ensure_store_owner(user=user, store=store)
+
+        member = self.repo.get_store_member_by_id(
+            store_id=store.id,
+            member_id=member_id,
+        )
+
+        if member is None:
+            raise ValidationAuthError(
+                message="Store member not found",
+                details={"member_id": member_id},
+            )
+
+        self._ensure_not_owner_member(member)
+
+        member.status = StoreMemberStatus.REMOVED.value
+
+        self.repo.commit()
+        self.repo.refresh(member)
+
+        return self._member_out(member)
+
+    def _get_owned_store(
+        self,
+        *,
+        user: AuthUser,
+        store_id: int,
+    ) -> Store:
         store = self.repo.get_user_store_by_id(
             user_id=user.id,
             store_id=store_id,
@@ -343,8 +466,56 @@ class StoreService:
                 details={"store_id": store_id},
             )
 
-        rows = self.repo.list_status_history(store_id=store.id)
-        return [self._history_out(item) for item in rows]
+        return store
+
+    def _ensure_store_owner(
+        self,
+        *,
+        user: AuthUser,
+        store: Store,
+    ) -> None:
+        if store.owner_user_id != user.id:
+            raise ValidationAuthError(
+                message="Only store owner can manage members",
+                details={"store_id": store.id},
+            )
+
+    def _validate_new_member_role(self, role: str) -> str:
+        allowed = {
+            StoreMemberRole.MANAGER.value,
+            StoreMemberRole.STAFF.value,
+            StoreMemberRole.VIEWER.value,
+        }
+
+        if role not in allowed:
+            raise ValidationAuthError(
+                message="Invalid store member role",
+                details={"allowed": sorted(allowed)},
+            )
+
+        return role
+
+    def _validate_member_status(self, status: str) -> str:
+        allowed = {
+            StoreMemberStatus.ACTIVE.value,
+            StoreMemberStatus.SUSPENDED.value,
+            StoreMemberStatus.REMOVED.value,
+        }
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid store member status",
+                details={"allowed": sorted(allowed)},
+            )
+
+        return status
+
+    def _ensure_not_owner_member(self, member: StoreMember) -> None:
+        if member.role == StoreMemberRole.OWNER.value:
+            raise ValidationAuthError(
+                message="Store owner member cannot be modified",
+                details={"member_id": member.id},
+            )
 
     def _validate_payload_common(
         self,
@@ -550,4 +721,17 @@ class StoreService:
             to_status=row.to_status,
             note=row.note,
             created_at=row.created_at.isoformat(),
+        )
+
+    def _member_out(self, member: StoreMember) -> StoreMemberOut:
+        return StoreMemberOut(
+            id=member.id,
+            store_id=member.store_id,
+            user_id=member.user_id,
+            role=member.role,
+            status=member.status,
+            invited_by=member.invited_by,
+            joined_at=member.joined_at.isoformat() if member.joined_at else None,
+            created_at=member.created_at.isoformat(),
+            updated_at=member.updated_at.isoformat(),
         )
