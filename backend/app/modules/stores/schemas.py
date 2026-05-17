@@ -181,3 +181,35 @@ class StoreMemberOut(BaseModel):
     joined_at: str | None = None
     created_at: str
     updated_at: str
+
+
+class PublicStoreOut(BaseModel):
+    id: int
+    owner_user_id: int
+
+    name: str
+    slug: str
+    description: str | None = None
+
+    store_type: str
+
+    phone: str | None = None
+    email: str | None = None
+
+    province_id: int | None = None
+    county_id: int | None = None
+    district_id: int | None = None
+    city_id: int | None = None
+    village_id: int | None = None
+
+    address: str | None = None
+    postal_code: str | None = None
+
+    latitude: str | None = None
+    longitude: str | None = None
+
+    logo_file_id: str | None = None
+    banner_file_id: str | None = None
+
+    created_at: str
+    updated_at: str

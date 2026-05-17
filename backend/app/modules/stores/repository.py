@@ -89,6 +89,64 @@ class StoreRepository:
 
         return items, total
 
+    def list_public_stores(
+        self,
+        *,
+        q: str | None = None,
+        province_id: int | None = None,
+        county_id: int | None = None,
+        city_id: int | None = None,
+        store_type: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[Store], int]:
+        query = self.db.query(Store).filter(
+            Store.status == "approved",
+            Store.deleted_at.is_(None),
+        )
+
+        if q:
+            pattern = f"%{q}%"
+            query = query.filter(
+                (Store.name.like(pattern))
+                | (Store.slug.like(pattern))
+                | (Store.description.like(pattern))
+            )
+
+        if province_id:
+            query = query.filter(Store.province_id == province_id)
+
+        if county_id:
+            query = query.filter(Store.county_id == county_id)
+
+        if city_id:
+            query = query.filter(Store.city_id == city_id)
+
+        if store_type:
+            query = query.filter(Store.store_type == store_type)
+
+        total = query.count()
+
+        items = (
+            query.order_by(Store.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
+    def get_public_store_by_slug(self, *, slug: str) -> Store | None:
+        return (
+            self.db.query(Store)
+            .filter(
+                Store.slug == slug,
+                Store.status == "approved",
+                Store.deleted_at.is_(None),
+            )
+            .one_or_none()
+        )
+
     def get_user_by_id(self, *, user_id: int) -> AuthUser | None:
         return self.db.query(AuthUser).filter(AuthUser.id == user_id).one_or_none()
 
