@@ -47,7 +47,8 @@ class AdminAuthController {
         password: password,
       );
 
-      _state.setAuthenticated(result.user);
+      final currentUser = await _repository.loadCurrentUser();
+      _state.setAuthenticated(currentUser ?? result.user);
       return true;
     } on AdminAuthApiException catch (error) {
       _state.setError(error.error.message);

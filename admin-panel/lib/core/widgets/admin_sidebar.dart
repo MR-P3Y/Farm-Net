@@ -45,7 +45,7 @@ class AdminSidebar extends StatelessWidget {
                   icon: Icons.storefront_outlined,
                   label: l10n.shops,
                   compact: isCompact,
-                  onTap: () {},
+                  onTap: () => context.go('/stores'),
                 ),
                 _SidebarItem(
                   icon: Icons.inventory_2_outlined,
