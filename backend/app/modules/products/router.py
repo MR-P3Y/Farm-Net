@@ -7,7 +7,12 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
-from app.modules.products.schemas import ProductCreateIn, ProductUpdateIn
+from app.modules.products.schemas import (
+    ProductCreateIn,
+    ProductImageCreateIn,
+    ProductImageUpdateIn,
+    ProductUpdateIn,
+)
 from app.modules.products.service import ProductService
 
 
@@ -217,4 +222,107 @@ def list_product_status_history(
             "count": len(result),
             "trace_id": request.state.trace_id,
         },
+    )
+
+
+@router.post("/{product_id}/images")
+def create_product_image(
+    store_id: int,
+    product_id: int,
+    payload: ProductImageCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("products.manage_images")),
+):
+    service = ProductService(db)
+
+    result = service.create_product_image(
+        user=current_user,
+        store_id=store_id,
+        product_id=product_id,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Product image created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/{product_id}/images")
+def list_product_images(
+    store_id: int,
+    product_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("products.read")),
+):
+    service = ProductService(db)
+
+    result = service.list_product_images(
+        user=current_user,
+        store_id=store_id,
+        product_id=product_id,
+    )
+
+    return success_response(
+        data=[item.model_dump(mode="json") for item in result],
+        message="OK",
+        meta={
+            "count": len(result),
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.patch("/{product_id}/images/{image_id}")
+def update_product_image(
+    store_id: int,
+    product_id: int,
+    image_id: int,
+    payload: ProductImageUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("products.manage_images")),
+):
+    service = ProductService(db)
+
+    result = service.update_product_image(
+        user=current_user,
+        store_id=store_id,
+        product_id=product_id,
+        image_id=image_id,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Product image updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.delete("/{product_id}/images/{image_id}")
+def delete_product_image(
+    store_id: int,
+    product_id: int,
+    image_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("products.manage_images")),
+):
+    service = ProductService(db)
+
+    result = service.delete_product_image(
+        user=current_user,
+        store_id=store_id,
+        product_id=product_id,
+        image_id=image_id,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Product image deleted",
+        meta={"trace_id": request.state.trace_id},
     )

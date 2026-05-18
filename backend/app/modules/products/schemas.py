@@ -132,3 +132,52 @@ class ProductStatusHistoryOut(BaseModel):
     to_status: str
     note: str | None = None
     created_at: str
+
+
+class ProductImageCreateIn(BaseModel):
+    file_id: str | None = Field(default=None, max_length=255)
+    file_path: str = Field(min_length=3, max_length=1000)
+    alt_text: str | None = Field(default=None, max_length=255)
+
+    sort_order: int = Field(default=0, ge=0)
+    is_primary: bool = False
+
+    @field_validator("file_id", "file_path", "alt_text", mode="before")
+    @classmethod
+    def normalize_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class ProductImageUpdateIn(BaseModel):
+    file_id: str | None = Field(default=None, max_length=255)
+    file_path: str | None = Field(default=None, min_length=3, max_length=1000)
+    alt_text: str | None = Field(default=None, max_length=255)
+
+    sort_order: int | None = Field(default=None, ge=0)
+    is_primary: bool | None = None
+
+    @field_validator("file_id", "file_path", "alt_text", mode="before")
+    @classmethod
+    def normalize_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class ProductImageOut(BaseModel):
+    id: int
+    product_id: int
+
+    file_id: str | None = None
+    file_path: str
+    alt_text: str | None = None
+
+    sort_order: int
+    is_primary: bool
+
+    created_at: str
+    updated_at: str

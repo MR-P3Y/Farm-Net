@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.products.models import (
     ProductCategory,
+    ProductImage,
     ProductStatusHistory,
     StoreProduct,
 )
@@ -201,6 +202,75 @@ class ProductRepository:
             .order_by(ProductStatusHistory.created_at.asc())
             .all()
         )
+
+    def create_product_image(
+        self,
+        *,
+        product_id: int,
+        file_id: str | None,
+        file_path: str,
+        alt_text: str | None,
+        sort_order: int,
+        is_primary: bool,
+    ) -> ProductImage:
+        image = ProductImage(
+            product_id=product_id,
+            file_id=file_id,
+            file_path=file_path,
+            alt_text=alt_text,
+            sort_order=sort_order,
+            is_primary=is_primary,
+        )
+        self.db.add(image)
+        self.db.flush()
+        return image
+
+    def list_product_images(self, *, product_id: int) -> list[ProductImage]:
+        return (
+            self.db.query(ProductImage)
+            .filter(ProductImage.product_id == product_id)
+            .order_by(ProductImage.sort_order.asc(), ProductImage.id.asc())
+            .all()
+        )
+
+    def get_product_image_by_id(
+        self,
+        *,
+        product_id: int,
+        image_id: int,
+    ) -> ProductImage | None:
+        return (
+            self.db.query(ProductImage)
+            .filter(
+                ProductImage.product_id == product_id,
+                ProductImage.id == image_id,
+            )
+            .one_or_none()
+        )
+
+    def clear_primary_product_images(
+        self,
+        *,
+        product_id: int,
+        except_image_id: int | None = None,
+    ) -> None:
+        query = self.db.query(ProductImage).filter(
+            ProductImage.product_id == product_id,
+            ProductImage.is_primary.is_(True),
+        )
+
+        if except_image_id is not None:
+            query = query.filter(ProductImage.id != except_image_id)
+
+        query.update(
+            {ProductImage.is_primary: False},
+            synchronize_session=False,
+        )
+        self.db.flush()
+
+    def delete_product_image(self, *, image: ProductImage) -> None:
+        self.db.delete(image)
+        self.db.flush()
 
     def commit(self) -> None:
         self.db.commit()

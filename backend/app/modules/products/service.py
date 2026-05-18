@@ -8,10 +8,13 @@ from sqlalchemy.orm import Session
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.products.enums import ProductStatus, ProductUnit
-from app.modules.products.models import ProductStatusHistory, StoreProduct
+from app.modules.products.models import ProductImage, ProductStatusHistory, StoreProduct
 from app.modules.products.repository import ProductRepository
 from app.modules.products.schemas import (
     ProductCreateIn,
+    ProductImageCreateIn,
+    ProductImageOut,
+    ProductImageUpdateIn,
     ProductOut,
     ProductStatusHistoryOut,
     ProductUpdateIn,
@@ -366,6 +369,148 @@ class ProductService:
         rows = self.repo.list_status_history(product_id=product.id)
         return [self._history_out(row) for row in rows]
 
+    def create_product_image(
+        self,
+        *,
+        user: AuthUser,
+        store_id: int,
+        product_id: int,
+        payload: ProductImageCreateIn,
+    ) -> ProductImageOut:
+        store = self._get_owned_approved_store(user=user, store_id=store_id)
+        product = self._get_store_product(store_id=store.id, product_id=product_id)
+        self._ensure_product_images_editable(product)
+
+        self._validate_image_payload(
+            file_path=payload.file_path,
+            sort_order=payload.sort_order,
+        )
+
+        image = self.repo.create_product_image(
+            product_id=product.id,
+            file_id=payload.file_id,
+            file_path=payload.file_path,
+            alt_text=payload.alt_text,
+            sort_order=payload.sort_order,
+            is_primary=payload.is_primary,
+        )
+
+        if image.is_primary:
+            self.repo.clear_primary_product_images(
+                product_id=product.id,
+                except_image_id=image.id,
+            )
+
+        self.repo.commit()
+        self.repo.refresh(image)
+
+        return self._image_out(image)
+
+    def list_product_images(
+        self,
+        *,
+        user: AuthUser,
+        store_id: int,
+        product_id: int,
+    ) -> list[ProductImageOut]:
+        store = self._get_owned_store(user=user, store_id=store_id)
+        product = self._get_store_product(store_id=store.id, product_id=product_id)
+
+        images = self.repo.list_product_images(product_id=product.id)
+        return [self._image_out(image) for image in images]
+
+    def update_product_image(
+        self,
+        *,
+        user: AuthUser,
+        store_id: int,
+        product_id: int,
+        image_id: int,
+        payload: ProductImageUpdateIn,
+    ) -> ProductImageOut:
+        store = self._get_owned_approved_store(user=user, store_id=store_id)
+        product = self._get_store_product(store_id=store.id, product_id=product_id)
+        self._ensure_product_images_editable(product)
+
+        image = self.repo.get_product_image_by_id(
+            product_id=product.id,
+            image_id=image_id,
+        )
+
+        if image is None:
+            raise ValidationAuthError(
+                message="Product image not found",
+                details={"image_id": image_id},
+            )
+
+        next_file_path = (
+            payload.file_path if payload.file_path is not None else image.file_path
+        )
+        next_sort_order = (
+            payload.sort_order if payload.sort_order is not None else image.sort_order
+        )
+
+        self._validate_image_payload(
+            file_path=next_file_path,
+            sort_order=next_sort_order,
+        )
+
+        if payload.file_id is not None:
+            image.file_id = payload.file_id
+
+        if payload.file_path is not None:
+            image.file_path = payload.file_path
+
+        if payload.alt_text is not None:
+            image.alt_text = payload.alt_text
+
+        if payload.sort_order is not None:
+            image.sort_order = payload.sort_order
+
+        if payload.is_primary is not None:
+            image.is_primary = payload.is_primary
+
+        if image.is_primary:
+            self.repo.clear_primary_product_images(
+                product_id=product.id,
+                except_image_id=image.id,
+            )
+
+        self.repo.commit()
+        self.repo.refresh(image)
+
+        return self._image_out(image)
+
+    def delete_product_image(
+        self,
+        *,
+        user: AuthUser,
+        store_id: int,
+        product_id: int,
+        image_id: int,
+    ) -> ProductImageOut:
+        store = self._get_owned_approved_store(user=user, store_id=store_id)
+        product = self._get_store_product(store_id=store.id, product_id=product_id)
+        self._ensure_product_images_editable(product)
+
+        image = self.repo.get_product_image_by_id(
+            product_id=product.id,
+            image_id=image_id,
+        )
+
+        if image is None:
+            raise ValidationAuthError(
+                message="Product image not found",
+                details={"image_id": image_id},
+            )
+
+        result = self._image_out(image)
+
+        self.repo.delete_product_image(image=image)
+        self.repo.commit()
+
+        return result
+
     def _get_owned_store(self, *, user: AuthUser, store_id: int):
         store = self.repo.get_store_by_id(store_id=store_id)
 
@@ -538,6 +683,37 @@ class ProductService:
                 details={"missing": missing},
             )
 
+    def _ensure_product_images_editable(self, product: StoreProduct) -> None:
+        if product.deleted_at is not None or product.status == ProductStatus.ARCHIVED.value:
+            raise ValidationAuthError(
+                message="Archived product images cannot be modified",
+                details={"product_id": product.id},
+            )
+
+        if product.status == ProductStatus.SUSPENDED.value:
+            raise ValidationAuthError(
+                message="Suspended product images cannot be modified by seller",
+                details={"product_id": product.id},
+            )
+
+    def _validate_image_payload(
+        self,
+        *,
+        file_path: str,
+        sort_order: int,
+    ) -> None:
+        if not file_path or len(file_path.strip()) < 3:
+            raise ValidationAuthError(
+                message="Invalid product image file_path",
+                details={"field": "file_path"},
+            )
+
+        if sort_order < 0:
+            raise ValidationAuthError(
+                message="Invalid product image sort_order",
+                details={"field": "sort_order"},
+            )
+
     def _product_out(self, product: StoreProduct) -> ProductOut:
         return ProductOut(
             id=product.id,
@@ -576,4 +752,17 @@ class ProductService:
             to_status=row.to_status,
             note=row.note,
             created_at=row.created_at.isoformat(),
+        )
+
+    def _image_out(self, image: ProductImage) -> ProductImageOut:
+        return ProductImageOut(
+            id=image.id,
+            product_id=image.product_id,
+            file_id=image.file_id,
+            file_path=image.file_path,
+            alt_text=image.alt_text,
+            sort_order=image.sort_order,
+            is_primary=image.is_primary,
+            created_at=image.created_at.isoformat(),
+            updated_at=image.updated_at.isoformat(),
         )
