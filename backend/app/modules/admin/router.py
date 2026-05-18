@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.modules.admin.products_router import router as products_router
 from app.modules.admin.roles_router import router as roles_router
 from app.modules.admin.stores_router import router as stores_router
 from app.modules.admin.users_router import router as users_router
@@ -14,3 +15,4 @@ router.include_router(users_router)
 router.include_router(roles_router)
 router.include_router(verifications_router)
 router.include_router(stores_router)
+router.include_router(products_router)

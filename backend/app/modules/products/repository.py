@@ -131,6 +131,58 @@ class ProductRepository:
 
         return items, total
 
+    def list_products_for_admin(
+        self,
+        *,
+        status: str | None = None,
+        store_id: int | None = None,
+        category_id: int | None = None,
+        q: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[StoreProduct], int]:
+        query = self.db.query(StoreProduct).filter(
+            StoreProduct.deleted_at.is_(None),
+        )
+
+        if status:
+            query = query.filter(StoreProduct.status == status)
+
+        if store_id:
+            query = query.filter(StoreProduct.store_id == store_id)
+
+        if category_id:
+            query = query.filter(StoreProduct.category_id == category_id)
+
+        if q:
+            pattern = f"%{q}%"
+            query = query.filter(
+                (StoreProduct.name.like(pattern))
+                | (StoreProduct.slug.like(pattern))
+                | (StoreProduct.sku.like(pattern))
+            )
+
+        total = query.count()
+
+        items = (
+            query.order_by(StoreProduct.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
+    def get_product_for_admin(self, *, product_id: int) -> StoreProduct | None:
+        return (
+            self.db.query(StoreProduct)
+            .filter(
+                StoreProduct.id == product_id,
+                StoreProduct.deleted_at.is_(None),
+            )
+            .one_or_none()
+        )
+
     def create_product(
         self,
         *,

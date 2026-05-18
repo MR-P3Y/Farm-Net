@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
@@ -154,5 +155,78 @@ class AdminStoreOut(BaseModel):
 
 
 class AdminUpdateStoreStatusIn(BaseModel):
+    status: str = Field(min_length=3, max_length=50)
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class AdminProductImageOut(BaseModel):
+    id: int
+    product_id: int
+    file_id: str | None = None
+    file_path: str
+    alt_text: str | None = None
+    sort_order: int
+    is_primary: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminProductStatusHistoryOut(BaseModel):
+    id: int
+    product_id: int
+    changed_by: int | None = None
+    from_status: str | None = None
+    to_status: str
+    note: str | None = None
+    created_at: datetime
+
+
+class AdminProductOut(BaseModel):
+    id: int
+    store_id: int
+    store_name: str | None = None
+    store_slug: str | None = None
+    owner_user_id: int | None = None
+    owner_email: str | None = None
+    owner_phone: str | None = None
+
+    category_id: int | None = None
+    category_name: str | None = None
+    category_slug: str | None = None
+
+    name: str
+    slug: str
+    short_description: str | None = None
+    description: str | None = None
+    sku: str | None = None
+
+    status: str
+
+    price: Decimal
+    compare_at_price: Decimal | None = None
+    currency: str
+
+    stock_quantity: int
+    unit: str
+
+    min_order_quantity: int
+    max_order_quantity: int | None = None
+
+    is_active: bool
+    is_featured: bool
+
+    admin_note: str | None = None
+    suspended_at: datetime | None = None
+    suspended_by: int | None = None
+
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: datetime | None = None
+
+    images: list[AdminProductImageOut] = Field(default_factory=list)
+    status_history: list[AdminProductStatusHistoryOut] = Field(default_factory=list)
+
+
+class AdminUpdateProductStatusIn(BaseModel):
     status: str = Field(min_length=3, max_length=50)
     note: str | None = Field(default=None, max_length=2000)
