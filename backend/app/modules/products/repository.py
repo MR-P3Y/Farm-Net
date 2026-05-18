@@ -183,6 +183,156 @@ class ProductRepository:
             .one_or_none()
         )
 
+    def list_public_products(
+        self,
+        *,
+        q: str | None = None,
+        store_id: int | None = None,
+        category_id: int | None = None,
+        province_id: int | None = None,
+        county_id: int | None = None,
+        city_id: int | None = None,
+        store_type: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[StoreProduct], int]:
+        query = (
+            self.db.query(StoreProduct)
+            .join(Store, Store.id == StoreProduct.store_id)
+            .filter(
+                StoreProduct.status == "published",
+                StoreProduct.deleted_at.is_(None),
+                StoreProduct.is_active.is_(True),
+                Store.status == "approved",
+                Store.deleted_at.is_(None),
+            )
+        )
+
+        if q:
+            pattern = f"%{q}%"
+            query = query.filter(
+                (StoreProduct.name.like(pattern))
+                | (StoreProduct.slug.like(pattern))
+                | (StoreProduct.short_description.like(pattern))
+                | (StoreProduct.description.like(pattern))
+            )
+
+        if store_id:
+            query = query.filter(StoreProduct.store_id == store_id)
+
+        if category_id:
+            query = query.filter(StoreProduct.category_id == category_id)
+
+        if province_id:
+            query = query.filter(Store.province_id == province_id)
+
+        if county_id:
+            query = query.filter(Store.county_id == county_id)
+
+        if city_id:
+            query = query.filter(Store.city_id == city_id)
+
+        if store_type:
+            query = query.filter(Store.store_type == store_type)
+
+        total = query.count()
+
+        items = (
+            query.order_by(
+                StoreProduct.is_featured.desc(),
+                StoreProduct.created_at.desc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
+    def get_public_product_by_id(self, *, product_id: int) -> StoreProduct | None:
+        return (
+            self.db.query(StoreProduct)
+            .join(Store, Store.id == StoreProduct.store_id)
+            .filter(
+                StoreProduct.id == product_id,
+                StoreProduct.status == "published",
+                StoreProduct.deleted_at.is_(None),
+                StoreProduct.is_active.is_(True),
+                Store.status == "approved",
+                Store.deleted_at.is_(None),
+            )
+            .one_or_none()
+        )
+
+    def list_public_products_by_store_slug(
+        self,
+        *,
+        store_slug: str,
+        q: str | None = None,
+        category_id: int | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[StoreProduct], int]:
+        query = (
+            self.db.query(StoreProduct)
+            .join(Store, Store.id == StoreProduct.store_id)
+            .filter(
+                Store.slug == store_slug,
+                Store.status == "approved",
+                Store.deleted_at.is_(None),
+                StoreProduct.status == "published",
+                StoreProduct.deleted_at.is_(None),
+                StoreProduct.is_active.is_(True),
+            )
+        )
+
+        if q:
+            pattern = f"%{q}%"
+            query = query.filter(
+                (StoreProduct.name.like(pattern))
+                | (StoreProduct.slug.like(pattern))
+                | (StoreProduct.short_description.like(pattern))
+                | (StoreProduct.description.like(pattern))
+            )
+
+        if category_id:
+            query = query.filter(StoreProduct.category_id == category_id)
+
+        total = query.count()
+
+        items = (
+            query.order_by(
+                StoreProduct.is_featured.desc(),
+                StoreProduct.created_at.desc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
+    def get_public_product_by_store_and_slug(
+        self,
+        *,
+        store_slug: str,
+        product_slug: str,
+    ) -> StoreProduct | None:
+        return (
+            self.db.query(StoreProduct)
+            .join(Store, Store.id == StoreProduct.store_id)
+            .filter(
+                Store.slug == store_slug,
+                Store.status == "approved",
+                Store.deleted_at.is_(None),
+                StoreProduct.slug == product_slug,
+                StoreProduct.status == "published",
+                StoreProduct.deleted_at.is_(None),
+                StoreProduct.is_active.is_(True),
+            )
+            .one_or_none()
+        )
+
     def create_product(
         self,
         *,

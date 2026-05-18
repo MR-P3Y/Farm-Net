@@ -181,3 +181,50 @@ class ProductImageOut(BaseModel):
 
     created_at: str
     updated_at: str
+
+
+class PublicProductImageOut(BaseModel):
+    id: int
+    file_id: str | None = None
+    file_path: str
+    alt_text: str | None = None
+    sort_order: int
+    is_primary: bool
+
+
+class PublicProductOut(BaseModel):
+    id: int
+
+    store_id: int
+    store_name: str | None = None
+    store_slug: str | None = None
+
+    category_id: int | None = None
+    category_name: str | None = None
+    category_slug: str | None = None
+
+    name: str
+    slug: str
+
+    short_description: str | None = None
+    description: str | None = None
+
+    sku: str | None = None
+
+    price: Decimal
+    compare_at_price: Decimal | None = None
+    currency: str
+
+    stock_quantity: int
+    unit: str
+
+    min_order_quantity: int
+    max_order_quantity: int | None = None
+
+    is_featured: bool
+
+    primary_image: PublicProductImageOut | None = None
+    images: list[PublicProductImageOut] = Field(default_factory=list)
+
+    created_at: str
+    updated_at: str

@@ -138,6 +138,7 @@ class StoreProduct(Base):
     category: Mapped["ProductCategory | None"] = relationship(
         back_populates="products",
     )
+    store = relationship("Store")
 
     images: Mapped[list["ProductImage"]] = relationship(
         back_populates="product",
