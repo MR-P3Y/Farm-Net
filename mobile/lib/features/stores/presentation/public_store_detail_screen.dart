@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_loading_view.dart';
@@ -91,6 +92,14 @@ class _PublicStoreDetailScreenState
                         _InfoRow(
                           label: 'کد پستی',
                           value: store.postalCode ?? '-',
+                        ),
+                        SizedBox(height: r.v(16)),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            context.push('/stores/${store.slug}/products');
+                          },
+                          icon: const Icon(Icons.inventory_2_outlined),
+                          label: const Text('محصولات این فروشگاه'),
                         ),
                       ],
                     ),

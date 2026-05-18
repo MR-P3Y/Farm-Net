@@ -2,6 +2,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/auth_gate.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/products/presentation/my_products_screen.dart';
+import '../../features/products/presentation/public_product_detail_screen.dart';
+import '../../features/products/presentation/public_products_screen.dart';
+import '../../features/products/presentation/store_products_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/stores/presentation/my_store_screen.dart';
@@ -38,6 +42,27 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const PublicStoresScreen(),
     ),
     GoRoute(
+      path: '/products',
+      name: 'public-products',
+      builder: (context, state) => const PublicProductsScreen(),
+    ),
+    GoRoute(
+      path: '/products/:productId',
+      name: 'public-product-detail',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['productId'] ?? '') ?? 0;
+        return PublicProductDetailScreen(productId: id);
+      },
+    ),
+    GoRoute(
+      path: '/stores/:storeSlug/products',
+      name: 'store-products',
+      builder: (context, state) {
+        final storeSlug = state.pathParameters['storeSlug'] ?? '';
+        return StoreProductsScreen(storeSlug: storeSlug);
+      },
+    ),
+    GoRoute(
       path: '/stores/:slug',
       name: 'public-store-detail',
       builder: (context, state) {
@@ -49,6 +74,11 @@ final GoRouter appRouter = GoRouter(
       path: '/my-store',
       name: 'my-store',
       builder: (context, state) => const MyStoreScreen(),
+    ),
+    GoRoute(
+      path: '/my-products',
+      name: 'my-products',
+      builder: (context, state) => const MyProductsScreen(),
     ),
     GoRoute(
       path: '/splash',
