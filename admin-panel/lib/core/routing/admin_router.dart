@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/admin_auth_gate.dart';
 import '../../features/auth/admin_login_page.dart';
 import '../../features/dashboard/admin_dashboard_page.dart';
+import '../../features/products/presentation/admin_products_page.dart';
 import '../../features/stores/presentation/admin_stores_page.dart';
 import '../../features/verifications/presentation/admin_verifications_page.dart';
 import '../auth/admin_permission_guard.dart';
@@ -48,6 +49,16 @@ final GoRouter adminRouter = GoRouter(
             return const AdminPermissionGuard(
               permission: 'stores.admin_read',
               child: AdminStoresPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/products',
+          name: 'admin-products',
+          builder: (context, state) {
+            return const AdminPermissionGuard(
+              permission: 'products.admin_read',
+              child: AdminProductsPage(),
             );
           },
         ),

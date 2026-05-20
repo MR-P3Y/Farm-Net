@@ -51,7 +51,7 @@ class AdminSidebar extends StatelessWidget {
                   icon: Icons.inventory_2_outlined,
                   label: l10n.products,
                   compact: isCompact,
-                  onTap: () {},
+                  onTap: () => context.go('/products'),
                 ),
                 _SidebarItem(
                   icon: Icons.payments_outlined,
