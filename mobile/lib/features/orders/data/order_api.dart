@@ -1,0 +1,199 @@
+import 'package:dio/dio.dart';
+
+import '../../../core/config/app_config.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_error.dart';
+import '../../../core/storage/token_storage.dart';
+import 'order_models.dart';
+
+class OrderApiException implements Exception {
+  const OrderApiException(this.error);
+
+  final ApiError error;
+
+  @override
+  String toString() => '${error.code}: ${error.message}';
+}
+
+class OrderApi {
+  OrderApi({ApiClient? client, TokenStorage? tokenStorage})
+    : _client = client ?? ApiClient(baseUrl: AppConfig.apiBaseUrl),
+      _tokenStorage = tokenStorage ?? TokenStorage();
+
+  final ApiClient _client;
+  final TokenStorage _tokenStorage;
+
+  Future<Cart> getMyCart() async {
+    await _setStoredToken();
+    final json = await _get('/cart/me');
+    return Cart.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
+  Future<Cart> addCartItem({
+    required int productId,
+    required int quantity,
+  }) async {
+    await _setStoredToken();
+
+    final json = await _post(
+      '/cart/items',
+      data: {'product_id': productId, 'quantity': quantity},
+    );
+
+    return Cart.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
+  Future<Cart> updateCartItem({
+    required int itemId,
+    required int quantity,
+  }) async {
+    await _setStoredToken();
+
+    final json = await _patch(
+      '/cart/items/$itemId',
+      data: {'quantity': quantity},
+    );
+
+    return Cart.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
+  Future<Cart> deleteCartItem(int itemId) async {
+    await _setStoredToken();
+    final json = await _delete('/cart/items/$itemId');
+    return Cart.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
+  Future<Cart> clearCart() async {
+    await _setStoredToken();
+    final json = await _delete('/cart/clear');
+    return Cart.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
+  Future<CheckoutResult> checkout(CheckoutInput input) async {
+    await _setStoredToken();
+
+    final json = await _post('/checkout', data: input.toJson());
+
+    return CheckoutResult.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
+  Future<List<Order>> listMyOrders({String? status}) async {
+    await _setStoredToken();
+
+    final query = <String, String>{};
+    if (status != null && status.isNotEmpty) query['status'] = status;
+
+    final uri = Uri(
+      path: '/orders/me',
+      queryParameters: query.isEmpty ? null : query,
+    );
+
+    final json = await _get(uri.toString());
+    final data = json['data'] as List? ?? [];
+
+    return data
+        .map((item) => Order.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Order> getMyOrder(int orderId) async {
+    await _setStoredToken();
+
+    final json = await _get('/orders/$orderId');
+    return Order.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
+  Future<List<Payment>> listMyPayments({String? status}) async {
+    await _setStoredToken();
+
+    final query = <String, String>{};
+    if (status != null && status.isNotEmpty) query['status'] = status;
+
+    final uri = Uri(
+      path: '/payments/me',
+      queryParameters: query.isEmpty ? null : query,
+    );
+
+    final json = await _get(uri.toString());
+    final data = json['data'] as List? ?? [];
+
+    return data
+        .map((item) => Payment.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Payment> mockPay(int paymentId) async {
+    await _setStoredToken();
+
+    final json = await _post('/payments/$paymentId/mock/pay', data: {});
+
+    return Payment.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
+  Future<void> _setStoredToken() async {
+    final token = await _tokenStorage.getAccessToken();
+    _client.setToken(token);
+  }
+
+  Future<Map<String, dynamic>> _get(String path) async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(path);
+      return response.data ?? {};
+    } on DioException catch (e) {
+      throw OrderApiException(_mapDioError(e));
+    }
+  }
+
+  Future<Map<String, dynamic>> _post(
+    String path, {
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        path,
+        data: data,
+      );
+      return response.data ?? {};
+    } on DioException catch (e) {
+      throw OrderApiException(_mapDioError(e));
+    }
+  }
+
+  Future<Map<String, dynamic>> _patch(
+    String path, {
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await _client.dio.patch<Map<String, dynamic>>(
+        path,
+        data: data,
+      );
+      return response.data ?? {};
+    } on DioException catch (e) {
+      throw OrderApiException(_mapDioError(e));
+    }
+  }
+
+  Future<Map<String, dynamic>> _delete(String path) async {
+    try {
+      final response = await _client.dio.delete<Map<String, dynamic>>(path);
+      return response.data ?? {};
+    } on DioException catch (e) {
+      throw OrderApiException(_mapDioError(e));
+    }
+  }
+
+  ApiError _mapDioError(DioException e) {
+    final data = e.response?.data;
+
+    if (data is Map<String, dynamic>) {
+      return ApiError.fromJson(data);
+    }
+
+    return ApiError(
+      code: 'NETWORK_ERROR',
+      message: e.message ?? 'Network error',
+      traceId: e.response?.headers.value('x-trace-id'),
+    );
+  }
+}

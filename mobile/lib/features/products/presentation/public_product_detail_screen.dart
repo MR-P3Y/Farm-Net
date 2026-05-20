@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../orders/state/order_controller.dart';
 import '../data/product_models.dart';
 import '../state/product_controller.dart';
 
@@ -42,6 +43,7 @@ class _PublicProductDetailScreenState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(productControllerProvider);
+    final orderState = ref.watch(orderControllerProvider);
     final product = state.selectedProduct;
 
     return Scaffold(
@@ -121,6 +123,32 @@ class _PublicProductDetailScreenState
                           SizedBox(height: r.v(8)),
                           Text(product.primaryImage!.filePath),
                         ],
+                        SizedBox(height: r.v(20)),
+                        FilledButton.icon(
+                          onPressed:
+                              orderState.isSaving
+                                  ? null
+                                  : () async {
+                                    final ok = await ref
+                                        .read(orderControllerProvider.notifier)
+                                        .addToCart(
+                                          productId: product.id,
+                                          quantity: 1,
+                                        );
+
+                                    if (!ok || !context.mounted) return;
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'محصول به سبد خرید اضافه شد.',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                          icon: const Icon(Icons.add_shopping_cart),
+                          label: const Text('افزودن به سبد خرید'),
+                        ),
                       ],
                     ),
                   ),

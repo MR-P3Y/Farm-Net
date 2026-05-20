@@ -2,6 +2,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/auth_gate.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/orders/presentation/cart_screen.dart';
+import '../../features/orders/presentation/my_orders_screen.dart';
+import '../../features/orders/presentation/order_detail_screen.dart';
 import '../../features/products/presentation/my_products_screen.dart';
 import '../../features/products/presentation/public_product_detail_screen.dart';
 import '../../features/products/presentation/public_products_screen.dart';
@@ -52,6 +55,24 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final id = int.tryParse(state.pathParameters['productId'] ?? '') ?? 0;
         return PublicProductDetailScreen(productId: id);
+      },
+    ),
+    GoRoute(
+      path: '/cart',
+      name: 'cart',
+      builder: (context, state) => const CartScreen(),
+    ),
+    GoRoute(
+      path: '/orders',
+      name: 'my-orders',
+      builder: (context, state) => const MyOrdersScreen(),
+    ),
+    GoRoute(
+      path: '/orders/:orderId',
+      name: 'order-detail',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['orderId'] ?? '') ?? 0;
+        return OrderDetailScreen(orderId: id);
       },
     ),
     GoRoute(

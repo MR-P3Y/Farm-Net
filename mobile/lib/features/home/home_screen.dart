@@ -90,6 +90,22 @@ class HomeScreen extends ConsumerWidget {
                       label: const Text('محصولات من'),
                     ),
                     SizedBox(height: r.v(12)),
+                    FilledButton.icon(
+                      onPressed: () {
+                        context.push('/cart');
+                      },
+                      icon: const Icon(Icons.shopping_cart_outlined),
+                      label: const Text('سبد خرید'),
+                    ),
+                    SizedBox(height: r.v(12)),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        context.push('/orders');
+                      },
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: const Text('سفارش‌های من'),
+                    ),
+                    SizedBox(height: r.v(12)),
                     OutlinedButton(
                       onPressed: () {
                         ref.read(authControllerProvider.notifier).logout();
