@@ -54,6 +54,18 @@ class AdminSidebar extends StatelessWidget {
                   onTap: () => context.go('/products'),
                 ),
                 _SidebarItem(
+                  icon: Icons.receipt_long_outlined,
+                  label: 'سفارش‌ها',
+                  compact: isCompact,
+                  onTap: () => context.go('/orders'),
+                ),
+                _SidebarItem(
+                  icon: Icons.percent_outlined,
+                  label: 'کمیسیون',
+                  compact: isCompact,
+                  onTap: () => context.go('/commission'),
+                ),
+                _SidebarItem(
                   icon: Icons.payments_outlined,
                   label: l10n.finance,
                   compact: isCompact,
