@@ -1,0 +1,325 @@
+{
+  "info": {
+    "name": "Farm Net - Orders Payments Commission Foundation",
+    "_postman_id": "48d02b90-9f11-4bb8-9bfb-orders-payments-commission",
+    "description": "Manual tests for Farm Net Phase 9 Orders / Payments / Commission Foundation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "access_token", "value": "" },
+    { "key": "admin_access_token", "value": "" },
+    { "key": "product_id", "value": "1" },
+    { "key": "cart_item_id", "value": "1" },
+    { "key": "order_id", "value": "1" },
+    { "key": "payment_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth - User Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/auth/login/email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test-auth@example.com\",\n  \"password\": \"Test@123456\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Admin Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/auth/login/email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"change-me\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Cart - Get My Cart",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/cart/me"
+      }
+    },
+    {
+      "name": "Cart - Add Item",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/cart/items",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 1\n}"
+        }
+      }
+    },
+    {
+      "name": "Cart - Update Item",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/cart/items/{{cart_item_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 3\n}"
+        }
+      }
+    },
+    {
+      "name": "Cart - Delete Item",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "DELETE",
+        "url": "{{base_url}}/cart/items/{{cart_item_id}}"
+      }
+    },
+    {
+      "name": "Cart - Clear",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "DELETE",
+        "url": "{{base_url}}/cart/clear"
+      }
+    },
+    {
+      "name": "Checkout - Create Orders",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/checkout",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"buyer_note\": \"Postman checkout\",\n  \"shipping_address\": \"Test address\",\n  \"shipping_postal_code\": \"1234567890\",\n  \"shipping_phone\": \"09120000000\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Buyer Orders - List My Orders",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/orders/me"
+      }
+    },
+    {
+      "name": "Buyer Orders - Get My Order",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/orders/{{order_id}}"
+      }
+    },
+    {
+      "name": "Payments - List My Payments",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/payments/me"
+      }
+    },
+    {
+      "name": "Payments - Get Payment",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/payments/{{payment_id}}"
+      }
+    },
+    {
+      "name": "Payments - Mock Pay",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "POST",
+        "url": "{{base_url}}/payments/{{payment_id}}/mock/pay"
+      }
+    },
+    {
+      "name": "Payments - Mock Fail",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+        },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/payments/{{payment_id}}/mock/fail",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Mock fail from Postman\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Seller Orders - List",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/seller/orders"
+      }
+    },
+    {
+      "name": "Seller Orders - Detail",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/seller/orders/{{order_id}}"
+      }
+    },
+    {
+      "name": "Seller Orders - Update Status",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/seller/orders/{{order_id}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"confirmed\",\n  \"seller_note\": \"Seller confirmed from Postman\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Orders - List",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/admin/orders?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin Orders - Detail",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/admin/orders/{{order_id}}"
+      }
+    },
+    {
+      "name": "Admin Orders - Cancel",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/admin/orders/{{order_id}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"cancelled\",\n  \"admin_note\": \"Admin cancelled from Postman\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Orders - Refund",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/admin/orders/{{order_id}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"refunded\",\n  \"admin_note\": \"Admin refunded from Postman\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Commission - List Settings",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/admin/commission/settings"
+      }
+    },
+    {
+      "name": "Admin Commission - Get Default",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/admin/commission/settings/default"
+      }
+    },
+    {
+      "name": "Admin Commission - Update Default",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{admin_access_token}}", "type": "string" }]
+        },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/admin/commission/settings/default",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"percent\": 5.00,\n  \"description\": \"Default commission used for new orders. Admin can change it later.\"\n}"
+        }
+      }
+    }
+  ]
+}
