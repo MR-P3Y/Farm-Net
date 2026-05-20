@@ -120,10 +120,24 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("billing.subscriptions.cancel", "Cancel subscriptions", "billing", "Cancel subscriptions"),
     PermissionSeed("billing.usage.read", "Read billing usage", "billing", "View feature usage"),
 
-    PermissionSeed("commission.read", "Read commission", "commission", "View commission rules"),
-    PermissionSeed("commission.create", "Create commission", "commission", "Create commission rules"),
-    PermissionSeed("commission.update", "Update commission", "commission", "Update commission rules"),
-    PermissionSeed("commission.deactivate", "Deactivate commission", "commission", "Deactivate commission rules"),
+    PermissionSeed("cart.read", "Read cart", "cart", "Read current user's cart"),
+    PermissionSeed("cart.update", "Update cart", "cart", "Add, update or remove cart items"),
+
+    PermissionSeed("orders.read", "Read own orders", "orders", "Read current user's orders"),
+    PermissionSeed("orders.create", "Create orders", "orders", "Create order from cart checkout"),
+    PermissionSeed("orders.cancel", "Cancel own orders", "orders", "Cancel current user's pending orders"),
+    PermissionSeed("orders.seller_read", "Seller read orders", "orders", "Seller can read orders for own store"),
+    PermissionSeed("orders.seller_update", "Seller update orders", "orders", "Seller can update operational order status"),
+    PermissionSeed("orders.admin_read", "Admin read orders", "orders", "Admin can list and inspect all orders"),
+    PermissionSeed("orders.admin_update", "Admin update orders", "orders", "Admin can update order status and admin notes"),
+
+    PermissionSeed("payments.read", "Read own payments", "payments", "Read current user's payments"),
+    PermissionSeed("payments.create", "Create payments", "payments", "Create payment attempt for own order"),
+    PermissionSeed("payments.admin_read", "Admin read payments", "payments", "Admin can list and inspect payments"),
+    PermissionSeed("payments.admin_update", "Admin update payments", "payments", "Admin can update payment status in supported flows"),
+
+    PermissionSeed("commission.read", "Read commission settings", "commission", "Read platform commission settings"),
+    PermissionSeed("commission.update", "Update commission settings", "commission", "Update platform commission settings"),
 
     PermissionSeed("finance.invoices.read", "Read invoices", "finance", "View invoices"),
     PermissionSeed("finance.invoices.read_detail", "Read invoice detail", "finance", "View invoice details"),
@@ -243,6 +257,11 @@ RETIRED_PERMISSION_CODES = {
     "products.read_detail",
     "products.approve",
     "products.reject",
+}
+
+REMOVED_PERMISSION_CODES = {
+    "commission.create",
+    "commission.deactivate",
 }
 
 RETIRED_ROLE_PERMISSION_CODES: dict[str, set[str]] = {
@@ -397,6 +416,31 @@ def remove_retired_role_permissions(
         )
 
 
+def delete_removed_permissions(db: Session) -> None:
+    removed_ids = [
+        row[0]
+        for row in (
+            db.query(AuthPermission.id)
+            .filter(AuthPermission.code.in_(REMOVED_PERMISSION_CODES))
+            .all()
+        )
+    ]
+
+    if not removed_ids:
+        return
+
+    (
+        db.query(AuthRolePermission)
+        .filter(AuthRolePermission.permission_id.in_(removed_ids))
+        .delete(synchronize_session=False)
+    )
+    (
+        db.query(AuthPermission)
+        .filter(AuthPermission.id.in_(removed_ids))
+        .delete(synchronize_session=False)
+    )
+
+
 def assign_default_permissions(
     db: Session,
     roles_by_code: dict[str, AuthRole],
@@ -408,6 +452,13 @@ def assign_default_permissions(
             "geo.read",
             "notifications.read",
             "media.upload",
+            "cart.read",
+            "cart.update",
+            "orders.read",
+            "orders.create",
+            "orders.cancel",
+            "payments.read",
+            "payments.create",
         ],
         "support": [
             "users.read",
@@ -416,8 +467,17 @@ def assign_default_permissions(
             "shops.read_detail",
             "verification.read",
             "notifications.read",
+            "orders.admin_read",
+            "payments.admin_read",
         ],
         "shop_owner": [
+            "cart.read",
+            "cart.update",
+            "orders.read",
+            "orders.create",
+            "orders.cancel",
+            "payments.read",
+            "payments.create",
             "stores.read",
             "stores.create",
             "stores.update",
@@ -430,6 +490,8 @@ def assign_default_permissions(
             "products.publish",
             "products.unpublish",
             "products.manage_images",
+            "orders.seller_read",
+            "orders.seller_update",
         ],
         "verification_admin": [
             "documents.read",
@@ -485,6 +547,12 @@ def assign_default_permissions(
             "products.admin_read",
             "products.suspend",
             "products.restore",
+            "orders.admin_read",
+            "orders.admin_update",
+            "payments.admin_read",
+            "payments.admin_update",
+            "commission.read",
+            "commission.update",
             "shops.read",
             "shops.read_detail",
             "verification.read",
@@ -597,6 +665,7 @@ def seed_auth(db: Session) -> dict[str, int | str]:
     permissions_by_code = seed_permissions(db)
     retire_permissions(db)
     remove_retired_role_permissions(db, roles_by_code)
+    delete_removed_permissions(db)
 
     super_admin_role = roles_by_code["super_admin"]
 
