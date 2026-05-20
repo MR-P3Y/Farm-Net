@@ -169,3 +169,8 @@ class MockPaymentFailIn(BaseModel):
 class SellerOrderStatusUpdateIn(BaseModel):
     status: str = Field(min_length=3, max_length=50)
     seller_note: str | None = Field(default=None, max_length=2000)
+
+
+class AdminOrderStatusUpdateIn(BaseModel):
+    status: str = Field(min_length=3, max_length=50)
+    admin_note: str | None = Field(default=None, max_length=2000)

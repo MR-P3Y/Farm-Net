@@ -434,6 +434,53 @@ class OrderRepository:
             .one_or_none()
         )
 
+    def list_admin_orders(
+        self,
+        *,
+        status: str | None = None,
+        payment_status: str | None = None,
+        store_id: int | None = None,
+        buyer_user_id: int | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[Order], int]:
+        query = self.db.query(Order).filter(
+            Order.deleted_at.is_(None),
+        )
+
+        if status:
+            query = query.filter(Order.status == status)
+
+        if payment_status:
+            query = query.filter(Order.payment_status == payment_status)
+
+        if store_id:
+            query = query.filter(Order.store_id == store_id)
+
+        if buyer_user_id:
+            query = query.filter(Order.buyer_user_id == buyer_user_id)
+
+        total = query.count()
+
+        items = (
+            query.order_by(Order.created_at.desc(), Order.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
+    def get_admin_order_by_id(self, *, order_id: int) -> Order | None:
+        return (
+            self.db.query(Order)
+            .filter(
+                Order.id == order_id,
+                Order.deleted_at.is_(None),
+            )
+            .one_or_none()
+        )
+
     def commit(self) -> None:
         self.db.commit()
 
