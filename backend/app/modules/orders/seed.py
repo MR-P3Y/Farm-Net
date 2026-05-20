@@ -44,11 +44,10 @@ def seed_commission_settings(db: Session) -> dict[str, int | str]:
             default_setting.title = DEFAULT_COMMISSION_TITLE
             changed = True
 
-        if default_setting.percent != DEFAULT_COMMISSION_PERCENT:
-            # For MVP, the seed enforces the default commission. When the
-            # admin commission API exists, change this so admin edits survive.
-            default_setting.percent = DEFAULT_COMMISSION_PERCENT
-            changed = True
+        # IMPORTANT:
+        # Do not overwrite default_setting.percent here.
+        # Admin can update commission percent through Admin Commission APIs.
+        # Seed must stay idempotent and must not reset admin-managed values.
 
         if default_setting.status != CommissionSettingStatus.ACTIVE.value:
             default_setting.status = CommissionSettingStatus.ACTIVE.value

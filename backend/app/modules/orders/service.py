@@ -12,6 +12,7 @@ from app.modules.orders.enums import CartStatus, OrderStatus, PaymentStatus
 from app.modules.orders.models import (
     Cart,
     CartItem,
+    CommissionSetting,
     Order,
     OrderItem,
     OrderStatusHistory,
@@ -26,6 +27,8 @@ from app.modules.orders.schemas import (
     CartOut,
     CheckoutIn,
     CheckoutOut,
+    CommissionSettingOut,
+    CommissionSettingUpdateIn,
     MockPaymentFailIn,
     OrderItemOut,
     OrderOut,
@@ -1077,6 +1080,70 @@ class AdminOrderService:
             to_status=row.to_status,
             note=row.note,
             created_at=row.created_at.isoformat(),
+        )
+
+
+class CommissionService:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+        self.repo = OrderRepository(db)
+
+    def list_settings(self) -> list[CommissionSettingOut]:
+        rows = self.repo.list_commission_settings()
+        return [self._commission_out(row) for row in rows]
+
+    def get_default_setting(self) -> CommissionSettingOut:
+        setting = self.repo.get_default_commission_setting()
+
+        if setting is None:
+            raise ValidationAuthError(
+                message="Default commission setting not found",
+                details={"commission": "missing"},
+            )
+
+        return self._commission_out(setting)
+
+    def update_default_setting(
+        self,
+        *,
+        user: AuthUser,
+        payload: CommissionSettingUpdateIn,
+    ) -> CommissionSettingOut:
+        setting = self.repo.get_default_commission_setting()
+
+        if setting is None:
+            raise ValidationAuthError(
+                message="Default commission setting not found",
+                details={"commission": "missing"},
+            )
+
+        if payload.percent < 0 or payload.percent > 100:
+            raise ValidationAuthError(
+                message="Invalid commission percent",
+                details={"percent": str(payload.percent)},
+            )
+
+        setting.percent = payload.percent
+        setting.description = payload.description
+        setting.updated_by = user.id
+
+        self.repo.commit()
+        self.repo.refresh(setting)
+
+        return self._commission_out(setting)
+
+    def _commission_out(self, setting: CommissionSetting) -> CommissionSettingOut:
+        return CommissionSettingOut(
+            id=setting.id,
+            title=setting.title,
+            percent=setting.percent,
+            status=setting.status,
+            is_default=setting.is_default,
+            description=setting.description,
+            created_by=setting.created_by,
+            updated_by=setting.updated_by,
+            created_at=setting.created_at.isoformat(),
+            updated_at=setting.updated_at.isoformat(),
         )
 
 

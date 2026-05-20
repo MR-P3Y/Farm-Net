@@ -174,3 +174,21 @@ class SellerOrderStatusUpdateIn(BaseModel):
 class AdminOrderStatusUpdateIn(BaseModel):
     status: str = Field(min_length=3, max_length=50)
     admin_note: str | None = Field(default=None, max_length=2000)
+
+
+class CommissionSettingOut(BaseModel):
+    id: int
+    title: str
+    percent: Decimal
+    status: str
+    is_default: bool
+    description: str | None = None
+    created_by: int | None = None
+    updated_by: int | None = None
+    created_at: str
+    updated_at: str
+
+
+class CommissionSettingUpdateIn(BaseModel):
+    percent: Decimal = Field(ge=0, le=100)
+    description: str | None = Field(default=None, max_length=2000)

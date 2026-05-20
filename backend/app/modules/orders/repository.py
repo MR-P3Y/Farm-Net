@@ -481,6 +481,27 @@ class OrderRepository:
             .one_or_none()
         )
 
+    def list_commission_settings(self) -> list[CommissionSetting]:
+        return (
+            self.db.query(CommissionSetting)
+            .order_by(
+                CommissionSetting.is_default.desc(),
+                CommissionSetting.created_at.desc(),
+                CommissionSetting.id.desc(),
+            )
+            .all()
+        )
+
+    def get_default_commission_setting(self) -> CommissionSetting | None:
+        return (
+            self.db.query(CommissionSetting)
+            .filter(
+                CommissionSetting.status == CommissionSettingStatus.ACTIVE.value,
+                CommissionSetting.is_default.is_(True),
+            )
+            .one_or_none()
+        )
+
     def commit(self) -> None:
         self.db.commit()
 
