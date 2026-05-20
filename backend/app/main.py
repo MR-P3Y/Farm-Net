@@ -10,6 +10,7 @@ from app.modules.admin.router import router as admin_router
 from app.modules.auth.router import router as auth_router
 from app.modules.geo.router import router as geo_router
 from app.modules.health.router import router as health_router
+from app.modules.orders.router import router as orders_router
 from app.modules.products.public_router import router as public_products_router
 from app.modules.products.router import router as products_router
 from app.modules.profiles.router import router as profile_router
@@ -56,6 +57,7 @@ def create_app() -> FastAPI:
     app.include_router(public_stores_router, prefix=settings.api_v1_prefix)
     app.include_router(public_products_router, prefix=settings.api_v1_prefix)
     app.include_router(products_router, prefix=settings.api_v1_prefix)
+    app.include_router(orders_router, prefix=settings.api_v1_prefix)
 
     register_exception_handlers(app)
 
