@@ -46,24 +46,12 @@ MVP v1 شامل بخش‌های زیر است:
 8. Users / Roles / Permissions
 9. Free User Profile
 10. Geo Core
-11. Notification Event Core
-12. Media Upload
-13. Documents
-14. Verification
-15. Contracts
-16. Billing / Subscription Core
-17. Commission Core
-18. Payment Gateway Core
-19. Finance / Invoice Core
-20. Store Core
-21. Store Members
-22. Product Categories
-23. Product Management
-24. Product Approval
-25. Shop Panel Core
-26. Public Store UI
-27. Promotion / Ladder Core ساده
-28. Admin Management Core
+11. Store Foundation
+12. Product / Catalog Foundation
+13. Cart / Orders / Payments / Commission Foundation
+14. Media / File Upload / Storage Foundation
+15. Notifications Foundation
+16. Admin Management Core
 ```
 
 ---
@@ -156,7 +144,8 @@ viewer
 دسته‌بندی خدمات باید از پنل ادمین قابل مدیریت باشد.
 ```
 
-ماژول کامل Services / Rental بعد از Store Core می‌آید.
+ماژول کامل Services بعد از Social / Community Foundation می‌آید.
+Equipment / Rental در فاز جداگانه بعد از Consultants اجرا می‌شود.
 
 ---
 
@@ -172,7 +161,7 @@ viewer
 فعال شدن مشاور نیازمند مدارک، قرارداد و تأیید ادمین است.
 ```
 
-ماژول کامل Consultants بعد از Services / Rental می‌آید.
+ماژول کامل Consultants بعد از Services Module و قبل از Equipment / Rental می‌آید.
 
 ---
 
@@ -390,192 +379,93 @@ seed data structure
 
 ---
 
-### Phase 7 - Notification Core
+### Phase 7 - Store Foundation
 
 خروجی‌ها:
 
 ```text
-notify_events
-notify_notifications
-notify_templates
-notify_channels
-notify_user_preferences
-notify_delivery_attempts
-notify_device_tokens
-In-App notification
-Push base structure
-SMS provider integration
-Email provider integration
-Queue worker
+store database models
+store owner/member structure
+store status lifecycle
+seller store APIs
+store member management APIs
+admin store review APIs
+public approved store lookup APIs
+mobile store foundation
+admin panel store foundation
 ```
 
 ---
 
-### Phase 8 - Media / Documents
+### Phase 8 - Product / Catalog Foundation
 
 خروجی‌ها:
 
 ```text
-upload image
-upload document
+product category seed
+seller product APIs
+product image metadata APIs
+admin product moderation APIs
+public product lookup APIs
+mobile product foundation
+admin panel product foundation
+```
+
+---
+
+### Phase 9 - Cart / Orders / Payments / Commission
+
+خروجی‌ها:
+
+```text
+cart
+checkout base
+orders
+order items
+payment attempts
+payment verify/callback
+commission snapshot
+seller/admin order views
+```
+
+---
+
+### Phase 10 - Media / File Upload / Storage
+
+خروجی‌ها:
+
+```text
+file upload
+image upload
+document upload
 file validation
 file metadata
-public/private file
-profile image
-document upload
-link file to module
+public/private storage policy
+module file linking
+safe file serving base
 ```
 
 ---
 
-### Phase 9 - Verification / Contracts
+### Phase 11 - Notifications Foundation
 
 خروجی‌ها:
 
 ```text
-verification requests
-document review
-contract templates
-contract versions
-contract acceptance
-PDF contract upload
-admin approval
-status flow
-notifications
-audit logs
+notification events
+notification templates
+in-app notification foundation
+push notification base
+SMS provider base
+email provider base
+delivery attempts
+user notification preferences
+queue worker foundation
 ```
 
 ---
 
-### Phase 10 - Billing / Subscription
-
-خروجی‌ها:
-
-```text
-plans
-plan features
-subscriptions
-feature usage
-subscription limits
-admin plan management
-manual/online subscription payment base
-notifications for expiration
-```
-
----
-
-### Phase 11 - Commission / Finance / Payment Core
-
-خروجی‌ها:
-
-```text
-commission rules
-commission snapshot
-invoice
-invoice items
-payment gateway
-payment attempt
-payment callback
-payment verify
-transaction
-platform amount
-provider amount
-notification
-audit log
-```
-
----
-
-### Phase 12 - Store Core
-
-خروجی‌ها:
-
-```text
-create shop request
-shop documents
-shop contract
-admin approval
-store_shops
-store_shop_members
-shop roles
-product categories
-products
-product images
-product features
-product benefits
-product status flow
-admin product approval
-notifications
-```
-
----
-
-### Phase 13 - Shop Panel UI
-
-خروجی‌ها:
-
-```text
-shop dashboard
-shop profile
-shop members
-create/edit product
-upload product images
-product status
-invoice list
-promotion requests
-notifications
-```
-
----
-
-### Phase 14 - Public Store UI
-
-خروجی‌ها:
-
-```text
-home store section
-product list
-product detail
-category filter
-location filter
-price display
-shop public profile
-```
-
----
-
-### Phase 15 - Admin Store Management
-
-خروجی‌ها:
-
-```text
-shop requests
-shop approval
-shop suspension
-product approval
-category management
-shop members view
-commission view
-invoice view
-promotion management
-```
-
----
-
-### Phase 16 - Promotion / Ladder Core
-
-خروجی‌ها:
-
-```text
-promotion packages
-promotion slots
-promotion target
-duration
-payment
-activation
-priority display
-notification
-```
+Post-MVP roadmap continues in docs/03-module-roadmap.md.
 
 ---
 
@@ -588,30 +478,17 @@ MVP v1 زمانی تمام‌شده حساب می‌شود که:
 2. MySQL migrationها بدون خطا اجرا شوند.
 3. Flutter App اجرا شود.
 4. Flutter Web Admin اجرا شود.
-5. کاربر بتواند ثبت‌نام و ورود کند.
-6. نقش و دسترسی قابل مدیریت باشد.
-7. کاربر پروفایل رایگان داشته باشد.
-8. Geo Core قابل استفاده باشد.
-9. نوتیفیکیشن داخلی کار کند.
-10. SMS برای OTP کار کند.
-11. Email برای قرارداد/فاکتور آماده باشد.
-12. فایل و مدرک قابل آپلود باشد.
-13. قرارداد قابل پذیرش و آپلود باشد.
-14. ادمین بتواند مدارک را تأیید/رد کند.
-15. ادمین بتواند کمیسیون را تنظیم کند.
-16. فاکتور صادر شود.
-17. پرداخت آنلاین Core کار کند.
-18. کمیسیون در فاکتور snapshot شود.
-19. کاربر بتواند فروشگاه ثبت کند.
-20. ادمین بتواند فروشگاه را تأیید/رد کند.
-21. فروشگاه بتواند محصول ثبت کند.
-22. محصول توسط ادمین تأیید/رد شود.
-23. محصولات در UI عمومی دیده شوند.
-24. پنل فروشگاه پایه کار کند.
-25. تبلیغ/نردبان ساده قابل تعریف باشد.
-26. APIها مستند باشند.
-27. Postman/Swagger تست شده باشد.
-28. Git tag برای MVP زده شود.
+5. Auth کامل پایه داشته باشد.
+6. Role/Permission پایه کار کند.
+7. Geo داده پایه داشته باشد.
+8. Store Foundation کامل باشد.
+9. Product / Catalog Foundation کامل باشد.
+10. Cart/Orders/Payments/Commission foundation کامل باشد.
+11. Media/File Upload foundation کامل باشد.
+12. Notifications foundation کامل باشد.
+13. API docs و Postman هر فاز ثبت شده باشد.
+14. Mobile و Admin build شوند.
+15. Git tag برای MVP زده شود.
 ```
 
 ---
@@ -623,9 +500,8 @@ MVP v1 زمانی تمام‌شده حساب می‌شود که:
 راه کنترل:
 
 ```text
-پرداخت آنلاین فقط Core باشد.
-نوتیفیکیشن همه کانال‌ها را داشته باشد، اما ارسال‌ها ساده و کنترل‌شده باشد.
-Social، AI، Services، Consultants و Weather کامل وارد MVP نشوند.
+Weather، Social، AI، Services، Consultants و Equipment/Rental کامل وارد MVP نشوند.
+برای هرکدام فقط جایگاه roadmap و dependencyها مشخص شود.
 ```
 
 ---
@@ -690,12 +566,15 @@ MVP v1 باید یک نسخه قابل اجرا از ستون فقرات پلت�
 بعد از MVP v1، مسیر توسعه به این ترتیب ادامه پیدا می‌کند:
 
 ```text
-1. Services / Rental Core
-2. Consultants Core
-3. Weather Core
-4. AI / RAG Core
-5. Social Core
-6. Data Access / BI
-7. Advanced Payment / Settlement
-8. Reports / Analytics
+1. Weather Foundation
+2. Social / Community Foundation
+3. Services Module
+4. Consultants Module
+5. Equipment / Rental
+6. Category Management
+7. Search / Filters / Discovery
+8. Reviews / Ratings / Reports
+9. Wallet / Settlement / Accounting
+10. AI / RAG Assistant Integration
+11. Production Hardening / Deployment
 ```

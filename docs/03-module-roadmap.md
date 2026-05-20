@@ -72,24 +72,56 @@ Phase 3: Flutter Foundation
 Phase 4: Admin Panel Foundation
 Phase 5: Auth / Users / Roles / Permissions
 Phase 6: Geo Core
-Phase 7: Notification Core
-Phase 8: Media / Documents
-Phase 9: Verification / Contracts
-Phase 10: Billing / Subscription
-Phase 11: Commission / Finance / Payment Core
-Phase 12: Store Core
-Phase 13: Shop Panel UI
-Phase 14: Public Store UI
-Phase 15: Admin Store Management
-Phase 16: Promotion / Ladder Core
-Phase 17: Services / Rental Core
-Phase 18: Consultants Core
-Phase 19: Weather Core
-Phase 20: AI / RAG Core
-Phase 21: Social Core
-Phase 22: Data Access / BI
-Phase 23: Advanced Payment / Settlement
-Phase 24: Reports / Analytics
+Phase 7: Store Foundation
+Phase 8: Product / Catalog Foundation
+Phase 9: Cart / Orders / Payments / Commission
+Phase 10: Media / File Upload / Storage
+Phase 11: Notifications Foundation
+Phase 12: Weather Foundation
+Phase 13: Social / Community Foundation
+Phase 14: Services Module
+Phase 15: Consultants Module
+Phase 16: Equipment / Rental
+Phase 17: Category Management
+Phase 18: Search / Filters / Discovery
+Phase 19: Reviews / Ratings / Reports
+Phase 20: Wallet / Settlement / Accounting
+Phase 21: AI / RAG Assistant Integration
+Phase 22: Production Hardening / Deployment
+```
+
+---
+
+## 3.1 Current Roadmap Note
+
+This roadmap was revised after Phase 8 on 2026-05-20.
+
+The phase order above is authoritative for Phase 9 and later. Older detailed
+module notes later in this document remain backlog notes until they are
+rewritten during their implementation phase.
+
+## 3.2 New Phase Scope Notes
+
+### Phase 12 - Weather Foundation
+
+```text
+User province/city/location weather lookup
+Current weather display
+Multi-day forecast
+Agricultural weather alerts
+Future AI crop recommendation integration point
+```
+
+### Phase 13 - Social / Community Foundation
+
+```text
+Posts
+Comments
+Likes
+Saved posts
+Abuse reports
+Discussion categories
+Farmer Q&A and experience sharing space
 ```
 
 ---
@@ -548,7 +580,7 @@ Province/city/village management
 
 ---
 
-# 10. Phase 7 — Notification Core
+# 10. Legacy Module Note — Notification Core
 
 ## هدف
 
@@ -665,7 +697,7 @@ Notification از API اصلی جدا و صفی ارسال شود.
 
 ---
 
-# 11. Phase 8 — Media / Documents
+# 11. Legacy Module Note — Media / Documents
 
 ## هدف
 
@@ -749,7 +781,7 @@ Approve/reject document base
 
 ---
 
-# 12. Phase 9 — Verification / Contracts
+# 12. Legacy Module Note — Verification / Contracts
 
 ## هدف
 
@@ -858,7 +890,7 @@ Audit log برای تصمیم ادمین ثبت شود.
 
 ---
 
-# 13. Phase 10 — Billing / Subscription
+# 13. Legacy Module Note — Billing / Subscription
 
 ## هدف
 
@@ -944,7 +976,7 @@ Feature limits management
 
 ---
 
-# 14. Phase 11 — Commission / Finance / Payment Core
+# 14. Legacy Module Note — Commission / Finance / Payment Core
 
 ## هدف
 
@@ -1066,7 +1098,7 @@ callback و verify کار کند.
 
 ---
 
-# 15. Phase 12 — Store Core
+# 15. Legacy Module Note — Store Core
 
 ## هدف
 
@@ -1226,7 +1258,7 @@ Audit log برای تصمیمات ادمین ثبت شود.
 
 ---
 
-# 16. Phase 13 — Shop Panel UI
+# 16. Legacy Module Note — Shop Panel UI
 
 ## هدف
 
@@ -1272,7 +1304,7 @@ Notifications
 
 ---
 
-# 17. Phase 14 — Public Store UI
+# 17. Legacy Module Note — Public Store UI
 
 ## هدف
 
@@ -1314,7 +1346,7 @@ Promoted products/shops
 
 ---
 
-# 18. Phase 15 — Admin Store Management
+# 18. Legacy Module Note — Admin Store Management
 
 ## هدف
 
@@ -1356,7 +1388,7 @@ Audit logs قابل مشاهده باشند.
 
 ---
 
-# 19. Phase 16 — Promotion / Ladder Core
+# 19. Legacy Module Note — Promotion / Ladder Core
 
 ## هدف
 
@@ -1422,7 +1454,7 @@ PROMOTION_CANCELLED
 
 ---
 
-# 20. Phase 17 — Services / Rental Core
+# 20. Legacy Module Note — Services / Rental Core
 
 ## هدف
 
@@ -1519,7 +1551,7 @@ SERVICE_REQUEST_CANCELLED
 
 ---
 
-# 21. Phase 18 — Consultants Core
+# 21. Legacy Module Note — Consultants Core
 
 ## هدف
 
@@ -1594,7 +1626,7 @@ CONSULT_REQUEST_CANCELLED
 
 ---
 
-# 22. Phase 19 — Weather Core
+# 22. Legacy Module Note — Weather Core
 
 ## هدف
 
@@ -1648,7 +1680,7 @@ DUST_WARNING
 
 ---
 
-# 23. Phase 20 — AI / RAG Core
+# 23. Legacy Module Note — AI / RAG Core
 
 ## هدف
 
@@ -1711,7 +1743,7 @@ feedback ثبت شود.
 
 ---
 
-# 24. Phase 21 — Social Core
+# 24. Legacy Module Note — Social Core
 
 ## هدف
 
@@ -1782,7 +1814,7 @@ USER_BLOCKED
 
 ---
 
-# 25. Phase 22 — Data Access / BI
+# 25. Legacy Module Note — Data Access / BI
 
 ## هدف
 
@@ -1853,7 +1885,7 @@ export داده لاگ شود.
 
 ---
 
-# 26. Phase 23 — Advanced Payment / Settlement
+# 26. Legacy Module Note — Advanced Payment / Settlement
 
 ## هدف
 
@@ -1915,7 +1947,7 @@ Refund پایه آماده باشد.
 
 ---
 
-# 27. Phase 24 — Reports / Analytics
+# 27. Legacy Module Note — Reports / Analytics
 
 ## هدف
 
@@ -2033,29 +2065,27 @@ Phase 3: Flutter Foundation
 Phase 4: Admin Panel Foundation
 Phase 5: Auth / Users / Roles / Permissions
 Phase 6: Geo Core
-Phase 7: Notification Core
-Phase 8: Media / Documents
-Phase 9: Verification / Contracts
-Phase 10: Billing / Subscription
-Phase 11: Commission / Finance / Payment Core
-Phase 12: Store Core
-Phase 13: Shop Panel UI
-Phase 14: Public Store UI
-Phase 15: Admin Store Management
-Phase 16: Promotion / Ladder Core
+Phase 7: Store Foundation
+Phase 8: Product / Catalog Foundation
+Phase 9: Cart / Orders / Payments / Commission
+Phase 10: Media / File Upload / Storage
+Phase 11: Notifications Foundation
 ```
 
 بعد از MVP v1:
 
 ```text
-Phase 17: Services / Rental Core
-Phase 18: Consultants Core
-Phase 19: Weather Core
-Phase 20: AI / RAG Core
-Phase 21: Social Core
-Phase 22: Data Access / BI
-Phase 23: Advanced Payment / Settlement
-Phase 24: Reports / Analytics
+Phase 12: Weather Foundation
+Phase 13: Social / Community Foundation
+Phase 14: Services Module
+Phase 15: Consultants Module
+Phase 16: Equipment / Rental
+Phase 17: Category Management
+Phase 18: Search / Filters / Discovery
+Phase 19: Reviews / Ratings / Reports
+Phase 20: Wallet / Settlement / Accounting
+Phase 21: AI / RAG Assistant Integration
+Phase 22: Production Hardening / Deployment
 ```
 
 ---
@@ -2074,3 +2104,9 @@ Tag خورده باشد
 ```
 
 اگر یک فاز ناقص باشد و تیم وارد فاز بعدی شود، پروژه دوباره شلوغ و شکننده می‌شود.
+
+## Roadmap Maintenance Rule
+
+Whenever a new phase, phase order change, or material scope change is defined,
+the related roadmap and scope documents must be updated in the same change set.
+The decision must not live only in chat or task notes.
