@@ -1,0 +1,391 @@
+{
+  "info": {
+    "name": "Farm Net - Product Catalog Foundation",
+    "_postman_id": "3e9239a2-0e0f-4b2f-9b8f-product-foundation",
+    "description": "Manual tests for Farm Net Phase 8 Product / Catalog Foundation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_access_token",
+      "value": ""
+    },
+    {
+      "key": "store_id",
+      "value": "1"
+    },
+    {
+      "key": "store_slug",
+      "value": "farmnet-test-store-20260517143901"
+    },
+    {
+      "key": "product_id",
+      "value": "1"
+    },
+    {
+      "key": "product_slug",
+      "value": "test-product-20260517235800"
+    },
+    {
+      "key": "category_id",
+      "value": "1"
+    },
+    {
+      "key": "image_id",
+      "value": "2"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Admin Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/auth/login/email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"change-me\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Public Products - List",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/public/products"
+      }
+    },
+    {
+      "name": "Public Products - Detail By ID",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/public/products/{{product_id}}"
+      }
+    },
+    {
+      "name": "Public Products - List Store Products",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/public/stores/{{store_slug}}/products"
+      }
+    },
+    {
+      "name": "Public Products - Store Product Detail",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/public/stores/{{store_slug}}/products/{{product_slug}}"
+      }
+    },
+    {
+      "name": "Seller Products - List My Products",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/stores/{{store_id}}/products/me"
+      }
+    },
+    {
+      "name": "Seller Products - Create Product",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/stores/{{store_id}}/products",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"category_id\": 1,\n  \"name\": \"Farm Net Postman Product\",\n  \"slug\": \"farmnet-postman-product-001\",\n  \"short_description\": \"Postman product\",\n  \"description\": \"Postman product full description\",\n  \"sku\": \"POSTMAN-SKU-001\",\n  \"price\": 250000,\n  \"compare_at_price\": 300000,\n  \"currency\": \"TOMAN\",\n  \"stock_quantity\": 100,\n  \"unit\": \"kg\",\n  \"min_order_quantity\": 1,\n  \"max_order_quantity\": 50,\n  \"is_active\": true,\n  \"is_featured\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "Seller Products - Get Product",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/stores/{{store_id}}/products/{{product_id}}"
+      }
+    },
+    {
+      "name": "Seller Products - Update Product",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/stores/{{store_id}}/products/{{product_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Farm Net Product Updated\",\n  \"price\": 260000,\n  \"stock_quantity\": 120\n}"
+        }
+      }
+    },
+    {
+      "name": "Seller Products - Publish Product",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "url": "{{base_url}}/stores/{{store_id}}/products/{{product_id}}/publish"
+      }
+    },
+    {
+      "name": "Seller Products - Unpublish Product",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "url": "{{base_url}}/stores/{{store_id}}/products/{{product_id}}/unpublish"
+      }
+    },
+    {
+      "name": "Seller Products - Status History",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/stores/{{store_id}}/products/{{product_id}}/status-history"
+      }
+    },
+    {
+      "name": "Product Images - List",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/stores/{{store_id}}/products/{{product_id}}/images"
+      }
+    },
+    {
+      "name": "Product Images - Create",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/stores/{{store_id}}/products/{{product_id}}/images",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"file_id\": \"postman-file-001\",\n  \"file_path\": \"products/1/postman-main.jpg\",\n  \"alt_text\": \"Postman image\",\n  \"sort_order\": 10,\n  \"is_primary\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Product Images - Update",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/stores/{{store_id}}/products/{{product_id}}/images/{{image_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"alt_text\": \"Updated image alt\",\n  \"sort_order\": 5,\n  \"is_primary\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Products - List",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/admin/products?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin Products - Detail",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "{{base_url}}/admin/products/{{product_id}}"
+      }
+    },
+    {
+      "name": "Admin Products - Suspend",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/admin/products/{{product_id}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"suspended\",\n  \"note\": \"Suspended from Postman\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Products - Restore Published",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{admin_access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/admin/products/{{product_id}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"published\",\n  \"note\": \"Restored from Postman\"\n}"
+        }
+      }
+    }
+  ]
+}
