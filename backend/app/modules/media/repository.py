@@ -1,5 +1,8 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
+from app.modules.media.enums import MediaStatus
 from app.modules.media.models import MediaFile
 
 
@@ -60,6 +63,59 @@ class MediaRepository:
 
     def get_by_id(self, *, media_id: int) -> MediaFile | None:
         return self.db.query(MediaFile).filter(MediaFile.id == media_id).one_or_none()
+
+    def list_by_owner(
+        self,
+        *,
+        owner_user_id: int,
+        purpose: str | None = None,
+        visibility: str | None = None,
+        status: str = MediaStatus.ACTIVE.value,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[MediaFile], int]:
+        query = self.db.query(MediaFile).filter(
+            MediaFile.owner_user_id == owner_user_id,
+            MediaFile.status == status,
+        )
+
+        if purpose:
+            query = query.filter(MediaFile.purpose == purpose)
+
+        if visibility:
+            query = query.filter(MediaFile.visibility == visibility)
+
+        total = query.count()
+
+        items = (
+            query.order_by(MediaFile.created_at.desc(), MediaFile.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
+    def get_active_by_file_key_for_owner(
+        self,
+        *,
+        file_key: str,
+        owner_user_id: int,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(
+                MediaFile.file_key == file_key,
+                MediaFile.owner_user_id == owner_user_id,
+                MediaFile.status == MediaStatus.ACTIVE.value,
+            )
+            .one_or_none()
+        )
+
+    def soft_delete(self, *, media: MediaFile) -> None:
+        media.status = MediaStatus.DELETED.value
+        media.deleted_at = datetime.utcnow()
+        self.db.flush()
 
     def commit(self) -> None:
         self.db.commit()

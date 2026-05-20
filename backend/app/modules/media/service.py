@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
-from app.modules.media.enums import MediaStatus
+from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
 from app.modules.media.models import MediaFile
 from app.modules.media.repository import MediaRepository
 from app.modules.media.schemas import MediaFileOut, MediaUploadMetaIn
@@ -68,6 +68,95 @@ class MediaService:
             ) from exc
 
         return self._media_out(row)
+
+    def list_my_media(
+        self,
+        *,
+        user: AuthUser,
+        purpose: str | None,
+        visibility: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[MediaFileOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if purpose is not None:
+            self._validate_purpose(purpose)
+
+        if visibility is not None:
+            self._validate_visibility(visibility)
+
+        rows, total = self.repo.list_by_owner(
+            owner_user_id=user.id,
+            purpose=purpose,
+            visibility=visibility,
+            status=MediaStatus.ACTIVE.value,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [self._media_out(row) for row in rows], total
+
+    def get_my_media(
+        self,
+        *,
+        user: AuthUser,
+        file_key: str,
+    ) -> MediaFileOut:
+        row = self.repo.get_active_by_file_key_for_owner(
+            file_key=file_key,
+            owner_user_id=user.id,
+        )
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Media file not found",
+                details={"file_key": file_key},
+            )
+
+        return self._media_out(row)
+
+    def delete_my_media(
+        self,
+        *,
+        user: AuthUser,
+        file_key: str,
+    ) -> MediaFileOut:
+        row = self.repo.get_active_by_file_key_for_owner(
+            file_key=file_key,
+            owner_user_id=user.id,
+        )
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Media file not found",
+                details={"file_key": file_key},
+            )
+
+        self.repo.soft_delete(media=row)
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return self._media_out(row)
+
+    def _validate_purpose(self, purpose: str) -> None:
+        allowed = {item.value for item in MediaPurpose}
+
+        if purpose not in allowed:
+            raise ValidationAuthError(
+                message="Invalid media purpose",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_visibility(self, visibility: str) -> None:
+        allowed = {item.value for item in MediaVisibility}
+
+        if visibility not in allowed:
+            raise ValidationAuthError(
+                message="Invalid media visibility",
+                details={"allowed": sorted(allowed)},
+            )
 
     def _media_out(self, row: MediaFile) -> MediaFileOut:
         return MediaFileOut(
