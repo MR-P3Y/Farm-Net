@@ -384,6 +384,56 @@ class OrderRepository:
             .one_or_none()
         )
 
+    def list_seller_orders(
+        self,
+        *,
+        seller_user_id: int,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[Order], int]:
+        query = (
+            self.db.query(Order)
+            .join(Store, Store.id == Order.store_id)
+            .filter(
+                Store.owner_user_id == seller_user_id,
+                Store.deleted_at.is_(None),
+                Order.deleted_at.is_(None),
+            )
+        )
+
+        if status:
+            query = query.filter(Order.status == status)
+
+        total = query.count()
+
+        items = (
+            query.order_by(Order.created_at.desc(), Order.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
+    def get_seller_order_by_id(
+        self,
+        *,
+        seller_user_id: int,
+        order_id: int,
+    ) -> Order | None:
+        return (
+            self.db.query(Order)
+            .join(Store, Store.id == Order.store_id)
+            .filter(
+                Order.id == order_id,
+                Store.owner_user_id == seller_user_id,
+                Store.deleted_at.is_(None),
+                Order.deleted_at.is_(None),
+            )
+            .one_or_none()
+        )
+
     def commit(self) -> None:
         self.db.commit()
 

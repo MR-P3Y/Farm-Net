@@ -164,3 +164,8 @@ class CheckoutOut(BaseModel):
 
 class MockPaymentFailIn(BaseModel):
     reason: str | None = Field(default="Mock payment failed", max_length=2000)
+
+
+class SellerOrderStatusUpdateIn(BaseModel):
+    status: str = Field(min_length=3, max_length=50)
+    seller_note: str | None = Field(default=None, max_length=2000)

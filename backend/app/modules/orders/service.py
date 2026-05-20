@@ -30,6 +30,7 @@ from app.modules.orders.schemas import (
     OrderOut,
     OrderStatusHistoryOut,
     PaymentOut,
+    SellerOrderStatusUpdateIn,
 )
 from app.modules.products.models import StoreProduct
 
@@ -579,6 +580,255 @@ class CheckoutService:
             created_at=row.created_at.isoformat(),
         )
 
+
+class SellerOrderService:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+        self.repo = OrderRepository(db)
+
+    def list_seller_orders(
+        self,
+        *,
+        user: AuthUser,
+        status: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[OrderOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if status is not None:
+            self._validate_order_status(status)
+
+        items, total = self.repo.list_seller_orders(
+            seller_user_id=user.id,
+            status=status,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [self._order_out(item) for item in items], total
+
+    def get_seller_order(
+        self,
+        *,
+        user: AuthUser,
+        order_id: int,
+    ) -> OrderOut:
+        order = self.repo.get_seller_order_by_id(
+            seller_user_id=user.id,
+            order_id=order_id,
+        )
+
+        if order is None:
+            raise ValidationAuthError(
+                message="Order not found",
+                details={"order_id": order_id},
+            )
+
+        return self._order_out(order)
+
+    def update_seller_order_status(
+        self,
+        *,
+        user: AuthUser,
+        order_id: int,
+        payload: SellerOrderStatusUpdateIn,
+    ) -> OrderOut:
+        order = self.repo.get_seller_order_by_id(
+            seller_user_id=user.id,
+            order_id=order_id,
+        )
+
+        if order is None:
+            raise ValidationAuthError(
+                message="Order not found",
+                details={"order_id": order_id},
+            )
+
+        self._validate_seller_target_status(payload.status)
+
+        if order.payment_status != PaymentStatus.PAID.value:
+            raise ValidationAuthError(
+                message="Order must be paid before seller can update it",
+                details={
+                    "order_id": order.id,
+                    "payment_status": order.payment_status,
+                },
+            )
+
+        self._validate_seller_transition(
+            current_status=order.status,
+            next_status=payload.status,
+        )
+
+        old_status = order.status
+        order.status = payload.status
+        order.seller_note = payload.seller_note
+
+        now = datetime.utcnow()
+
+        if payload.status == OrderStatus.CONFIRMED.value:
+            order.confirmed_at = now
+
+        if payload.status == OrderStatus.DELIVERED.value:
+            order.delivered_at = now
+
+        self.repo.create_order_status_history(
+            order_id=order.id,
+            changed_by=user.id,
+            from_status=old_status,
+            to_status=payload.status,
+            note=payload.seller_note
+            or f"Seller changed order status to {payload.status}",
+        )
+
+        self.repo.commit()
+        self.repo.refresh(order)
+
+        return self._order_out(order)
+
+    def _validate_order_status(self, status: str) -> None:
+        allowed = {item.value for item in OrderStatus}
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid order status filter",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_seller_target_status(self, status: str) -> None:
+        allowed = {
+            OrderStatus.CONFIRMED.value,
+            OrderStatus.PROCESSING.value,
+            OrderStatus.SHIPPED.value,
+            OrderStatus.DELIVERED.value,
+        }
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid seller order status",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_seller_transition(
+        self,
+        *,
+        current_status: str,
+        next_status: str,
+    ) -> None:
+        allowed_transitions = {
+            OrderStatus.PAID.value: {OrderStatus.CONFIRMED.value},
+            OrderStatus.CONFIRMED.value: {OrderStatus.PROCESSING.value},
+            OrderStatus.PROCESSING.value: {OrderStatus.SHIPPED.value},
+            OrderStatus.SHIPPED.value: {OrderStatus.DELIVERED.value},
+        }
+
+        allowed_next = allowed_transitions.get(current_status, set())
+
+        if next_status not in allowed_next:
+            raise ValidationAuthError(
+                message="Invalid seller order status transition",
+                details={
+                    "current_status": current_status,
+                    "next_status": next_status,
+                    "allowed_next": sorted(allowed_next),
+                },
+            )
+
+    def _order_out(self, order: Order) -> OrderOut:
+        items = self.repo.list_order_items(order_id=order.id)
+        payments = self.repo.list_order_payments(order_id=order.id)
+        history = self.repo.list_order_status_history(order_id=order.id)
+
+        return OrderOut(
+            id=order.id,
+            order_number=order.order_number,
+            buyer_user_id=order.buyer_user_id,
+            store_id=order.store_id,
+            status=order.status,
+            payment_status=order.payment_status,
+            currency=order.currency,
+            subtotal_amount=order.subtotal_amount,
+            discount_amount=order.discount_amount,
+            shipping_amount=order.shipping_amount,
+            total_amount=order.total_amount,
+            commission_percent=order.commission_percent,
+            commission_amount=order.commission_amount,
+            seller_amount=order.seller_amount,
+            buyer_note=order.buyer_note,
+            seller_note=order.seller_note,
+            admin_note=order.admin_note,
+            shipping_province_id=order.shipping_province_id,
+            shipping_county_id=order.shipping_county_id,
+            shipping_city_id=order.shipping_city_id,
+            shipping_address=order.shipping_address,
+            shipping_postal_code=order.shipping_postal_code,
+            shipping_phone=order.shipping_phone,
+            paid_at=order.paid_at.isoformat() if order.paid_at else None,
+            confirmed_at=order.confirmed_at.isoformat()
+            if order.confirmed_at
+            else None,
+            cancelled_at=order.cancelled_at.isoformat()
+            if order.cancelled_at
+            else None,
+            delivered_at=order.delivered_at.isoformat()
+            if order.delivered_at
+            else None,
+            created_at=order.created_at.isoformat(),
+            updated_at=order.updated_at.isoformat(),
+            items=[self._order_item_out(item) for item in items],
+            payments=[self._payment_out(payment) for payment in payments],
+            status_history=[self._history_out(row) for row in history],
+        )
+
+    def _order_item_out(self, item: OrderItem) -> OrderItemOut:
+        return OrderItemOut(
+            id=item.id,
+            order_id=item.order_id,
+            product_id=item.product_id,
+            store_id=item.store_id,
+            quantity=item.quantity,
+            unit_price=item.unit_price,
+            line_total=item.line_total,
+            product_name_snapshot=item.product_name_snapshot,
+            product_slug_snapshot=item.product_slug_snapshot,
+            product_sku_snapshot=item.product_sku_snapshot,
+            unit_snapshot=item.unit_snapshot,
+            created_at=item.created_at.isoformat(),
+        )
+
+    def _payment_out(self, payment: Payment) -> PaymentOut:
+        return PaymentOut(
+            id=payment.id,
+            order_id=payment.order_id,
+            user_id=payment.user_id,
+            method=payment.method,
+            status=payment.status,
+            amount=payment.amount,
+            currency=payment.currency,
+            provider=payment.provider,
+            provider_payment_id=payment.provider_payment_id,
+            provider_reference=payment.provider_reference,
+            paid_at=payment.paid_at.isoformat() if payment.paid_at else None,
+            failed_at=payment.failed_at.isoformat() if payment.failed_at else None,
+            cancelled_at=payment.cancelled_at.isoformat()
+            if payment.cancelled_at
+            else None,
+            created_at=payment.created_at.isoformat(),
+            updated_at=payment.updated_at.isoformat(),
+        )
+
+    def _history_out(self, row: OrderStatusHistory) -> OrderStatusHistoryOut:
+        return OrderStatusHistoryOut(
+            id=row.id,
+            order_id=row.order_id,
+            changed_by=row.changed_by,
+            from_status=row.from_status,
+            to_status=row.to_status,
+            note=row.note,
+            created_at=row.created_at.isoformat(),
+        )
 
 class PaymentService:
     def __init__(self, db: Session) -> None:
