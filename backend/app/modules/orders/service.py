@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
-from app.modules.orders.enums import CartStatus, OrderStatus
+from app.modules.orders.enums import CartStatus, OrderStatus, PaymentStatus
 from app.modules.orders.models import (
     Cart,
     CartItem,
@@ -25,6 +25,7 @@ from app.modules.orders.schemas import (
     CartOut,
     CheckoutIn,
     CheckoutOut,
+    MockPaymentFailIn,
     OrderItemOut,
     OrderOut,
     OrderStatusHistoryOut,
@@ -576,4 +577,180 @@ class CheckoutService:
             to_status=row.to_status,
             note=row.note,
             created_at=row.created_at.isoformat(),
+        )
+
+
+class PaymentService:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+        self.repo = OrderRepository(db)
+
+    def list_my_payments(
+        self,
+        *,
+        user: AuthUser,
+        status: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[PaymentOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if status is not None:
+            self._validate_payment_status(status)
+
+        items, total = self.repo.list_my_payments(
+            user_id=user.id,
+            status=status,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [self._payment_out(item) for item in items], total
+
+    def get_my_payment(
+        self,
+        *,
+        user: AuthUser,
+        payment_id: int,
+    ) -> PaymentOut:
+        payment = self.repo.get_my_payment_by_id(
+            user_id=user.id,
+            payment_id=payment_id,
+        )
+
+        if payment is None:
+            raise ValidationAuthError(
+                message="Payment not found",
+                details={"payment_id": payment_id},
+            )
+
+        return self._payment_out(payment)
+
+    def mock_pay(
+        self,
+        *,
+        user: AuthUser,
+        payment_id: int,
+    ) -> PaymentOut:
+        payment = self.repo.get_my_payment_by_id(
+            user_id=user.id,
+            payment_id=payment_id,
+        )
+
+        if payment is None:
+            raise ValidationAuthError(
+                message="Payment not found",
+                details={"payment_id": payment_id},
+            )
+
+        if payment.status != PaymentStatus.PENDING.value:
+            raise ValidationAuthError(
+                message="Payment cannot be paid in current status",
+                details={"current_status": payment.status},
+            )
+
+        order = self.repo.get_order_by_id(order_id=payment.order_id)
+        if order is None:
+            raise ValidationAuthError(
+                message="Order not found",
+                details={"order_id": payment.order_id},
+            )
+
+        now = datetime.utcnow()
+
+        payment.status = PaymentStatus.PAID.value
+        payment.paid_at = now
+        payment.provider_reference = f"MOCK-PAID-{payment.id}"
+
+        old_order_status = order.status
+        order.payment_status = PaymentStatus.PAID.value
+        order.status = OrderStatus.PAID.value
+        order.paid_at = now
+
+        self.repo.create_order_status_history(
+            order_id=order.id,
+            changed_by=user.id,
+            from_status=old_order_status,
+            to_status=OrderStatus.PAID.value,
+            note="Mock payment paid",
+        )
+
+        self.repo.commit()
+        self.repo.refresh(payment)
+
+        return self._payment_out(payment)
+
+    def mock_fail(
+        self,
+        *,
+        user: AuthUser,
+        payment_id: int,
+        payload: MockPaymentFailIn,
+    ) -> PaymentOut:
+        payment = self.repo.get_my_payment_by_id(
+            user_id=user.id,
+            payment_id=payment_id,
+        )
+
+        if payment is None:
+            raise ValidationAuthError(
+                message="Payment not found",
+                details={"payment_id": payment_id},
+            )
+
+        if payment.status != PaymentStatus.PENDING.value:
+            raise ValidationAuthError(
+                message="Payment cannot be failed in current status",
+                details={"current_status": payment.status},
+            )
+
+        order = self.repo.get_order_by_id(order_id=payment.order_id)
+        if order is None:
+            raise ValidationAuthError(
+                message="Order not found",
+                details={"order_id": payment.order_id},
+            )
+
+        now = datetime.utcnow()
+
+        payment.status = PaymentStatus.FAILED.value
+        payment.failed_at = now
+        payment.failure_reason = payload.reason or "Mock payment failed"
+
+        order.payment_status = PaymentStatus.FAILED.value
+
+        self.repo.commit()
+        self.repo.refresh(payment)
+
+        return self._payment_out(payment)
+
+    def _validate_payment_status(self, status: str) -> None:
+        allowed = {item.value for item in PaymentStatus}
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid payment status filter",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _payment_out(self, payment: Payment) -> PaymentOut:
+        return PaymentOut(
+            id=payment.id,
+            order_id=payment.order_id,
+            user_id=payment.user_id,
+            method=payment.method,
+            status=payment.status,
+            amount=payment.amount,
+            currency=payment.currency,
+            provider=payment.provider,
+            provider_payment_id=payment.provider_payment_id,
+            provider_reference=payment.provider_reference,
+            paid_at=payment.paid_at.isoformat() if payment.paid_at else None,
+            failed_at=payment.failed_at.isoformat() if payment.failed_at else None,
+            cancelled_at=payment.cancelled_at.isoformat()
+            if payment.cancelled_at
+            else None,
+            created_at=payment.created_at.isoformat(),
+            updated_at=payment.updated_at.isoformat(),
         )

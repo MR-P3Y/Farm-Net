@@ -160,3 +160,7 @@ class CheckoutOut(BaseModel):
     orders: list[OrderOut]
     orders_count: int
     total_amount: Decimal
+
+
+class MockPaymentFailIn(BaseModel):
+    reason: str | None = Field(default="Mock payment failed", max_length=2000)

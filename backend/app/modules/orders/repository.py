@@ -335,6 +335,55 @@ class OrderRepository:
             .all()
         )
 
+    def list_my_payments(
+        self,
+        *,
+        user_id: int,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[Payment], int]:
+        query = self.db.query(Payment).filter(Payment.user_id == user_id)
+
+        if status:
+            query = query.filter(Payment.status == status)
+
+        total = query.count()
+
+        items = (
+            query.order_by(Payment.created_at.desc(), Payment.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
+    def get_my_payment_by_id(
+        self,
+        *,
+        user_id: int,
+        payment_id: int,
+    ) -> Payment | None:
+        return (
+            self.db.query(Payment)
+            .filter(
+                Payment.id == payment_id,
+                Payment.user_id == user_id,
+            )
+            .one_or_none()
+        )
+
+    def get_order_by_id(self, *, order_id: int) -> Order | None:
+        return (
+            self.db.query(Order)
+            .filter(
+                Order.id == order_id,
+                Order.deleted_at.is_(None),
+            )
+            .one_or_none()
+        )
+
     def commit(self) -> None:
         self.db.commit()
 
