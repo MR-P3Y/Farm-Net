@@ -10,6 +10,7 @@ from app.modules.geo import models as geo_models  # noqa: F401
 from app.modules.profiles import models as profile_models  # noqa: F401
 from app.modules.stores import models as store_models  # noqa: F401
 from app.modules.products import models as product_models  # noqa: F401
+from app.modules.orders import models as order_models  # noqa: F401
 
 
 config = context.config
