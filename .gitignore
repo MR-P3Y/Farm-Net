@@ -48,7 +48,6 @@ Thumbs.db
 # Storage / Uploads
 storage/
 uploads/
-media/
 /storage/documents/
 /backend/storage/documents/
 /uploads/documents/
