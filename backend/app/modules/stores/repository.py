@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 
+from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
+from app.modules.media.models import MediaFile
 from app.modules.auth.models import AuthUser
 from app.modules.geo.models import (
     GeoCity,
@@ -144,6 +146,49 @@ class StoreRepository:
                 Store.status == "approved",
                 Store.deleted_at.is_(None),
             )
+            .one_or_none()
+        )
+
+    def get_active_store_logo_media(
+        self,
+        *,
+        file_key: str,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(
+                MediaFile.file_key == file_key,
+                MediaFile.purpose == MediaPurpose.STORE_LOGO.value,
+                MediaFile.visibility == MediaVisibility.PUBLIC.value,
+                MediaFile.status == MediaStatus.ACTIVE.value,
+            )
+            .one_or_none()
+        )
+
+    def get_active_store_banner_media(
+        self,
+        *,
+        file_key: str,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(
+                MediaFile.file_key == file_key,
+                MediaFile.purpose == MediaPurpose.STORE_BANNER.value,
+                MediaFile.visibility == MediaVisibility.PUBLIC.value,
+                MediaFile.status == MediaStatus.ACTIVE.value,
+            )
+            .one_or_none()
+        )
+
+    def get_media_by_id(
+        self,
+        *,
+        media_file_id: int,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(MediaFile.id == media_file_id)
             .one_or_none()
         )
 

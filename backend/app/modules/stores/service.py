@@ -230,6 +230,32 @@ class StoreService:
         if payload.banner_file_id is not None:
             store.banner_file_id = payload.banner_file_id
 
+        if payload.logo_media_file_key:
+            logo = self.repo.get_active_store_logo_media(
+                file_key=payload.logo_media_file_key,
+            )
+
+            if logo is None or logo.owner_user_id != user.id:
+                raise ValidationAuthError(
+                    message="Store logo media file not found",
+                    details={"logo_media_file_key": payload.logo_media_file_key},
+                )
+
+            store.logo_media_file_id = logo.id
+
+        if payload.banner_media_file_key:
+            banner = self.repo.get_active_store_banner_media(
+                file_key=payload.banner_media_file_key,
+            )
+
+            if banner is None or banner.owner_user_id != user.id:
+                raise ValidationAuthError(
+                    message="Store banner media file not found",
+                    details={"banner_media_file_key": payload.banner_media_file_key},
+                )
+
+            store.banner_media_file_id = banner.id
+
         try:
             self.repo.commit()
         except IntegrityError as exc:
@@ -682,6 +708,19 @@ class StoreService:
                 )
 
     def _store_out(self, store: Store) -> StoreOut:
+        logo_media = (
+            self.repo.get_media_by_id(media_file_id=store.logo_media_file_id)
+            if store.logo_media_file_id
+            else None
+        )
+        banner_media = (
+            self.repo.get_media_by_id(media_file_id=store.banner_media_file_id)
+            if store.banner_media_file_id
+            else None
+        )
+        logo_file_key = logo_media.file_key if logo_media else None
+        banner_file_key = banner_media.file_key if banner_media else None
+
         return StoreOut(
             id=store.id,
             owner_user_id=store.owner_user_id,
@@ -703,6 +742,12 @@ class StoreService:
             longitude=store.longitude,
             logo_file_id=store.logo_file_id,
             banner_file_id=store.banner_file_id,
+            logo_media_file_id=store.logo_media_file_id,
+            logo_file_key=logo_file_key,
+            logo_url=self._media_public_url(file_key=logo_file_key),
+            banner_media_file_id=store.banner_media_file_id,
+            banner_file_key=banner_file_key,
+            banner_url=self._media_public_url(file_key=banner_file_key),
             admin_note=store.admin_note,
             approved_at=store.approved_at.isoformat() if store.approved_at else None,
             approved_by=store.approved_by,
@@ -711,6 +756,11 @@ class StoreService:
             created_at=store.created_at.isoformat(),
             updated_at=store.updated_at.isoformat(),
         )
+
+    def _media_public_url(self, *, file_key: str | None) -> str | None:
+        if not file_key:
+            return None
+        return f"/api/v1/media/public/{file_key}"
 
     def _history_out(self, row: StoreStatusHistory) -> StoreStatusHistoryOut:
         return StoreStatusHistoryOut(

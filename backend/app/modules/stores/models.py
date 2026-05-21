@@ -99,6 +99,18 @@ class Store(Base):
 
     logo_file_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     banner_file_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    logo_media_file_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("media_files.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    banner_media_file_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("media_files.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     admin_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
