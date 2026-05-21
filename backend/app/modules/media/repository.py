@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.modules.media.enums import MediaStatus
+from app.modules.media.enums import MediaStatus, MediaVisibility
 from app.modules.media.models import MediaFile
 
 
@@ -107,6 +107,28 @@ class MediaRepository:
             .filter(
                 MediaFile.file_key == file_key,
                 MediaFile.owner_user_id == owner_user_id,
+                MediaFile.status == MediaStatus.ACTIVE.value,
+            )
+            .one_or_none()
+        )
+
+    def get_active_public_by_file_key(self, *, file_key: str) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(
+                MediaFile.file_key == file_key,
+                MediaFile.visibility == MediaVisibility.PUBLIC.value,
+                MediaFile.status == MediaStatus.ACTIVE.value,
+            )
+            .one_or_none()
+        )
+
+    def get_active_private_by_file_key(self, *, file_key: str) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(
+                MediaFile.file_key == file_key,
+                MediaFile.visibility == MediaVisibility.PRIVATE.value,
                 MediaFile.status == MediaStatus.ACTIVE.value,
             )
             .one_or_none()

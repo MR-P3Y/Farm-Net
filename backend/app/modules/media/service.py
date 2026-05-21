@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -139,6 +141,60 @@ class MediaService:
         self.repo.refresh(row)
 
         return self._media_out(row)
+
+    def get_public_media_file_path(
+        self,
+        *,
+        file_key: str,
+    ) -> tuple[MediaFile, Path]:
+        row = self.repo.get_active_public_by_file_key(file_key=file_key)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Public media file not found",
+                details={"file_key": file_key},
+            )
+
+        path = self.storage.absolute_path(relative_path=row.relative_path)
+
+        if not path.exists() or not path.is_file():
+            raise ValidationAuthError(
+                message="Media physical file not found",
+                details={"file_key": file_key},
+            )
+
+        return row, path
+
+    def get_private_media_file_path(
+        self,
+        *,
+        user: AuthUser,
+        file_key: str,
+        is_admin: bool = False,
+    ) -> tuple[MediaFile, Path]:
+        row = self.repo.get_active_private_by_file_key(file_key=file_key)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Private media file not found",
+                details={"file_key": file_key},
+            )
+
+        if not is_admin and row.owner_user_id != user.id:
+            raise ValidationAuthError(
+                message="Media file not found",
+                details={"file_key": file_key},
+            )
+
+        path = self.storage.absolute_path(relative_path=row.relative_path)
+
+        if not path.exists() or not path.is_file():
+            raise ValidationAuthError(
+                message="Media physical file not found",
+                details={"file_key": file_key},
+            )
+
+        return row, path
 
     def _validate_purpose(self, purpose: str) -> None:
         allowed = {item.value for item in MediaPurpose}
