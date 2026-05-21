@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 from sqlalchemy.exc import IntegrityError
@@ -8,7 +9,11 @@ from app.modules.auth.models import AuthUser
 from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
 from app.modules.media.models import MediaFile
 from app.modules.media.repository import MediaRepository
-from app.modules.media.schemas import MediaFileOut, MediaUploadMetaIn
+from app.modules.media.schemas import (
+    AdminMediaStatusUpdateIn,
+    MediaFileOut,
+    MediaUploadMetaIn,
+)
 from app.modules.media.storage import LocalMediaStorage, get_local_media_storage
 
 
@@ -196,6 +201,85 @@ class MediaService:
 
         return row, path
 
+    def list_admin_media(
+        self,
+        *,
+        purpose: str | None,
+        visibility: str | None,
+        status: str | None,
+        owner_user_id: int | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[MediaFileOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if purpose is not None:
+            self._validate_purpose(purpose)
+
+        if visibility is not None:
+            self._validate_visibility(visibility)
+
+        if status is not None:
+            self._validate_status(status)
+
+        rows, total = self.repo.list_admin_media(
+            purpose=purpose,
+            visibility=visibility,
+            status=status,
+            owner_user_id=owner_user_id,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [self._media_out(row) for row in rows], total
+
+    def get_admin_media(
+        self,
+        *,
+        file_key: str,
+    ) -> MediaFileOut:
+        row = self.repo.get_by_file_key_any_status(file_key=file_key)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Media file not found",
+                details={"file_key": file_key},
+            )
+
+        return self._media_out(row)
+
+    def update_admin_media_status(
+        self,
+        *,
+        file_key: str,
+        payload: AdminMediaStatusUpdateIn,
+    ) -> MediaFileOut:
+        row = self.repo.get_by_file_key_any_status(file_key=file_key)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Media file not found",
+                details={"file_key": file_key},
+            )
+
+        self._validate_status(payload.status)
+
+        row.status = payload.status
+
+        if payload.description is not None:
+            row.description = payload.description
+
+        if payload.status == MediaStatus.DELETED.value:
+            row.deleted_at = datetime.utcnow()
+        else:
+            row.deleted_at = None
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return self._media_out(row)
+
     def _validate_purpose(self, purpose: str) -> None:
         allowed = {item.value for item in MediaPurpose}
 
@@ -211,6 +295,15 @@ class MediaService:
         if visibility not in allowed:
             raise ValidationAuthError(
                 message="Invalid media visibility",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_status(self, status: str) -> None:
+        allowed = {item.value for item in MediaStatus}
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid media status",
                 details={"allowed": sorted(allowed)},
             )
 

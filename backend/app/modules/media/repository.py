@@ -61,6 +61,13 @@ class MediaRepository:
             .one_or_none()
         )
 
+    def get_by_file_key_any_status(self, *, file_key: str) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(MediaFile.file_key == file_key)
+            .one_or_none()
+        )
+
     def get_by_id(self, *, media_id: int) -> MediaFile | None:
         return self.db.query(MediaFile).filter(MediaFile.id == media_id).one_or_none()
 
@@ -84,6 +91,41 @@ class MediaRepository:
 
         if visibility:
             query = query.filter(MediaFile.visibility == visibility)
+
+        total = query.count()
+
+        items = (
+            query.order_by(MediaFile.created_at.desc(), MediaFile.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return items, total
+
+    def list_admin_media(
+        self,
+        *,
+        purpose: str | None = None,
+        visibility: str | None = None,
+        status: str | None = None,
+        owner_user_id: int | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[MediaFile], int]:
+        query = self.db.query(MediaFile)
+
+        if purpose:
+            query = query.filter(MediaFile.purpose == purpose)
+
+        if visibility:
+            query = query.filter(MediaFile.visibility == visibility)
+
+        if status:
+            query = query.filter(MediaFile.status == status)
+
+        if owner_user_id:
+            query = query.filter(MediaFile.owner_user_id == owner_user_id)
 
         total = query.count()
 
