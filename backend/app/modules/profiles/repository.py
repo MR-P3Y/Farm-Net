@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 
+from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
+from app.modules.media.models import MediaFile
 from app.modules.geo.models import (
     GeoCity,
     GeoCounty,
@@ -103,6 +105,7 @@ class ProfileRepository:
         file_name: str,
         mime_type: str | None,
         size_bytes: int | None,
+        media_file_id: int | None,
         status: str,
     ) -> UserDocument:
         document = UserDocument(
@@ -112,11 +115,55 @@ class ProfileRepository:
             file_name=file_name,
             mime_type=mime_type,
             size_bytes=size_bytes,
+            media_file_id=media_file_id,
             status=status,
         )
         self.db.add(document)
         self.db.flush()
         return document
+
+    def get_active_profile_document_media(
+        self,
+        *,
+        file_key: str,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(
+                MediaFile.file_key == file_key,
+                MediaFile.purpose == MediaPurpose.PROFILE_DOCUMENT.value,
+                MediaFile.visibility == MediaVisibility.PRIVATE.value,
+                MediaFile.status == MediaStatus.ACTIVE.value,
+            )
+            .one_or_none()
+        )
+
+    def get_active_verification_document_media(
+        self,
+        *,
+        file_key: str,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(
+                MediaFile.file_key == file_key,
+                MediaFile.purpose == MediaPurpose.VERIFICATION_DOCUMENT.value,
+                MediaFile.visibility == MediaVisibility.PRIVATE.value,
+                MediaFile.status == MediaStatus.ACTIVE.value,
+            )
+            .one_or_none()
+        )
+
+    def get_media_by_id(
+        self,
+        *,
+        media_file_id: int,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(MediaFile.id == media_file_id)
+            .one_or_none()
+        )
 
     def list_user_documents(self, *, user_id: int) -> list[UserDocument]:
         return (

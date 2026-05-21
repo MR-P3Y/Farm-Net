@@ -215,13 +215,7 @@ class AdminVerificationService:
             created_at=request.created_at,
             updated_at=request.updated_at,
             documents=[
-                AdminVerificationDocumentOut(
-                    id=link.id,
-                    document_id=link.document.id,
-                    document_type=link.document.document_type,
-                    file_name=link.document.file_name,
-                    status=link.document.status,
-                )
+                self._document_out(link)
                 for link in request.documents
                 if link.document.deleted_at is None
             ],
@@ -236,3 +230,33 @@ class AdminVerificationService:
                 for review in request.reviews
             ],
         )
+
+    def _document_out(self, link) -> AdminVerificationDocumentOut:
+        media = (
+            self.profile_repo.get_media_by_id(media_file_id=link.document.media_file_id)
+            if link.document.media_file_id
+            else None
+        )
+        file_key = media.file_key if media else None
+
+        return AdminVerificationDocumentOut(
+            id=link.id,
+            document_id=link.document.id,
+            document_type=link.document.document_type,
+            file_name=link.document.file_name,
+            media_file_id=link.document.media_file_id,
+            file_key=file_key,
+            private_url=self._private_media_url(file_key=file_key),
+            admin_private_url=self._admin_private_media_url(file_key=file_key),
+            status=link.document.status,
+        )
+
+    def _private_media_url(self, *, file_key: str | None) -> str | None:
+        if not file_key:
+            return None
+        return f"/api/v1/media/private/{file_key}"
+
+    def _admin_private_media_url(self, *, file_key: str | None) -> str | None:
+        if not file_key:
+            return None
+        return f"/api/v1/admin/media/private/{file_key}"

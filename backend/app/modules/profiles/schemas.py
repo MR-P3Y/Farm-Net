@@ -75,16 +75,18 @@ class ProfileUpdateIn(BaseModel):
 
 class DocumentCreateIn(BaseModel):
     document_type: str = Field(max_length=80)
-    file_path: str = Field(min_length=1, max_length=500)
-    file_name: str = Field(min_length=1, max_length=255)
+    file_path: str | None = Field(default=None, min_length=1, max_length=500)
+    file_name: str | None = Field(default=None, min_length=1, max_length=255)
     mime_type: str | None = Field(default=None, max_length=150)
     size_bytes: int | None = Field(default=None, ge=1)
+    media_file_key: str | None = Field(default=None, max_length=80)
 
     @field_validator(
         "document_type",
         "file_path",
         "file_name",
         "mime_type",
+        "media_file_key",
         mode="before",
     )
     @classmethod
@@ -103,6 +105,10 @@ class DocumentOut(BaseModel):
     file_name: str
     mime_type: str | None = None
     size_bytes: int | None = None
+    media_file_id: int | None = None
+    file_key: str | None = None
+    private_url: str | None = None
+    admin_private_url: str | None = None
     status: str
     uploaded_at: datetime
     reviewed_at: datetime | None = None
@@ -146,6 +152,10 @@ class VerificationDocumentOut(BaseModel):
     document_id: int
     document_type: str
     file_name: str
+    media_file_id: int | None = None
+    file_key: str | None = None
+    private_url: str | None = None
+    admin_private_url: str | None = None
     status: str
 
 

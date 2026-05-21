@@ -102,13 +102,54 @@ class ProfileService:
     ) -> DocumentOut:
         self._validate_document_payload(payload)
 
+        media_file_id = None
+        media_file_path = None
+        media_file_name = None
+        media_mime_type = None
+        media_size_bytes = None
+
+        if payload.media_file_key:
+            media = self.repo.get_active_verification_document_media(
+                file_key=payload.media_file_key,
+            )
+
+            if media is None or media.owner_user_id != user.id:
+                raise ValidationAuthError(
+                    message="Verification document media file not found",
+                    details={"media_file_key": payload.media_file_key},
+                )
+
+            media_file_id = media.id
+            media_file_path = media.relative_path
+            media_file_name = media.original_filename
+            media_mime_type = media.mime_type
+            media_size_bytes = media.size_bytes
+
+        file_path = payload.file_path or media_file_path
+        file_name = payload.file_name or media_file_name
+        mime_type = payload.mime_type or media_mime_type
+        size_bytes = payload.size_bytes or media_size_bytes
+
+        if not file_path:
+            raise ValidationAuthError(
+                message="Document file_path is required",
+                details={"field": "file_path"},
+            )
+
+        if not file_name:
+            raise ValidationAuthError(
+                message="Document file_name is required",
+                details={"field": "file_name"},
+            )
+
         document = self.repo.create_document(
             user_id=user.id,
             document_type=payload.document_type,
-            file_path=payload.file_path,
-            file_name=payload.file_name,
-            mime_type=payload.mime_type,
-            size_bytes=payload.size_bytes,
+            file_path=file_path,
+            file_name=file_name,
+            mime_type=mime_type,
+            size_bytes=size_bytes,
+            media_file_id=media_file_id,
             status=DocumentStatus.PENDING.value,
         )
 
@@ -607,20 +648,29 @@ class ProfileService:
                 details={"allowed": sorted(allowed_document_types)},
             )
 
-        if payload.mime_type is not None:
-            if not (
-                payload.mime_type.startswith("image/")
-                or payload.mime_type == "application/pdf"
-            ):
-                raise ValidationAuthError(
-                    message="Invalid mime_type",
-                    details={"allowed": ["image/*", "application/pdf"]},
-                )
+        self._validate_document_file_metadata(
+            mime_type=payload.mime_type,
+            size_bytes=payload.size_bytes,
+        )
 
-        if payload.size_bytes is not None:
+    def _validate_document_file_metadata(
+        self,
+        *,
+        mime_type: str | None,
+        size_bytes: int | None,
+    ) -> None:
+        if mime_type is not None and not (
+            mime_type.startswith("image/") or mime_type == "application/pdf"
+        ):
+            raise ValidationAuthError(
+                message="Invalid mime_type",
+                details={"allowed": ["image/*", "application/pdf"]},
+            )
+
+        if size_bytes is not None:
             max_size = 15 * 1024 * 1024
 
-            if payload.size_bytes > max_size:
+            if size_bytes > max_size:
                 raise ValidationAuthError(
                     message="Document file is too large",
                     details={"max_size_bytes": max_size},
@@ -668,6 +718,13 @@ class ProfileService:
         return has_name and has_location and has_address
 
     def _document_out(self, document: UserDocument) -> DocumentOut:
+        media = (
+            self.repo.get_media_by_id(media_file_id=document.media_file_id)
+            if document.media_file_id
+            else None
+        )
+        file_key = media.file_key if media else None
+
         return DocumentOut(
             id=document.id,
             user_id=document.user_id,
@@ -676,6 +733,10 @@ class ProfileService:
             file_name=document.file_name,
             mime_type=document.mime_type,
             size_bytes=document.size_bytes,
+            media_file_id=document.media_file_id,
+            file_key=file_key,
+            private_url=self._private_media_url(file_key=file_key),
+            admin_private_url=self._admin_private_media_url(file_key=file_key),
             status=document.status,
             uploaded_at=document.uploaded_at,
             reviewed_at=document.reviewed_at,
@@ -684,6 +745,36 @@ class ProfileService:
             created_at=document.created_at,
             updated_at=document.updated_at,
         )
+
+    def _verification_document_out(self, link) -> VerificationDocumentOut:
+        media = (
+            self.repo.get_media_by_id(media_file_id=link.document.media_file_id)
+            if link.document.media_file_id
+            else None
+        )
+        file_key = media.file_key if media else None
+
+        return VerificationDocumentOut(
+            id=link.id,
+            document_id=link.document.id,
+            document_type=link.document.document_type,
+            file_name=link.document.file_name,
+            media_file_id=link.document.media_file_id,
+            file_key=file_key,
+            private_url=self._private_media_url(file_key=file_key),
+            admin_private_url=self._admin_private_media_url(file_key=file_key),
+            status=link.document.status,
+        )
+
+    def _private_media_url(self, *, file_key: str | None) -> str | None:
+        if not file_key:
+            return None
+        return f"/api/v1/media/private/{file_key}"
+
+    def _admin_private_media_url(self, *, file_key: str | None) -> str | None:
+        if not file_key:
+            return None
+        return f"/api/v1/admin/media/private/{file_key}"
 
     def _verification_request_out(self, request) -> VerificationRequestOut:
         return VerificationRequestOut(
@@ -699,13 +790,7 @@ class ProfileService:
             created_at=request.created_at,
             updated_at=request.updated_at,
             documents=[
-                VerificationDocumentOut(
-                    id=link.id,
-                    document_id=link.document.id,
-                    document_type=link.document.document_type,
-                    file_name=link.document.file_name,
-                    status=link.document.status,
-                )
+                self._verification_document_out(link)
                 for link in request.documents
                 if link.document.deleted_at is None
             ],
