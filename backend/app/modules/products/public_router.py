@@ -162,7 +162,7 @@ def _public_product_out(
     product: StoreProduct,
 ) -> PublicProductOut:
     images = repo.list_product_images(product_id=product.id)
-    image_outputs = [_public_image_out(image) for image in images]
+    image_outputs = [_public_image_out(repo, image) for image in images]
 
     primary_image = next((item for item in image_outputs if item.is_primary), None)
     category = product.category if product.category else None
@@ -195,12 +195,31 @@ def _public_product_out(
     )
 
 
-def _public_image_out(image: ProductImage) -> PublicProductImageOut:
+def _public_image_out(
+    repo: ProductRepository,
+    image: ProductImage,
+) -> PublicProductImageOut:
+    media = (
+        repo.get_media_by_id(media_file_id=image.media_file_id)
+        if image.media_file_id
+        else None
+    )
+    file_key = media.file_key if media else None
+
     return PublicProductImageOut(
         id=image.id,
         file_id=image.file_id,
+        media_file_id=image.media_file_id,
+        file_key=file_key,
+        public_url=_media_public_url(file_key=file_key),
         file_path=image.file_path,
         alt_text=image.alt_text,
         sort_order=image.sort_order,
         is_primary=image.is_primary,
     )
+
+
+def _media_public_url(*, file_key: str | None) -> str | None:
+    if not file_key:
+        return None
+    return f"/api/v1/media/public/{file_key}"

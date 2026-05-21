@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 
+from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
+from app.modules.media.models import MediaFile
 from app.modules.products.models import (
     ProductCategory,
     ProductImage,
@@ -405,11 +407,35 @@ class ProductRepository:
             .all()
         )
 
+    def get_active_product_image_media(
+        self,
+        *,
+        file_key: str,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(
+                MediaFile.file_key == file_key,
+                MediaFile.purpose == MediaPurpose.PRODUCT_IMAGE.value,
+                MediaFile.visibility == MediaVisibility.PUBLIC.value,
+                MediaFile.status == MediaStatus.ACTIVE.value,
+            )
+            .one_or_none()
+        )
+
+    def get_media_by_id(self, *, media_file_id: int) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(MediaFile.id == media_file_id)
+            .one_or_none()
+        )
+
     def create_product_image(
         self,
         *,
         product_id: int,
         file_id: str | None,
+        media_file_id: int | None,
         file_path: str,
         alt_text: str | None,
         sort_order: int,
@@ -418,6 +444,7 @@ class ProductRepository:
         image = ProductImage(
             product_id=product_id,
             file_id=file_id,
+            media_file_id=media_file_id,
             file_path=file_path,
             alt_text=alt_text,
             sort_order=sort_order,

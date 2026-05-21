@@ -381,15 +381,36 @@ class ProductService:
         product = self._get_store_product(store_id=store.id, product_id=product_id)
         self._ensure_product_images_editable(product)
 
+        media_file_id = None
+        media_file_path = None
+
+        if payload.media_file_key:
+            media = self.repo.get_active_product_image_media(
+                file_key=payload.media_file_key,
+            )
+
+            if media is None or media.owner_user_id != user.id:
+                raise ValidationAuthError(
+                    message="Product image media file not found",
+                    details={"media_file_key": payload.media_file_key},
+                )
+
+            media_file_id = media.id
+            media_file_path = media.relative_path
+
+        file_path = payload.file_path or media_file_path
+
         self._validate_image_payload(
-            file_path=payload.file_path,
+            file_path=file_path,
+            media_file_key=payload.media_file_key,
             sort_order=payload.sort_order,
         )
 
         image = self.repo.create_product_image(
             product_id=product.id,
-            file_id=payload.file_id,
-            file_path=payload.file_path,
+            file_id=payload.file_id or payload.media_file_key,
+            media_file_id=media_file_id,
+            file_path=file_path,
             alt_text=payload.alt_text,
             sort_order=payload.sort_order,
             is_primary=payload.is_primary,
@@ -699,10 +720,17 @@ class ProductService:
     def _validate_image_payload(
         self,
         *,
-        file_path: str,
+        file_path: str | None,
+        media_file_key: str | None = None,
         sort_order: int,
     ) -> None:
-        if not file_path or len(file_path.strip()) < 3:
+        if not file_path and not media_file_key:
+            raise ValidationAuthError(
+                message="Invalid product image file_path",
+                details={"field": "file_path"},
+            )
+
+        if file_path is not None and len(file_path.strip()) < 3:
             raise ValidationAuthError(
                 message="Invalid product image file_path",
                 details={"field": "file_path"},
@@ -755,10 +783,20 @@ class ProductService:
         )
 
     def _image_out(self, image: ProductImage) -> ProductImageOut:
+        media = (
+            self.repo.get_media_by_id(media_file_id=image.media_file_id)
+            if image.media_file_id
+            else None
+        )
+        file_key = media.file_key if media else None
+
         return ProductImageOut(
             id=image.id,
             product_id=image.product_id,
             file_id=image.file_id,
+            media_file_id=image.media_file_id,
+            file_key=file_key,
+            public_url=self._media_public_url(file_key=file_key),
             file_path=image.file_path,
             alt_text=image.alt_text,
             sort_order=image.sort_order,
@@ -766,3 +804,8 @@ class ProductService:
             created_at=image.created_at.isoformat(),
             updated_at=image.updated_at.isoformat(),
         )
+
+    def _media_public_url(self, *, file_key: str | None) -> str | None:
+        if not file_key:
+            return None
+        return f"/api/v1/media/public/{file_key}"

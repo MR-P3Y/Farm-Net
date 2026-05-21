@@ -173,6 +173,12 @@ class ProductImage(Base):
     )
 
     file_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    media_file_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("media_files.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     file_path: Mapped[str] = mapped_column(String(1000), nullable=False)
     alt_text: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
