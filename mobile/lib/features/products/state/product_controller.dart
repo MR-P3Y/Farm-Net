@@ -198,6 +198,36 @@ class ProductController extends StateNotifier<ProductState> {
     );
   }
 
+  Future<bool> createProductImage({
+    required int storeId,
+    required int productId,
+    required ProductImageCreateInput input,
+  }) async {
+    state = state.copyWith(isSaving: true, clearError: true);
+
+    try {
+      await _repository.createProductImage(
+        storeId: storeId,
+        productId: productId,
+        input: input,
+      );
+      state = state.copyWith(isSaving: false);
+      return true;
+    } on ProductApiException catch (error) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: error.error.message,
+      );
+      return false;
+    } catch (_) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: 'خطا در ثبت تصویر محصول',
+      );
+      return false;
+    }
+  }
+
   Future<bool> _changeProductStatus({
     required int storeId,
     required int productId,

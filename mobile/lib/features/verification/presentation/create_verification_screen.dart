@@ -5,6 +5,7 @@ import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_button.dart';
 import '../../../core/widgets/farm_text_field.dart';
 import '../../documents/data/document_models.dart';
+import '../../media/presentation/media_upload_button.dart';
 import '../data/verification_models.dart';
 import '../state/verification_controller.dart';
 
@@ -20,6 +21,7 @@ class _CreateVerificationScreenState
     extends ConsumerState<CreateVerificationScreen> {
   String _targetRole = 'consultant';
   String _documentType = 'national_card';
+  String? _documentMediaFileKey;
 
   final _requestNoteController = TextEditingController(
     text: 'درخواست تأیید نقش در فارم نت',
@@ -53,6 +55,7 @@ class _CreateVerificationScreenState
             fileName: _fileNameController.text.trim(),
             mimeType: _mimeTypeController.text.trim(),
             sizeBytes: size,
+            mediaFileKey: _documentMediaFileKey,
           ),
           verificationInput: VerificationCreateInput(
             targetRole: _targetRole,
@@ -185,6 +188,34 @@ class _CreateVerificationScreenState
                             setState(() => _documentType = value);
                           },
                         ),
+                        SizedBox(height: r.v(12)),
+                        MediaUploadButton(
+                          label: 'آپلود مدرک',
+                          purpose: 'verification_document',
+                          visibility: 'private',
+                          allowedExtensions: const [
+                            'pdf',
+                            'jpg',
+                            'jpeg',
+                            'png',
+                            'webp',
+                          ],
+                          onUploaded: (media) {
+                            setState(() {
+                              _documentMediaFileKey = media.fileKey;
+                              _fileNameController.text = media.originalFilename;
+                              _mimeTypeController.text = media.mimeType;
+                              _sizeBytesController.text =
+                                  media.sizeBytes.toString();
+                              _filePathController.text =
+                                  media.privateUrl ?? media.relativePath;
+                            });
+                          },
+                        ),
+                        if (_documentMediaFileKey != null) ...[
+                          SizedBox(height: r.v(8)),
+                          const Text('مدرک آپلود شد.'),
+                        ],
                         SizedBox(height: r.v(12)),
                         FarmTextField(
                           controller: _filePathController,

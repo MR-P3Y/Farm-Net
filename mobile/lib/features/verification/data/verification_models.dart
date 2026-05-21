@@ -5,12 +5,20 @@ class VerificationDocument {
     required this.documentType,
     required this.fileName,
     required this.status,
+    this.mediaFileId,
+    this.fileKey,
+    this.privateUrl,
+    this.adminPrivateUrl,
   });
 
   final int id;
   final int documentId;
   final String documentType;
   final String fileName;
+  final int? mediaFileId;
+  final String? fileKey;
+  final String? privateUrl;
+  final String? adminPrivateUrl;
   final String status;
 
   factory VerificationDocument.fromJson(Map<String, dynamic> json) {
@@ -19,6 +27,13 @@ class VerificationDocument {
       documentId: (json['document_id'] as num).toInt(),
       documentType: json['document_type']?.toString() ?? '',
       fileName: json['file_name']?.toString() ?? '',
+      mediaFileId:
+          json['media_file_id'] == null
+              ? null
+              : (json['media_file_id'] as num).toInt(),
+      fileKey: json['file_key']?.toString(),
+      privateUrl: json['private_url']?.toString(),
+      adminPrivateUrl: json['admin_private_url']?.toString(),
       status: json['status']?.toString() ?? '',
     );
   }

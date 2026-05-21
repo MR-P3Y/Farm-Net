@@ -194,6 +194,21 @@ class ProductApi {
     return Product.fromJson(json['data'] as Map<String, dynamic>);
   }
 
+  Future<ProductImage> createProductImage({
+    required int storeId,
+    required int productId,
+    required ProductImageCreateInput input,
+  }) async {
+    await _setStoredToken();
+
+    final json = await _post(
+      '/stores/$storeId/products/$productId/images',
+      data: input.toJson(),
+    );
+
+    return ProductImage.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
   Future<void> _setStoredToken() async {
     final token = await _tokenStorage.getAccessToken();
     _client.setToken(token);

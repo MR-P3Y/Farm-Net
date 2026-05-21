@@ -5,6 +5,7 @@ import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_button.dart';
 import '../../../core/widgets/farm_text_field.dart';
 import '../../geo/data/geo_models.dart';
+import '../../media/presentation/media_upload_button.dart';
 import '../../profile/state/profile_controller.dart';
 import '../data/store_models.dart';
 import '../state/store_controller.dart';
@@ -31,6 +32,8 @@ class _EditStoreScreenState extends ConsumerState<EditStoreScreen> {
   int? _provinceId;
   int? _countyId;
   int? _cityId;
+  String? _logoMediaFileKey;
+  String? _bannerMediaFileKey;
 
   bool _filled = false;
   bool _geoLoaded = false;
@@ -97,6 +100,8 @@ class _EditStoreScreenState extends ConsumerState<EditStoreScreen> {
     _provinceId = store.provinceId;
     _countyId = store.countyId;
     _cityId = store.cityId;
+    _logoMediaFileKey = store.logoFileKey;
+    _bannerMediaFileKey = store.bannerFileKey;
   }
 
   Future<void> _save() async {
@@ -118,6 +123,8 @@ class _EditStoreScreenState extends ConsumerState<EditStoreScreen> {
                 cityId: _cityId,
                 address: _addressController.text.trim(),
                 postalCode: _postalCodeController.text.trim(),
+                logoMediaFileKey: _logoMediaFileKey,
+                bannerMediaFileKey: _bannerMediaFileKey,
               ),
             )
             : await controller.updateStore(
@@ -134,10 +141,28 @@ class _EditStoreScreenState extends ConsumerState<EditStoreScreen> {
                 cityId: _cityId,
                 address: _addressController.text.trim(),
                 postalCode: _postalCodeController.text.trim(),
+                logoMediaFileKey: _logoMediaFileKey,
+                bannerMediaFileKey: _bannerMediaFileKey,
               ),
             );
 
     if (!ok || !mounted) return;
+
+    if (store == null &&
+        (_logoMediaFileKey != null || _bannerMediaFileKey != null)) {
+      final createdStore = ref.read(storeControllerProvider).myStore;
+      if (createdStore != null) {
+        final mediaOk = await controller.updateStore(
+          storeId: createdStore.id,
+          input: StoreUpdateInput(
+            logoMediaFileKey: _logoMediaFileKey,
+            bannerMediaFileKey: _bannerMediaFileKey,
+          ),
+        );
+
+        if (!mediaOk || !mounted) return;
+      }
+    }
 
     Navigator.pop(context);
   }
@@ -328,6 +353,48 @@ class _EditStoreScreenState extends ConsumerState<EditStoreScreen> {
                           label: 'کد پستی',
                           keyboardType: TextInputType.number,
                         ),
+                        SizedBox(height: r.v(16)),
+                        MediaUploadButton(
+                          label: 'آپلود لوگوی فروشگاه',
+                          purpose: 'store_logo',
+                          visibility: 'public',
+                          allowedExtensions: const [
+                            'jpg',
+                            'jpeg',
+                            'png',
+                            'webp',
+                          ],
+                          onUploaded: (media) {
+                            setState(() {
+                              _logoMediaFileKey = media.fileKey;
+                            });
+                          },
+                        ),
+                        if (_logoMediaFileKey != null) ...[
+                          SizedBox(height: r.v(8)),
+                          Text('لوگو آپلود شد: $_logoMediaFileKey'),
+                        ],
+                        SizedBox(height: r.v(12)),
+                        MediaUploadButton(
+                          label: 'آپلود بنر فروشگاه',
+                          purpose: 'store_banner',
+                          visibility: 'public',
+                          allowedExtensions: const [
+                            'jpg',
+                            'jpeg',
+                            'png',
+                            'webp',
+                          ],
+                          onUploaded: (media) {
+                            setState(() {
+                              _bannerMediaFileKey = media.fileKey;
+                            });
+                          },
+                        ),
+                        if (_bannerMediaFileKey != null) ...[
+                          SizedBox(height: r.v(8)),
+                          Text('بنر آپلود شد: $_bannerMediaFileKey'),
+                        ],
                         if (storeState.errorMessage != null) ...[
                           SizedBox(height: r.v(12)),
                           Text(

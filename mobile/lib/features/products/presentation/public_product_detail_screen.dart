@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../../orders/state/order_controller.dart';
 import '../data/product_models.dart';
@@ -68,6 +69,8 @@ class _PublicProductDetailScreenState
             return const Center(child: Text('محصول پیدا نشد.'));
           }
 
+          final imageUrl = absoluteApiUrl(product.primaryImage?.publicUrl);
+
           return SingleChildScrollView(
             padding: r.pagePadding(),
             child: Center(
@@ -79,7 +82,27 @@ class _PublicProductDetailScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(Icons.inventory_2_outlined, size: 56),
+                        if (imageUrl == null)
+                          const Icon(Icons.inventory_2_outlined, size: 56)
+                        else
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(r.s(16)),
+                            child: AspectRatio(
+                              aspectRatio: 16 / 9,
+                              child: Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.image_not_supported_outlined,
+                                      size: 56,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
                         SizedBox(height: r.v(12)),
                         Text(
                           product.name,
@@ -121,7 +144,10 @@ class _PublicProductDetailScreenState
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           SizedBox(height: r.v(8)),
-                          Text(product.primaryImage!.filePath),
+                          Text(
+                            product.primaryImage!.publicUrl ??
+                                product.primaryImage!.filePath,
+                          ),
                         ],
                         SizedBox(height: r.v(20)),
                         FilledButton.icon(
