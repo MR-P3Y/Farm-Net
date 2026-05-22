@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import uuid4
 
 from sqlalchemy.exc import IntegrityError
@@ -213,6 +214,90 @@ class NotificationService:
         self.repo.commit()
 
         return result
+
+    def create_event_and_notify_user(
+        self,
+        *,
+        event_type: str,
+        recipient_user_id: int,
+        title: str,
+        body: str,
+        actor_user_id: int | None = None,
+        source_type: str | None = None,
+        source_id: str | None = None,
+        payload_json: dict[str, Any] | None = None,
+        action_url: str | None = None,
+        priority: str = NotificationPriority.NORMAL.value,
+        commit: bool = True,
+    ) -> NotificationOut:
+        event = self.create_event(
+            payload=NotificationEventCreateIn(
+                event_type=event_type,
+                actor_user_id=actor_user_id,
+                source_type=source_type,
+                source_id=source_id,
+                payload_json=payload_json,
+            ),
+            commit=False,
+        )
+
+        notification = self.notify_user(
+            recipient_user_id=recipient_user_id,
+            title=title,
+            body=body,
+            event_id=event.id,
+            channel=NotificationChannel.IN_APP.value,
+            action_url=action_url,
+            priority=priority,
+            commit=False,
+        )
+
+        if commit:
+            self.repo.commit()
+
+        return notification
+
+    def create_event_and_notify_many(
+        self,
+        *,
+        event_type: str,
+        recipient_user_ids: list[int],
+        title: str,
+        body: str,
+        actor_user_id: int | None = None,
+        source_type: str | None = None,
+        source_id: str | None = None,
+        payload_json: dict[str, Any] | None = None,
+        action_url: str | None = None,
+        priority: str = NotificationPriority.NORMAL.value,
+        commit: bool = True,
+    ) -> list[NotificationOut]:
+        event = self.create_event(
+            payload=NotificationEventCreateIn(
+                event_type=event_type,
+                actor_user_id=actor_user_id,
+                source_type=source_type,
+                source_id=source_id,
+                payload_json=payload_json,
+            ),
+            commit=False,
+        )
+
+        notifications = self.notify_many(
+            recipient_user_ids=recipient_user_ids,
+            title=title,
+            body=body,
+            event_id=event.id,
+            channel=NotificationChannel.IN_APP.value,
+            action_url=action_url,
+            priority=priority,
+            commit=False,
+        )
+
+        if commit:
+            self.repo.commit()
+
+        return notifications
 
     def list_user_notifications(
         self,

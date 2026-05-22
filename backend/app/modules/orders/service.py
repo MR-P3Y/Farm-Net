@@ -36,7 +36,126 @@ from app.modules.orders.schemas import (
     PaymentOut,
     SellerOrderStatusUpdateIn,
 )
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.service import NotificationService
 from app.modules.products.models import StoreProduct
+
+
+def _notify_order_created(
+    *,
+    db: Session,
+    order: Order,
+) -> None:
+    NotificationService(db).create_event_and_notify_user(
+        event_type=NotificationEventType.ORDER_CREATED.value,
+        recipient_user_id=order.buyer_user_id,
+        title="Order created",
+        body=f"Order #{order.id} was created successfully.",
+        actor_user_id=order.buyer_user_id,
+        source_type="order",
+        source_id=str(order.id),
+        payload_json={
+            "order_id": order.id,
+            "status": order.status,
+            "total_amount": str(order.total_amount),
+        },
+        action_url=f"/orders/{order.id}",
+        priority="normal",
+        commit=False,
+    )
+
+
+def _notify_order_status_changed(
+    *,
+    db: Session,
+    order: Order,
+    old_status: str,
+    new_status: str,
+    actor_user_id: int | None,
+) -> None:
+    NotificationService(db).create_event_and_notify_user(
+        event_type=NotificationEventType.ORDER_STATUS_CHANGED.value,
+        recipient_user_id=order.buyer_user_id,
+        title="Order status changed",
+        body=f"Order #{order.id} status changed from {old_status} to {new_status}.",
+        actor_user_id=actor_user_id,
+        source_type="order",
+        source_id=str(order.id),
+        payload_json={
+            "order_id": order.id,
+            "old_status": old_status,
+            "new_status": new_status,
+        },
+        action_url=f"/orders/{order.id}",
+        priority="normal",
+        commit=False,
+    )
+
+
+def _notify_payment_created(
+    *,
+    db: Session,
+    payment: Payment,
+    order: Order,
+) -> None:
+    NotificationService(db).create_event_and_notify_user(
+        event_type=NotificationEventType.PAYMENT_CREATED.value,
+        recipient_user_id=order.buyer_user_id,
+        title="Payment created",
+        body=f"Payment for order #{order.id} was created.",
+        actor_user_id=order.buyer_user_id,
+        source_type="payment",
+        source_id=str(payment.id),
+        payload_json={
+            "payment_id": payment.id,
+            "order_id": order.id,
+            "status": payment.status,
+            "amount": str(payment.amount),
+        },
+        action_url=f"/orders/{order.id}",
+        priority="normal",
+        commit=False,
+    )
+
+
+def _notify_payment_status_changed(
+    *,
+    db: Session,
+    payment: Payment,
+    order: Order,
+    old_status: str,
+    new_status: str,
+    actor_user_id: int | None,
+) -> None:
+    succeeded = new_status == PaymentStatus.PAID.value
+    event_type = (
+        NotificationEventType.PAYMENT_SUCCEEDED.value
+        if succeeded
+        else NotificationEventType.PAYMENT_FAILED.value
+    )
+
+    NotificationService(db).create_event_and_notify_user(
+        event_type=event_type,
+        recipient_user_id=order.buyer_user_id,
+        title="Payment succeeded" if succeeded else "Payment failed",
+        body=(
+            f"Payment for order #{order.id} was completed successfully."
+            if succeeded
+            else f"Payment for order #{order.id} failed."
+        ),
+        actor_user_id=actor_user_id,
+        source_type="payment",
+        source_id=str(payment.id),
+        payload_json={
+            "payment_id": payment.id,
+            "order_id": order.id,
+            "old_status": old_status,
+            "new_status": new_status,
+        },
+        action_url=f"/orders/{order.id}",
+        priority="normal" if succeeded else "high",
+        commit=False,
+    )
 
 
 class CartService:
@@ -362,7 +481,7 @@ class CheckoutService:
                     cart_item=item,
                 )
 
-            self.repo.create_payment(
+            payment = self.repo.create_payment(
                 order_id=order.id,
                 user_id=user.id,
                 amount=total,
@@ -376,6 +495,9 @@ class CheckoutService:
                 to_status=OrderStatus.PENDING_PAYMENT.value,
                 note="Order created from cart checkout",
             )
+
+            _notify_order_created(db=self.db, order=order)
+            _notify_payment_created(db=self.db, payment=payment, order=order)
 
             orders.append(order)
 
@@ -687,6 +809,14 @@ class SellerOrderService:
             or f"Seller changed order status to {payload.status}",
         )
 
+        _notify_order_status_changed(
+            db=self.db,
+            order=order,
+            old_status=old_status,
+            new_status=payload.status,
+            actor_user_id=user.id,
+        )
+
         self.repo.commit()
         self.repo.refresh(order)
 
@@ -925,6 +1055,14 @@ class AdminOrderService:
             to_status=payload.status,
             note=payload.admin_note
             or f"Admin changed order status to {payload.status}",
+        )
+
+        _notify_order_status_changed(
+            db=self.db,
+            order=order,
+            old_status=old_status,
+            new_status=payload.status,
+            actor_user_id=user.id,
         )
 
         self.repo.commit()
@@ -1226,6 +1364,7 @@ class PaymentService:
 
         now = datetime.utcnow()
 
+        old_payment_status = payment.status
         payment.status = PaymentStatus.PAID.value
         payment.paid_at = now
         payment.provider_reference = f"MOCK-PAID-{payment.id}"
@@ -1241,6 +1380,22 @@ class PaymentService:
             from_status=old_order_status,
             to_status=OrderStatus.PAID.value,
             note="Mock payment paid",
+        )
+
+        _notify_payment_status_changed(
+            db=self.db,
+            payment=payment,
+            order=order,
+            old_status=old_payment_status,
+            new_status=PaymentStatus.PAID.value,
+            actor_user_id=user.id,
+        )
+        _notify_order_status_changed(
+            db=self.db,
+            order=order,
+            old_status=old_order_status,
+            new_status=OrderStatus.PAID.value,
+            actor_user_id=user.id,
         )
 
         self.repo.commit()
@@ -1281,11 +1436,21 @@ class PaymentService:
 
         now = datetime.utcnow()
 
+        old_payment_status = payment.status
         payment.status = PaymentStatus.FAILED.value
         payment.failed_at = now
         payment.failure_reason = payload.reason or "Mock payment failed"
 
         order.payment_status = PaymentStatus.FAILED.value
+
+        _notify_payment_status_changed(
+            db=self.db,
+            payment=payment,
+            order=order,
+            old_status=old_payment_status,
+            new_status=PaymentStatus.FAILED.value,
+            actor_user_id=user.id,
+        )
 
         self.repo.commit()
         self.repo.refresh(payment)
