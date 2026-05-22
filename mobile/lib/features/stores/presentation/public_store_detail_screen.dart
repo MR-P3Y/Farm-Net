@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../state/store_controller.dart';
 
@@ -61,6 +62,9 @@ class _PublicStoreDetailScreenState
             return const Center(child: Text('فروشگاه پیدا نشد.'));
           }
 
+          final logoUrl = absoluteApiUrl(store.logoUrl);
+          final bannerUrl = absoluteApiUrl(store.bannerUrl);
+
           return SingleChildScrollView(
             padding: r.pagePadding(),
             child: Center(
@@ -72,7 +76,53 @@ class _PublicStoreDetailScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(Icons.storefront_outlined, size: 56),
+                        if (bannerUrl != null) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(r.s(16)),
+                            child: AspectRatio(
+                              aspectRatio: 16 / 9,
+                              child: Image.network(
+                                bannerUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.image_not_supported_outlined,
+                                      size: 56,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: r.v(12)),
+                        ],
+                        Center(
+                          child: SizedBox.square(
+                            dimension: r.s(72),
+                            child:
+                                logoUrl == null
+                                    ? const Icon(
+                                      Icons.storefront_outlined,
+                                      size: 56,
+                                    )
+                                    : ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                        r.s(16),
+                                      ),
+                                      child: Image.network(
+                                        logoUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) {
+                                          return const Icon(
+                                            Icons.image_not_supported_outlined,
+                                            size: 56,
+                                          );
+                                        },
+                                      ),
+                                    ),
+                          ),
+                        ),
                         SizedBox(height: r.v(12)),
                         Text(
                           store.name,

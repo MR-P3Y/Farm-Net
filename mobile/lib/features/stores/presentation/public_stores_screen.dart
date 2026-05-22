@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/store_models.dart';
 import '../state/store_controller.dart';
@@ -148,9 +149,26 @@ class _StoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final logoUrl = absoluteApiUrl(store.logoUrl);
+
     return Card(
       child: ListTile(
-        leading: const Icon(Icons.storefront_outlined),
+        leading: SizedBox.square(
+          dimension: 56,
+          child:
+              logoUrl == null
+                  ? const Icon(Icons.storefront_outlined)
+                  : ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      logoUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return const Icon(Icons.image_not_supported_outlined);
+                      },
+                    ),
+                  ),
+        ),
         title: Text(store.name),
         subtitle: Text(
           '${_typeLabel(store.storeType)}\n${store.address ?? '-'}',

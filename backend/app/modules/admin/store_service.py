@@ -167,6 +167,18 @@ class AdminStoreService:
     def _store_out(self, store: Store) -> AdminStoreOut:
         owner = self.auth_repo.get_user_by_id(store.owner_user_id)
         history_rows = self.store_repo.list_status_history(store_id=store.id)
+        logo_media = (
+            self.store_repo.get_media_by_id(media_file_id=store.logo_media_file_id)
+            if store.logo_media_file_id
+            else None
+        )
+        banner_media = (
+            self.store_repo.get_media_by_id(media_file_id=store.banner_media_file_id)
+            if store.banner_media_file_id
+            else None
+        )
+        logo_file_key = logo_media.file_key if logo_media else None
+        banner_file_key = banner_media.file_key if banner_media else None
 
         return AdminStoreOut(
             id=store.id,
@@ -191,6 +203,12 @@ class AdminStoreService:
             longitude=str(store.longitude) if store.longitude is not None else None,
             logo_file_id=store.logo_file_id,
             banner_file_id=store.banner_file_id,
+            logo_media_file_id=store.logo_media_file_id,
+            logo_file_key=logo_file_key,
+            logo_url=self._media_public_url(file_key=logo_file_key),
+            banner_media_file_id=store.banner_media_file_id,
+            banner_file_key=banner_file_key,
+            banner_url=self._media_public_url(file_key=banner_file_key),
             admin_note=store.admin_note,
             approved_at=store.approved_at,
             approved_by=store.approved_by,
@@ -225,3 +243,8 @@ class AdminStoreService:
                 for row in history_rows
             ],
         )
+
+    def _media_public_url(self, *, file_key: str | None) -> str | None:
+        if not file_key:
+            return None
+        return f"/api/v1/media/public/{file_key}"

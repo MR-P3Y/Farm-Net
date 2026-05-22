@@ -136,13 +136,14 @@ class ProductStatusHistoryOut(BaseModel):
 
 class ProductImageCreateIn(BaseModel):
     file_id: str | None = Field(default=None, max_length=255)
-    file_path: str = Field(min_length=3, max_length=1000)
+    media_file_key: str | None = Field(default=None, max_length=80)
+    file_path: str | None = Field(default=None, min_length=3, max_length=1000)
     alt_text: str | None = Field(default=None, max_length=255)
 
     sort_order: int = Field(default=0, ge=0)
     is_primary: bool = False
 
-    @field_validator("file_id", "file_path", "alt_text", mode="before")
+    @field_validator("file_id", "media_file_key", "file_path", "alt_text", mode="before")
     @classmethod
     def normalize_strings(cls, value):
         if isinstance(value, str):
@@ -173,6 +174,9 @@ class ProductImageOut(BaseModel):
     product_id: int
 
     file_id: str | None = None
+    media_file_id: int | None = None
+    file_key: str | None = None
+    public_url: str | None = None
     file_path: str
     alt_text: str | None = None
 
@@ -186,6 +190,9 @@ class ProductImageOut(BaseModel):
 class PublicProductImageOut(BaseModel):
     id: int
     file_id: str | None = None
+    media_file_id: int | None = None
+    file_key: str | None = None
+    public_url: str | None = None
     file_path: str
     alt_text: str | None = None
     sort_order: int

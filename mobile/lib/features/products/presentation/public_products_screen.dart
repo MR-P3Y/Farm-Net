@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/product_models.dart';
 import '../state/product_controller.dart';
@@ -133,9 +134,26 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = absoluteApiUrl(product.primaryImage?.publicUrl);
+
     return Card(
       child: ListTile(
-        leading: const Icon(Icons.inventory_2_outlined),
+        leading: SizedBox.square(
+          dimension: 56,
+          child:
+              imageUrl == null
+                  ? const Icon(Icons.inventory_2_outlined)
+                  : ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return const Icon(Icons.image_not_supported_outlined);
+                      },
+                    ),
+                  ),
+        ),
         title: Text(product.name),
         subtitle: Text('${product.storeName ?? '-'}\n${_priceText(product)}'),
         isThreeLine: true,

@@ -22,6 +22,12 @@ class Store {
     this.longitude,
     this.logoFileId,
     this.bannerFileId,
+    this.logoMediaFileId,
+    this.logoFileKey,
+    this.logoUrl,
+    this.bannerMediaFileId,
+    this.bannerFileKey,
+    this.bannerUrl,
     this.adminNote,
   });
 
@@ -45,6 +51,12 @@ class Store {
   final String? longitude;
   final String? logoFileId;
   final String? bannerFileId;
+  final int? logoMediaFileId;
+  final String? logoFileKey;
+  final String? logoUrl;
+  final int? bannerMediaFileId;
+  final String? bannerFileKey;
+  final String? bannerUrl;
   final String? adminNote;
   final String createdAt;
   final String updatedAt;
@@ -81,6 +93,18 @@ class Store {
       longitude: json['longitude']?.toString(),
       logoFileId: json['logo_file_id']?.toString(),
       bannerFileId: json['banner_file_id']?.toString(),
+      logoMediaFileId:
+          json['logo_media_file_id'] == null
+              ? null
+              : (json['logo_media_file_id'] as num).toInt(),
+      logoFileKey: json['logo_file_key']?.toString(),
+      logoUrl: json['logo_url']?.toString(),
+      bannerMediaFileId:
+          json['banner_media_file_id'] == null
+              ? null
+              : (json['banner_media_file_id'] as num).toInt(),
+      bannerFileKey: json['banner_file_key']?.toString(),
+      bannerUrl: json['banner_url']?.toString(),
       adminNote: json['admin_note']?.toString(),
       createdAt: json['created_at']?.toString() ?? '',
       updatedAt: json['updated_at']?.toString() ?? '',
@@ -107,6 +131,8 @@ class StoreCreateInput {
     this.longitude,
     this.logoFileId,
     this.bannerFileId,
+    this.logoMediaFileKey,
+    this.bannerMediaFileKey,
   });
 
   final String name;
@@ -126,6 +152,8 @@ class StoreCreateInput {
   final String? longitude;
   final String? logoFileId;
   final String? bannerFileId;
+  final String? logoMediaFileKey;
+  final String? bannerMediaFileKey;
 
   Map<String, dynamic> toJson() {
     return {
@@ -146,6 +174,8 @@ class StoreCreateInput {
       'longitude': longitude,
       'logo_file_id': logoFileId,
       'banner_file_id': bannerFileId,
+      'logo_media_file_key': logoMediaFileKey,
+      'banner_media_file_key': bannerMediaFileKey,
     };
   }
 }
@@ -169,6 +199,8 @@ class StoreUpdateInput {
     this.longitude,
     this.logoFileId,
     this.bannerFileId,
+    this.logoMediaFileKey,
+    this.bannerMediaFileKey,
   });
 
   final String? name;
@@ -188,6 +220,8 @@ class StoreUpdateInput {
   final String? longitude;
   final String? logoFileId;
   final String? bannerFileId;
+  final String? logoMediaFileKey;
+  final String? bannerMediaFileKey;
 
   Map<String, dynamic> toJson() {
     return {
@@ -208,6 +242,8 @@ class StoreUpdateInput {
       'longitude': longitude,
       'logo_file_id': logoFileId,
       'banner_file_id': bannerFileId,
+      'logo_media_file_key': logoMediaFileKey,
+      'banner_media_file_key': bannerMediaFileKey,
     };
   }
 }

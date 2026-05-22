@@ -115,4 +115,16 @@ class ProductRepository {
   }) {
     return _api.archiveProduct(storeId: storeId, productId: productId);
   }
+
+  Future<ProductImage> createProductImage({
+    required int storeId,
+    required int productId,
+    required ProductImageCreateInput input,
+  }) {
+    return _api.createProductImage(
+      storeId: storeId,
+      productId: productId,
+      input: input,
+    );
+  }
 }

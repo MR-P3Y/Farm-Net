@@ -46,7 +46,7 @@ def list_public_stores(
     )
 
     return success_response(
-        data=[_public_store_out(item).model_dump(mode="json") for item in items],
+        data=[_public_store_out(repo, item).model_dump(mode="json") for item in items],
         message="OK",
         meta={
             "page": page,
@@ -75,7 +75,7 @@ def get_public_store_by_slug(
         )
 
     return success_response(
-        data=_public_store_out(store).model_dump(mode="json"),
+        data=_public_store_out(repo, store).model_dump(mode="json"),
         message="OK",
         meta={"trace_id": request.state.trace_id},
     )
@@ -91,7 +91,20 @@ def _validate_store_type(store_type: str) -> None:
         )
 
 
-def _public_store_out(store: Store) -> PublicStoreOut:
+def _public_store_out(repo: StoreRepository, store: Store) -> PublicStoreOut:
+    logo_media = (
+        repo.get_media_by_id(media_file_id=store.logo_media_file_id)
+        if store.logo_media_file_id
+        else None
+    )
+    banner_media = (
+        repo.get_media_by_id(media_file_id=store.banner_media_file_id)
+        if store.banner_media_file_id
+        else None
+    )
+    logo_file_key = logo_media.file_key if logo_media else None
+    banner_file_key = banner_media.file_key if banner_media else None
+
     return PublicStoreOut(
         id=store.id,
         owner_user_id=store.owner_user_id,
@@ -112,6 +125,18 @@ def _public_store_out(store: Store) -> PublicStoreOut:
         longitude=str(store.longitude) if store.longitude is not None else None,
         logo_file_id=store.logo_file_id,
         banner_file_id=store.banner_file_id,
+        logo_media_file_id=store.logo_media_file_id,
+        logo_file_key=logo_file_key,
+        logo_url=_media_public_url(file_key=logo_file_key),
+        banner_media_file_id=store.banner_media_file_id,
+        banner_file_key=banner_file_key,
+        banner_url=_media_public_url(file_key=banner_file_key),
         created_at=store.created_at.isoformat(),
         updated_at=store.updated_at.isoformat(),
     )
+
+
+def _media_public_url(*, file_key: str | None) -> str | None:
+    if not file_key:
+        return None
+    return f"/api/v1/media/public/{file_key}"

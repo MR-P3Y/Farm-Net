@@ -53,6 +53,10 @@ class AdminVerificationDocumentOut(BaseModel):
     document_id: int
     document_type: str
     file_name: str
+    media_file_id: int | None = None
+    file_key: str | None = None
+    private_url: str | None = None
+    admin_private_url: str | None = None
     status: str
 
 
@@ -139,6 +143,12 @@ class AdminStoreOut(BaseModel):
 
     logo_file_id: str | None = None
     banner_file_id: str | None = None
+    logo_media_file_id: int | None = None
+    logo_file_key: str | None = None
+    logo_url: str | None = None
+    banner_media_file_id: int | None = None
+    banner_file_key: str | None = None
+    banner_url: str | None = None
 
     admin_note: str | None = None
 

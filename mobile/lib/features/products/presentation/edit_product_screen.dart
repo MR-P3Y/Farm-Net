@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../media/presentation/media_upload_button.dart';
 import '../data/product_models.dart';
 import '../state/product_controller.dart';
 
@@ -29,6 +30,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   final _stockController = TextEditingController(text: '100');
 
   String _unit = 'kg';
+  String? _productImageMediaFileKey;
   bool _filled = false;
 
   @override
@@ -106,6 +108,25 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             );
 
     if (!ok || !mounted) return;
+
+    final mediaFileKey = _productImageMediaFileKey;
+    final savedProduct =
+        ref.read(productControllerProvider).selectedProduct ?? product;
+
+    if (mediaFileKey != null && savedProduct != null) {
+      final imageOk = await controller.createProductImage(
+        storeId: widget.storeId,
+        productId: savedProduct.id,
+        input: ProductImageCreateInput(
+          mediaFileKey: mediaFileKey,
+          altText: _nameController.text.trim(),
+          sortOrder: 0,
+          isPrimary: true,
+        ),
+      );
+
+      if (!imageOk || !mounted) return;
+    }
 
     await ref
         .read(productControllerProvider.notifier)
@@ -244,6 +265,30 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                             setState(() => _unit = value);
                           },
                         ),
+                        SizedBox(height: r.v(16)),
+                        MediaUploadButton(
+                          label: 'آپلود تصویر محصول',
+                          purpose: 'product_image',
+                          visibility: 'public',
+                          allowedExtensions: const [
+                            'jpg',
+                            'jpeg',
+                            'png',
+                            'webp',
+                          ],
+                          onUploaded: (media) {
+                            setState(() {
+                              _productImageMediaFileKey = media.fileKey;
+                            });
+                          },
+                        ),
+                        if (_productImageMediaFileKey != null) ...[
+                          SizedBox(height: r.v(8)),
+                          Text(
+                            'تصویر آپلود شد: $_productImageMediaFileKey',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
                         if (state.errorMessage != null) ...[
                           SizedBox(height: r.v(12)),
                           Text(

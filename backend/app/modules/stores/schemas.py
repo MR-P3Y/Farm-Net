@@ -73,6 +73,8 @@ class StoreUpdateIn(BaseModel):
 
     logo_file_id: str | None = Field(default=None, max_length=255)
     banner_file_id: str | None = Field(default=None, max_length=255)
+    logo_media_file_key: str | None = Field(default=None, max_length=80)
+    banner_media_file_key: str | None = Field(default=None, max_length=80)
 
     @field_validator(
         "name",
@@ -85,6 +87,8 @@ class StoreUpdateIn(BaseModel):
         "postal_code",
         "logo_file_id",
         "banner_file_id",
+        "logo_media_file_key",
+        "banner_media_file_key",
         mode="before",
     )
     @classmethod
@@ -123,6 +127,12 @@ class StoreOut(BaseModel):
 
     logo_file_id: str | None = None
     banner_file_id: str | None = None
+    logo_media_file_id: int | None = None
+    logo_file_key: str | None = None
+    logo_url: str | None = None
+    banner_media_file_id: int | None = None
+    banner_file_key: str | None = None
+    banner_url: str | None = None
 
     admin_note: str | None = None
 
@@ -210,6 +220,12 @@ class PublicStoreOut(BaseModel):
 
     logo_file_id: str | None = None
     banner_file_id: str | None = None
+    logo_media_file_id: int | None = None
+    logo_file_key: str | None = None
+    logo_url: str | None = None
+    banner_media_file_id: int | None = None
+    banner_file_key: str | None = None
+    banner_url: str | None = None
 
     created_at: str
     updated_at: str

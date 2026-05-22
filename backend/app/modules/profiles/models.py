@@ -143,6 +143,12 @@ class UserDocument(Base):
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     mime_type: Mapped[str | None] = mapped_column(String(150), nullable=True)
     size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    media_file_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("media_files.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     status: Mapped[str] = mapped_column(
         String(50),

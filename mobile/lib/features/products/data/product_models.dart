@@ -5,11 +5,17 @@ class ProductImage {
     required this.sortOrder,
     required this.isPrimary,
     this.fileId,
+    this.mediaFileId,
+    this.fileKey,
+    this.publicUrl,
     this.altText,
   });
 
   final int id;
   final String? fileId;
+  final int? mediaFileId;
+  final String? fileKey;
+  final String? publicUrl;
   final String filePath;
   final String? altText;
   final int sortOrder;
@@ -19,11 +25,43 @@ class ProductImage {
     return ProductImage(
       id: _asInt(json['id']),
       fileId: json['file_id']?.toString(),
+      mediaFileId: _asNullableInt(json['media_file_id']),
+      fileKey: json['file_key']?.toString(),
+      publicUrl: json['public_url']?.toString(),
       filePath: json['file_path']?.toString() ?? '',
       altText: json['alt_text']?.toString(),
       sortOrder: _asInt(json['sort_order']),
       isPrimary: json['is_primary'] == true,
     );
+  }
+}
+
+class ProductImageCreateInput {
+  const ProductImageCreateInput({
+    this.fileId,
+    this.mediaFileKey,
+    this.filePath,
+    this.altText,
+    this.sortOrder = 0,
+    this.isPrimary = false,
+  });
+
+  final String? fileId;
+  final String? mediaFileKey;
+  final String? filePath;
+  final String? altText;
+  final int sortOrder;
+  final bool isPrimary;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'file_id': fileId,
+      'media_file_key': mediaFileKey,
+      'file_path': filePath,
+      'alt_text': altText,
+      'sort_order': sortOrder,
+      'is_primary': isPrimary,
+    };
   }
 }
 

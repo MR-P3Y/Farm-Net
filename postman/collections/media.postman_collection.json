@@ -1,0 +1,345 @@
+{
+  "info": {
+    "name": "Farm Net - Media Foundation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Media upload, access, admin review, product/store/document integration."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_access_token",
+      "value": ""
+    },
+    {
+      "key": "file_key",
+      "value": ""
+    },
+    {
+      "key": "product_image_key",
+      "value": ""
+    },
+    {
+      "key": "store_logo_key",
+      "value": ""
+    },
+    {
+      "key": "store_banner_key",
+      "value": ""
+    },
+    {
+      "key": "verification_doc_key",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Login Admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/auth/login/email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"change-me\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Media - Upload Product Image",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/media/upload",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "purpose",
+              "value": "product_image",
+              "type": "text"
+            },
+            {
+              "key": "visibility",
+              "value": "public",
+              "type": "text"
+            },
+            {
+              "key": "alt_text",
+              "value": "Product image",
+              "type": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Media - Upload Store Logo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/media/upload",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "purpose",
+              "value": "store_logo",
+              "type": "text"
+            },
+            {
+              "key": "visibility",
+              "value": "public",
+              "type": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Media - Upload Store Banner",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/media/upload",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "purpose",
+              "value": "store_banner",
+              "type": "text"
+            },
+            {
+              "key": "visibility",
+              "value": "public",
+              "type": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Media - Upload Verification Document",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/media/upload",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "purpose",
+              "value": "verification_document",
+              "type": "text"
+            },
+            {
+              "key": "visibility",
+              "value": "private",
+              "type": "text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Media - My Media",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/media/me"
+      }
+    },
+    {
+      "name": "Media - Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/media/{{file_key}}"
+      }
+    },
+    {
+      "name": "Media - Public Access",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/media/public/{{file_key}}"
+      }
+    },
+    {
+      "name": "Media - Private Access",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/media/private/{{file_key}}"
+      }
+    },
+    {
+      "name": "Admin Media - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/media?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin Media - Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/media/{{file_key}}"
+      }
+    },
+    {
+      "name": "Admin Media - Private Access",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/media/private/{{file_key}}"
+      }
+    },
+    {
+      "name": "Admin Media - Quarantine",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/admin/media/{{file_key}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"quarantined\",\n  \"description\": \"Admin review\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Media - Restore Active",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/admin/media/{{file_key}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"active\",\n  \"description\": \"Restored\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Media - Soft Delete",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/admin/media/{{file_key}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"deleted\",\n  \"description\": \"Deleted by admin\"\n}"
+        }
+      }
+    }
+  ]
+}
