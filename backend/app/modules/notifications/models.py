@@ -16,6 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+from app.modules.auth.models import AuthUser  # noqa: F401
 from app.modules.notifications.enums import (
     NotificationChannel,
     NotificationDeliveryStatus,
