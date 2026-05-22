@@ -338,6 +338,23 @@ class NotificationService:
 
         return [NotificationOut.model_validate(row) for row in rows], total
 
+    def get_admin_notification(
+        self,
+        *,
+        notification_id: int,
+    ) -> NotificationOut:
+        row = self.repo.get_admin_notification_by_id(
+            notification_id=notification_id,
+        )
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Notification not found",
+                details={"notification_id": notification_id},
+            )
+
+        return NotificationOut.model_validate(row)
+
     def _generate_event_key(
         self,
         *,

@@ -71,6 +71,17 @@ class NotificationRepository:
             .one_or_none()
         )
 
+    def get_admin_notification_by_id(
+        self,
+        *,
+        notification_id: int,
+    ) -> Notification | None:
+        return (
+            self.db.query(Notification)
+            .filter(Notification.id == notification_id)
+            .one_or_none()
+        )
+
     def list_user_notifications(
         self,
         *,
