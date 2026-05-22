@@ -15,6 +15,8 @@ from app.modules.media.schemas import (
     MediaUploadMetaIn,
 )
 from app.modules.media.storage import LocalMediaStorage, get_local_media_storage
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.service import NotificationService
 
 
 class MediaService:
@@ -254,6 +256,7 @@ class MediaService:
         *,
         file_key: str,
         payload: AdminMediaStatusUpdateIn,
+        actor_user_id: int | None = None,
     ) -> MediaFileOut:
         row = self.repo.get_by_file_key_any_status(file_key=file_key)
 
@@ -265,6 +268,7 @@ class MediaService:
 
         self._validate_status(payload.status)
 
+        old_status = row.status
         row.status = payload.status
 
         if payload.description is not None:
@@ -275,10 +279,70 @@ class MediaService:
         else:
             row.deleted_at = None
 
+        self._notify_admin_media_status_changed(
+            row=row,
+            old_status=old_status,
+            new_status=payload.status,
+            actor_user_id=actor_user_id,
+        )
+
         self.repo.commit()
         self.repo.refresh(row)
 
         return self._media_out(row)
+
+    def _notify_admin_media_status_changed(
+        self,
+        *,
+        row: MediaFile,
+        old_status: str,
+        new_status: str,
+        actor_user_id: int | None,
+    ) -> None:
+        event_type = None
+        title = None
+        body = None
+        priority = "normal"
+
+        if new_status == MediaStatus.QUARANTINED.value:
+            event_type = NotificationEventType.MEDIA_QUARANTINED.value
+            title = "Media file quarantined"
+            body = "One of your media files was quarantined for review."
+            priority = "high"
+        elif new_status == MediaStatus.DELETED.value:
+            event_type = NotificationEventType.MEDIA_DELETED.value
+            title = "Media file deleted"
+            body = "One of your media files was deleted by an admin."
+            priority = "high"
+
+        if (
+            event_type is None
+            or title is None
+            or body is None
+            or row.owner_user_id is None
+        ):
+            return
+
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=event_type,
+            recipient_user_id=row.owner_user_id,
+            title=title,
+            body=body,
+            actor_user_id=actor_user_id,
+            source_type="media_file",
+            source_id=str(row.id),
+            payload_json={
+                "media_file_id": row.id,
+                "file_key": row.file_key,
+                "purpose": row.purpose,
+                "visibility": row.visibility,
+                "old_status": old_status,
+                "new_status": new_status,
+            },
+            action_url="/media",
+            priority=priority,
+            commit=False,
+        )
 
     def _validate_purpose(self, purpose: str) -> None:
         allowed = {item.value for item in MediaPurpose}

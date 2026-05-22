@@ -77,13 +77,14 @@ def update_admin_media_status(
     payload: AdminMediaStatusUpdateIn,
     request: Request,
     db: Session = Depends(get_db),
-    _: AuthUser = Depends(require_permission("media.admin_manage")),
+    current_user: AuthUser = Depends(require_permission("media.admin_manage")),
 ):
     service = MediaService(db)
 
     result = service.update_admin_media_status(
         file_key=file_key,
         payload=payload,
+        actor_user_id=current_user.id,
     )
 
     return success_response(
