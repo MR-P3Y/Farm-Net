@@ -72,6 +72,12 @@ class AdminSidebar extends StatelessWidget {
                   onTap: () => context.go('/media'),
                 ),
                 _SidebarItem(
+                  icon: Icons.notifications_none_outlined,
+                  label: 'اعلان‌ها',
+                  compact: isCompact,
+                  onTap: () => context.go('/notifications'),
+                ),
+                _SidebarItem(
                   icon: Icons.payments_outlined,
                   label: l10n.finance,
                   compact: isCompact,
