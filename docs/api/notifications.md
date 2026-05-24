@@ -1,0 +1,476 @@
+# Farm Net Notifications API
+
+## Purpose
+
+Notifications foundation provides internal in-app notifications for users and admins.
+
+Current supported channel:
+
+```text
+in_app
+```
+
+Future channels:
+
+```text
+sms
+email
+push
+telegram
+```
+
+## Core Concepts
+
+### Notification Event
+
+A notification event records what happened in the system.
+
+Examples:
+
+```text
+order.created
+order.status_changed
+payment.succeeded
+verification.approved
+media.quarantined
+system.message
+```
+
+### Notification
+
+A notification is the message shown to a recipient user.
+
+Each notification has:
+
+```text
+recipient_user_id
+channel
+title
+body
+action_url
+priority
+status
+```
+
+### Delivery Log
+
+Delivery logs track channel delivery state.
+
+For now, `in_app` delivery is marked as `sent`.
+
+---
+
+## Event Types
+
+Supported event types:
+
+```text
+order.created
+order.status_changed
+
+payment.created
+payment.succeeded
+payment.failed
+payment.receipt_uploaded
+
+verification.submitted
+verification.approved
+verification.rejected
+
+media.quarantined
+media.deleted
+
+store.approved
+store.rejected
+
+product.approved
+product.rejected
+
+system.message
+```
+
+Note:
+
+```text
+payment.receipt_uploaded is defined but currently skipped if no card-to-card receipt upload flow exists.
+```
+
+---
+
+## Statuses
+
+Notification statuses:
+
+```text
+unread
+read
+archived
+deleted
+```
+
+Only non-deleted notifications are returned in the normal user inbox.
+
+---
+
+## Priorities
+
+```text
+low
+normal
+high
+urgent
+```
+
+---
+
+## User APIs
+
+### List my notifications
+
+```http
+GET /api/v1/notifications/me
+```
+
+Required permission:
+
+```text
+notifications.read
+```
+
+Query parameters:
+
+| Name      | Type   | Description          |
+| --------- | ------ | -------------------- |
+| page      | int    | Default 1            |
+| page_size | int    | Default 20, max 100  |
+| status    | string | unread/read/archived |
+| channel   | string | Default in_app       |
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "event_id": 1,
+      "recipient_user_id": 2,
+      "channel": "in_app",
+      "title": "سفارش شما ثبت شد",
+      "body": "سفارش شماره 15 با موفقیت ثبت شد.",
+      "action_url": "/orders/15",
+      "priority": "normal",
+      "status": "unread",
+      "read_at": null,
+      "created_at": "...",
+      "updated_at": "...",
+      "deleted_at": null
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "page_size": 20,
+    "total": 1,
+    "total_pages": 1,
+    "trace_id": "..."
+  }
+}
+```
+
+---
+
+### My unread count
+
+```http
+GET /api/v1/notifications/me/unread-count
+```
+
+Required permission:
+
+```text
+notifications.read
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "unread_count": 3
+  }
+}
+```
+
+---
+
+### Mark notification as read
+
+```http
+PATCH /api/v1/notifications/{notification_id}/read
+```
+
+Required permission:
+
+```text
+notifications.manage
+```
+
+Rules:
+
+```text
+Only owner can mark own notification as read.
+Non-owner access returns not found style validation error.
+```
+
+---
+
+### Mark all as read
+
+```http
+PATCH /api/v1/notifications/read-all
+```
+
+Required permission:
+
+```text
+notifications.manage
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "updated_count": 4
+  }
+}
+```
+
+---
+
+### Delete notification
+
+```http
+DELETE /api/v1/notifications/{notification_id}
+```
+
+Required permission:
+
+```text
+notifications.manage
+```
+
+This is a soft delete.
+
+---
+
+## Admin APIs
+
+### List notifications
+
+```http
+GET /api/v1/admin/notifications
+```
+
+Required permission:
+
+```text
+notifications.admin_read
+```
+
+Query parameters:
+
+| Name              | Type   | Description                    |
+| ----------------- | ------ | ------------------------------ |
+| page              | int    | Default 1                      |
+| page_size         | int    | Default 20, max 100            |
+| status            | string | unread/read/archived/deleted   |
+| channel           | string | in_app/sms/email/push/telegram |
+| recipient_user_id | int    | Filter by recipient            |
+
+---
+
+### Get notification detail
+
+```http
+GET /api/v1/admin/notifications/{notification_id}
+```
+
+Required permission:
+
+```text
+notifications.admin_read
+```
+
+---
+
+### Create system message
+
+```http
+POST /api/v1/admin/notifications/system-message
+```
+
+Required permission:
+
+```text
+notifications.system_message
+```
+
+Body:
+
+```json
+{
+  "recipient_user_id": 2,
+  "title": "پیام سیستمی",
+  "body": "متن پیام سیستمی",
+  "action_url": "/notifications",
+  "priority": "normal"
+}
+```
+
+Rules:
+
+```text
+Current MVP supports sending system message to one specific user.
+Mass/broadcast send is intentionally not enabled yet.
+```
+
+---
+
+## Integrated Events
+
+### Orders
+
+Emitted events:
+
+```text
+order.created
+order.status_changed
+```
+
+Target:
+
+```text
+order owner / customer user
+```
+
+Typical action URL:
+
+```text
+/orders/{order_id}
+```
+
+---
+
+### Payments
+
+Emitted events:
+
+```text
+payment.created
+payment.succeeded
+payment.failed
+```
+
+Defined but currently skipped if flow does not exist:
+
+```text
+payment.receipt_uploaded
+```
+
+Target:
+
+```text
+payment/order owner
+```
+
+Typical action URL:
+
+```text
+/orders/{order_id}
+```
+
+---
+
+### Verifications / User Documents
+
+Emitted events:
+
+```text
+verification.submitted
+verification.approved
+verification.rejected
+```
+
+Target:
+
+```text
+document owner
+```
+
+Typical action URL:
+
+```text
+/verification
+```
+
+---
+
+### Media
+
+Emitted events:
+
+```text
+media.quarantined
+media.deleted
+```
+
+Target:
+
+```text
+media owner
+```
+
+Typical action URL:
+
+```text
+/media
+```
+
+---
+
+## Permissions
+
+```text
+notifications.read
+notifications.manage
+notifications.admin_read
+notifications.admin_manage
+notifications.system_message
+```
+
+Role mapping:
+
+```text
+user: read/manage
+shop_owner: read/manage
+consultant: read/manage
+lessor: read/manage
+support: read/manage/admin_read
+admin: all 5
+super_admin: all 5
+```
+
+---
+
+## Security Notes
+
+* Users can only access their own notifications.
+* Non-owner notification access does not expose existence.
+* Admin access is permission-protected.
+* System messages require explicit permission.
+* Broadcast/mass messaging is intentionally not enabled in this foundation.
+* External channels are modeled but not yet delivered.
