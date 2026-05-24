@@ -8,6 +8,7 @@ import '../../core/utils/dates.dart';
 import '../../core/widgets/farm_app_bar.dart';
 import '../../core/widgets/farm_price_text.dart';
 import '../auth/state/auth_controller.dart';
+import '../notifications/presentation/notification_badge_button.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -19,7 +20,17 @@ class HomeScreen extends ConsumerWidget {
     final user = auth.user;
 
     return Scaffold(
-      appBar: FarmAppBar(title: l10n.appName, showBack: false),
+      appBar: FarmAppBar(
+        title: l10n.appName,
+        showBack: false,
+        actions: [
+          NotificationBadgeButton(
+            onPressed: () {
+              context.push('/notifications');
+            },
+          ),
+        ],
+      ),
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {
           return Center(
@@ -104,6 +115,14 @@ class HomeScreen extends ConsumerWidget {
                       },
                       icon: const Icon(Icons.receipt_long_outlined),
                       label: const Text('سفارش‌های من'),
+                    ),
+                    SizedBox(height: r.v(12)),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        context.push('/notifications');
+                      },
+                      icon: const Icon(Icons.notifications_none_outlined),
+                      label: const Text('اعلان‌ها'),
                     ),
                     SizedBox(height: r.v(12)),
                     OutlinedButton(

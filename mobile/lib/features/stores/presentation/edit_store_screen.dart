@@ -207,7 +207,7 @@ class _EditStoreScreenState extends ConsumerState<EditStoreScreen> {
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<String>(
-                          value: _storeType,
+                          initialValue: _storeType,
                           decoration: const InputDecoration(
                             labelText: 'نوع فروشگاه',
                             border: OutlineInputBorder(),
@@ -267,7 +267,7 @@ class _EditStoreScreenState extends ConsumerState<EditStoreScreen> {
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<int>(
-                          value: _provinceId,
+                          initialValue: _provinceId,
                           decoration: const InputDecoration(
                             labelText: 'استان',
                             border: OutlineInputBorder(),
@@ -295,7 +295,7 @@ class _EditStoreScreenState extends ConsumerState<EditStoreScreen> {
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<int>(
-                          value: _countyId,
+                          initialValue: _countyId,
                           decoration: const InputDecoration(
                             labelText: 'شهرستان',
                             border: OutlineInputBorder(),
@@ -323,7 +323,7 @@ class _EditStoreScreenState extends ConsumerState<EditStoreScreen> {
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<int>(
-                          value: _cityId,
+                          initialValue: _cityId,
                           decoration: const InputDecoration(
                             labelText: 'شهر',
                             border: OutlineInputBorder(),
