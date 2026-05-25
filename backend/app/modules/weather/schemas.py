@@ -97,6 +97,16 @@ class WeatherProviderConfigCreateIn(BaseModel):
     settings_json: dict[str, Any] | None = None
 
 
+class WeatherProviderConfigUpdateIn(BaseModel):
+    base_url: str | None = Field(default=None, max_length=500)
+    api_key_ref: str | None = Field(default=None, max_length=120)
+
+    is_active: bool | None = None
+    priority: int | None = None
+
+    settings_json: dict[str, Any] | None = None
+
+
 class WeatherProviderConfigOut(BaseModel):
     id: int
 

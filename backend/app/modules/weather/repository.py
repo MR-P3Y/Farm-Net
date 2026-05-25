@@ -38,6 +38,17 @@ class WeatherRepository:
             .one_or_none()
         )
 
+    def get_location_any_status(
+        self,
+        *,
+        location_id: int,
+    ) -> WeatherLocation | None:
+        return (
+            self.db.query(WeatherLocation)
+            .filter(WeatherLocation.id == location_id)
+            .one_or_none()
+        )
+
     def list_locations(self, *, limit: int = 100) -> list[WeatherLocation]:
         return (
             self.db.query(WeatherLocation)
@@ -141,6 +152,27 @@ class WeatherRepository:
             .filter(WeatherProviderConfig.is_active == True)  # noqa: E712
             .order_by(WeatherProviderConfig.priority.asc(), WeatherProviderConfig.id.asc())
             .first()
+        )
+
+    def list_provider_configs(self) -> list[WeatherProviderConfig]:
+        return (
+            self.db.query(WeatherProviderConfig)
+            .order_by(
+                WeatherProviderConfig.priority.asc(),
+                WeatherProviderConfig.id.asc(),
+            )
+            .all()
+        )
+
+    def get_provider_config_by_id(
+        self,
+        *,
+        config_id: int,
+    ) -> WeatherProviderConfig | None:
+        return (
+            self.db.query(WeatherProviderConfig)
+            .filter(WeatherProviderConfig.id == config_id)
+            .one_or_none()
         )
 
     def add_snapshot(self, row: WeatherSnapshot) -> WeatherSnapshot:

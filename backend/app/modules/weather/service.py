@@ -18,6 +18,7 @@ from app.modules.weather.schemas import (
     WeatherLocationCreateIn,
     WeatherLocationOut,
     WeatherProviderConfigOut,
+    WeatherProviderConfigUpdateIn,
     WeatherSnapshotOut,
 )
 
@@ -50,6 +51,51 @@ class WeatherService:
         self.repo.commit()
 
         return [WeatherProviderConfigOut.model_validate(row) for row in rows]
+
+    def list_provider_configs(self) -> list[WeatherProviderConfigOut]:
+        rows = self.repo.list_provider_configs()
+
+        return [WeatherProviderConfigOut.model_validate(row) for row in rows]
+
+    def update_provider_config(
+        self,
+        *,
+        config_id: int,
+        payload: WeatherProviderConfigUpdateIn,
+    ) -> WeatherProviderConfigOut:
+        row = self.repo.get_provider_config_by_id(config_id=config_id)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Weather provider config not found",
+                details={"config_id": config_id},
+            )
+
+        if payload.priority is not None and payload.priority < 1:
+            raise ValidationAuthError(
+                message="Invalid weather provider priority",
+                details={"priority": payload.priority},
+            )
+
+        if payload.base_url is not None:
+            row.base_url = payload.base_url
+
+        if payload.api_key_ref is not None:
+            row.api_key_ref = payload.api_key_ref
+
+        if payload.is_active is not None:
+            row.is_active = payload.is_active
+
+        if payload.priority is not None:
+            row.priority = payload.priority
+
+        if payload.settings_json is not None:
+            row.settings_json = payload.settings_json
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return WeatherProviderConfigOut.model_validate(row)
 
     def create_location(
         self,
@@ -133,6 +179,21 @@ class WeatherService:
         )
 
         return [WeatherLocationOut.model_validate(row) for row in rows], total
+
+    def get_location_admin(
+        self,
+        *,
+        location_id: int,
+    ) -> WeatherLocationOut:
+        row = self.repo.get_location_any_status(location_id=location_id)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Weather location not found",
+                details={"location_id": location_id},
+            )
+
+        return WeatherLocationOut.model_validate(row)
 
     def refresh_location_weather(
         self,
