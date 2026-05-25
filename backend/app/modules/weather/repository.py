@@ -5,6 +5,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.modules.weather.models import (
+    WeatherAlert,
     WeatherForecast,
     WeatherLocation,
     WeatherProviderConfig,
@@ -45,6 +46,40 @@ class WeatherRepository:
             .limit(limit)
             .all()
         )
+
+    def list_locations_paginated(
+        self,
+        *,
+        q: str | None = None,
+        country_code: str | None = None,
+        location_type: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[WeatherLocation], int]:
+        query = self.db.query(WeatherLocation).filter(
+            WeatherLocation.is_active == True  # noqa: E712
+        )
+
+        if q:
+            like = f"%{q}%"
+            query = query.filter(WeatherLocation.display_name.like(like))
+
+        if country_code:
+            query = query.filter(WeatherLocation.country_code == country_code.upper())
+
+        if location_type:
+            query = query.filter(WeatherLocation.location_type == location_type)
+
+        total = query.count()
+
+        rows = (
+            query.order_by(WeatherLocation.display_name.asc(), WeatherLocation.id.asc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total
 
     def find_location_by_coordinates(
         self,
@@ -157,3 +192,21 @@ class WeatherRepository:
             query = query.filter(WeatherForecast.forecast_type == forecast_type)
 
         return query.order_by(WeatherForecast.forecast_time.asc()).limit(limit).all()
+
+    def list_active_alerts(
+        self,
+        *,
+        location_id: int,
+        limit: int = 20,
+    ) -> list[WeatherAlert]:
+        return (
+            self.db.query(WeatherAlert)
+            .filter(
+                WeatherAlert.location_id == location_id,
+                WeatherAlert.is_active == True,  # noqa: E712
+                WeatherAlert.status == "active",
+            )
+            .order_by(WeatherAlert.starts_at.desc(), WeatherAlert.id.desc())
+            .limit(limit)
+            .all()
+        )

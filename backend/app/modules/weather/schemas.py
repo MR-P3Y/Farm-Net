@@ -27,6 +27,13 @@ class WeatherLocationCreateIn(BaseModel):
     timezone: str | None = Field(default=None, max_length=80)
 
 
+class WeatherGpsLocationIn(BaseModel):
+    latitude: Decimal
+    longitude: Decimal
+    display_name: str | None = Field(default=None, max_length=255)
+    timezone: str | None = Field(default=None, max_length=80)
+
+
 class WeatherLocationOut(BaseModel):
     id: int
 
@@ -48,6 +55,30 @@ class WeatherLocationOut(BaseModel):
 
     timezone: str | None = None
     is_active: bool
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class WeatherAlertOut(BaseModel):
+    id: int
+    location_id: int
+    rule_id: int | None = None
+
+    alert_type: str
+    severity: str
+    status: str
+
+    title: str
+    body: str
+
+    starts_at: datetime
+    ends_at: datetime | None = None
+
+    is_active: bool
+    payload_json: dict[str, Any] | None = None
 
     created_at: datetime
     updated_at: datetime

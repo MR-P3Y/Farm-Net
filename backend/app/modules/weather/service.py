@@ -12,7 +12,9 @@ from app.modules.weather.providers.mock_provider import MockWeatherProviderClien
 from app.modules.weather.providers.openweather_provider import OpenWeatherProviderClient
 from app.modules.weather.repository import WeatherRepository
 from app.modules.weather.schemas import (
+    WeatherAlertOut,
     WeatherForecastOut,
+    WeatherGpsLocationIn,
     WeatherLocationCreateIn,
     WeatherLocationOut,
     WeatherProviderConfigOut,
@@ -86,6 +88,51 @@ class WeatherService:
         self.repo.refresh(row)
 
         return WeatherLocationOut.model_validate(row)
+
+    def create_gps_location(
+        self,
+        *,
+        payload: WeatherGpsLocationIn,
+    ) -> WeatherLocationOut:
+        display_name = payload.display_name or (
+            f"GPS {payload.latitude}, {payload.longitude}"
+        )
+
+        return self.create_location(
+            payload=WeatherLocationCreateIn(
+                country_code=None,
+                display_name=display_name,
+                location_type=WeatherLocationType.GPS.value,
+                latitude=payload.latitude,
+                longitude=payload.longitude,
+                timezone=payload.timezone,
+            )
+        )
+
+    def list_locations(
+        self,
+        *,
+        q: str | None,
+        country_code: str | None,
+        location_type: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[WeatherLocationOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if location_type is not None:
+            self._validate_location_type(location_type)
+
+        rows, total = self.repo.list_locations_paginated(
+            q=q,
+            country_code=country_code,
+            location_type=location_type,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [WeatherLocationOut.model_validate(row) for row in rows], total
 
     def refresh_location_weather(
         self,
@@ -179,6 +226,21 @@ class WeatherService:
 
         return WeatherSnapshotOut.model_validate(row)
 
+    def current_weather(
+        self,
+        *,
+        location_id: int,
+    ) -> WeatherSnapshotOut | None:
+        location = self.repo.get_location_by_id(location_id=location_id)
+
+        if location is None:
+            raise ValidationAuthError(
+                message="Weather location not found",
+                details={"location_id": location_id},
+            )
+
+        return self.latest_snapshot(location_id=location_id)
+
     def list_forecasts(
         self,
         *,
@@ -191,6 +253,42 @@ class WeatherService:
         )
 
         return [WeatherForecastOut.model_validate(row) for row in rows]
+
+    def forecast(
+        self,
+        *,
+        location_id: int,
+        forecast_type: str | None,
+    ) -> list[WeatherForecastOut]:
+        location = self.repo.get_location_by_id(location_id=location_id)
+
+        if location is None:
+            raise ValidationAuthError(
+                message="Weather location not found",
+                details={"location_id": location_id},
+            )
+
+        return self.list_forecasts(
+            location_id=location_id,
+            forecast_type=forecast_type,
+        )
+
+    def active_alerts(
+        self,
+        *,
+        location_id: int,
+    ) -> list[WeatherAlertOut]:
+        location = self.repo.get_location_by_id(location_id=location_id)
+
+        if location is None:
+            raise ValidationAuthError(
+                message="Weather location not found",
+                details={"location_id": location_id},
+            )
+
+        rows = self.repo.list_active_alerts(location_id=location_id)
+
+        return [WeatherAlertOut.model_validate(row) for row in rows]
 
     def _provider(
         self,
