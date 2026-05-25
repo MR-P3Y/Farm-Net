@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.service import NotificationService
 from app.modules.profiles.enums import (
     DocumentStatus,
     DocumentType,
@@ -151,6 +153,25 @@ class ProfileService:
             size_bytes=size_bytes,
             media_file_id=media_file_id,
             status=DocumentStatus.PENDING.value,
+        )
+
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=NotificationEventType.VERIFICATION_SUBMITTED.value,
+            recipient_user_id=document.user_id,
+            title="Verification document submitted",
+            body="Your verification document was submitted and is waiting for review.",
+            actor_user_id=document.user_id,
+            source_type="user_document",
+            source_id=str(document.id),
+            payload_json={
+                "document_id": document.id,
+                "document_type": document.document_type,
+                "status": document.status,
+                "media_file_id": document.media_file_id,
+            },
+            action_url="/verification",
+            priority="normal",
+            commit=False,
         )
 
         self.repo.commit()

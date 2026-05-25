@@ -99,7 +99,7 @@ class _AdminProductsPageState extends ConsumerState<AdminProductsPage> {
                   SizedBox(
                     width: r.isCompact ? double.infinity : 260,
                     child: DropdownButtonFormField<String?>(
-                      value: _statusFilter,
+                      initialValue: _statusFilter,
                       decoration: const InputDecoration(
                         labelText: 'وضعیت',
                         border: OutlineInputBorder(),

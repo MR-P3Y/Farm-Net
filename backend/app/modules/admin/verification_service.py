@@ -10,6 +10,8 @@ from app.modules.admin.schemas import (
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.auth.repository import AuthRepository
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.service import NotificationService
 from app.modules.profiles.enums import VerificationStatus, VerificationTargetRole
 from app.modules.profiles.models import VerificationRequest
 from app.modules.profiles.repository import ProfileRepository
@@ -88,6 +90,7 @@ class AdminVerificationService:
             self._ensure_request_can_be_approved(request)
 
         now = datetime.utcnow()
+        old_status = request.status
 
         request.status = status
         request.admin_note = note
@@ -104,10 +107,62 @@ class AdminVerificationService:
         if status == VerificationStatus.APPROVED.value:
             self._assign_target_role(request, assigned_by=reviewer.id)
 
+        self._notify_verification_status_changed(
+            request=request,
+            old_status=old_status,
+            new_status=status,
+            reviewer=reviewer,
+        )
+
         self.profile_repo.commit()
         self.profile_repo.refresh(request)
 
         return self._verification_out(request)
+
+    def _notify_verification_status_changed(
+        self,
+        *,
+        request: VerificationRequest,
+        old_status: str,
+        new_status: str,
+        reviewer: AuthUser,
+    ) -> None:
+        event_type = None
+        title = None
+        body = None
+        priority = "normal"
+
+        if new_status == VerificationStatus.APPROVED.value:
+            event_type = NotificationEventType.VERIFICATION_APPROVED.value
+            title = "Verification approved"
+            body = "Your verification request was approved."
+        elif new_status == VerificationStatus.REJECTED.value:
+            event_type = NotificationEventType.VERIFICATION_REJECTED.value
+            title = "Verification rejected"
+            body = "Your verification request was rejected. Please review the details."
+            priority = "high"
+
+        if event_type is None or title is None or body is None:
+            return
+
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=event_type,
+            recipient_user_id=request.user_id,
+            title=title,
+            body=body,
+            actor_user_id=reviewer.id,
+            source_type="verification_request",
+            source_id=str(request.id),
+            payload_json={
+                "request_id": request.id,
+                "target_role": request.target_role,
+                "old_status": old_status,
+                "new_status": new_status,
+            },
+            action_url="/verification",
+            priority=priority,
+            commit=False,
+        )
 
     def _assign_target_role(
         self,

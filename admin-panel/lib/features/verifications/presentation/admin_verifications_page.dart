@@ -86,7 +86,7 @@ class _AdminVerificationsPageState
                   SizedBox(
                     width: r.isCompact ? double.infinity : 260,
                     child: DropdownButtonFormField<String?>(
-                      value: _statusFilter,
+                      initialValue: _statusFilter,
                       decoration: const InputDecoration(
                         labelText: 'وضعیت',
                         border: OutlineInputBorder(),
@@ -130,7 +130,7 @@ class _AdminVerificationsPageState
                   SizedBox(
                     width: r.isCompact ? double.infinity : 260,
                     child: DropdownButtonFormField<String?>(
-                      value: _targetRoleFilter,
+                      initialValue: _targetRoleFilter,
                       decoration: const InputDecoration(
                         labelText: 'نقش',
                         border: OutlineInputBorder(),

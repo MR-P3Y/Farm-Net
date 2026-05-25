@@ -154,7 +154,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<String>(
-                          value: _gender,
+                          initialValue: _gender,
                           decoration: const InputDecoration(
                             labelText: 'جنسیت',
                             border: OutlineInputBorder(),
@@ -176,7 +176,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<int>(
-                          value: selectedProvinceId,
+                          initialValue: selectedProvinceId,
                           decoration: const InputDecoration(
                             labelText: 'استان',
                             border: OutlineInputBorder(),
@@ -206,7 +206,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<int>(
-                          value: selectedCountyId,
+                          initialValue: selectedCountyId,
                           decoration: const InputDecoration(
                             labelText: 'شهرستان',
                             border: OutlineInputBorder(),
@@ -236,7 +236,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<int>(
-                          value: selectedCityId,
+                          initialValue: selectedCityId,
                           decoration: const InputDecoration(
                             labelText: 'شهر',
                             border: OutlineInputBorder(),

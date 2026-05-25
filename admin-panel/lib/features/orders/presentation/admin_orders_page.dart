@@ -82,7 +82,7 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
                   SizedBox(
                     width: r.isCompact ? double.infinity : 300,
                     child: DropdownButtonFormField<String?>(
-                      value: _statusFilter,
+                      initialValue: _statusFilter,
                       decoration: const InputDecoration(
                         labelText: 'وضعیت سفارش',
                         border: OutlineInputBorder(),
@@ -134,7 +134,7 @@ class _AdminOrdersPageState extends ConsumerState<AdminOrdersPage> {
                   SizedBox(
                     width: r.isCompact ? double.infinity : 260,
                     child: DropdownButtonFormField<String?>(
-                      value: _paymentStatusFilter,
+                      initialValue: _paymentStatusFilter,
                       decoration: const InputDecoration(
                         labelText: 'وضعیت پرداخت',
                         border: OutlineInputBorder(),

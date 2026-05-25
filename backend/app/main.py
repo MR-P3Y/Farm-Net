@@ -14,6 +14,8 @@ from app.modules.media.access_router import router as media_access_router
 from app.modules.media.admin_access_router import router as admin_media_access_router
 from app.modules.media.admin_router import router as admin_media_router
 from app.modules.media.router import router as media_router
+from app.modules.notifications.admin_router import router as admin_notifications_router
+from app.modules.notifications.router import router as notifications_router
 from app.modules.orders.admin_router import router as admin_orders_router
 from app.modules.orders.checkout_router import router as checkout_router
 from app.modules.orders.commission_router import router as commission_router
@@ -76,6 +78,8 @@ def create_app() -> FastAPI:
     app.include_router(media_access_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_media_access_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_media_router, prefix=settings.api_v1_prefix)
+    app.include_router(notifications_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_notifications_router, prefix=settings.api_v1_prefix)
 
     register_exception_handlers(app)
 

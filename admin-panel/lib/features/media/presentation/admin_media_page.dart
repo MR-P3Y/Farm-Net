@@ -90,7 +90,7 @@ class _AdminMediaPageState extends ConsumerState<AdminMediaPage> {
                   SizedBox(
                     width: r.isCompact ? double.infinity : 280,
                     child: DropdownButtonFormField<String?>(
-                      value: _purposeFilter,
+                      initialValue: _purposeFilter,
                       decoration: const InputDecoration(
                         labelText: 'Purpose',
                         border: OutlineInputBorder(),
@@ -134,7 +134,7 @@ class _AdminMediaPageState extends ConsumerState<AdminMediaPage> {
                   SizedBox(
                     width: r.isCompact ? double.infinity : 220,
                     child: DropdownButtonFormField<String?>(
-                      value: _visibilityFilter,
+                      initialValue: _visibilityFilter,
                       decoration: const InputDecoration(
                         labelText: 'Visibility',
                         border: OutlineInputBorder(),
@@ -162,7 +162,7 @@ class _AdminMediaPageState extends ConsumerState<AdminMediaPage> {
                   SizedBox(
                     width: r.isCompact ? double.infinity : 220,
                     child: DropdownButtonFormField<String?>(
-                      value: _statusFilter,
+                      initialValue: _statusFilter,
                       decoration: const InputDecoration(
                         labelText: 'Status',
                         border: OutlineInputBorder(),

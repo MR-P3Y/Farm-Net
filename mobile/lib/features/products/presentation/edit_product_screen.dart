@@ -222,7 +222,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<String>(
-                          value: _unit,
+                          initialValue: _unit,
                           decoration: const InputDecoration(
                             labelText: 'واحد',
                             border: OutlineInputBorder(),

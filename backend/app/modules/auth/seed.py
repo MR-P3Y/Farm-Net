@@ -71,11 +71,11 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("geo.manage", "Manage geo data", "geo", "Manage geo data"),
     PermissionSeed("geo.seed", "Seed geo data", "geo", "Seed provinces/cities/villages"),
 
-    PermissionSeed("notifications.read", "Read notifications", "notifications", "Read notifications"),
-    PermissionSeed("notifications.manage_templates", "Manage notification templates", "notifications", "Manage templates"),
-    PermissionSeed("notifications.send_test", "Send test notification", "notifications", "Send test notifications"),
-    PermissionSeed("notifications.view_delivery_logs", "View delivery logs", "notifications", "View notification delivery logs"),
-    PermissionSeed("notifications.manage_channels", "Manage notification channels", "notifications", "Manage notification channels"),
+    PermissionSeed("notifications.read", "Read own notifications", "notifications", "Allows user to read own in-app notifications."),
+    PermissionSeed("notifications.manage", "Manage own notifications", "notifications", "Allows user to mark, archive, or delete own notifications."),
+    PermissionSeed("notifications.admin_read", "Admin read notifications", "notifications", "Allows admin to read notification records."),
+    PermissionSeed("notifications.admin_manage", "Admin manage notifications", "notifications", "Allows admin to manage notification records."),
+    PermissionSeed("notifications.system_message", "Send system notification", "notifications", "Allows admin to send system messages through notifications."),
 
     PermissionSeed("media.upload", "Upload media", "media", "Upload files to media storage"),
     PermissionSeed("media.read", "Read own media", "media", "Read current user's media files"),
@@ -266,6 +266,10 @@ RETIRED_PERMISSION_CODES = {
 REMOVED_PERMISSION_CODES = {
     "commission.create",
     "commission.deactivate",
+    "notifications.manage_channels",
+    "notifications.manage_templates",
+    "notifications.send_test",
+    "notifications.view_delivery_logs",
 }
 
 RETIRED_ROLE_PERMISSION_CODES: dict[str, set[str]] = {
@@ -455,6 +459,7 @@ def assign_default_permissions(
             "profiles.update",
             "geo.read",
             "notifications.read",
+            "notifications.manage",
             "media.upload",
             "media.read",
             "media.private_read",
@@ -474,11 +479,15 @@ def assign_default_permissions(
             "shops.read_detail",
             "verification.read",
             "notifications.read",
+            "notifications.manage",
+            "notifications.admin_read",
             "orders.admin_read",
             "payments.admin_read",
             "media.admin_read",
         ],
         "shop_owner": [
+            "notifications.read",
+            "notifications.manage",
             "media.upload",
             "media.read",
             "media.private_read",
@@ -505,6 +514,14 @@ def assign_default_permissions(
             "products.manage_images",
             "orders.seller_read",
             "orders.seller_update",
+        ],
+        "lessor": [
+            "notifications.read",
+            "notifications.manage",
+        ],
+        "consultant": [
+            "notifications.read",
+            "notifications.manage",
         ],
         "verification_admin": [
             "documents.read",
@@ -575,6 +592,10 @@ def assign_default_permissions(
             "verification.read",
             "finance.invoices.read",
             "notifications.read",
+            "notifications.manage",
+            "notifications.admin_read",
+            "notifications.admin_manage",
+            "notifications.system_message",
         ],
         "data_client": [
             "data_access.exports.read",

@@ -99,7 +99,7 @@ class _CreateVerificationScreenState
                         ),
                         SizedBox(height: r.v(16)),
                         DropdownButtonFormField<String>(
-                          value: _targetRole,
+                          initialValue: _targetRole,
                           decoration: const InputDecoration(
                             labelText: 'نقش درخواستی',
                             border: OutlineInputBorder(),
@@ -144,7 +144,7 @@ class _CreateVerificationScreenState
                         ),
                         SizedBox(height: r.v(12)),
                         DropdownButtonFormField<String>(
-                          value: _documentType,
+                          initialValue: _documentType,
                           decoration: const InputDecoration(
                             labelText: 'نوع سند',
                             border: OutlineInputBorder(),

@@ -1,0 +1,190 @@
+{
+  "info": {
+    "name": "Farm Net - Notifications Foundation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "User and admin notification APIs for in-app notifications."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_access_token",
+      "value": ""
+    },
+    {
+      "key": "notification_id",
+      "value": ""
+    },
+    {
+      "key": "recipient_user_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Login User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/auth/login/email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test-auth@example.com\",\n  \"password\": \"Test@123456\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Login Admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/auth/login/email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"change-me\"\n}"
+        }
+      }
+    },
+    {
+      "name": "User Notifications - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/notifications/me?page=1&page_size=20&channel=in_app"
+      }
+    },
+    {
+      "name": "User Notifications - Unread Count",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/notifications/me/unread-count"
+      }
+    },
+    {
+      "name": "User Notifications - Mark Read",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/notifications/{{notification_id}}/read"
+      }
+    },
+    {
+      "name": "User Notifications - Mark All Read",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/notifications/read-all"
+      }
+    },
+    {
+      "name": "User Notifications - Delete",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/notifications/{{notification_id}}"
+      }
+    },
+    {
+      "name": "Admin Notifications - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/notifications?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin Notifications - List Filtered",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/notifications?status=unread&channel=in_app&recipient_user_id={{recipient_user_id}}"
+      }
+    },
+    {
+      "name": "Admin Notifications - Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/notifications/{{notification_id}}"
+      }
+    },
+    {
+      "name": "Admin Notifications - System Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/admin/notifications/system-message",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"recipient_user_id\": {{recipient_user_id}},\n  \"title\": \"پیام سیستمی تست\",\n  \"body\": \"این یک پیام سیستمی تستی است.\",\n  \"action_url\": \"/notifications\",\n  \"priority\": \"normal\"\n}"
+        }
+      }
+    }
+  ]
+}
