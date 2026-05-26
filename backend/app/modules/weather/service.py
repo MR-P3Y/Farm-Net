@@ -6,6 +6,8 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.service import NotificationService
 from app.modules.weather.enums import (
     WeatherAlertSeverity,
     WeatherAlertStatus,
@@ -630,6 +632,12 @@ class WeatherService:
                 )
 
                 self.repo.add_alert(alert)
+
+                self._notify_admins_for_weather_alert(
+                    alert=alert,
+                    location=location,
+                )
+
                 created += 1
 
         self.repo.commit()
@@ -639,6 +647,40 @@ class WeatherService:
             evaluated_rules=len(rules),
             created_alerts=created,
             skipped_duplicates=skipped,
+        )
+
+    def _notify_admins_for_weather_alert(
+        self,
+        *,
+        alert: WeatherAlert,
+        location: WeatherLocation,
+    ) -> None:
+        recipient_ids = self.repo.list_weather_admin_recipient_user_ids()
+
+        if not recipient_ids:
+            return
+
+        NotificationService(self.db).create_event_and_notify_many(
+            event_type=NotificationEventType.WEATHER_ALERT_CREATED.value,
+            recipient_user_ids=recipient_ids,
+            title=f"هشدار آب‌وهوا: {alert.title}",
+            body=f"{location.display_name}: {alert.body}",
+            actor_user_id=None,
+            source_type="weather_alert",
+            source_id=str(alert.id),
+            payload_json={
+                "weather_alert_id": alert.id,
+                "location_id": alert.location_id,
+                "location_name": location.display_name,
+                "alert_type": alert.alert_type,
+                "severity": alert.severity,
+                "starts_at": alert.starts_at.isoformat(),
+            },
+            action_url=f"/weather/alerts?location_id={alert.location_id}",
+            priority=(
+                "high" if alert.severity in {"high", "critical"} else "normal"
+            ),
+            commit=False,
         )
 
     def _rule_matches_forecast(

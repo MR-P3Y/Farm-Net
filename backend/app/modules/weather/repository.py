@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.modules.weather.models import (
@@ -348,3 +349,19 @@ class WeatherRepository:
         )
 
         return rows, total
+
+    def list_weather_admin_recipient_user_ids(self) -> list[int]:
+        rows = self.db.execute(
+            text(
+                """
+                SELECT DISTINCT u.id
+                FROM auth_users u
+                JOIN auth_user_roles ur ON ur.user_id = u.id
+                JOIN auth_roles r ON r.id = ur.role_id
+                WHERE r.code IN ('admin', 'super_admin')
+                ORDER BY u.id
+                """
+            )
+        ).fetchall()
+
+        return [int(row[0]) for row in rows]
