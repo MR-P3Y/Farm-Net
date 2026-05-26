@@ -6,14 +6,28 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
-from app.modules.weather.enums import WeatherLocationType, WeatherProvider
-from app.modules.weather.models import WeatherForecast, WeatherLocation, WeatherSnapshot
+from app.modules.weather.enums import (
+    WeatherAlertSeverity,
+    WeatherAlertStatus,
+    WeatherAlertType,
+    WeatherLocationType,
+    WeatherProvider,
+)
+from app.modules.weather.models import (
+    WeatherAlert,
+    WeatherAlertRule,
+    WeatherForecast,
+    WeatherLocation,
+    WeatherSnapshot,
+)
 from app.modules.weather.providers.base import WeatherProviderClient, WeatherProviderLocation
 from app.modules.weather.providers.mock_provider import MockWeatherProviderClient
 from app.modules.weather.providers.openweather_provider import OpenWeatherProviderClient
 from app.modules.weather.repository import WeatherRepository
 from app.modules.weather.schemas import (
+    WeatherAlertEvaluationOut,
     WeatherAlertOut,
+    WeatherAlertRuleOut,
     WeatherForecastOut,
     WeatherGpsLocationIn,
     WeatherLocationCreateIn,
@@ -55,6 +69,100 @@ class WeatherService:
         self.repo.commit()
 
         return [WeatherProviderConfigOut.model_validate(row) for row in rows]
+
+    def seed_default_alert_rules(self) -> list[WeatherAlertRuleOut]:
+        defaults = [
+            {
+                "alert_type": WeatherAlertType.FROST.value,
+                "severity": WeatherAlertSeverity.HIGH.value,
+                "title_template": "هشدار سرمازدگی",
+                "body_template": (
+                    "دمای پیش‌بینی‌شده به {temperature_c} درجه رسیده است. "
+                    "برای محافظت از محصولات حساس اقدام کنید."
+                ),
+                "rule_json": {"temperature_c_lte": 2},
+            },
+            {
+                "alert_type": WeatherAlertType.HEAT.value,
+                "severity": WeatherAlertSeverity.HIGH.value,
+                "title_template": "هشدار گرمای شدید",
+                "body_template": (
+                    "دمای پیش‌بینی‌شده به {temperature_c} درجه رسیده است. "
+                    "آبیاری و محافظت گرمایی را بررسی کنید."
+                ),
+                "rule_json": {"temperature_c_gte": 38},
+            },
+            {
+                "alert_type": WeatherAlertType.HEAVY_RAIN.value,
+                "severity": WeatherAlertSeverity.MEDIUM.value,
+                "title_template": "هشدار بارش سنگین",
+                "body_template": (
+                    "بارش پیش‌بینی‌شده {precipitation_mm} میلی‌متر است. "
+                    "زهکشی و برنامه عملیات مزرعه را بررسی کنید."
+                ),
+                "rule_json": {"precipitation_mm_gte": 20},
+            },
+            {
+                "alert_type": WeatherAlertType.STRONG_WIND.value,
+                "severity": WeatherAlertSeverity.MEDIUM.value,
+                "title_template": "هشدار باد شدید",
+                "body_template": (
+                    "سرعت باد پیش‌بینی‌شده {wind_speed_mps} متر بر ثانیه است. "
+                    "از سم‌پاشی یا عملیات حساس خودداری کنید."
+                ),
+                "rule_json": {"wind_speed_mps_gte": 12},
+            },
+            {
+                "alert_type": WeatherAlertType.SPRAYING_NOT_RECOMMENDED.value,
+                "severity": WeatherAlertSeverity.MEDIUM.value,
+                "title_template": "سم‌پاشی توصیه نمی‌شود",
+                "body_template": (
+                    "به دلیل باد یا احتمال بارش، سم‌پاشی در این بازه توصیه نمی‌شود."
+                ),
+                "rule_json": {
+                    "any": [
+                        {"wind_speed_mps_gte": 8},
+                        {"precipitation_probability_gte": 0.6},
+                    ]
+                },
+            },
+        ]
+
+        rows: list[WeatherAlertRule] = []
+
+        for item in defaults:
+            row = self.repo.get_alert_rule_by_type(alert_type=item["alert_type"])
+
+            if row is None:
+                row = WeatherAlertRule(
+                    alert_type=item["alert_type"],
+                    severity=item["severity"],
+                    title_template=item["title_template"],
+                    body_template=item["body_template"],
+                    rule_json=item["rule_json"],
+                    is_active=True,
+                )
+                self.repo.add_alert_rule(row)
+            else:
+                row.severity = item["severity"]
+                row.title_template = item["title_template"]
+                row.body_template = item["body_template"]
+                row.rule_json = item["rule_json"]
+                row.is_active = True
+
+            rows.append(row)
+
+        self.repo.commit()
+
+        for row in rows:
+            self.repo.refresh(row)
+
+        return [WeatherAlertRuleOut.model_validate(row) for row in rows]
+
+    def list_alert_rules(self) -> list[WeatherAlertRuleOut]:
+        rows = self.repo.list_alert_rules()
+
+        return [WeatherAlertRuleOut.model_validate(row) for row in rows]
 
     def list_provider_configs(self) -> list[WeatherProviderConfigOut]:
         rows = self.repo.list_provider_configs()
@@ -427,6 +535,203 @@ class WeatherService:
 
         return [WeatherAlertOut.model_validate(row) for row in rows]
 
+    def list_admin_alerts(
+        self,
+        *,
+        location_id: int | None,
+        alert_type: str | None,
+        status: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[WeatherAlertOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if alert_type is not None:
+            self._validate_alert_type(alert_type)
+
+        if status is not None:
+            self._validate_alert_status(status)
+
+        rows, total = self.repo.list_admin_alerts(
+            location_id=location_id,
+            alert_type=alert_type,
+            status=status,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [WeatherAlertOut.model_validate(row) for row in rows], total
+
+    def evaluate_alert_rules_for_location(
+        self,
+        *,
+        location_id: int,
+    ) -> WeatherAlertEvaluationOut:
+        location = self.repo.get_location_by_id(location_id=location_id)
+
+        if location is None:
+            raise ValidationAuthError(
+                message="Weather location not found",
+                details={"location_id": location_id},
+            )
+
+        rules = self.repo.list_active_alert_rules()
+        forecasts = self.repo.list_forecasts(location_id=location_id, limit=120)
+
+        created = 0
+        skipped = 0
+
+        for rule in rules:
+            for forecast in forecasts:
+                if not self._rule_matches_forecast(rule.rule_json, forecast):
+                    continue
+
+                existing = self.repo.find_duplicate_active_alert(
+                    location_id=location_id,
+                    rule_id=rule.id,
+                    alert_type=rule.alert_type,
+                    starts_at=forecast.forecast_time,
+                )
+
+                if existing is not None:
+                    skipped += 1
+                    continue
+
+                alert = WeatherAlert(
+                    location_id=location_id,
+                    rule_id=rule.id,
+                    alert_type=rule.alert_type,
+                    severity=rule.severity,
+                    status=WeatherAlertStatus.ACTIVE.value,
+                    title=rule.title_template,
+                    body=self._render_alert_body(
+                        template=rule.body_template,
+                        forecast=forecast,
+                    ),
+                    starts_at=forecast.forecast_time,
+                    ends_at=None,
+                    is_active=True,
+                    payload_json={
+                        "forecast_id": forecast.id,
+                        "forecast_time": forecast.forecast_time.isoformat(),
+                        "rule_json": rule.rule_json,
+                        "temperature_c": self._decimal_to_str(forecast.temperature_c),
+                        "precipitation_mm": self._decimal_to_str(
+                            forecast.precipitation_mm
+                        ),
+                        "precipitation_probability": self._decimal_to_str(
+                            forecast.precipitation_probability
+                        ),
+                        "wind_speed_mps": self._decimal_to_str(
+                            forecast.wind_speed_mps
+                        ),
+                    },
+                )
+
+                self.repo.add_alert(alert)
+                created += 1
+
+        self.repo.commit()
+
+        return WeatherAlertEvaluationOut(
+            location_id=location_id,
+            evaluated_rules=len(rules),
+            created_alerts=created,
+            skipped_duplicates=skipped,
+        )
+
+    def _rule_matches_forecast(
+        self,
+        rule_json: dict,
+        forecast: WeatherForecast,
+    ) -> bool:
+        if "any" in rule_json:
+            return any(
+                self._rule_matches_forecast(item, forecast)
+                for item in rule_json["any"]
+            )
+
+        if "all" in rule_json:
+            return all(
+                self._rule_matches_forecast(item, forecast)
+                for item in rule_json["all"]
+            )
+
+        for key, threshold in rule_json.items():
+            value = self._forecast_metric(forecast, key)
+
+            if value is None:
+                return False
+
+            if key.endswith("_lte"):
+                if value > Decimal(str(threshold)):
+                    return False
+
+            elif key.endswith("_gte"):
+                if value < Decimal(str(threshold)):
+                    return False
+
+            else:
+                raise ValidationAuthError(
+                    message="Unsupported weather alert rule operator",
+                    details={"operator": key},
+                )
+
+        return True
+
+    def _forecast_metric(
+        self,
+        forecast: WeatherForecast,
+        key: str,
+    ) -> Decimal | None:
+        metric_name = key.removesuffix("_lte").removesuffix("_gte")
+
+        value = getattr(forecast, metric_name, None)
+
+        if value is None:
+            return None
+
+        return Decimal(str(value))
+
+    def _render_alert_body(
+        self,
+        *,
+        template: str,
+        forecast: WeatherForecast,
+    ) -> str:
+        values = {
+            "temperature_c": self._decimal_to_str(forecast.temperature_c) or "-",
+            "min_temperature_c": self._decimal_to_str(
+                forecast.min_temperature_c
+            )
+            or "-",
+            "max_temperature_c": self._decimal_to_str(
+                forecast.max_temperature_c
+            )
+            or "-",
+            "humidity_percent": self._decimal_to_str(forecast.humidity_percent)
+            or "-",
+            "precipitation_mm": self._decimal_to_str(forecast.precipitation_mm)
+            or "-",
+            "precipitation_probability": self._decimal_to_str(
+                forecast.precipitation_probability
+            )
+            or "-",
+            "wind_speed_mps": self._decimal_to_str(forecast.wind_speed_mps) or "-",
+        }
+
+        try:
+            return template.format(**values)
+        except Exception:
+            return template
+
+    def _decimal_to_str(self, value: object) -> str | None:
+        if value is None:
+            return None
+
+        return str(value)
+
     def _provider(
         self,
         *,
@@ -486,4 +791,22 @@ class WeatherService:
             raise ValidationAuthError(
                 message="Invalid longitude",
                 details={"longitude": str(longitude)},
+            )
+
+    def _validate_alert_type(self, alert_type: str) -> None:
+        allowed = {item.value for item in WeatherAlertType}
+
+        if alert_type not in allowed:
+            raise ValidationAuthError(
+                message="Invalid weather alert type",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_alert_status(self, status: str) -> None:
+        allowed = {item.value for item in WeatherAlertStatus}
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid weather alert status",
+                details={"allowed": sorted(allowed)},
             )

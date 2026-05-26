@@ -86,6 +86,32 @@ class WeatherAlertOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class WeatherAlertRuleOut(BaseModel):
+    id: int
+
+    alert_type: str
+    severity: str
+
+    title_template: str
+    body_template: str
+
+    rule_json: dict[str, Any]
+
+    is_active: bool
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class WeatherAlertEvaluationOut(BaseModel):
+    location_id: int
+    evaluated_rules: int
+    created_alerts: int
+    skipped_duplicates: int
+
+
 class WeatherProviderConfigCreateIn(BaseModel):
     provider: str = Field(min_length=2, max_length=50)
     base_url: str | None = Field(default=None, max_length=500)

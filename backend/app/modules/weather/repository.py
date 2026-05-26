@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.weather.models import (
     WeatherAlert,
+    WeatherAlertRule,
     WeatherForecast,
     WeatherLocation,
     WeatherProviderConfig,
@@ -263,3 +264,87 @@ class WeatherRepository:
             .limit(limit)
             .all()
         )
+
+    def add_alert_rule(self, row: WeatherAlertRule) -> WeatherAlertRule:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def get_alert_rule_by_type(
+        self,
+        *,
+        alert_type: str,
+    ) -> WeatherAlertRule | None:
+        return (
+            self.db.query(WeatherAlertRule)
+            .filter(WeatherAlertRule.alert_type == alert_type)
+            .one_or_none()
+        )
+
+    def list_active_alert_rules(self) -> list[WeatherAlertRule]:
+        return (
+            self.db.query(WeatherAlertRule)
+            .filter(WeatherAlertRule.is_active == True)  # noqa: E712
+            .order_by(WeatherAlertRule.id.asc())
+            .all()
+        )
+
+    def list_alert_rules(self) -> list[WeatherAlertRule]:
+        return self.db.query(WeatherAlertRule).order_by(WeatherAlertRule.id.asc()).all()
+
+    def add_alert(self, row: WeatherAlert) -> WeatherAlert:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def find_duplicate_active_alert(
+        self,
+        *,
+        location_id: int,
+        rule_id: int | None,
+        alert_type: str,
+        starts_at: datetime,
+    ) -> WeatherAlert | None:
+        return (
+            self.db.query(WeatherAlert)
+            .filter(
+                WeatherAlert.location_id == location_id,
+                WeatherAlert.rule_id == rule_id,
+                WeatherAlert.alert_type == alert_type,
+                WeatherAlert.starts_at == starts_at,
+                WeatherAlert.status == "active",
+                WeatherAlert.is_active == True,  # noqa: E712
+            )
+            .one_or_none()
+        )
+
+    def list_admin_alerts(
+        self,
+        *,
+        location_id: int | None = None,
+        alert_type: str | None = None,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[WeatherAlert], int]:
+        query = self.db.query(WeatherAlert)
+
+        if location_id:
+            query = query.filter(WeatherAlert.location_id == location_id)
+
+        if alert_type:
+            query = query.filter(WeatherAlert.alert_type == alert_type)
+
+        if status:
+            query = query.filter(WeatherAlert.status == status)
+
+        total = query.count()
+
+        rows = (
+            query.order_by(WeatherAlert.created_at.desc(), WeatherAlert.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total

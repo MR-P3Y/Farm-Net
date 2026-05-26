@@ -59,6 +59,98 @@ def update_weather_provider_config(
     )
 
 
+@router.get("/alert-rules")
+def list_weather_alert_rules(
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("weather.alert_manage")),
+):
+    service = WeatherService(db)
+
+    items = service.list_alert_rules()
+
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "total": len(items),
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.post("/alert-rules/seed")
+def seed_weather_alert_rules(
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("weather.alert_manage")),
+):
+    service = WeatherService(db)
+
+    items = service.seed_default_alert_rules()
+
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="Weather alert rules seeded",
+        meta={
+            "total": len(items),
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.get("/alerts")
+def list_admin_weather_alerts(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    location_id: int | None = Query(default=None, ge=1),
+    alert_type: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("weather.admin_read")),
+):
+    service = WeatherService(db)
+
+    items, total = service.list_admin_alerts(
+        location_id=location_id,
+        alert_type=alert_type,
+        status=status,
+        page=page,
+        page_size=page_size,
+    )
+
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.post("/alerts/evaluate")
+def evaluate_weather_alerts(
+    request: Request,
+    location_id: int = Query(..., ge=1),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("weather.alert_manage")),
+):
+    service = WeatherService(db)
+
+    result = service.evaluate_alert_rules_for_location(location_id=location_id)
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Weather alert rules evaluated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
 @router.get("/locations")
 def list_admin_weather_locations(
     request: Request,
