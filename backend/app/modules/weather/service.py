@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -24,6 +25,9 @@ from app.modules.weather.schemas import (
 
 
 class WeatherService:
+    CURRENT_WEATHER_TTL_MINUTES = 30
+    FORECAST_TTL_MINUTES = 180
+
     def __init__(self, db: Session) -> None:
         self.db = db
         self.repo = WeatherRepository(db)
@@ -274,6 +278,78 @@ class WeatherService:
             WeatherSnapshotOut.model_validate(snapshot),
             [WeatherForecastOut.model_validate(row) for row in forecast_rows],
         )
+
+    def is_current_weather_stale(
+        self,
+        *,
+        location_id: int,
+        ttl_minutes: int | None = None,
+    ) -> bool:
+        row = self.repo.latest_snapshot(location_id=location_id)
+
+        if row is None:
+            return True
+
+        ttl = ttl_minutes or self.CURRENT_WEATHER_TTL_MINUTES
+        cutoff = datetime.utcnow() - timedelta(minutes=ttl)
+
+        return row.observed_at.replace(tzinfo=None) < cutoff
+
+    def is_forecast_stale(
+        self,
+        *,
+        location_id: int,
+        forecast_type: str | None = None,
+        ttl_minutes: int | None = None,
+    ) -> bool:
+        latest_created_at = self.repo.latest_forecast_created_at(
+            location_id=location_id,
+            forecast_type=forecast_type,
+        )
+
+        if latest_created_at is None:
+            return True
+
+        ttl = ttl_minutes or self.FORECAST_TTL_MINUTES
+        cutoff = datetime.utcnow() - timedelta(minutes=ttl)
+
+        return latest_created_at.replace(tzinfo=None) < cutoff
+
+    def is_weather_cache_stale(
+        self,
+        *,
+        location_id: int,
+    ) -> bool:
+        return self.is_current_weather_stale(
+            location_id=location_id
+        ) or self.is_forecast_stale(location_id=location_id)
+
+    def refresh_location_weather_if_stale(
+        self,
+        *,
+        location_id: int,
+        provider_override: str | None = None,
+        force: bool = False,
+    ) -> tuple[WeatherSnapshotOut | None, list[WeatherForecastOut], bool]:
+        location = self.repo.get_location_by_id(location_id=location_id)
+
+        if location is None:
+            raise ValidationAuthError(
+                message="Weather location not found",
+                details={"location_id": location_id},
+            )
+
+        if force or self.is_weather_cache_stale(location_id=location_id):
+            snapshot, forecasts = self.refresh_location_weather(
+                location_id=location_id,
+                provider_override=provider_override,
+            )
+            return snapshot, forecasts, True
+
+        snapshot = self.latest_snapshot(location_id=location_id)
+        forecasts = self.list_forecasts(location_id=location_id)
+
+        return snapshot, forecasts, False
 
     def latest_snapshot(
         self,

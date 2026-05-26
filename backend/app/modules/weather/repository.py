@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -224,6 +225,26 @@ class WeatherRepository:
             query = query.filter(WeatherForecast.forecast_type == forecast_type)
 
         return query.order_by(WeatherForecast.forecast_time.asc()).limit(limit).all()
+
+    def latest_forecast_created_at(
+        self,
+        *,
+        location_id: int,
+        forecast_type: str | None = None,
+    ) -> datetime | None:
+        query = self.db.query(WeatherForecast).filter(
+            WeatherForecast.location_id == location_id
+        )
+
+        if forecast_type:
+            query = query.filter(WeatherForecast.forecast_type == forecast_type)
+
+        row = query.order_by(
+            WeatherForecast.created_at.desc(),
+            WeatherForecast.id.desc(),
+        ).first()
+
+        return row.created_at if row else None
 
     def list_active_alerts(
         self,

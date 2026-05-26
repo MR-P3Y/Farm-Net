@@ -111,28 +111,60 @@ def get_admin_weather_location(
     )
 
 
+@router.get("/locations/{location_id}/cache-status")
+def get_admin_weather_cache_status(
+    location_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("weather.admin_read")),
+):
+    service = WeatherService(db)
+
+    location = service.get_location_admin(location_id=location_id)
+
+    current_stale = service.is_current_weather_stale(location_id=location.id)
+    forecast_stale = service.is_forecast_stale(location_id=location.id)
+
+    return success_response(
+        data={
+            "location_id": location.id,
+            "current_stale": current_stale,
+            "forecast_stale": forecast_stale,
+            "weather_stale": current_stale or forecast_stale,
+            "current_ttl_minutes": service.CURRENT_WEATHER_TTL_MINUTES,
+            "forecast_ttl_minutes": service.FORECAST_TTL_MINUTES,
+        },
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
 @router.post("/refresh")
 def refresh_admin_weather_location(
     request: Request,
     location_id: int = Query(..., ge=1),
     provider: str | None = Query(default=None),
+    force: bool = Query(default=True),
     db: Session = Depends(get_db),
     _: AuthUser = Depends(require_permission("weather.admin_manage")),
 ):
     service = WeatherService(db)
 
-    snapshot, forecasts = service.refresh_location_weather(
+    snapshot, forecasts, refreshed = service.refresh_location_weather_if_stale(
         location_id=location_id,
         provider_override=provider,
+        force=force,
     )
 
     return success_response(
         data={
-            "snapshot": snapshot.model_dump(mode="json"),
+            "snapshot": snapshot.model_dump(mode="json") if snapshot else None,
             "forecasts": [item.model_dump(mode="json") for item in forecasts],
         },
-        message="Weather refreshed",
+        message="Weather refreshed" if refreshed else "Weather cache is fresh",
         meta={
+            "refreshed": refreshed,
+            "force": force,
             "forecasts_count": len(forecasts),
             "trace_id": request.state.trace_id,
         },

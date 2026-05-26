@@ -139,18 +139,20 @@ def refresh_weather_location(
 ):
     service = WeatherService(db)
 
-    snapshot, forecasts = service.refresh_location_weather(
+    snapshot, forecasts, refreshed = service.refresh_location_weather_if_stale(
         location_id=location_id,
         provider_override=provider,
+        force=False,
     )
 
     return success_response(
         data={
-            "snapshot": snapshot.model_dump(mode="json"),
+            "snapshot": snapshot.model_dump(mode="json") if snapshot else None,
             "forecasts": [item.model_dump(mode="json") for item in forecasts],
         },
-        message="Weather refreshed",
+        message="Weather refreshed" if refreshed else "Weather cache is fresh",
         meta={
+            "refreshed": refreshed,
             "forecasts_count": len(forecasts),
             "trace_id": request.state.trace_id,
         },
