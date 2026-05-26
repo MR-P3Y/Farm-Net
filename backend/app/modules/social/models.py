@@ -15,6 +15,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+from app.modules.auth import models as auth_models  # noqa: F401
+from app.modules.media import models as media_models  # noqa: F401
 
 
 class SocialCategory(Base):
