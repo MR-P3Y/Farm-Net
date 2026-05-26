@@ -10,6 +10,7 @@ import '../../features/orders/presentation/admin_orders_page.dart';
 import '../../features/products/presentation/admin_products_page.dart';
 import '../../features/stores/presentation/admin_stores_page.dart';
 import '../../features/verifications/presentation/admin_verifications_page.dart';
+import '../../features/weather/presentation/admin_weather_page.dart';
 import '../auth/admin_permission_guard.dart';
 import '../widgets/admin_app_shell.dart';
 
@@ -103,6 +104,16 @@ final GoRouter adminRouter = GoRouter(
             return const AdminPermissionGuard(
               permission: 'notifications.admin_read',
               child: AdminNotificationsPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/weather',
+          name: 'admin-weather',
+          builder: (context, state) {
+            return const AdminPermissionGuard(
+              permission: 'weather.admin_read',
+              child: AdminWeatherPage(),
             );
           },
         ),

@@ -78,6 +78,12 @@ class AdminSidebar extends StatelessWidget {
                   onTap: () => context.go('/notifications'),
                 ),
                 _SidebarItem(
+                  icon: Icons.wb_sunny_outlined,
+                  label: 'آب‌وهوا',
+                  compact: isCompact,
+                  onTap: () => context.go('/weather'),
+                ),
+                _SidebarItem(
                   icon: Icons.payments_outlined,
                   label: l10n.finance,
                   compact: isCompact,
