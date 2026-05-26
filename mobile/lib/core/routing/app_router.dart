@@ -16,6 +16,7 @@ import '../../features/stores/presentation/my_store_screen.dart';
 import '../../features/stores/presentation/public_store_detail_screen.dart';
 import '../../features/stores/presentation/public_stores_screen.dart';
 import '../../features/verification/presentation/verification_requests_screen.dart';
+import '../../features/weather/presentation/weather_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -34,6 +35,11 @@ final GoRouter appRouter = GoRouter(
       path: '/notifications',
       name: 'notifications',
       builder: (context, state) => const NotificationsScreen(),
+    ),
+    GoRoute(
+      path: '/weather',
+      name: 'weather',
+      builder: (context, state) => const WeatherScreen(),
     ),
     GoRoute(
       path: '/profile',

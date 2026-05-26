@@ -117,6 +117,14 @@ class HomeScreen extends ConsumerWidget {
                       label: const Text('سفارش‌های من'),
                     ),
                     SizedBox(height: r.v(12)),
+                    FilledButton.icon(
+                      onPressed: () {
+                        context.push('/weather');
+                      },
+                      icon: const Icon(Icons.wb_sunny_outlined),
+                      label: const Text('آب‌وهوا'),
+                    ),
+                    SizedBox(height: r.v(12)),
                     OutlinedButton.icon(
                       onPressed: () {
                         context.push('/notifications');
