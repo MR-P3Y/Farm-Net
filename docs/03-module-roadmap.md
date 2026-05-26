@@ -104,13 +104,30 @@ rewritten during their implementation phase.
 
 ### Phase 12 - Weather Foundation
 
-```text
-User province/city/location weather lookup
-Current weather display
-Multi-day forecast
-Agricultural weather alerts
-Future AI crop recommendation integration point
-```
+Status: Foundation completed in Phase 12
+
+Implemented:
+
+- Weather database foundation
+- Weather permissions
+- Provider abstraction
+- Mock provider
+- OpenWeather-ready config using `api_key_ref`
+- Public weather APIs
+- Admin weather APIs
+- DB cache-aware refresh
+- Automatic alert rules engine
+- Weather alert notifications for admin/super_admin
+- Flutter mobile weather foundation
+- Admin panel weather foundation
+- Docs and Postman collection
+
+Deferred:
+
+- User weather subscriptions
+- User-targeted weather notifications
+- Real external provider production hardening
+- Push/SMS/email delivery
 
 ### Phase 13 - Social / Community Foundation
 

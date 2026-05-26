@@ -1,0 +1,265 @@
+{
+  "info": {
+    "name": "Farm Net - Weather Foundation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Weather locations, current weather, forecasts, alerts, provider configs, cache refresh, and alert rule evaluation."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_access_token",
+      "value": ""
+    },
+    {
+      "key": "weather_location_id",
+      "value": "1"
+    },
+    {
+      "key": "provider_config_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Login User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/auth/login/email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"test-auth@example.com\",\n  \"password\": \"Test@123456\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Login Admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/auth/login/email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"change-me\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Weather - List Locations",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/weather/locations?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Weather - Create GPS Location",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/weather/locations/gps",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"latitude\": 35.6892,\n  \"longitude\": 51.3890,\n  \"display_name\": \"Tehran GPS Postman\",\n  \"timezone\": \"Asia/Tehran\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Weather - Current",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/weather/current?location_id={{weather_location_id}}"
+      }
+    },
+    {
+      "name": "Weather - Forecast",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/weather/forecast?location_id={{weather_location_id}}"
+      }
+    },
+    {
+      "name": "Weather - Alerts",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/weather/alerts?location_id={{weather_location_id}}"
+      }
+    },
+    {
+      "name": "Weather - Refresh If Stale",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/weather/refresh?location_id={{weather_location_id}}&provider=mock"
+      }
+    },
+    {
+      "name": "Admin Weather - Provider Configs",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/provider-configs"
+      }
+    },
+    {
+      "name": "Admin Weather - Update Provider Config",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/provider-configs/{{provider_config_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"is_active\": true,\n  \"priority\": 50,\n  \"api_key_ref\": \"OPENWEATHER_API_KEY\",\n  \"settings_json\": {\n    \"units\": \"metric\"\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Weather - Locations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/locations?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin Weather - Location Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/locations/{{weather_location_id}}"
+      }
+    },
+    {
+      "name": "Admin Weather - Cache Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/locations/{{weather_location_id}}/cache-status"
+      }
+    },
+    {
+      "name": "Admin Weather - Force Refresh",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/refresh?location_id={{weather_location_id}}&provider=mock&force=true"
+      }
+    },
+    {
+      "name": "Admin Weather - Alert Rules",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/alert-rules"
+      }
+    },
+    {
+      "name": "Admin Weather - Seed Alert Rules",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/alert-rules/seed"
+      }
+    },
+    {
+      "name": "Admin Weather - Alerts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/alerts?page=1&page_size=20&location_id={{weather_location_id}}"
+      }
+    },
+    {
+      "name": "Admin Weather - Evaluate Alerts",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/weather/alerts/evaluate?location_id={{weather_location_id}}"
+      }
+    }
+  ]
+}
