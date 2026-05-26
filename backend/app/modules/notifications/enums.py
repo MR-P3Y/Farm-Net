@@ -23,6 +23,9 @@ class NotificationEventType(str, Enum):
     PRODUCT_APPROVED = "product.approved"
     PRODUCT_REJECTED = "product.rejected"
 
+    WEATHER_ALERT_CREATED = "weather.alert_created"
+    WEATHER_ALERT_RESOLVED = "weather.alert_resolved"
+
     SYSTEM_MESSAGE = "system.message"
 
 

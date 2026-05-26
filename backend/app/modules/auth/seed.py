@@ -214,9 +214,42 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("consult_requests.read", "Read consult requests", "consultants", "View consult requests"),
     PermissionSeed("consult_requests.manage", "Manage consult requests", "consultants", "Manage consult requests"),
 
-    PermissionSeed("weather.read", "Read weather", "weather", "View weather"),
-    PermissionSeed("weather.manage_locations", "Manage weather locations", "weather", "Manage weather locations"),
-    PermissionSeed("weather.manage_alerts", "Manage weather alerts", "weather", "Manage weather alerts"),
+    PermissionSeed(
+        "weather.public_read",
+        "Public read weather",
+        "weather",
+        "Allows public access to weather locations, current weather, forecasts, and public alerts.",
+    ),
+    PermissionSeed(
+        "weather.read",
+        "Read weather",
+        "weather",
+        "Allows authenticated users to read weather data.",
+    ),
+    PermissionSeed(
+        "weather.admin_read",
+        "Admin read weather",
+        "weather",
+        "Allows admin users to read weather records and provider settings.",
+    ),
+    PermissionSeed(
+        "weather.admin_manage",
+        "Admin manage weather",
+        "weather",
+        "Allows admin users to manage weather locations and refresh weather data.",
+    ),
+    PermissionSeed(
+        "weather.alert_manage",
+        "Manage weather alerts",
+        "weather",
+        "Allows admin users to manage weather alert rules and alerts.",
+    ),
+    PermissionSeed(
+        "weather.provider_manage",
+        "Manage weather providers",
+        "weather",
+        "Allows admin users to manage weather provider configuration.",
+    ),
 
     PermissionSeed("ai.requests.read", "Read AI requests", "ai", "View AI requests"),
     PermissionSeed("ai.feedback.read", "Read AI feedback", "ai", "View AI feedback"),
@@ -270,6 +303,8 @@ REMOVED_PERMISSION_CODES = {
     "notifications.manage_templates",
     "notifications.send_test",
     "notifications.view_delivery_logs",
+    "weather.manage_alerts",
+    "weather.manage_locations",
 }
 
 RETIRED_ROLE_PERMISSION_CODES: dict[str, set[str]] = {
@@ -460,6 +495,8 @@ def assign_default_permissions(
             "geo.read",
             "notifications.read",
             "notifications.manage",
+            "weather.public_read",
+            "weather.read",
             "media.upload",
             "media.read",
             "media.private_read",
@@ -481,6 +518,9 @@ def assign_default_permissions(
             "notifications.read",
             "notifications.manage",
             "notifications.admin_read",
+            "weather.public_read",
+            "weather.read",
+            "weather.admin_read",
             "orders.admin_read",
             "payments.admin_read",
             "media.admin_read",
@@ -488,6 +528,8 @@ def assign_default_permissions(
         "shop_owner": [
             "notifications.read",
             "notifications.manage",
+            "weather.public_read",
+            "weather.read",
             "media.upload",
             "media.read",
             "media.private_read",
@@ -518,10 +560,14 @@ def assign_default_permissions(
         "lessor": [
             "notifications.read",
             "notifications.manage",
+            "weather.public_read",
+            "weather.read",
         ],
         "consultant": [
             "notifications.read",
             "notifications.manage",
+            "weather.public_read",
+            "weather.read",
         ],
         "verification_admin": [
             "documents.read",
@@ -596,6 +642,12 @@ def assign_default_permissions(
             "notifications.admin_read",
             "notifications.admin_manage",
             "notifications.system_message",
+            "weather.public_read",
+            "weather.read",
+            "weather.admin_read",
+            "weather.admin_manage",
+            "weather.alert_manage",
+            "weather.provider_manage",
         ],
         "data_client": [
             "data_access.exports.read",
