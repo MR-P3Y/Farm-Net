@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.service import NotificationService
 from app.modules.social.enums import (
     SocialCommentStatus,
     SocialModerationActionType,
@@ -265,6 +267,7 @@ class SocialService:
             )
 
         parent_comment_id = payload.parent_comment_id
+        parent: SocialComment | None = None
 
         if parent_comment_id is not None:
             parent = self.repo.get_published_comment_by_id(
@@ -297,6 +300,39 @@ class SocialService:
         self.repo.add_comment(row)
 
         post.comments_count += 1
+
+        if parent_comment_id is None:
+            if post.author_user_id != author_user_id:
+                self._notify_user(
+                    recipient_user_id=post.author_user_id,
+                    event_type=NotificationEventType.SOCIAL_COMMENT_CREATED.value,
+                    title="کامنت جدید روی پست شما",
+                    body=f"برای پست «{post.title}» یک کامنت جدید ثبت شد.",
+                    source_type="social_post",
+                    source_id=str(post.id),
+                    payload_json={
+                        "post_id": post.id,
+                        "comment_id": row.id,
+                        "actor_user_id": author_user_id,
+                    },
+                    action_url=f"/social/posts/{post.id}",
+                )
+        elif parent is not None and parent.author_user_id != author_user_id:
+            self._notify_user(
+                recipient_user_id=parent.author_user_id,
+                event_type=NotificationEventType.SOCIAL_REPLY_CREATED.value,
+                title="پاسخ جدید به کامنت شما",
+                body=f"برای کامنت شما در پست «{post.title}» یک پاسخ ثبت شد.",
+                source_type="social_comment",
+                source_id=str(parent.id),
+                payload_json={
+                    "post_id": post.id,
+                    "comment_id": row.id,
+                    "parent_comment_id": parent.id,
+                    "actor_user_id": author_user_id,
+                },
+                action_url=f"/social/posts/{post.id}",
+            )
 
         self.repo.commit()
         self.repo.refresh(row)
@@ -643,6 +679,22 @@ class SocialService:
         self.repo.add_report(row)
         post.reports_count += 1
 
+        self._notify_social_admins(
+            event_type=NotificationEventType.SOCIAL_POST_REPORTED.value,
+            title="گزارش جدید برای پست اجتماعی",
+            body=f"پست «{post.title}» با دلیل «{payload.reason}» گزارش شد.",
+            source_type="social_report",
+            source_id=str(row.id),
+            payload_json={
+                "report_id": row.id,
+                "post_id": post.id,
+                "reason": payload.reason,
+                "reporter_user_id": reporter_user_id,
+            },
+            action_url="/admin/social/reports",
+            priority="high",
+        )
+
         self.repo.commit()
         self.repo.refresh(row)
 
@@ -679,6 +731,23 @@ class SocialService:
 
         self.repo.add_report(row)
         comment.reports_count += 1
+
+        self._notify_social_admins(
+            event_type=NotificationEventType.SOCIAL_COMMENT_REPORTED.value,
+            title="گزارش جدید برای کامنت اجتماعی",
+            body=f"یک کامنت با دلیل «{payload.reason}» گزارش شد.",
+            source_type="social_report",
+            source_id=str(row.id),
+            payload_json={
+                "report_id": row.id,
+                "comment_id": comment.id,
+                "post_id": comment.post_id,
+                "reason": payload.reason,
+                "reporter_user_id": reporter_user_id,
+            },
+            action_url="/admin/social/reports",
+            priority="high",
+        )
 
         self.repo.commit()
         self.repo.refresh(row)
@@ -837,6 +906,24 @@ class SocialService:
             )
         )
 
+        if row.author_user_id != moderator_user_id:
+            self._notify_user(
+                recipient_user_id=row.author_user_id,
+                event_type=NotificationEventType.SOCIAL_COMMENT_HIDDEN.value,
+                title="کامنت شما مخفی شد",
+                body="یکی از کامنت‌های شما توسط تیم مدیریت مخفی شد.",
+                source_type="social_comment",
+                source_id=str(row.id),
+                payload_json={
+                    "comment_id": row.id,
+                    "post_id": row.post_id,
+                    "moderator_user_id": moderator_user_id,
+                    "reason": payload.reason,
+                },
+                action_url=f"/social/posts/{row.post_id}",
+                priority="high",
+            )
+
         self.repo.commit()
         self.repo.refresh(row)
 
@@ -906,6 +993,23 @@ class SocialService:
             )
         )
 
+        if row.author_user_id != moderator_user_id:
+            self._notify_user(
+                recipient_user_id=row.author_user_id,
+                event_type=NotificationEventType.SOCIAL_POST_HIDDEN.value,
+                title="پست شما مخفی شد",
+                body=f"پست «{row.title}» توسط تیم مدیریت مخفی شد.",
+                source_type="social_post",
+                source_id=str(row.id),
+                payload_json={
+                    "post_id": row.id,
+                    "moderator_user_id": moderator_user_id,
+                    "reason": payload.reason,
+                },
+                action_url=f"/social/posts/{row.id}",
+                priority="high",
+            )
+
         self.repo.commit()
         self.repo.refresh(row)
 
@@ -945,6 +1049,64 @@ class SocialService:
         self.repo.refresh(row)
 
         return self._social_post_out(row)
+
+    def _notify_user(
+        self,
+        *,
+        recipient_user_id: int,
+        event_type: str,
+        title: str,
+        body: str,
+        source_type: str,
+        source_id: str,
+        payload_json: dict,
+        action_url: str | None = None,
+        priority: str = "normal",
+    ) -> None:
+        NotificationService(self.db).create_event_and_notify_many(
+            event_type=event_type,
+            recipient_user_ids=[recipient_user_id],
+            title=title,
+            body=body,
+            actor_user_id=None,
+            source_type=source_type,
+            source_id=source_id,
+            payload_json=payload_json,
+            action_url=action_url,
+            priority=priority,
+            commit=False,
+        )
+
+    def _notify_social_admins(
+        self,
+        *,
+        event_type: str,
+        title: str,
+        body: str,
+        source_type: str,
+        source_id: str,
+        payload_json: dict,
+        action_url: str | None = None,
+        priority: str = "normal",
+    ) -> None:
+        recipient_ids = self.repo.list_social_admin_recipient_user_ids()
+
+        if not recipient_ids:
+            return
+
+        NotificationService(self.db).create_event_and_notify_many(
+            event_type=event_type,
+            recipient_user_ids=recipient_ids,
+            title=title,
+            body=body,
+            actor_user_id=None,
+            source_type=source_type,
+            source_id=source_id,
+            payload_json=payload_json,
+            action_url=action_url,
+            priority=priority,
+            commit=False,
+        )
 
     def _validate_social_post_media(
         self,
