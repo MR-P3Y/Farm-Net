@@ -98,3 +98,28 @@ class SocialPostListFilter(BaseModel):
 
 class SocialPostModerationIn(BaseModel):
     reason: str | None = Field(default=None, max_length=1000)
+
+
+class SocialCommentCreateIn(BaseModel):
+    body: str = Field(min_length=2, max_length=5000)
+    parent_comment_id: int | None = None
+
+
+class SocialCommentOut(BaseModel):
+    id: int
+    post_id: int
+    author_user_id: int
+    parent_comment_id: int | None = None
+
+    body: str
+    status: str
+
+    reactions_count: int
+    reports_count: int
+
+    deleted_at: datetime | None = None
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}

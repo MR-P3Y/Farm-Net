@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
 from app.modules.social.schemas import (
+    SocialCommentCreateIn,
     SocialPostCreateIn,
     SocialPostListFilter,
 )
@@ -111,6 +112,58 @@ def get_social_post_detail(
     )
 
 
+@router.post("/posts/{post_id}/comments")
+def create_social_comment(
+    post_id: int,
+    payload: SocialCommentCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.comment_create")),
+):
+    service = SocialService(db)
+
+    result = service.create_comment(
+        author_user_id=current_user.id,
+        post_id=post_id,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Social comment created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/posts/{post_id}/comments")
+def list_social_comments(
+    post_id: int,
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    service = SocialService(db)
+
+    items, total = service.list_post_comments(
+        post_id=post_id,
+        page=page,
+        page_size=page_size,
+    )
+
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
 @router.get("/me/posts")
 def list_my_social_posts(
     request: Request,
@@ -157,5 +210,26 @@ def delete_own_social_post(
     return success_response(
         data=result.model_dump(mode="json"),
         message="Social post deleted",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.delete("/comments/{comment_id}")
+def delete_own_social_comment(
+    comment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.comment_manage_own")),
+):
+    service = SocialService(db)
+
+    result = service.soft_delete_own_comment(
+        user_id=current_user.id,
+        comment_id=comment_id,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Social comment deleted",
         meta={"trace_id": request.state.trace_id},
     )

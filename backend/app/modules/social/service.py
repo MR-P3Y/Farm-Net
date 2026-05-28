@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.social.enums import (
+    SocialCommentStatus,
     SocialModerationActionType,
     SocialModerationTargetType,
     SocialPostStatus,
@@ -14,12 +15,15 @@ from app.modules.social.enums import (
 )
 from app.modules.social.models import (
     SocialCategory,
+    SocialComment,
     SocialModerationAction,
     SocialPost,
 )
 from app.modules.social.repository import SocialRepository
 from app.modules.social.schemas import (
     SocialCategoryOut,
+    SocialCommentCreateIn,
+    SocialCommentOut,
     SocialPostCreateIn,
     SocialPostListFilter,
     SocialPostModerationIn,
@@ -224,6 +228,113 @@ class SocialService:
         )
 
         return [SocialPostOut.model_validate(row) for row in rows], total
+
+    def create_comment(
+        self,
+        *,
+        author_user_id: int,
+        post_id: int,
+        payload: SocialCommentCreateIn,
+    ) -> SocialCommentOut:
+        post = self.repo.get_published_post_by_id(post_id=post_id)
+
+        if post is None:
+            raise ValidationAuthError(
+                message="Social post not found",
+                details={"post_id": post_id},
+            )
+
+        parent_comment_id = payload.parent_comment_id
+
+        if parent_comment_id is not None:
+            parent = self.repo.get_published_comment_by_id(
+                comment_id=parent_comment_id,
+            )
+
+            if parent is None or parent.post_id != post_id:
+                raise ValidationAuthError(
+                    message="Parent comment not found",
+                    details={"parent_comment_id": parent_comment_id},
+                )
+
+            if parent.parent_comment_id is not None:
+                raise ValidationAuthError(
+                    message="Nested replies are not allowed",
+                    details={"parent_comment_id": parent_comment_id},
+                )
+
+        row = SocialComment(
+            post_id=post_id,
+            author_user_id=author_user_id,
+            parent_comment_id=parent_comment_id,
+            body=payload.body.strip(),
+            status=SocialCommentStatus.PUBLISHED.value,
+            reactions_count=0,
+            reports_count=0,
+            deleted_at=None,
+        )
+
+        self.repo.add_comment(row)
+
+        post.comments_count += 1
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialCommentOut.model_validate(row)
+
+    def list_post_comments(
+        self,
+        *,
+        post_id: int,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> tuple[list[SocialCommentOut], int]:
+        post = self.repo.get_published_post_by_id(post_id=post_id)
+
+        if post is None:
+            raise ValidationAuthError(
+                message="Social post not found",
+                details={"post_id": post_id},
+            )
+
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        rows, total = self.repo.list_post_comments(
+            post_id=post_id,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [SocialCommentOut.model_validate(row) for row in rows], total
+
+    def soft_delete_own_comment(
+        self,
+        *,
+        user_id: int,
+        comment_id: int,
+    ) -> SocialCommentOut:
+        row = self.repo.get_comment_by_id(comment_id=comment_id)
+
+        if row is None or row.author_user_id != user_id:
+            raise ValidationAuthError(
+                message="Social comment not found",
+                details={"comment_id": comment_id},
+            )
+
+        if row.status != SocialCommentStatus.DELETED.value:
+            post = self.repo.get_post_by_id(post_id=row.post_id)
+            if post is not None and post.comments_count > 0:
+                post.comments_count -= 1
+
+        row.status = SocialCommentStatus.DELETED.value
+        row.deleted_at = datetime.utcnow()
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialCommentOut.model_validate(row)
 
     def soft_delete_own_post(
         self,

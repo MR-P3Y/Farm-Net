@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.social.models import (
     SocialCategory,
+    SocialComment,
     SocialModerationAction,
     SocialPost,
 )
@@ -54,6 +55,11 @@ class SocialRepository:
         self.db.flush()
         return row
 
+    def add_comment(self, row: SocialComment) -> SocialComment:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
     def get_post_by_id(self, *, post_id: int) -> SocialPost | None:
         return self.db.query(SocialPost).filter(SocialPost.id == post_id).one_or_none()
 
@@ -63,6 +69,31 @@ class SocialRepository:
             .filter(
                 SocialPost.id == post_id,
                 SocialPost.status == "published",
+            )
+            .one_or_none()
+        )
+
+    def get_comment_by_id(
+        self,
+        *,
+        comment_id: int,
+    ) -> SocialComment | None:
+        return (
+            self.db.query(SocialComment)
+            .filter(SocialComment.id == comment_id)
+            .one_or_none()
+        )
+
+    def get_published_comment_by_id(
+        self,
+        *,
+        comment_id: int,
+    ) -> SocialComment | None:
+        return (
+            self.db.query(SocialComment)
+            .filter(
+                SocialComment.id == comment_id,
+                SocialComment.status == "published",
             )
             .one_or_none()
         )
@@ -123,6 +154,33 @@ class SocialRepository:
 
         rows = (
             query.order_by(SocialPost.created_at.desc(), SocialPost.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total
+
+    def list_post_comments(
+        self,
+        *,
+        post_id: int,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> tuple[list[SocialComment], int]:
+        query = self.db.query(SocialComment).filter(
+            SocialComment.post_id == post_id,
+            SocialComment.status == "published",
+        )
+
+        total = query.count()
+
+        rows = (
+            query.order_by(
+                SocialComment.parent_comment_id.asc(),
+                SocialComment.created_at.asc(),
+                SocialComment.id.asc(),
+            )
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()
