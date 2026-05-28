@@ -123,3 +123,33 @@ class SocialCommentOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class SocialReactionCreateIn(BaseModel):
+    reaction_type: str = Field(min_length=2, max_length=40)
+
+
+class SocialReactionOut(BaseModel):
+    id: int
+    post_id: int | None = None
+    comment_id: int | None = None
+    user_id: int
+    reaction_type: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SocialBookmarkOut(BaseModel):
+    id: int
+    post_id: int
+    user_id: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SocialBookmarkPostOut(BaseModel):
+    bookmark_id: int
+    bookmarked_at: datetime
+    post: SocialPostOut

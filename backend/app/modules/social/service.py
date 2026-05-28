@@ -12,15 +12,20 @@ from app.modules.social.enums import (
     SocialPostStatus,
     SocialPostType,
     SocialPostVisibility,
+    SocialReactionType,
 )
 from app.modules.social.models import (
+    SocialBookmark,
     SocialCategory,
     SocialComment,
     SocialModerationAction,
     SocialPost,
+    SocialReaction,
 )
 from app.modules.social.repository import SocialRepository
 from app.modules.social.schemas import (
+    SocialBookmarkOut,
+    SocialBookmarkPostOut,
     SocialCategoryOut,
     SocialCommentCreateIn,
     SocialCommentOut,
@@ -28,6 +33,8 @@ from app.modules.social.schemas import (
     SocialPostListFilter,
     SocialPostModerationIn,
     SocialPostOut,
+    SocialReactionCreateIn,
+    SocialReactionOut,
 )
 
 
@@ -336,6 +343,261 @@ class SocialService:
 
         return SocialCommentOut.model_validate(row)
 
+    def react_to_post(
+        self,
+        *,
+        user_id: int,
+        post_id: int,
+        payload: SocialReactionCreateIn,
+    ) -> tuple[SocialReactionOut, bool]:
+        self._validate_reaction_type(payload.reaction_type)
+
+        post = self.repo.get_published_post_by_id(post_id=post_id)
+
+        if post is None:
+            raise ValidationAuthError(
+                message="Social post not found",
+                details={"post_id": post_id},
+            )
+
+        existing = self.repo.get_post_reaction(
+            post_id=post_id,
+            user_id=user_id,
+            reaction_type=payload.reaction_type,
+        )
+
+        if existing is not None:
+            return SocialReactionOut.model_validate(existing), False
+
+        row = SocialReaction(
+            post_id=post_id,
+            comment_id=None,
+            user_id=user_id,
+            reaction_type=payload.reaction_type,
+        )
+
+        self.repo.add_reaction(row)
+        post.reactions_count += 1
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialReactionOut.model_validate(row), True
+
+    def remove_post_reaction(
+        self,
+        *,
+        user_id: int,
+        post_id: int,
+        reaction_type: str,
+    ) -> dict:
+        self._validate_reaction_type(reaction_type)
+
+        post = self.repo.get_published_post_by_id(post_id=post_id)
+
+        if post is None:
+            raise ValidationAuthError(
+                message="Social post not found",
+                details={"post_id": post_id},
+            )
+
+        existing = self.repo.get_post_reaction(
+            post_id=post_id,
+            user_id=user_id,
+            reaction_type=reaction_type,
+        )
+
+        if existing is None:
+            return {
+                "deleted": False,
+                "post_id": post_id,
+                "reaction_type": reaction_type,
+            }
+
+        self.repo.delete_reaction(existing)
+
+        if post.reactions_count > 0:
+            post.reactions_count -= 1
+
+        self.repo.commit()
+
+        return {
+            "deleted": True,
+            "post_id": post_id,
+            "reaction_type": reaction_type,
+        }
+
+    def react_to_comment(
+        self,
+        *,
+        user_id: int,
+        comment_id: int,
+        payload: SocialReactionCreateIn,
+    ) -> tuple[SocialReactionOut, bool]:
+        self._validate_reaction_type(payload.reaction_type)
+
+        comment = self.repo.get_published_comment_by_id(comment_id=comment_id)
+
+        if comment is None:
+            raise ValidationAuthError(
+                message="Social comment not found",
+                details={"comment_id": comment_id},
+            )
+
+        post = self.repo.get_published_post_by_id(post_id=comment.post_id)
+
+        if post is None:
+            raise ValidationAuthError(
+                message="Social post not found",
+                details={"post_id": comment.post_id},
+            )
+
+        existing = self.repo.get_comment_reaction(
+            comment_id=comment_id,
+            user_id=user_id,
+            reaction_type=payload.reaction_type,
+        )
+
+        if existing is not None:
+            return SocialReactionOut.model_validate(existing), False
+
+        row = SocialReaction(
+            post_id=None,
+            comment_id=comment_id,
+            user_id=user_id,
+            reaction_type=payload.reaction_type,
+        )
+
+        self.repo.add_reaction(row)
+        comment.reactions_count += 1
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialReactionOut.model_validate(row), True
+
+    def remove_comment_reaction(
+        self,
+        *,
+        user_id: int,
+        comment_id: int,
+        reaction_type: str,
+    ) -> dict:
+        self._validate_reaction_type(reaction_type)
+
+        comment = self.repo.get_published_comment_by_id(comment_id=comment_id)
+
+        if comment is None:
+            raise ValidationAuthError(
+                message="Social comment not found",
+                details={"comment_id": comment_id},
+            )
+
+        existing = self.repo.get_comment_reaction(
+            comment_id=comment_id,
+            user_id=user_id,
+            reaction_type=reaction_type,
+        )
+
+        if existing is None:
+            return {
+                "deleted": False,
+                "comment_id": comment_id,
+                "reaction_type": reaction_type,
+            }
+
+        self.repo.delete_reaction(existing)
+
+        if comment.reactions_count > 0:
+            comment.reactions_count -= 1
+
+        self.repo.commit()
+
+        return {
+            "deleted": True,
+            "comment_id": comment_id,
+            "reaction_type": reaction_type,
+        }
+
+    def bookmark_post(
+        self,
+        *,
+        user_id: int,
+        post_id: int,
+    ) -> tuple[SocialBookmarkOut, bool]:
+        post = self.repo.get_published_post_by_id(post_id=post_id)
+
+        if post is None:
+            raise ValidationAuthError(
+                message="Social post not found",
+                details={"post_id": post_id},
+            )
+
+        existing = self.repo.get_bookmark(post_id=post_id, user_id=user_id)
+
+        if existing is not None:
+            return SocialBookmarkOut.model_validate(existing), False
+
+        row = SocialBookmark(
+            post_id=post_id,
+            user_id=user_id,
+        )
+
+        self.repo.add_bookmark(row)
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialBookmarkOut.model_validate(row), True
+
+    def remove_bookmark(
+        self,
+        *,
+        user_id: int,
+        post_id: int,
+    ) -> dict:
+        existing = self.repo.get_bookmark(post_id=post_id, user_id=user_id)
+
+        if existing is None:
+            return {
+                "deleted": False,
+                "post_id": post_id,
+            }
+
+        self.repo.delete_bookmark(existing)
+        self.repo.commit()
+
+        return {
+            "deleted": True,
+            "post_id": post_id,
+        }
+
+    def list_my_bookmarks(
+        self,
+        *,
+        user_id: int,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[SocialBookmarkPostOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        rows, total = self.repo.list_user_bookmarks(
+            user_id=user_id,
+            page=page,
+            page_size=page_size,
+        )
+
+        items = [
+            SocialBookmarkPostOut(
+                bookmark_id=bookmark.id,
+                bookmarked_at=bookmark.created_at,
+                post=SocialPostOut.model_validate(post),
+            )
+            for bookmark, post in rows
+        ]
+
+        return items, total
+
     def soft_delete_own_post(
         self,
         *,
@@ -442,5 +704,14 @@ class SocialService:
         if visibility not in allowed:
             raise ValidationAuthError(
                 message="Invalid social post visibility",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_reaction_type(self, reaction_type: str) -> None:
+        allowed = {item.value for item in SocialReactionType}
+
+        if reaction_type not in allowed:
+            raise ValidationAuthError(
+                message="Invalid social reaction type",
                 details={"allowed": sorted(allowed)},
             )

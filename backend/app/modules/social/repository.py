@@ -6,10 +6,12 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.modules.social.models import (
+    SocialBookmark,
     SocialCategory,
     SocialComment,
     SocialModerationAction,
     SocialPost,
+    SocialReaction,
 )
 
 
@@ -60,6 +62,24 @@ class SocialRepository:
         self.db.flush()
         return row
 
+    def add_reaction(self, row: SocialReaction) -> SocialReaction:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def delete_reaction(self, row: SocialReaction) -> None:
+        self.db.delete(row)
+        self.db.flush()
+
+    def add_bookmark(self, row: SocialBookmark) -> SocialBookmark:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def delete_bookmark(self, row: SocialBookmark) -> None:
+        self.db.delete(row)
+        self.db.flush()
+
     def get_post_by_id(self, *, post_id: int) -> SocialPost | None:
         return self.db.query(SocialPost).filter(SocialPost.id == post_id).one_or_none()
 
@@ -94,6 +114,57 @@ class SocialRepository:
             .filter(
                 SocialComment.id == comment_id,
                 SocialComment.status == "published",
+            )
+            .one_or_none()
+        )
+
+    def get_post_reaction(
+        self,
+        *,
+        post_id: int,
+        user_id: int,
+        reaction_type: str,
+    ) -> SocialReaction | None:
+        return (
+            self.db.query(SocialReaction)
+            .filter(
+                SocialReaction.post_id == post_id,
+                SocialReaction.comment_id.is_(None),
+                SocialReaction.user_id == user_id,
+                SocialReaction.reaction_type == reaction_type,
+            )
+            .one_or_none()
+        )
+
+    def get_comment_reaction(
+        self,
+        *,
+        comment_id: int,
+        user_id: int,
+        reaction_type: str,
+    ) -> SocialReaction | None:
+        return (
+            self.db.query(SocialReaction)
+            .filter(
+                SocialReaction.post_id.is_(None),
+                SocialReaction.comment_id == comment_id,
+                SocialReaction.user_id == user_id,
+                SocialReaction.reaction_type == reaction_type,
+            )
+            .one_or_none()
+        )
+
+    def get_bookmark(
+        self,
+        *,
+        post_id: int,
+        user_id: int,
+    ) -> SocialBookmark | None:
+        return (
+            self.db.query(SocialBookmark)
+            .filter(
+                SocialBookmark.post_id == post_id,
+                SocialBookmark.user_id == user_id,
             )
             .one_or_none()
         )
@@ -181,6 +252,34 @@ class SocialRepository:
                 SocialComment.created_at.asc(),
                 SocialComment.id.asc(),
             )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total
+
+    def list_user_bookmarks(
+        self,
+        *,
+        user_id: int,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[tuple[SocialBookmark, SocialPost]], int]:
+        query = (
+            self.db.query(SocialBookmark, SocialPost)
+            .join(SocialPost, SocialPost.id == SocialBookmark.post_id)
+            .filter(
+                SocialBookmark.user_id == user_id,
+                SocialPost.status == "published",
+                SocialPost.visibility == "public",
+            )
+        )
+
+        total = query.count()
+
+        rows = (
+            query.order_by(SocialBookmark.created_at.desc(), SocialBookmark.id.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()

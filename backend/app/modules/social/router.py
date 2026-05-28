@@ -11,6 +11,7 @@ from app.modules.social.schemas import (
     SocialCommentCreateIn,
     SocialPostCreateIn,
     SocialPostListFilter,
+    SocialReactionCreateIn,
 )
 from app.modules.social.service import SocialService
 
@@ -147,6 +148,184 @@ def list_social_comments(
 
     items, total = service.list_post_comments(
         post_id=post_id,
+        page=page,
+        page_size=page_size,
+    )
+
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.post("/posts/{post_id}/reactions")
+def react_to_social_post(
+    post_id: int,
+    payload: SocialReactionCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.react")),
+):
+    service = SocialService(db)
+
+    result, created = service.react_to_post(
+        user_id=current_user.id,
+        post_id=post_id,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Social post reaction created"
+        if created
+        else "Social post reaction already exists",
+        meta={
+            "created": created,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.delete("/posts/{post_id}/reactions/{reaction_type}")
+def remove_social_post_reaction(
+    post_id: int,
+    reaction_type: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.react")),
+):
+    service = SocialService(db)
+
+    result = service.remove_post_reaction(
+        user_id=current_user.id,
+        post_id=post_id,
+        reaction_type=reaction_type,
+    )
+
+    return success_response(
+        data=result,
+        message="Social post reaction removed",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/comments/{comment_id}/reactions")
+def react_to_social_comment(
+    comment_id: int,
+    payload: SocialReactionCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.react")),
+):
+    service = SocialService(db)
+
+    result, created = service.react_to_comment(
+        user_id=current_user.id,
+        comment_id=comment_id,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Social comment reaction created"
+        if created
+        else "Social comment reaction already exists",
+        meta={
+            "created": created,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.delete("/comments/{comment_id}/reactions/{reaction_type}")
+def remove_social_comment_reaction(
+    comment_id: int,
+    reaction_type: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.react")),
+):
+    service = SocialService(db)
+
+    result = service.remove_comment_reaction(
+        user_id=current_user.id,
+        comment_id=comment_id,
+        reaction_type=reaction_type,
+    )
+
+    return success_response(
+        data=result,
+        message="Social comment reaction removed",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/posts/{post_id}/bookmark")
+def bookmark_social_post(
+    post_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.bookmark")),
+):
+    service = SocialService(db)
+
+    result, created = service.bookmark_post(
+        user_id=current_user.id,
+        post_id=post_id,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Social post bookmarked"
+        if created
+        else "Social post bookmark already exists",
+        meta={
+            "created": created,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.delete("/posts/{post_id}/bookmark")
+def remove_social_post_bookmark(
+    post_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.bookmark")),
+):
+    service = SocialService(db)
+
+    result = service.remove_bookmark(
+        user_id=current_user.id,
+        post_id=post_id,
+    )
+
+    return success_response(
+        data=result,
+        message="Social post bookmark removed",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/me/bookmarks")
+def list_my_social_bookmarks(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.bookmark")),
+):
+    service = SocialService(db)
+
+    items, total = service.list_my_bookmarks(
+        user_id=current_user.id,
         page=page,
         page_size=page_size,
     )
