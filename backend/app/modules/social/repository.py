@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.modules.media.models import MediaFile
 from app.modules.social.models import (
     SocialBookmark,
     SocialCategory,
@@ -96,6 +97,17 @@ class SocialRepository:
                 SocialPost.id == post_id,
                 SocialPost.status == "published",
             )
+            .one_or_none()
+        )
+
+    def get_media_file_by_id(
+        self,
+        *,
+        media_file_id: int,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(MediaFile.id == media_file_id)
             .one_or_none()
         )
 

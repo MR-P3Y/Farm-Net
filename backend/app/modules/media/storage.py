@@ -35,6 +35,7 @@ DOCUMENT_PURPOSES = {
 
 PUBLIC_PURPOSES = {
     MediaPurpose.PRODUCT_IMAGE.value,
+    MediaPurpose.SOCIAL_POST_IMAGE.value,
     MediaPurpose.STORE_LOGO.value,
     MediaPurpose.STORE_BANNER.value,
 }
@@ -154,6 +155,15 @@ class LocalMediaStorage:
                 details={"purpose": purpose, "visibility": visibility},
             )
 
+        if (
+            purpose == MediaPurpose.SOCIAL_POST_IMAGE.value
+            and visibility != MediaVisibility.PUBLIC.value
+        ):
+            raise ValidationAuthError(
+                message="Social post image media must be public",
+                details={"purpose": purpose, "visibility": visibility},
+            )
+
     def _normalize_mime_type(
         self,
         *,
@@ -213,6 +223,9 @@ class LocalMediaStorage:
     def _relative_dir_for_purpose(self, purpose: str) -> str:
         if purpose == MediaPurpose.PRODUCT_IMAGE.value:
             return "products/images"
+
+        if purpose == MediaPurpose.SOCIAL_POST_IMAGE.value:
+            return "social/posts/images"
 
         if purpose == MediaPurpose.STORE_LOGO.value:
             return "stores/logos"

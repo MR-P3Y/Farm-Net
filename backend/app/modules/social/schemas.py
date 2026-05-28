@@ -59,6 +59,7 @@ class SocialPostOut(BaseModel):
     visibility: str
 
     media_file_id: int | None = None
+    media_public_url: str | None = None
 
     country_code: str | None = None
     province_id: int | None = None

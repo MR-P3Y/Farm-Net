@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
+from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
 from app.modules.social.enums import (
     SocialCommentStatus,
     SocialModerationActionType,
@@ -132,6 +133,10 @@ class SocialService:
     ) -> SocialPostOut:
         self._validate_post_type(payload.post_type)
         self._validate_visibility(payload.visibility)
+        self._validate_social_post_media(
+            media_file_id=payload.media_file_id,
+            author_user_id=author_user_id,
+        )
 
         if payload.category_id is not None:
             category = self.repo.get_category_by_id(category_id=payload.category_id)
@@ -175,7 +180,7 @@ class SocialService:
         self.repo.commit()
         self.repo.refresh(row)
 
-        return SocialPostOut.model_validate(row)
+        return self._social_post_out(row)
 
     def list_published_posts(
         self,
@@ -205,7 +210,7 @@ class SocialService:
             page_size=page_size,
         )
 
-        return [SocialPostOut.model_validate(row) for row in rows], total
+        return [self._social_post_out(row) for row in rows], total
 
     def get_published_post(
         self,
@@ -224,7 +229,7 @@ class SocialService:
         self.repo.commit()
         self.repo.refresh(row)
 
-        return SocialPostOut.model_validate(row)
+        return self._social_post_out(row)
 
     def list_my_posts(
         self,
@@ -242,7 +247,7 @@ class SocialService:
             page_size=page_size,
         )
 
-        return [SocialPostOut.model_validate(row) for row in rows], total
+        return [self._social_post_out(row) for row in rows], total
 
     def create_comment(
         self,
@@ -599,7 +604,7 @@ class SocialService:
             SocialBookmarkPostOut(
                 bookmark_id=bookmark.id,
                 bookmarked_at=bookmark.created_at,
-                post=SocialPostOut.model_validate(post),
+                post=self._social_post_out(post),
             )
             for bookmark, post in rows
         ]
@@ -756,7 +761,7 @@ class SocialService:
             page_size=page_size,
         )
 
-        return [SocialPostOut.model_validate(row) for row in rows], total
+        return [self._social_post_out(row) for row in rows], total
 
     def list_admin_comments(
         self,
@@ -801,7 +806,7 @@ class SocialService:
         self.repo.commit()
         self.repo.refresh(row)
 
-        return SocialPostOut.model_validate(row)
+        return self._social_post_out(row)
 
     def hide_comment_admin(
         self,
@@ -904,7 +909,7 @@ class SocialService:
         self.repo.commit()
         self.repo.refresh(row)
 
-        return SocialPostOut.model_validate(row)
+        return self._social_post_out(row)
 
     def unhide_post_admin(
         self,
@@ -939,7 +944,73 @@ class SocialService:
         self.repo.commit()
         self.repo.refresh(row)
 
-        return SocialPostOut.model_validate(row)
+        return self._social_post_out(row)
+
+    def _validate_social_post_media(
+        self,
+        *,
+        media_file_id: int | None,
+        author_user_id: int,
+    ) -> None:
+        if media_file_id is None:
+            return
+
+        media = self.repo.get_media_file_by_id(media_file_id=media_file_id)
+
+        if media is None:
+            raise ValidationAuthError(
+                message="Media file not found",
+                details={"media_file_id": media_file_id},
+            )
+
+        if media.owner_user_id != author_user_id:
+            raise ValidationAuthError(
+                message="Media file not found",
+                details={"media_file_id": media_file_id},
+            )
+
+        if media.purpose != MediaPurpose.SOCIAL_POST_IMAGE.value:
+            raise ValidationAuthError(
+                message="Invalid media purpose for social post",
+                details={"media_file_id": media_file_id},
+            )
+
+        if media.visibility != MediaVisibility.PUBLIC.value:
+            raise ValidationAuthError(
+                message="Social post image must be public",
+                details={"media_file_id": media_file_id},
+            )
+
+        if media.status != MediaStatus.ACTIVE.value:
+            raise ValidationAuthError(
+                message="Media file is not active",
+                details={"media_file_id": media_file_id},
+            )
+
+    def _social_post_out(self, row: SocialPost) -> SocialPostOut:
+        result = SocialPostOut.model_validate(row)
+
+        if row.media_file_id is None:
+            return result
+
+        media = self.repo.get_media_file_by_id(media_file_id=row.media_file_id)
+
+        if (
+            media is None
+            or media.purpose != MediaPurpose.SOCIAL_POST_IMAGE.value
+            or media.visibility != MediaVisibility.PUBLIC.value
+            or media.status != MediaStatus.ACTIVE.value
+        ):
+            return result
+
+        result.media_public_url = self._media_public_url(file_key=media.file_key)
+        return result
+
+    def _media_public_url(self, *, file_key: str | None) -> str | None:
+        if not file_key:
+            return None
+
+        return f"/api/v1/media/public/{file_key}"
 
     def _validate_post_type(self, post_type: str) -> None:
         allowed = {item.value for item in SocialPostType}
