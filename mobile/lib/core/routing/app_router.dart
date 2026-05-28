@@ -11,6 +11,9 @@ import '../../features/products/presentation/public_product_detail_screen.dart';
 import '../../features/products/presentation/public_products_screen.dart';
 import '../../features/products/presentation/store_products_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/social/presentation/social_create_post_screen.dart';
+import '../../features/social/presentation/social_feed_screen.dart';
+import '../../features/social/presentation/social_post_detail_screen.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/stores/presentation/my_store_screen.dart';
 import '../../features/stores/presentation/public_store_detail_screen.dart';
@@ -40,6 +43,24 @@ final GoRouter appRouter = GoRouter(
       path: '/weather',
       name: 'weather',
       builder: (context, state) => const WeatherScreen(),
+    ),
+    GoRoute(
+      path: '/social',
+      name: 'social',
+      builder: (context, state) => const SocialFeedScreen(),
+    ),
+    GoRoute(
+      path: '/social/create',
+      name: 'social-create',
+      builder: (context, state) => const SocialCreatePostScreen(),
+    ),
+    GoRoute(
+      path: '/social/detail/:id',
+      name: 'social-detail',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+        return SocialPostDetailScreen(postId: id);
+      },
     ),
     GoRoute(
       path: '/profile',
