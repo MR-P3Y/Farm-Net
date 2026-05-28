@@ -13,6 +13,9 @@ from app.modules.social.enums import (
     SocialPostType,
     SocialPostVisibility,
     SocialReactionType,
+    SocialReportReason,
+    SocialReportStatus,
+    SocialReportTargetType,
 )
 from app.modules.social.models import (
     SocialBookmark,
@@ -21,9 +24,11 @@ from app.modules.social.models import (
     SocialModerationAction,
     SocialPost,
     SocialReaction,
+    SocialReport,
 )
 from app.modules.social.repository import SocialRepository
 from app.modules.social.schemas import (
+    SocialAdminCommentOut,
     SocialBookmarkOut,
     SocialBookmarkPostOut,
     SocialCategoryOut,
@@ -35,6 +40,9 @@ from app.modules.social.schemas import (
     SocialPostOut,
     SocialReactionCreateIn,
     SocialReactionOut,
+    SocialReportCreateIn,
+    SocialReportOut,
+    SocialReportStatusUpdateIn,
 )
 
 
@@ -598,6 +606,181 @@ class SocialService:
 
         return items, total
 
+    def report_post(
+        self,
+        *,
+        reporter_user_id: int,
+        post_id: int,
+        payload: SocialReportCreateIn,
+    ) -> SocialReportOut:
+        self._validate_report_reason(payload.reason)
+
+        post = self.repo.get_published_post_by_id(post_id=post_id)
+
+        if post is None:
+            raise ValidationAuthError(
+                message="Social post not found",
+                details={"post_id": post_id},
+            )
+
+        row = SocialReport(
+            reporter_user_id=reporter_user_id,
+            target_type=SocialReportTargetType.POST.value,
+            post_id=post_id,
+            comment_id=None,
+            reason=payload.reason,
+            description=payload.description,
+            status=SocialReportStatus.OPEN.value,
+            reviewed_by_user_id=None,
+            reviewed_at=None,
+        )
+
+        self.repo.add_report(row)
+        post.reports_count += 1
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialReportOut.model_validate(row)
+
+    def report_comment(
+        self,
+        *,
+        reporter_user_id: int,
+        comment_id: int,
+        payload: SocialReportCreateIn,
+    ) -> SocialReportOut:
+        self._validate_report_reason(payload.reason)
+
+        comment = self.repo.get_published_comment_by_id(comment_id=comment_id)
+
+        if comment is None:
+            raise ValidationAuthError(
+                message="Social comment not found",
+                details={"comment_id": comment_id},
+            )
+
+        row = SocialReport(
+            reporter_user_id=reporter_user_id,
+            target_type=SocialReportTargetType.COMMENT.value,
+            post_id=None,
+            comment_id=comment_id,
+            reason=payload.reason,
+            description=payload.description,
+            status=SocialReportStatus.OPEN.value,
+            reviewed_by_user_id=None,
+            reviewed_at=None,
+        )
+
+        self.repo.add_report(row)
+        comment.reports_count += 1
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialReportOut.model_validate(row)
+
+    def list_reports_admin(
+        self,
+        *,
+        target_type: str | None,
+        status: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[SocialReportOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if target_type is not None:
+            self._validate_report_target_type(target_type)
+
+        if status is not None:
+            self._validate_report_status(status)
+
+        rows, total = self.repo.list_reports(
+            target_type=target_type,
+            status=status,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [SocialReportOut.model_validate(row) for row in rows], total
+
+    def update_report_status_admin(
+        self,
+        *,
+        admin_user_id: int,
+        report_id: int,
+        payload: SocialReportStatusUpdateIn,
+    ) -> SocialReportOut:
+        self._validate_report_status(payload.status)
+
+        row = self.repo.get_report_by_id(report_id=report_id)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Social report not found",
+                details={"report_id": report_id},
+            )
+
+        row.status = payload.status
+        row.reviewed_by_user_id = admin_user_id
+        row.reviewed_at = datetime.utcnow()
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialReportOut.model_validate(row)
+
+    def list_admin_posts(
+        self,
+        *,
+        status: str | None,
+        post_type: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[SocialPostOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if status is not None:
+            self._validate_post_status(status)
+
+        if post_type is not None:
+            self._validate_post_type(post_type)
+
+        rows, total = self.repo.list_admin_posts(
+            status=status,
+            post_type=post_type,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [SocialPostOut.model_validate(row) for row in rows], total
+
+    def list_admin_comments(
+        self,
+        *,
+        status: str | None,
+        post_id: int | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[SocialAdminCommentOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if status is not None:
+            self._validate_comment_status(status)
+
+        rows, total = self.repo.list_admin_comments(
+            status=status,
+            post_id=post_id,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [SocialAdminCommentOut.model_validate(row) for row in rows], total
+
     def soft_delete_own_post(
         self,
         *,
@@ -619,6 +802,75 @@ class SocialService:
         self.repo.refresh(row)
 
         return SocialPostOut.model_validate(row)
+
+    def hide_comment_admin(
+        self,
+        *,
+        moderator_user_id: int,
+        comment_id: int,
+        payload: SocialPostModerationIn,
+    ) -> SocialAdminCommentOut:
+        row = self.repo.get_comment_by_id(comment_id=comment_id)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Social comment not found",
+                details={"comment_id": comment_id},
+            )
+
+        row.status = SocialCommentStatus.HIDDEN.value
+
+        self.repo.add_moderation_action(
+            SocialModerationAction(
+                moderator_user_id=moderator_user_id,
+                target_type=SocialModerationTargetType.COMMENT.value,
+                post_id=None,
+                comment_id=row.id,
+                action_type=SocialModerationActionType.HIDE.value,
+                reason=payload.reason,
+                metadata_json=None,
+            )
+        )
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialAdminCommentOut.model_validate(row)
+
+    def unhide_comment_admin(
+        self,
+        *,
+        moderator_user_id: int,
+        comment_id: int,
+        payload: SocialPostModerationIn,
+    ) -> SocialAdminCommentOut:
+        row = self.repo.get_comment_by_id(comment_id=comment_id)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Social comment not found",
+                details={"comment_id": comment_id},
+            )
+
+        row.status = SocialCommentStatus.PUBLISHED.value
+        row.deleted_at = None
+
+        self.repo.add_moderation_action(
+            SocialModerationAction(
+                moderator_user_id=moderator_user_id,
+                target_type=SocialModerationTargetType.COMMENT.value,
+                post_id=None,
+                comment_id=row.id,
+                action_type=SocialModerationActionType.UNHIDE.value,
+                reason=payload.reason,
+                metadata_json=None,
+            )
+        )
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return SocialAdminCommentOut.model_validate(row)
 
     def hide_post_admin(
         self,
@@ -707,11 +959,56 @@ class SocialService:
                 details={"allowed": sorted(allowed)},
             )
 
+    def _validate_post_status(self, status: str) -> None:
+        allowed = {item.value for item in SocialPostStatus}
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid social post status",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_comment_status(self, status: str) -> None:
+        allowed = {item.value for item in SocialCommentStatus}
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid social comment status",
+                details={"allowed": sorted(allowed)},
+            )
+
     def _validate_reaction_type(self, reaction_type: str) -> None:
         allowed = {item.value for item in SocialReactionType}
 
         if reaction_type not in allowed:
             raise ValidationAuthError(
                 message="Invalid social reaction type",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_report_reason(self, reason: str) -> None:
+        allowed = {item.value for item in SocialReportReason}
+
+        if reason not in allowed:
+            raise ValidationAuthError(
+                message="Invalid social report reason",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_report_status(self, status: str) -> None:
+        allowed = {item.value for item in SocialReportStatus}
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid social report status",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_report_target_type(self, target_type: str) -> None:
+        allowed = {item.value for item in SocialReportTargetType}
+
+        if target_type not in allowed:
+            raise ValidationAuthError(
+                message="Invalid social report target type",
                 details={"allowed": sorted(allowed)},
             )

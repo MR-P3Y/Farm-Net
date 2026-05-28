@@ -12,6 +12,7 @@ from app.modules.social.models import (
     SocialModerationAction,
     SocialPost,
     SocialReaction,
+    SocialReport,
 )
 
 
@@ -79,6 +80,11 @@ class SocialRepository:
     def delete_bookmark(self, row: SocialBookmark) -> None:
         self.db.delete(row)
         self.db.flush()
+
+    def add_report(self, row: SocialReport) -> SocialReport:
+        self.db.add(row)
+        self.db.flush()
+        return row
 
     def get_post_by_id(self, *, post_id: int) -> SocialPost | None:
         return self.db.query(SocialPost).filter(SocialPost.id == post_id).one_or_none()
@@ -166,6 +172,17 @@ class SocialRepository:
                 SocialBookmark.post_id == post_id,
                 SocialBookmark.user_id == user_id,
             )
+            .one_or_none()
+        )
+
+    def get_report_by_id(
+        self,
+        *,
+        report_id: int,
+    ) -> SocialReport | None:
+        return (
+            self.db.query(SocialReport)
+            .filter(SocialReport.id == report_id)
             .one_or_none()
         )
 
@@ -280,6 +297,87 @@ class SocialRepository:
 
         rows = (
             query.order_by(SocialBookmark.created_at.desc(), SocialBookmark.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total
+
+    def list_reports(
+        self,
+        *,
+        target_type: str | None = None,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[SocialReport], int]:
+        query = self.db.query(SocialReport)
+
+        if target_type:
+            query = query.filter(SocialReport.target_type == target_type)
+
+        if status:
+            query = query.filter(SocialReport.status == status)
+
+        total = query.count()
+
+        rows = (
+            query.order_by(SocialReport.created_at.desc(), SocialReport.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total
+
+    def list_admin_posts(
+        self,
+        *,
+        status: str | None = None,
+        post_type: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[SocialPost], int]:
+        query = self.db.query(SocialPost)
+
+        if status:
+            query = query.filter(SocialPost.status == status)
+
+        if post_type:
+            query = query.filter(SocialPost.post_type == post_type)
+
+        total = query.count()
+
+        rows = (
+            query.order_by(SocialPost.created_at.desc(), SocialPost.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total
+
+    def list_admin_comments(
+        self,
+        *,
+        status: str | None = None,
+        post_id: int | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[SocialComment], int]:
+        query = self.db.query(SocialComment)
+
+        if status:
+            query = query.filter(SocialComment.status == status)
+
+        if post_id:
+            query = query.filter(SocialComment.post_id == post_id)
+
+        total = query.count()
+
+        rows = (
+            query.order_by(SocialComment.created_at.desc(), SocialComment.id.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()

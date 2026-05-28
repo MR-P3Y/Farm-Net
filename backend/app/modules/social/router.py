@@ -12,6 +12,7 @@ from app.modules.social.schemas import (
     SocialPostCreateIn,
     SocialPostListFilter,
     SocialReactionCreateIn,
+    SocialReportCreateIn,
 )
 from app.modules.social.service import SocialService
 
@@ -340,6 +341,52 @@ def list_my_social_bookmarks(
             "total_pages": ceil(total / page_size) if total else 0,
             "trace_id": request.state.trace_id,
         },
+    )
+
+
+@router.post("/posts/{post_id}/report")
+def report_social_post(
+    post_id: int,
+    payload: SocialReportCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.report")),
+):
+    service = SocialService(db)
+
+    result = service.report_post(
+        reporter_user_id=current_user.id,
+        post_id=post_id,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Social post reported",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/comments/{comment_id}/report")
+def report_social_comment(
+    comment_id: int,
+    payload: SocialReportCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("social.report")),
+):
+    service = SocialService(db)
+
+    result = service.report_comment(
+        reporter_user_id=current_user.id,
+        comment_id=comment_id,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Social comment reported",
+        meta={"trace_id": request.state.trace_id},
     )
 
 

@@ -153,3 +153,55 @@ class SocialBookmarkPostOut(BaseModel):
     bookmark_id: int
     bookmarked_at: datetime
     post: SocialPostOut
+
+
+class SocialReportCreateIn(BaseModel):
+    reason: str = Field(min_length=2, max_length=80)
+    description: str | None = Field(default=None, max_length=2000)
+
+
+class SocialReportStatusUpdateIn(BaseModel):
+    status: str = Field(min_length=2, max_length=40)
+
+
+class SocialReportOut(BaseModel):
+    id: int
+
+    reporter_user_id: int
+    target_type: str
+
+    post_id: int | None = None
+    comment_id: int | None = None
+
+    reason: str
+    description: str | None = None
+
+    status: str
+
+    reviewed_by_user_id: int | None = None
+    reviewed_at: datetime | None = None
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SocialAdminCommentOut(BaseModel):
+    id: int
+    post_id: int
+    author_user_id: int
+    parent_comment_id: int | None = None
+
+    body: str
+    status: str
+
+    reactions_count: int
+    reports_count: int
+
+    deleted_at: datetime | None = None
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
