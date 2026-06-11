@@ -26,6 +26,13 @@ class NotificationEventType(str, Enum):
     WEATHER_ALERT_CREATED = "weather.alert_created"
     WEATHER_ALERT_RESOLVED = "weather.alert_resolved"
 
+    SOCIAL_COMMENT_CREATED = "social.comment_created"
+    SOCIAL_REPLY_CREATED = "social.reply_created"
+    SOCIAL_POST_REPORTED = "social.post_reported"
+    SOCIAL_COMMENT_REPORTED = "social.comment_reported"
+    SOCIAL_POST_HIDDEN = "social.post_hidden"
+    SOCIAL_COMMENT_HIDDEN = "social.comment_hidden"
+
     SYSTEM_MESSAGE = "system.message"
 
 

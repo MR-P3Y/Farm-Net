@@ -1,0 +1,359 @@
+{
+  "info": {
+    "name": "Farm Net - Social Community",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Social community foundation APIs for Farm Net."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "user_token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "post_id",
+      "value": ""
+    },
+    {
+      "key": "comment_id",
+      "value": ""
+    },
+    {
+      "key": "report_id",
+      "value": ""
+    },
+    {
+      "key": "category_id",
+      "value": ""
+    },
+    {
+      "key": "media_file_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Public - Categories",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/social/categories"
+      }
+    },
+    {
+      "name": "Public - List Posts",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/social/posts?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "User - Create Post",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"category_id\": {{category_id}},\n  \"title\": \"پست تست جامعه فارم نت\",\n  \"body\": \"این یک پست تستی برای جامعه فارم نت است.\",\n  \"post_type\": \"question\",\n  \"visibility\": \"public\",\n  \"media_file_id\": null\n}"
+        },
+        "url": "{{base_url}}/social/posts"
+      }
+    },
+    {
+      "name": "Public - Post Detail",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/social/posts/{{post_id}}"
+      }
+    },
+    {
+      "name": "User - My Posts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}"
+          }
+        ],
+        "url": "{{base_url}}/social/me/posts"
+      }
+    },
+    {
+      "name": "User - Create Comment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"body\": \"کامنت تستی\",\n  \"parent_comment_id\": null\n}"
+        },
+        "url": "{{base_url}}/social/posts/{{post_id}}/comments"
+      }
+    },
+    {
+      "name": "Public - List Comments",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/social/posts/{{post_id}}/comments?page=1&page_size=100"
+      }
+    },
+    {
+      "name": "User - React To Post",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reaction_type\": \"like\"\n}"
+        },
+        "url": "{{base_url}}/social/posts/{{post_id}}/reactions"
+      }
+    },
+    {
+      "name": "User - Bookmark Post",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}"
+          }
+        ],
+        "url": "{{base_url}}/social/posts/{{post_id}}/bookmark"
+      }
+    },
+    {
+      "name": "User - My Bookmarks",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}"
+          }
+        ],
+        "url": "{{base_url}}/social/me/bookmarks"
+      }
+    },
+    {
+      "name": "User - Report Post",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"spam\",\n  \"description\": \"گزارش تستی\"\n}"
+        },
+        "url": "{{base_url}}/social/posts/{{post_id}}/report"
+      }
+    },
+    {
+      "name": "User - Report Comment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{user_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"abuse\",\n  \"description\": \"گزارش کامنت تستی\"\n}"
+        },
+        "url": "{{base_url}}/social/comments/{{comment_id}}/report"
+      }
+    },
+    {
+      "name": "Admin - List Reports",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/social/reports?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin - Update Report Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"reviewed\"\n}"
+        },
+        "url": "{{base_url}}/admin/social/reports/{{report_id}}/status"
+      }
+    },
+    {
+      "name": "Admin - List Posts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/social/posts?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin - Hide Post",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"moderation from postman\"\n}"
+        },
+        "url": "{{base_url}}/admin/social/posts/{{post_id}}/hide"
+      }
+    },
+    {
+      "name": "Admin - Unhide Post",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"restore from postman\"\n}"
+        },
+        "url": "{{base_url}}/admin/social/posts/{{post_id}}/unhide"
+      }
+    },
+    {
+      "name": "Admin - List Comments",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/social/comments?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin - Hide Comment",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"moderation from postman\"\n}"
+        },
+        "url": "{{base_url}}/admin/social/comments/{{comment_id}}/hide"
+      }
+    },
+    {
+      "name": "Admin - Unhide Comment",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"restore from postman\"\n}"
+        },
+        "url": "{{base_url}}/admin/social/comments/{{comment_id}}/unhide"
+      }
+    }
+  ]
+}

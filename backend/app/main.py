@@ -25,6 +25,8 @@ from app.modules.orders.seller_router import router as seller_orders_router
 from app.modules.products.public_router import router as public_products_router
 from app.modules.products.router import router as products_router
 from app.modules.profiles.router import router as profile_router
+from app.modules.social.admin_router import router as admin_social_router
+from app.modules.social.router import router as social_router
 from app.modules.stores.public_router import router as public_stores_router
 from app.modules.stores.router import router as stores_router
 from app.modules.weather.admin_router import router as admin_weather_router
@@ -84,6 +86,8 @@ def create_app() -> FastAPI:
     app.include_router(admin_notifications_router, prefix=settings.api_v1_prefix)
     app.include_router(weather_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_weather_router, prefix=settings.api_v1_prefix)
+    app.include_router(social_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_social_router, prefix=settings.api_v1_prefix)
 
     register_exception_handlers(app)
 
