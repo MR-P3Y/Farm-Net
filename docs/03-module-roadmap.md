@@ -131,15 +131,30 @@ Deferred:
 
 ### Phase 13 - Social / Community Foundation
 
-```text
-Posts
-Comments
-Likes
-Saved posts
-Abuse reports
-Discussion categories
-Farmer Q&A and experience sharing space
-```
+Status: Completed on develop.
+
+Implemented:
+
+- Social DB models and migration
+- Social permissions seed
+- Social service/repository foundation
+- Public/user social APIs
+- Comments and one-level replies
+- Reactions, bookmarks, reports
+- Admin moderation APIs
+- Media image integration for social posts
+- Social notification integration
+- Flutter mobile social foundation
+- Admin panel moderation foundation
+- Social API docs and Postman collection
+
+Known limitations:
+
+- Mobile/admin manual UI QA not completed yet
+- Mobile create post image upload is not implemented yet
+- Advanced moderation filters/details are not implemented yet
+- Feed ranking/search is not implemented yet
+- Anti-abuse/rate-limit rules should be hardened before high-traffic production use
 
 ---
 
