@@ -13,6 +13,10 @@ class ExpertAnswerModerationIn(BaseModel):
     reason: str | None = Field(default=None, max_length=500)
 
 
+class ExpertAnswerStatusUpdateIn(BaseModel):
+    status: str = Field(min_length=2, max_length=40)
+
+
 class ExpertAnswerOut(BaseModel):
     id: int
 
@@ -34,3 +38,16 @@ class ExpertAnswerOut(BaseModel):
     deleted_at: datetime | None = None
 
     model_config = {"from_attributes": True}
+
+
+class ExpertAnswerAdminOut(BaseModel):
+    answer_id: int
+    post_id: int
+    expert_id: int
+
+    body: str
+    status: str
+
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: datetime | None = None

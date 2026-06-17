@@ -9,9 +9,11 @@ from app.modules.expert.enums import ExpertAnswerStatus
 from app.modules.expert.models import ExpertAnswer
 from app.modules.expert.repository import ExpertAnswerRepository
 from app.modules.expert.schemas import (
+    ExpertAnswerAdminOut,
     ExpertAnswerCreateIn,
     ExpertAnswerModerationIn,
     ExpertAnswerOut,
+    ExpertAnswerStatusUpdateIn,
 )
 
 
@@ -133,12 +135,12 @@ class ExpertAnswerService:
         expert_user_id: int | None,
         page: int,
         page_size: int,
-    ) -> tuple[list[ExpertAnswerOut], int]:
+    ) -> tuple[list[ExpertAnswerAdminOut], int]:
         page = max(page, 1)
         page_size = min(max(page_size, 1), 100)
 
         if status is not None:
-            self._validate_status(status)
+            self._validate_admin_list_status(status)
 
         rows, total = self.repo.list_admin_answers(
             status=status,
@@ -148,7 +150,57 @@ class ExpertAnswerService:
             page_size=page_size,
         )
 
-        return [ExpertAnswerOut.model_validate(row) for row in rows], total
+        return [self._admin_answer_out(row) for row in rows], total
+
+    def update_answer_status_admin(
+        self,
+        *,
+        answer_id: int,
+        admin_user_id: int,
+        payload: ExpertAnswerStatusUpdateIn,
+    ) -> ExpertAnswerAdminOut:
+        _ = admin_user_id
+        self._validate_admin_status_update(payload.status)
+
+        row = self.repo.get_answer_by_id(answer_id=answer_id)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Expert answer not found",
+                details={"answer_id": answer_id},
+            )
+
+        row.status = payload.status
+        row.deleted_at = None
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return self._admin_answer_out(row)
+
+    def soft_delete_answer_admin(
+        self,
+        *,
+        answer_id: int,
+        admin_user_id: int,
+    ) -> ExpertAnswerAdminOut:
+        _ = admin_user_id
+
+        row = self.repo.get_answer_by_id(answer_id=answer_id)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Expert answer not found",
+                details={"answer_id": answer_id},
+            )
+
+        row.status = ExpertAnswerStatus.DELETED.value
+        row.deleted_at = datetime.utcnow()
+
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return self._admin_answer_out(row)
 
     def hide_answer_admin(
         self,
@@ -209,3 +261,40 @@ class ExpertAnswerService:
                 message="Invalid expert answer status",
                 details={"allowed": sorted(allowed)},
             )
+
+    def _validate_admin_list_status(self, status: str) -> None:
+        allowed = {
+            ExpertAnswerStatus.PUBLISHED.value,
+            ExpertAnswerStatus.HIDDEN.value,
+            ExpertAnswerStatus.DELETED.value,
+        }
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid expert answer status",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_admin_status_update(self, status: str) -> None:
+        allowed = {
+            ExpertAnswerStatus.PUBLISHED.value,
+            ExpertAnswerStatus.HIDDEN.value,
+        }
+
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid expert answer status",
+                details={"allowed": sorted(allowed)},
+            )
+
+    def _admin_answer_out(self, row: ExpertAnswer) -> ExpertAnswerAdminOut:
+        return ExpertAnswerAdminOut(
+            answer_id=row.id,
+            post_id=row.post_id,
+            expert_id=row.expert_user_id,
+            body=row.body,
+            status=row.status,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+            deleted_at=row.deleted_at,
+        )
