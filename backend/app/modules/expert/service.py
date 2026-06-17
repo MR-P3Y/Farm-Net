@@ -15,6 +15,10 @@ from app.modules.expert.schemas import (
     ExpertAnswerOut,
     ExpertAnswerStatusUpdateIn,
 )
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.schemas import NotificationEventCreateIn
+from app.modules.notifications.service import NotificationService
+from app.modules.social.models import SocialPost
 
 
 class ExpertAnswerService:
@@ -51,6 +55,11 @@ class ExpertAnswerService:
         )
 
         self.repo.add_answer(row)
+        self._notify_post_owner_about_answer(
+            post=post,
+            answer=row,
+            expert_user_id=expert_user_id,
+        )
         self.repo.commit()
         self.repo.refresh(row)
 
@@ -261,6 +270,51 @@ class ExpertAnswerService:
                 message="Invalid expert answer status",
                 details={"allowed": sorted(allowed)},
             )
+
+    def _notify_post_owner_about_answer(
+        self,
+        *,
+        post: SocialPost,
+        answer: ExpertAnswer,
+        expert_user_id: int,
+    ) -> None:
+        if answer.status != ExpertAnswerStatus.PUBLISHED.value:
+            return
+
+        if post.author_user_id == expert_user_id:
+            return
+
+        event_key = f"expert_answer_created:expert_answer:{answer.id}"
+        notification_service = NotificationService(self.db)
+
+        if notification_service.repo.get_event_by_key(event_key=event_key) is not None:
+            return
+
+        event = notification_service.create_event(
+            payload=NotificationEventCreateIn(
+                event_key=event_key,
+                event_type=NotificationEventType.EXPERT_ANSWER_CREATED.value,
+                actor_user_id=expert_user_id,
+                source_type="expert_answer",
+                source_id=str(answer.id),
+                payload_json={
+                    "answer_id": answer.id,
+                    "post_id": post.id,
+                    "expert_user_id": expert_user_id,
+                },
+            ),
+            commit=False,
+        )
+
+        notification_service.notify_user(
+            recipient_user_id=post.author_user_id,
+            title="پاسخ تخصصی جدید برای پست شما",
+            body=f"برای پست «{post.title}» یک پاسخ تخصصی ثبت شد.",
+            event_id=event.id,
+            action_url=f"/social/posts/{post.id}",
+            priority="normal",
+            commit=False,
+        )
 
     def _validate_admin_list_status(self, status: str) -> None:
         allowed = {

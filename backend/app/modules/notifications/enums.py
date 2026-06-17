@@ -33,6 +33,8 @@ class NotificationEventType(str, Enum):
     SOCIAL_POST_HIDDEN = "social.post_hidden"
     SOCIAL_COMMENT_HIDDEN = "social.comment_hidden"
 
+    EXPERT_ANSWER_CREATED = "expert_answer_created"
+
     SYSTEM_MESSAGE = "system.message"
 
 
