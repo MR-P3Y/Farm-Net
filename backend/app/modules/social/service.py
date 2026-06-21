@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
+from app.modules.expert.service import ExpertAnswerService
 from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType
 from app.modules.notifications.service import NotificationService
@@ -38,6 +39,7 @@ from app.modules.social.schemas import (
     SocialCommentCreateIn,
     SocialCommentOut,
     SocialPostCreateIn,
+    SocialPostDetailOut,
     SocialPostListFilter,
     SocialPostModerationIn,
     SocialPostOut,
@@ -218,7 +220,7 @@ class SocialService:
         self,
         *,
         post_id: int,
-    ) -> SocialPostOut:
+    ) -> SocialPostDetailOut:
         row = self.repo.get_published_post_by_id(post_id=post_id)
 
         if row is None:
@@ -231,7 +233,17 @@ class SocialService:
         self.repo.commit()
         self.repo.refresh(row)
 
-        return self._social_post_out(row)
+        post_out = self._social_post_out(row)
+        expert_answers, _ = ExpertAnswerService(self.db).list_published_answers_for_post(
+            post_id=post_id,
+            page=1,
+            page_size=20,
+        )
+
+        return SocialPostDetailOut(
+            **post_out.model_dump(),
+            expert_answers=expert_answers,
+        )
 
     def list_my_posts(
         self,

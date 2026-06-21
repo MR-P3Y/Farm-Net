@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
@@ -40,10 +41,54 @@ class ExpertAnswerOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ExpertAnswerConsultantSpecialtyOut(BaseModel):
+    id: int
+    code: str
+    title: str
+
+    model_config = {"from_attributes": True}
+
+
+class ExpertAnswerConsultantOut(BaseModel):
+    consultant_id: int
+    user_id: int
+    display_name: str | None = None
+    name: str | None = None
+    title: str | None = None
+    avatar_file_id: str | None = None
+    avatar_media_file_id: int | None = None
+    avatar_url: str | None = None
+    status: str
+    is_verified: bool
+    verification_status: str
+    is_featured: bool
+    rating_average: Decimal
+    reviews_count: int
+    specialties: list[ExpertAnswerConsultantSpecialtyOut] = Field(default_factory=list)
+
+
+class ExpertAnswerPostPreviewOut(BaseModel):
+    id: int
+    author_user_id: int
+    title: str
+    post_type: str
+    status: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ExpertAnswerPublicOut(ExpertAnswerOut):
+    answer_id: int
+    expert_id: int
+    consultant: ExpertAnswerConsultantOut | None = None
+
+
 class ExpertAnswerAdminOut(BaseModel):
     answer_id: int
     post_id: int
     expert_id: int
+    expert_user_id: int
 
     body: str
     status: str
@@ -51,3 +96,7 @@ class ExpertAnswerAdminOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None = None
+
+    post_title: str | None = None
+    consultant: ExpertAnswerConsultantOut | None = None
+    post_preview: ExpertAnswerPostPreviewOut | None = None

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.modules.expert.models import ExpertAnswer
 from app.modules.social.models import SocialPost
@@ -76,10 +76,14 @@ class ExpertAnswerRepository:
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[ExpertAnswer], int]:
-        query = self.db.query(ExpertAnswer).filter(
-            ExpertAnswer.post_id == post_id,
-            ExpertAnswer.status == "published",
-            ExpertAnswer.deleted_at.is_(None),
+        query = (
+            self.db.query(ExpertAnswer)
+            .options(joinedload(ExpertAnswer.post))
+            .filter(
+                ExpertAnswer.post_id == post_id,
+                ExpertAnswer.status == "published",
+                ExpertAnswer.deleted_at.is_(None),
+            )
         )
 
         total = query.count()
@@ -132,7 +136,7 @@ class ExpertAnswerRepository:
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[ExpertAnswer], int]:
-        query = self.db.query(ExpertAnswer)
+        query = self.db.query(ExpertAnswer).options(joinedload(ExpertAnswer.post))
 
         if status:
             query = query.filter(ExpertAnswer.status == status)

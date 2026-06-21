@@ -1,18 +1,25 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
+from app.modules.consultants.enums import ConsultProfileStatus
+from app.modules.consultants.repository import ConsultantRepository
 from app.modules.expert.enums import ExpertAnswerStatus
 from app.modules.expert.models import ExpertAnswer
 from app.modules.expert.repository import ExpertAnswerRepository
 from app.modules.expert.schemas import (
     ExpertAnswerAdminOut,
+    ExpertAnswerConsultantOut,
+    ExpertAnswerConsultantSpecialtyOut,
     ExpertAnswerCreateIn,
     ExpertAnswerModerationIn,
     ExpertAnswerOut,
+    ExpertAnswerPostPreviewOut,
+    ExpertAnswerPublicOut,
     ExpertAnswerStatusUpdateIn,
 )
 from app.modules.notifications.enums import NotificationEventType
@@ -25,6 +32,7 @@ class ExpertAnswerService:
     def __init__(self, db: Session) -> None:
         self.db = db
         self.repo = ExpertAnswerRepository(db)
+        self.consultant_repo = ConsultantRepository(db)
 
     def create_answer(
         self,
@@ -71,7 +79,7 @@ class ExpertAnswerService:
         post_id: int,
         page: int,
         page_size: int,
-    ) -> tuple[list[ExpertAnswerOut], int]:
+    ) -> tuple[list[ExpertAnswerPublicOut], int]:
         page = max(page, 1)
         page_size = min(max(page_size, 1), 100)
 
@@ -89,7 +97,7 @@ class ExpertAnswerService:
             page_size=page_size,
         )
 
-        return [ExpertAnswerOut.model_validate(row) for row in rows], total
+        return [self._public_answer_out(row) for row in rows], total
 
     def list_my_answers(
         self,
@@ -341,14 +349,104 @@ class ExpertAnswerService:
                 details={"allowed": sorted(allowed)},
             )
 
+    def _public_answer_out(self, row: ExpertAnswer) -> ExpertAnswerPublicOut:
+        data = ExpertAnswerOut.model_validate(row).model_dump()
+        return ExpertAnswerPublicOut(
+            **data,
+            answer_id=row.id,
+            expert_id=row.expert_user_id,
+            consultant=self._consultant_out(
+                expert_user_id=row.expert_user_id,
+                public_only=True,
+            ),
+        )
+
     def _admin_answer_out(self, row: ExpertAnswer) -> ExpertAnswerAdminOut:
         return ExpertAnswerAdminOut(
             answer_id=row.id,
             post_id=row.post_id,
             expert_id=row.expert_user_id,
+            expert_user_id=row.expert_user_id,
             body=row.body,
             status=row.status,
             created_at=row.created_at,
             updated_at=row.updated_at,
             deleted_at=row.deleted_at,
+            post_title=row.post.title if row.post is not None else None,
+            consultant=self._consultant_out(
+                expert_user_id=row.expert_user_id,
+                public_only=False,
+            ),
+            post_preview=self._post_preview_out(row.post),
+        )
+
+    def _consultant_out(
+        self,
+        *,
+        expert_user_id: int,
+        public_only: bool,
+    ) -> ExpertAnswerConsultantOut | None:
+        profile = self.consultant_repo.get_profile_by_user_id(expert_user_id)
+
+        if profile is None:
+            return None
+
+        if public_only and profile.status != ConsultProfileStatus.APPROVED.value:
+            return None
+
+        avatar_url = None
+        if profile.avatar_media_file_id:
+            media = self.consultant_repo.get_media_file_by_id(profile.avatar_media_file_id)
+            if media is not None and media.file_key:
+                avatar_url = f"/api/v1/media/public/{media.file_key}"
+
+        specialties = []
+        for link in profile.specialty_links:
+            specialty = link.specialty
+            if specialty is None:
+                continue
+            if public_only and not specialty.is_active:
+                continue
+            specialties.append(
+                ExpertAnswerConsultantSpecialtyOut(
+                    id=specialty.id,
+                    code=specialty.code,
+                    title=specialty.title,
+                )
+            )
+
+        display_name = profile.display_name
+
+        return ExpertAnswerConsultantOut(
+            consultant_id=profile.id,
+            user_id=profile.user_id,
+            display_name=display_name,
+            name=display_name,
+            title=profile.title,
+            avatar_file_id=profile.avatar_file_id,
+            avatar_media_file_id=profile.avatar_media_file_id,
+            avatar_url=avatar_url,
+            status=profile.status,
+            is_verified=profile.status == ConsultProfileStatus.APPROVED.value,
+            verification_status=profile.status,
+            is_featured=profile.is_featured,
+            rating_average=profile.rating_average or Decimal("0.00"),
+            reviews_count=profile.reviews_count,
+            specialties=specialties,
+        )
+
+    def _post_preview_out(
+        self,
+        row: SocialPost | None,
+    ) -> ExpertAnswerPostPreviewOut | None:
+        if row is None:
+            return None
+
+        return ExpertAnswerPostPreviewOut(
+            id=row.id,
+            author_user_id=row.author_user_id,
+            title=row.title,
+            post_type=row.post_type,
+            status=row.status,
+            created_at=row.created_at,
         )
