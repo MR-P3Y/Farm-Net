@@ -38,6 +38,7 @@ class SocialPostModel {
     required this.reactionsCount,
     required this.reportsCount,
     required this.createdAt,
+    this.expertAnswers = const [],
     this.categoryId,
     this.mediaFileId,
     this.mediaPublicUrl,
@@ -67,8 +68,11 @@ class SocialPostModel {
   final int reportsCount;
 
   final String createdAt;
+  final List<ExpertAnswerModel> expertAnswers;
 
   factory SocialPostModel.fromJson(Map<String, dynamic> json) {
+    final expertAnswerRows = json['expert_answers'] as List? ?? const [];
+
     return SocialPostModel(
       id: (json['id'] as num).toInt(),
       authorUserId: (json['author_user_id'] as num).toInt(),
@@ -93,6 +97,164 @@ class SocialPostModel {
       reactionsCount: (json['reactions_count'] as num?)?.toInt() ?? 0,
       reportsCount: (json['reports_count'] as num?)?.toInt() ?? 0,
       createdAt: json['created_at']?.toString() ?? '',
+      expertAnswers:
+          expertAnswerRows
+              .whereType<Map<String, dynamic>>()
+              .map(ExpertAnswerModel.fromJson)
+              .toList(),
+    );
+  }
+}
+
+class ExpertAnswerModel {
+  const ExpertAnswerModel({
+    required this.id,
+    required this.postId,
+    required this.expertUserId,
+    required this.body,
+    required this.status,
+    required this.isAccepted,
+    required this.helpfulCount,
+    required this.reportsCount,
+    required this.createdAt,
+    required this.updatedAt,
+    this.consultant,
+  });
+
+  final int id;
+  final int postId;
+  final int expertUserId;
+  final String body;
+  final String status;
+  final bool isAccepted;
+  final int helpfulCount;
+  final int reportsCount;
+  final String createdAt;
+  final String updatedAt;
+  final ExpertAnswerConsultantModel? consultant;
+
+  factory ExpertAnswerModel.fromJson(Map<String, dynamic> json) {
+    final consultantJson = json['consultant'];
+
+    return ExpertAnswerModel(
+      id:
+          (json['answer_id'] as num?)?.toInt() ??
+          (json['id'] as num?)?.toInt() ??
+          0,
+      postId: (json['post_id'] as num?)?.toInt() ?? 0,
+      expertUserId:
+          (json['expert_user_id'] as num?)?.toInt() ??
+          (json['expert_id'] as num?)?.toInt() ??
+          0,
+      body: json['body']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      isAccepted: json['is_accepted'] == true,
+      helpfulCount: (json['helpful_count'] as num?)?.toInt() ?? 0,
+      reportsCount: (json['reports_count'] as num?)?.toInt() ?? 0,
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
+      consultant:
+          consultantJson is Map<String, dynamic>
+              ? ExpertAnswerConsultantModel.fromJson(consultantJson)
+              : null,
+    );
+  }
+}
+
+class ExpertAnswerConsultantModel {
+  const ExpertAnswerConsultantModel({
+    required this.consultantId,
+    required this.userId,
+    required this.status,
+    required this.isVerified,
+    required this.isFeatured,
+    required this.ratingAverage,
+    required this.reviewsCount,
+    this.displayName,
+    this.name,
+    this.title,
+    this.avatarFileId,
+    this.avatarMediaFileId,
+    this.avatarUrl,
+    this.verificationStatus,
+    this.specialties = const [],
+  });
+
+  final int consultantId;
+  final int userId;
+  final String? displayName;
+  final String? name;
+  final String? title;
+  final String? avatarFileId;
+  final int? avatarMediaFileId;
+  final String? avatarUrl;
+  final String status;
+  final bool isVerified;
+  final String? verificationStatus;
+  final bool isFeatured;
+  final double ratingAverage;
+  final int reviewsCount;
+  final List<ExpertAnswerSpecialtyModel> specialties;
+
+  String get resolvedName {
+    final primary = displayName?.trim();
+    if (primary != null && primary.isNotEmpty) return primary;
+
+    final fallback = name?.trim();
+    if (fallback != null && fallback.isNotEmpty) return fallback;
+
+    return 'مشاور';
+  }
+
+  factory ExpertAnswerConsultantModel.fromJson(Map<String, dynamic> json) {
+    final specialtyRows = json['specialties'] as List? ?? const [];
+
+    return ExpertAnswerConsultantModel(
+      consultantId:
+          (json['consultant_id'] as num?)?.toInt() ??
+          (json['id'] as num?)?.toInt() ??
+          0,
+      userId: (json['user_id'] as num?)?.toInt() ?? 0,
+      displayName: json['display_name']?.toString(),
+      name: json['name']?.toString(),
+      title: json['title']?.toString(),
+      avatarFileId: json['avatar_file_id']?.toString(),
+      avatarMediaFileId:
+          json['avatar_media_file_id'] == null
+              ? null
+              : (json['avatar_media_file_id'] as num).toInt(),
+      avatarUrl: json['avatar_url']?.toString(),
+      status: json['status']?.toString() ?? '',
+      isVerified: json['is_verified'] == true,
+      verificationStatus: json['verification_status']?.toString(),
+      isFeatured: json['is_featured'] == true,
+      ratingAverage: (json['rating_average'] as num?)?.toDouble() ?? 0,
+      reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
+      specialties:
+          specialtyRows
+              .whereType<Map<String, dynamic>>()
+              .map(ExpertAnswerSpecialtyModel.fromJson)
+              .toList(),
+    );
+  }
+}
+
+class ExpertAnswerSpecialtyModel {
+  const ExpertAnswerSpecialtyModel({
+    required this.id,
+    required this.code,
+    required this.title,
+  });
+
+  final int id;
+  final String code;
+  final String title;
+
+  factory ExpertAnswerSpecialtyModel.fromJson(Map<String, dynamic> json) {
+    return ExpertAnswerSpecialtyModel(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      code: json['code']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
     );
   }
 }
