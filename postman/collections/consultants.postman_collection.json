@@ -1,0 +1,243 @@
+{
+  "info": {
+    "name": "Farm Net - Consultants",
+    "description": "Consultants module APIs: specialties, consultant profiles, consult requests, admin moderation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "specialty_id",
+      "value": "1"
+    },
+    {
+      "key": "consultant_profile_id",
+      "value": "1"
+    },
+    {
+      "key": "consult_request_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Public - List Specialties",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/consultants/specialties"
+      }
+    },
+    {
+      "name": "Public - List Consultants",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/consultants?page=1&page_size=20&specialty_id={{specialty_id}}"
+      }
+    },
+    {
+      "name": "Public - Consultant Detail",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/consultants/{{consultant_profile_id}}"
+      }
+    },
+    {
+      "name": "User - Upsert My Consultant Profile",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"display_name\": \"مشاور پسته کرمان\",\n  \"title\": \"متخصص آفات و تغذیه پسته\",\n  \"bio\": \"مشاوره تخصصی باغ پسته، تغذیه، آفات و بیماری‌ها.\",\n  \"experience_years\": 8,\n  \"phone\": \"09120000000\",\n  \"province_name\": \"کرمان\",\n  \"city_name\": \"رفسنجان\",\n  \"specialty_ids\": [{{specialty_id}}]\n}"
+        },
+        "url": "{{base_url}}/consultants/me/profile"
+      }
+    },
+    {
+      "name": "User - Submit My Consultant Profile",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/consultants/me/profile/submit"
+      }
+    },
+    {
+      "name": "User - Create Consult Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"consultant_profile_id\": {{consultant_profile_id}},\n  \"specialty_id\": {{specialty_id}},\n  \"title\": \"مشکل زردی برگ پسته\",\n  \"description\": \"درختان پسته از دو هفته قبل زردی برگ و ضعف رشد دارند. نیاز به بررسی تخصصی دارم.\",\n  \"contact_method\": \"in_app\",\n  \"budget_amount\": 2500000,\n  \"currency\": \"IRR\"\n}"
+        },
+        "url": "{{base_url}}/consultants/requests"
+      }
+    },
+    {
+      "name": "User - My Consult Requests",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/consultants/requests/me"
+      }
+    },
+    {
+      "name": "Consultant - Assigned Requests",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/consultants/requests/assigned"
+      }
+    },
+    {
+      "name": "Consultant - Accept Assigned Request",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"accepted\",\n  \"note\": \"درخواست بررسی شد و زمان مشاوره هماهنگ می‌شود.\"\n}"
+        },
+        "url": "{{base_url}}/consultants/requests/{{consult_request_id}}/status"
+      }
+    },
+    {
+      "name": "Admin - Create Specialty",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"pistachio_disease\",\n  \"title\": \"آفات و بیماری پسته\",\n  \"description\": \"مشاوره تخصصی آفات، بیماری و تغذیه پسته\",\n  \"sort_order\": 100,\n  \"is_active\": true\n}"
+        },
+        "url": "{{base_url}}/admin/consultants/specialties"
+      }
+    },
+    {
+      "name": "Admin - List Consultant Profiles",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/consultants?status=pending_review"
+      }
+    },
+    {
+      "name": "Admin - Approve Consultant Profile",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"approved\",\n  \"note\": \"مدارک و تخصص تأیید شد.\"\n}"
+        },
+        "url": "{{base_url}}/admin/consultants/{{consultant_profile_id}}/status"
+      }
+    },
+    {
+      "name": "Admin - List Consult Requests",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/consultants/requests?status=open"
+      }
+    },
+    {
+      "name": "Admin - Update Consult Request Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"completed\",\n  \"note\": \"درخواست از سمت مدیریت تکمیل شد.\"\n}"
+        },
+        "url": "{{base_url}}/admin/consultants/requests/{{consult_request_id}}/status"
+      }
+    }
+  ]
+}

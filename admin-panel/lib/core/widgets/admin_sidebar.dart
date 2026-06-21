@@ -66,6 +66,12 @@ class AdminSidebar extends StatelessWidget {
                   onTap: () => context.go('/commission'),
                 ),
                 _SidebarItem(
+                  icon: Icons.support_agent_outlined,
+                  label: 'مشاوران',
+                  compact: isCompact,
+                  onTap: () => context.go('/consultants'),
+                ),
+                _SidebarItem(
                   icon: Icons.perm_media_outlined,
                   label: 'فایل‌ها',
                   compact: isCompact,

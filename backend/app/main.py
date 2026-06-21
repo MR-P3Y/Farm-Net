@@ -8,6 +8,8 @@ from app.core.middleware import trace_id_middleware
 from app.core.rate_limit import create_rate_limit_middleware
 from app.modules.admin.router import router as admin_router
 from app.modules.auth.router import router as auth_router
+from app.modules.consultants.admin_router import router as admin_consultants_router
+from app.modules.consultants.router import router as consultants_router
 from app.modules.expert.admin_router import router as admin_expert_router
 from app.modules.expert.router import router as expert_router
 from app.modules.geo.router import router as geo_router
@@ -88,6 +90,8 @@ def create_app() -> FastAPI:
     app.include_router(admin_notifications_router, prefix=settings.api_v1_prefix)
     app.include_router(weather_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_weather_router, prefix=settings.api_v1_prefix)
+    app.include_router(consultants_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_consultants_router, prefix=settings.api_v1_prefix)
     app.include_router(social_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_social_router, prefix=settings.api_v1_prefix)
     app.include_router(expert_router, prefix=settings.api_v1_prefix)

@@ -35,6 +35,14 @@ class NotificationEventType(str, Enum):
 
     EXPERT_ANSWER_CREATED = "expert_answer_created"
 
+    CONSULTANT_REQUEST_SUBMITTED = "consultant.request_submitted"
+    CONSULTANT_APPROVED = "consultant.approved"
+    CONSULTANT_REJECTED = "consultant.rejected"
+    CONSULT_REQUEST_CREATED = "consult.request_created"
+    CONSULT_REQUEST_ACCEPTED = "consult.request_accepted"
+    CONSULT_REQUEST_COMPLETED = "consult.request_completed"
+    CONSULT_REQUEST_CANCELLED = "consult.request_cancelled"
+
     SYSTEM_MESSAGE = "system.message"
 
 

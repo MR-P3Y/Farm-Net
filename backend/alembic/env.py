@@ -16,6 +16,7 @@ from app.modules.notifications import models as notification_models  # noqa: F40
 from app.modules.weather import models as weather_models  # noqa: F401
 from app.modules.social import models as social_models  # noqa: F401
 from app.modules.expert import models as expert_models  # noqa: F401
+from app.modules.consultants import models as consultant_models  # noqa: F401
 
 
 config = context.config
