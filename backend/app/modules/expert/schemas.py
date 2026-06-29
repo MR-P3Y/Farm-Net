@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
 
 from pydantic import BaseModel, Field
+
+from app.modules.consultants.schemas import ConsultSpecialtyOut
 
 
 class ExpertAnswerCreateIn(BaseModel):
@@ -41,14 +42,6 @@ class ExpertAnswerOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class ExpertAnswerConsultantSpecialtyOut(BaseModel):
-    id: int
-    code: str
-    title: str
-
-    model_config = {"from_attributes": True}
-
-
 class ExpertAnswerConsultantOut(BaseModel):
     consultant_id: int
     user_id: int
@@ -62,20 +55,9 @@ class ExpertAnswerConsultantOut(BaseModel):
     is_verified: bool
     verification_status: str
     is_featured: bool
-    rating_average: Decimal
+    rating_average: float
     reviews_count: int
-    specialties: list[ExpertAnswerConsultantSpecialtyOut] = Field(default_factory=list)
-
-
-class ExpertAnswerPostPreviewOut(BaseModel):
-    id: int
-    author_user_id: int
-    title: str
-    post_type: str
-    status: str
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+    specialties: list[ConsultSpecialtyOut] = Field(default_factory=list)
 
 
 class ExpertAnswerPublicOut(ExpertAnswerOut):
@@ -98,5 +80,5 @@ class ExpertAnswerAdminOut(BaseModel):
     deleted_at: datetime | None = None
 
     post_title: str | None = None
+    post_preview: str | None = None
     consultant: ExpertAnswerConsultantOut | None = None
-    post_preview: ExpertAnswerPostPreviewOut | None = None

@@ -1,24 +1,22 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.consultants.enums import ConsultProfileStatus
 from app.modules.consultants.repository import ConsultantRepository
+from app.modules.consultants.schemas import ConsultSpecialtyOut
 from app.modules.expert.enums import ExpertAnswerStatus
 from app.modules.expert.models import ExpertAnswer
 from app.modules.expert.repository import ExpertAnswerRepository
 from app.modules.expert.schemas import (
     ExpertAnswerAdminOut,
     ExpertAnswerConsultantOut,
-    ExpertAnswerConsultantSpecialtyOut,
     ExpertAnswerCreateIn,
     ExpertAnswerModerationIn,
     ExpertAnswerOut,
-    ExpertAnswerPostPreviewOut,
     ExpertAnswerPublicOut,
     ExpertAnswerStatusUpdateIn,
 )
@@ -377,7 +375,7 @@ class ExpertAnswerService:
                 expert_user_id=row.expert_user_id,
                 public_only=False,
             ),
-            post_preview=self._post_preview_out(row.post),
+            post_preview=self._post_preview_text(row.post),
         )
 
     def _consultant_out(
@@ -407,13 +405,7 @@ class ExpertAnswerService:
                 continue
             if public_only and not specialty.is_active:
                 continue
-            specialties.append(
-                ExpertAnswerConsultantSpecialtyOut(
-                    id=specialty.id,
-                    code=specialty.code,
-                    title=specialty.title,
-                )
-            )
+            specialties.append(ConsultSpecialtyOut.model_validate(specialty))
 
         display_name = profile.display_name
 
@@ -430,23 +422,20 @@ class ExpertAnswerService:
             is_verified=profile.status == ConsultProfileStatus.APPROVED.value,
             verification_status=profile.status,
             is_featured=profile.is_featured,
-            rating_average=profile.rating_average or Decimal("0.00"),
+            rating_average=float(profile.rating_average or 0),
             reviews_count=profile.reviews_count,
             specialties=specialties,
         )
 
-    def _post_preview_out(
+    def _post_preview_text(
         self,
         row: SocialPost | None,
-    ) -> ExpertAnswerPostPreviewOut | None:
+    ) -> str | None:
         if row is None:
             return None
 
-        return ExpertAnswerPostPreviewOut(
-            id=row.id,
-            author_user_id=row.author_user_id,
-            title=row.title,
-            post_type=row.post_type,
-            status=row.status,
-            created_at=row.created_at,
-        )
+        source = (row.body or row.title or "").strip()
+        if not source:
+            return None
+
+        return source[:160]
