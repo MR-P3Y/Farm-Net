@@ -24,6 +24,14 @@
     {
       "key": "consult_request_id",
       "value": "1"
+    },
+    {
+      "key": "admin_access_token",
+      "value": ""
+    },
+    {
+      "key": "consultant_user_access_token",
+      "value": ""
     }
   ],
   "item": [
@@ -123,7 +131,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{access_token}}"
+            "value": "Bearer {{consultant_user_access_token}}"
           }
         ],
         "url": "{{base_url}}/consultants/requests/assigned"
@@ -136,7 +144,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{access_token}}"
+            "value": "Bearer {{consultant_user_access_token}}"
           },
           {
             "key": "Content-Type",
@@ -157,7 +165,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{access_token}}"
+            "value": "Bearer {{admin_access_token}}"
           },
           {
             "key": "Content-Type",
@@ -178,7 +186,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{access_token}}"
+            "value": "Bearer {{admin_access_token}}"
           }
         ],
         "url": "{{base_url}}/admin/consultants?status=pending_review"
@@ -191,7 +199,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{access_token}}"
+            "value": "Bearer {{admin_access_token}}"
           },
           {
             "key": "Content-Type",
@@ -212,7 +220,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{access_token}}"
+            "value": "Bearer {{admin_access_token}}"
           }
         ],
         "url": "{{base_url}}/admin/consultants/requests?status=open"
@@ -225,7 +233,7 @@
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{access_token}}"
+            "value": "Bearer {{admin_access_token}}"
           },
           {
             "key": "Content-Type",
@@ -237,6 +245,88 @@
           "raw": "{\n  \"status\": \"completed\",\n  \"note\": \"درخواست از سمت مدیریت تکمیل شد.\"\n}"
         },
         "url": "{{base_url}}/admin/consultants/requests/{{consult_request_id}}/status"
+      }
+    },
+    {
+      "name": "User - Create My Consultant Profile",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/consultants/me/profile",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"display_name\": \"مشاور نمونه فارم نت\",\n  \"title\": \"متخصص تغذیه گیاه\",\n  \"bio\": \"پروفایل نمونه برای تست جریان مشاور.\",\n  \"experience_years\": 5,\n  \"phone\": \"09120000000\",\n  \"email\": \"consultant@example.com\",\n  \"province_name\": \"تهران\",\n  \"city_name\": \"تهران\",\n  \"avatar_file_id\": null,\n  \"avatar_media_file_id\": null,\n  \"specialty_ids\": [\n    \"{{specialty_id}}\"\n  ]\n}"
+        },
+        "description": "Creates the current user's consultant profile. Use PUT to update the same profile."
+      }
+    },
+    {
+      "name": "User - Get My Consultant Profile",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/consultants/me/profile",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Admin - List Specialties",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/admin/consultants/specialties",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Admin - Update Specialty",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/admin/consultants/specialties/{{specialty_id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"نمونه ویرایش‌شده\",\n  \"is_active\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin - Consultant Detail",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/admin/consultants/{{consultant_profile_id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ]
       }
     }
   ]

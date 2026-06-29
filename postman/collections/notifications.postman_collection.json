@@ -24,6 +24,10 @@
     {
       "key": "recipient_user_id",
       "value": "1"
+    },
+    {
+      "key": "post_owner_user_id",
+      "value": "1"
     }
   ],
   "item": [
@@ -184,6 +188,34 @@
           "mode": "raw",
           "raw": "{\n  \"recipient_user_id\": {{recipient_user_id}},\n  \"title\": \"پیام سیستمی تست\",\n  \"body\": \"این یک پیام سیستمی تستی است.\",\n  \"action_url\": \"/notifications\",\n  \"priority\": \"normal\"\n}"
         }
+      }
+    },
+    {
+      "name": "User Notifications - Expert Answer Created Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/notifications/me?page=1&page_size=20&channel=in_app",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "description": "Run as the social post owner after an expert creates a published answer. Look for title پاسخ تخصصی جدید and action_url /social/posts/{post_id}."
+      }
+    },
+    {
+      "name": "Admin Notifications - Expert Answer Recipient Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/admin/notifications?page=1&page_size=20&channel=in_app&recipient_user_id={{post_owner_user_id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "description": "Admin visibility check for the post owner's expert answer notification. The notifications API exposes event_id but does not filter by event_type."
       }
     }
   ]

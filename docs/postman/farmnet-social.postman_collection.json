@@ -36,6 +36,22 @@
     {
       "key": "media_file_id",
       "value": ""
+    },
+    {
+      "key": "expert_token",
+      "value": ""
+    },
+    {
+      "key": "answer_id",
+      "value": ""
+    },
+    {
+      "key": "expert_user_id",
+      "value": "1"
+    },
+    {
+      "key": "post_owner_user_id",
+      "value": "1"
     }
   ],
   "item": [
@@ -353,6 +369,168 @@
           "raw": "{\n  \"reason\": \"restore from postman\"\n}"
         },
         "url": "{{base_url}}/admin/social/comments/{{comment_id}}/unhide"
+      }
+    },
+    {
+      "name": "Public - Expert Answers For Post",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/social/posts/{{post_id}}/expert-answers?page=1&page_size=20",
+        "description": "Published expert answers only; hidden/deleted answers are filtered by backend."
+      }
+    },
+    {
+      "name": "Expert - Create Answer",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/social/posts/{{post_id}}/expert-answers",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{expert_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"body\": \"پاسخ تخصصی نمونه برای پست اجتماعی.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Expert - My Answers",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/expert/me/answers?page=1&page_size=20",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{expert_token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Expert - Delete Own Answer",
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/expert/answers/{{answer_id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{expert_token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Admin Expert - List Answers",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/admin/expert/answers?page=1&page_size=20",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Admin Expert - Filter By Status",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/admin/expert/answers?status=published&page=1&page_size=20",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Admin Expert - Filter By Post",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/admin/expert/answers?post_id={{post_id}}&page=1&page_size=20",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Admin Expert - Filter By Expert",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/admin/expert/answers?expert_id={{expert_user_id}}&page=1&page_size=20",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Admin Expert - Hide Answer",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/admin/expert/answers/{{answer_id}}/status",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"hidden\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Expert - Publish Answer",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/admin/expert/answers/{{answer_id}}/status",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"published\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin Expert - Delete Answer",
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/admin/expert/answers/{{answer_id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ]
       }
     }
   ]

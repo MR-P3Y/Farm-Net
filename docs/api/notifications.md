@@ -86,6 +86,8 @@ store.rejected
 product.approved
 product.rejected
 
+expert_answer_created
+
 system.message
 ```
 
@@ -415,6 +417,37 @@ Typical action URL:
 
 ```text
 /verification
+```
+
+---
+
+### Expert Answers
+
+Emitted event:
+
+```text
+expert_answer_created
+```
+
+Target:
+
+```text
+social post owner
+```
+
+Typical action URL:
+
+```text
+/social/posts/{post_id}
+```
+
+Rules:
+
+```text
+Only published expert answers emit this event.
+No notification is emitted when the expert/admin is also the post owner.
+Hide/delete/republish moderation does not emit duplicate expert answer notifications.
+The notifications API currently exposes event_id on notifications, but it does not provide an event_type query filter.
 ```
 
 ---

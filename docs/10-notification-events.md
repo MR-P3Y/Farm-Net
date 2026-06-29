@@ -47,6 +47,19 @@ store.rejected
 product.approved
 product.rejected
 
+consultant.request_submitted
+consultant.approved
+consultant.rejected
+
+social.comment_created
+social.reply_created
+social.post_reported
+social.comment_reported
+social.post_hidden
+social.comment_hidden
+
+expert_answer_created
+
 system.message
 ```
 
@@ -73,6 +86,22 @@ Media:
 
 Admin:
 - system.message
+
+Consultants:
+- consultant.request_submitted
+- consultant.approved
+- consultant.rejected
+
+Social:
+- social.comment_created
+- social.reply_created
+- social.post_reported
+- social.comment_reported
+- social.post_hidden
+- social.comment_hidden
+
+Expert Answers:
+- expert_answer_created
 ```
 
 ## Defined but not fully wired yet

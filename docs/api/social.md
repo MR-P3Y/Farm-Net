@@ -96,6 +96,13 @@ Public endpoint.
 
 Returns published posts only.
 
+Response note:
+
+```text
+The list response does not include expert_answers.
+Expert answers are attached only to the post detail response.
+```
+
 ---
 
 ### Create Post
@@ -173,6 +180,61 @@ Public endpoint.
 Only published posts are visible.
 
 This endpoint increments `views_count`.
+
+The detail response may include expert answers:
+
+```json
+{
+  "id": 11,
+  "title": "مشکل زردی برگ گندم",
+  "body": "...",
+  "expert_answers": [
+    {
+      "id": 4,
+      "answer_id": 4,
+      "post_id": 11,
+      "expert_user_id": 3,
+      "expert_id": 3,
+      "body": "پاسخ تخصصی...",
+      "status": "published",
+      "is_accepted": false,
+      "accepted_at": null,
+      "accepted_by_user_id": null,
+      "helpful_count": 0,
+      "reports_count": 0,
+      "created_at": "...",
+      "updated_at": "...",
+      "deleted_at": null,
+      "consultant": {
+        "consultant_id": 2,
+        "user_id": 3,
+        "display_name": "نام مشاور",
+        "name": "نام مشاور",
+        "title": "متخصص تغذیه گیاه",
+        "avatar_file_id": null,
+        "avatar_media_file_id": null,
+        "avatar_url": null,
+        "status": "approved",
+        "is_verified": true,
+        "verification_status": "approved",
+        "is_featured": false,
+        "rating_average": 4.7,
+        "reviews_count": 12,
+        "specialties": []
+      }
+    }
+  ]
+}
+```
+
+Expert answer rules:
+
+```text
+Only published expert answers are returned.
+Hidden/deleted expert answers are excluded by the backend.
+consultant can be null when no approved public consultant profile is available.
+The consultant summary is safe and does not expose phone, email, admin_note, or moderation-only fields.
+```
 
 ---
 
@@ -609,6 +671,7 @@ social.post_reported
 social.comment_reported
 social.post_hidden
 social.comment_hidden
+expert_answer_created
 ```
 
 Rules:
@@ -618,6 +681,7 @@ No notification is sent when a user comments on their own post.
 No notification is sent when a user replies to their own comment.
 Reports notify admin/super_admin users.
 Hide actions notify the content author.
+expert_answer_created notifies the post owner when a published expert answer is created by another user.
 ```
 
 ---
@@ -627,10 +691,11 @@ Hide actions notify the content author.
 As of Social Foundation:
 
 ```text
-Social paths: 14
-Social methods: 18
+Social paths: 15
+Social methods: 20
 Admin Social paths: 8
 Admin Social methods: 8
 Notification endpoints: 5
 Admin Notification endpoints: 3
+Admin Expert paths: 3
 ```
