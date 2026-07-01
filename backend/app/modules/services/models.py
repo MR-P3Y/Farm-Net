@@ -99,6 +99,7 @@ class ServiceProviderProfile(Base):
     province_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     city_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     village_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    service_area: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     avatar_file_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     avatar_media_file_id: Mapped[int | None] = mapped_column(

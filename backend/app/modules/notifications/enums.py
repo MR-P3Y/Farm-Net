@@ -43,6 +43,10 @@ class NotificationEventType(str, Enum):
     CONSULT_REQUEST_COMPLETED = "consult.request_completed"
     CONSULT_REQUEST_CANCELLED = "consult.request_cancelled"
 
+    SERVICE_PROVIDER_SUBMITTED = "service_provider.submitted"
+    SERVICE_PROVIDER_APPROVED = "service_provider.approved"
+    SERVICE_PROVIDER_REJECTED = "service_provider.rejected"
+
     SYSTEM_MESSAGE = "system.message"
 
 
