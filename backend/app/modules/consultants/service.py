@@ -431,6 +431,21 @@ class ConsultantService:
         )
         return [self._request_out(row) for row in rows], total
 
+    def get_my_request_detail(
+        self,
+        *,
+        request_id: int,
+        user: AuthUser,
+    ) -> ConsultRequestOut:
+        row = self.repo.get_request_by_id(request_id)
+        if row is None or row.requester_user_id != user.id:
+            raise ValidationAuthError(
+                message="Consult request not found",
+                details={"request_id": request_id},
+            )
+
+        return self._request_out(row)
+
     def list_my_consultant_requests(
         self,
         *,
@@ -453,6 +468,25 @@ class ConsultantService:
             page_size=min(max(page_size, 1), 100),
         )
         return [self._request_out(row) for row in rows], total
+
+    def get_my_assigned_request_detail(
+        self,
+        *,
+        request_id: int,
+        user: AuthUser,
+    ) -> ConsultRequestOut:
+        profile = self.repo.get_profile_by_user_id(user.id)
+        if profile is None or profile.status != ConsultProfileStatus.APPROVED.value:
+            raise ValidationAuthError(message="Approved consultant profile is required")
+
+        row = self.repo.get_request_by_id(request_id)
+        if row is None or row.consultant_profile_id != profile.id:
+            raise ValidationAuthError(
+                message="Consult request not found",
+                details={"request_id": request_id},
+            )
+
+        return self._request_out(row)
 
     def update_consultant_request_status(
         self,

@@ -107,6 +107,17 @@ void main() {
         'currency': 'IRR',
         'created_at': '2026-06-30T10:00:00',
         'updated_at': '2026-06-30T10:00:00',
+        'status_logs': [
+          {
+            'id': 5,
+            'request_id': 31,
+            'changed_by': 7,
+            'from_status': null,
+            'to_status': 'open',
+            'note': 'Consult request created',
+            'created_at': '2026-06-30T10:00:00',
+          },
+        ],
         'consultant': {
           'id': 12,
           'user_id': 4,
@@ -127,6 +138,8 @@ void main() {
       expect(request.canCancel, isTrue);
       expect(request.consultant?.resolvedName, 'مشاور خاک');
       expect(request.specialty?.title, 'خاک');
+      expect(request.statusLogs.single.toStatus, 'open');
+      expect(request.statusLogs.single.changedBy, 7);
     });
 
     test('cancelled requests cannot be cancelled again', () {

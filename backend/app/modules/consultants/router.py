@@ -237,6 +237,46 @@ def list_my_assigned_consult_requests(
     )
 
 
+@router.get("/requests/assigned/{request_id}")
+def get_my_assigned_consult_request_detail(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("consult_requests.manage_assigned")),
+):
+    service = ConsultantService(db)
+    result = service.get_my_assigned_request_detail(
+        request_id=request_id,
+        user=current_user,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/requests/{request_id}")
+def get_my_consult_request_detail(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("consult_requests.read_own")),
+):
+    service = ConsultantService(db)
+    result = service.get_my_request_detail(
+        request_id=request_id,
+        user=current_user,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
 @router.patch("/requests/{request_id}/status")
 def update_assigned_consult_request_status(
     request_id: int,

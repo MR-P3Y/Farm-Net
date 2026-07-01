@@ -240,7 +240,9 @@ POST /api/v1/consultants/me/profile/submit
 
 POST /api/v1/consultants/requests
 GET  /api/v1/consultants/requests/me
+GET  /api/v1/consultants/requests/{request_id}
 GET  /api/v1/consultants/requests/assigned
+GET  /api/v1/consultants/requests/assigned/{request_id}
 PATCH /api/v1/consultants/requests/{request_id}/status
 PATCH /api/v1/consultants/requests/{request_id}/cancel
 ```
@@ -251,8 +253,9 @@ Permissions:
 GET/POST/PUT /me/profile and submit: consultants.profile_manage
 POST /requests: consult_requests.create
 GET /requests/me: consult_requests.read_own
+GET /requests/{id}: consult_requests.read_own and requester ownership
 PATCH /requests/{id}/cancel: consult_requests.manage_own
-GET /requests/assigned and PATCH /requests/{id}/status: consult_requests.manage_assigned
+GET /requests/assigned, GET /requests/assigned/{id}, and PATCH /requests/{id}/status: consult_requests.manage_assigned
 ```
 
 Assigned workbench rules:
@@ -261,6 +264,15 @@ Assigned workbench rules:
 The consultant role includes consult_requests.manage_assigned.
 The assigned requests endpoints also require the current user to have an approved consultant profile.
 Non-approved consultant profiles are rejected by the service layer.
+```
+
+Consult request detail contract:
+
+```text
+GET /consultants/requests/{request_id} returns only requests owned by the current requester.
+GET /consultants/requests/assigned/{request_id} returns only requests assigned to the current approved consultant profile.
+Detail responses include status_logs plus consultant and specialty summaries when available.
+List responses may include the same fields, but mobile uses detail endpoints for the full status timeline.
 ```
 
 Consultant-managed status transitions:

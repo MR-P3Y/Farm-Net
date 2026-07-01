@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/digits.dart';
@@ -103,6 +104,10 @@ class _MyConsultationRequestsScreenState
                                       final request = state.requests[index];
                                       return _RequestCard(
                                         request: request,
+                                        onTap:
+                                            () => context.push(
+                                              '/consultants/requests/${request.id}',
+                                            ),
                                         onCancel:
                                             request.canCancel && !state.isSaving
                                                 ? () => _confirmCancel(request)
@@ -153,9 +158,14 @@ class _MyConsultationRequestsScreenState
 }
 
 class _RequestCard extends StatelessWidget {
-  const _RequestCard({required this.request, required this.onCancel});
+  const _RequestCard({
+    required this.request,
+    required this.onTap,
+    required this.onCancel,
+  });
 
   final ConsultationRequestModel request;
+  final VoidCallback onTap;
   final VoidCallback? onCancel;
 
   @override
@@ -171,64 +181,68 @@ class _RequestCard extends StatelessWidget {
     ];
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    request.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      request.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  _StatusChip(status: request.status),
+                ],
+              ),
+              if (subtitleParts.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  subtitleParts.join(' • '),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 8),
-                _StatusChip(status: request.status),
               ],
-            ),
-            if (subtitleParts.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                subtitleParts.join(' • '),
+                request.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(
+                    Icons.schedule_outlined,
+                    size: 18,
+                    color: theme.colorScheme.outline,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      _compactDate(request.createdAt),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                  if (onCancel != null)
+                    TextButton.icon(
+                      onPressed: onCancel,
+                      icon: const Icon(Icons.cancel_outlined),
+                      label: const Text('لغو'),
+                    ),
+                ],
+              ),
             ],
-            const SizedBox(height: 8),
-            Text(
-              request.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(
-                  Icons.schedule_outlined,
-                  size: 18,
-                  color: theme.colorScheme.outline,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    _compactDate(request.createdAt),
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ),
-                if (onCancel != null)
-                  TextButton.icon(
-                    onPressed: onCancel,
-                    icon: const Icon(Icons.cancel_outlined),
-                    label: const Text('لغو'),
-                  ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );

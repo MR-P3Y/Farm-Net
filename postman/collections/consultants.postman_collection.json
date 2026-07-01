@@ -150,6 +150,20 @@
       }
     },
     {
+      "name": "User - Consult Request Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/consultants/requests/{{consult_request_id}}",
+        "description": "Requires consult_requests.read_own and requester ownership. Response includes status_logs plus consultant and specialty summaries when available."
+      }
+    },
+    {
       "name": "User - Cancel Consult Request",
       "request": {
         "method": "PATCH",
@@ -182,6 +196,20 @@
           }
         ],
         "url": "{{base_url}}/consultants/requests/assigned"
+      }
+    },
+    {
+      "name": "Consultant - Assigned Request Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{consultant_user_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/consultants/requests/assigned/{{consult_request_id}}",
+        "description": "Requires consult_requests.manage_assigned and an approved consultant profile. Returns only requests assigned to the current consultant."
       }
     },
     {

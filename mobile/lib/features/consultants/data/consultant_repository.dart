@@ -73,6 +73,10 @@ class ConsultantRepository {
     return _api.myRequests(status: status, page: page, pageSize: pageSize);
   }
 
+  Future<ConsultationRequestModel> requestDetail(int requestId) {
+    return _api.requestDetail(requestId);
+  }
+
   Future<ConsultationRequestModel> cancelRequest({
     required int requestId,
     String? note,
@@ -90,6 +94,10 @@ class ConsultantRepository {
       page: page,
       pageSize: pageSize,
     );
+  }
+
+  Future<ConsultationRequestModel> assignedRequestDetail(int requestId) {
+    return _api.assignedRequestDetail(requestId);
   }
 
   Future<ConsultationRequestModel> updateAssignedRequestStatus({

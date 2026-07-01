@@ -185,6 +185,20 @@ class ConsultantApi {
     }
   }
 
+  Future<ConsultationRequestModel> requestDetail(int requestId) async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/consultants/requests/$requestId',
+      );
+
+      return ConsultationRequestModel.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
   Future<ConsultationRequestModel> cancelRequest({
     required int requestId,
     String? note,
@@ -225,6 +239,20 @@ class ConsultantApi {
           .whereType<Map<String, dynamic>>()
           .map(ConsultationRequestModel.fromJson)
           .toList();
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
+  Future<ConsultationRequestModel> assignedRequestDetail(int requestId) async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/consultants/requests/assigned/$requestId',
+      );
+
+      return ConsultationRequestModel.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw ConsultantApiException(_mapDioError(e));
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/digits.dart';
@@ -113,6 +114,10 @@ class _ConsultantWorkbenchScreenState
                                       final request = state.requests[index];
                                       return _AssignedRequestCard(
                                         request: request,
+                                        onTap:
+                                            () => context.push(
+                                              '/consultants/workbench/requests/${request.id}',
+                                            ),
                                         onChangeStatus:
                                             request.canConsultantManage &&
                                                     !state.isSaving
@@ -226,10 +231,12 @@ class _StatusFilterChips extends StatelessWidget {
 class _AssignedRequestCard extends StatelessWidget {
   const _AssignedRequestCard({
     required this.request,
+    required this.onTap,
     required this.onChangeStatus,
   });
 
   final ConsultationRequestModel request;
+  final VoidCallback onTap;
   final VoidCallback? onChangeStatus;
 
   @override
@@ -242,64 +249,68 @@ class _AssignedRequestCard extends StatelessWidget {
     ];
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    request.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      request.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  _StatusChip(status: request.status),
+                ],
+              ),
+              if (subtitleParts.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  subtitleParts.join(' • '),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 8),
-                _StatusChip(status: request.status),
               ],
-            ),
-            if (subtitleParts.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                subtitleParts.join(' • '),
-                maxLines: 2,
+                request.description,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(
+                    Icons.schedule_outlined,
+                    size: 18,
+                    color: theme.colorScheme.outline,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      _compactDate(request.createdAt),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                  if (onChangeStatus != null)
+                    TextButton.icon(
+                      onPressed: onChangeStatus,
+                      icon: const Icon(Icons.tune_outlined),
+                      label: const Text('مدیریت'),
+                    ),
+                ],
+              ),
             ],
-            const SizedBox(height: 8),
-            Text(
-              request.description,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(
-                  Icons.schedule_outlined,
-                  size: 18,
-                  color: theme.colorScheme.outline,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    _compactDate(request.createdAt),
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ),
-                if (onChangeStatus != null)
-                  TextButton.icon(
-                    onPressed: onChangeStatus,
-                    icon: const Icon(Icons.tune_outlined),
-                    label: const Text('مدیریت'),
-                  ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );

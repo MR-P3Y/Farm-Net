@@ -5,6 +5,7 @@ import '../../features/consultants/presentation/consultant_detail_screen.dart';
 import '../../features/consultants/presentation/consultant_list_screen.dart';
 import '../../features/consultants/presentation/consultant_request_create_screen.dart';
 import '../../features/consultants/presentation/consultant_workbench_screen.dart';
+import '../../features/consultants/presentation/consultation_request_detail_screen.dart';
 import '../../features/consultants/presentation/my_consultant_profile_screen.dart';
 import '../../features/consultants/presentation/my_consultation_requests_screen.dart';
 import '../../features/home/home_screen.dart';
@@ -79,6 +80,17 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const MyConsultationRequestsScreen(),
     ),
     GoRoute(
+      path: '/consultants/requests/:requestId',
+      name: 'consultation-request-detail',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0;
+        return ConsultationRequestDetailScreen(
+          requestId: id,
+          assignedMode: false,
+        );
+      },
+    ),
+    GoRoute(
       path: '/consultants/me/profile',
       name: 'my-consultant-profile',
       builder: (context, state) => const MyConsultantProfileScreen(),
@@ -87,6 +99,17 @@ final GoRouter appRouter = GoRouter(
       path: '/consultants/workbench',
       name: 'consultant-workbench',
       builder: (context, state) => const ConsultantWorkbenchScreen(),
+    ),
+    GoRoute(
+      path: '/consultants/workbench/requests/:requestId',
+      name: 'consultant-workbench-request-detail',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0;
+        return ConsultationRequestDetailScreen(
+          requestId: id,
+          assignedMode: true,
+        );
+      },
     ),
     GoRoute(
       path: '/consultants/:profileId/request',

@@ -188,6 +188,38 @@ class ConsultantSpecialtyModel {
   }
 }
 
+class ConsultRequestStatusLogModel {
+  const ConsultRequestStatusLogModel({
+    required this.id,
+    required this.requestId,
+    required this.toStatus,
+    required this.createdAt,
+    this.changedBy,
+    this.fromStatus,
+    this.note,
+  });
+
+  final int id;
+  final int requestId;
+  final int? changedBy;
+  final String? fromStatus;
+  final String toStatus;
+  final String? note;
+  final String createdAt;
+
+  factory ConsultRequestStatusLogModel.fromJson(Map<String, dynamic> json) {
+    return ConsultRequestStatusLogModel(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      requestId: (json['request_id'] as num?)?.toInt() ?? 0,
+      changedBy: (json['changed_by'] as num?)?.toInt(),
+      fromStatus: json['from_status']?.toString(),
+      toStatus: json['to_status']?.toString() ?? '',
+      note: json['note']?.toString(),
+      createdAt: json['created_at']?.toString() ?? '',
+    );
+  }
+}
+
 class ConsultationRequestModel {
   const ConsultationRequestModel({
     required this.id,
@@ -210,6 +242,7 @@ class ConsultationRequestModel {
     this.cancelledAt,
     this.consultant,
     this.specialty,
+    this.statusLogs = const [],
   });
 
   final int id;
@@ -234,6 +267,7 @@ class ConsultationRequestModel {
 
   final ConsultantProfileModel? consultant;
   final ConsultantSpecialtyModel? specialty;
+  final List<ConsultRequestStatusLogModel> statusLogs;
 
   bool get canCancel {
     return status == 'open' || status == 'accepted' || status == 'in_progress';
@@ -253,6 +287,7 @@ class ConsultationRequestModel {
   factory ConsultationRequestModel.fromJson(Map<String, dynamic> json) {
     final consultantJson = json['consultant'];
     final specialtyJson = json['specialty'];
+    final statusLogRows = json['status_logs'] as List? ?? const [];
 
     return ConsultationRequestModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
@@ -287,6 +322,11 @@ class ConsultationRequestModel {
           specialtyJson is Map<String, dynamic>
               ? ConsultantSpecialtyModel.fromJson(specialtyJson)
               : null,
+      statusLogs:
+          statusLogRows
+              .whereType<Map<String, dynamic>>()
+              .map(ConsultRequestStatusLogModel.fromJson)
+              .toList(),
     );
   }
 }
