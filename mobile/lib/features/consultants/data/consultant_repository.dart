@@ -79,4 +79,28 @@ class ConsultantRepository {
   }) {
     return _api.cancelRequest(requestId: requestId, note: note);
   }
+
+  Future<List<ConsultationRequestModel>> assignedRequests({
+    String? status,
+    int page = 1,
+    int pageSize = 50,
+  }) {
+    return _api.assignedRequests(
+      status: status,
+      page: page,
+      pageSize: pageSize,
+    );
+  }
+
+  Future<ConsultationRequestModel> updateAssignedRequestStatus({
+    required int requestId,
+    required String status,
+    String? note,
+  }) {
+    return _api.updateAssignedRequestStatus(
+      requestId: requestId,
+      status: status,
+      note: note,
+    );
+  }
 }

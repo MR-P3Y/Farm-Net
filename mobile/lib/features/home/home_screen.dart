@@ -160,6 +160,14 @@ class HomeScreen extends ConsumerWidget {
                       SizedBox(height: r.v(12)),
                       OutlinedButton.icon(
                         onPressed: () {
+                          context.push('/consultants/workbench');
+                        },
+                        icon: const Icon(Icons.work_outline),
+                        label: const Text('میزکار مشاور'),
+                      ),
+                      SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
                           context.push('/notifications');
                         },
                         icon: const Icon(Icons.notifications_none_outlined),

@@ -239,6 +239,17 @@ class ConsultationRequestModel {
     return status == 'open' || status == 'accepted' || status == 'in_progress';
   }
 
+  List<String> get consultantNextStatuses {
+    return switch (status) {
+      'open' => const ['accepted', 'rejected'],
+      'accepted' => const ['in_progress', 'cancelled'],
+      'in_progress' => const ['completed', 'cancelled'],
+      _ => const [],
+    };
+  }
+
+  bool get canConsultantManage => consultantNextStatuses.isNotEmpty;
+
   factory ConsultationRequestModel.fromJson(Map<String, dynamic> json) {
     final consultantJson = json['consultant'];
     final specialtyJson = json['specialty'];

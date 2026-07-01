@@ -146,5 +146,35 @@ void main() {
       expect(request.consultant, isNull);
       expect(request.specialty, isNull);
     });
+
+    test('consultant workbench exposes valid next status actions', () {
+      final openRequest = ConsultationRequestModel.fromJson({
+        'id': 33,
+        'requester_user_id': 7,
+        'title': 'درخواست باز',
+        'description': 'برای میزکار مشاور',
+        'contact_method': 'in_app',
+        'status': 'open',
+        'currency': 'IRR',
+        'created_at': '2026-06-30T10:00:00',
+        'updated_at': '2026-06-30T10:00:00',
+      });
+      final completedRequest = ConsultationRequestModel.fromJson({
+        'id': 34,
+        'requester_user_id': 7,
+        'title': 'درخواست تکمیل‌شده',
+        'description': 'دیگر قابل مدیریت نیست.',
+        'contact_method': 'in_app',
+        'status': 'completed',
+        'currency': 'IRR',
+        'created_at': '2026-06-30T10:00:00',
+        'updated_at': '2026-06-30T10:00:00',
+      });
+
+      expect(openRequest.consultantNextStatuses, ['accepted', 'rejected']);
+      expect(openRequest.canConsultantManage, isTrue);
+      expect(completedRequest.consultantNextStatuses, isEmpty);
+      expect(completedRequest.canConsultantManage, isFalse);
+    });
   });
 }

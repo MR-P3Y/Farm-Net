@@ -206,6 +206,52 @@ class ConsultantApi {
     }
   }
 
+  Future<List<ConsultationRequestModel>> assignedRequests({
+    String? status,
+    int page = 1,
+    int pageSize = 50,
+  }) async {
+    try {
+      final params = <String, dynamic>{'page': page, 'page_size': pageSize};
+      if (status != null && status.isNotEmpty) params['status'] = status;
+
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/consultants/requests/assigned',
+        queryParameters: params,
+      );
+      final rows = response.data?['data'] as List? ?? const [];
+
+      return rows
+          .whereType<Map<String, dynamic>>()
+          .map(ConsultationRequestModel.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
+  Future<ConsultationRequestModel> updateAssignedRequestStatus({
+    required int requestId,
+    required String status,
+    String? note,
+  }) async {
+    try {
+      final response = await _client.dio.patch<Map<String, dynamic>>(
+        '/consultants/requests/$requestId/status',
+        data: {
+          'status': status,
+          'note': note ?? 'به‌روزرسانی توسط مشاور از اپلیکیشن موبایل',
+        },
+      );
+
+      return ConsultationRequestModel.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
   ApiError _mapDioError(DioException e) {
     final data = e.response?.data;
 

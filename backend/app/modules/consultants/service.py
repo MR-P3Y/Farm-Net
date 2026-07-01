@@ -440,8 +440,8 @@ class ConsultantService:
         page_size: int,
     ) -> tuple[list[ConsultRequestOut], int]:
         profile = self.repo.get_profile_by_user_id(user.id)
-        if profile is None:
-            raise ValidationAuthError(message="Consultant profile not found")
+        if profile is None or profile.status != ConsultProfileStatus.APPROVED.value:
+            raise ValidationAuthError(message="Approved consultant profile is required")
 
         if status is not None:
             self._validate_request_status(status)

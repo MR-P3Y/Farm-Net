@@ -645,6 +645,7 @@ def assign_default_permissions(
         "consultant": [
             "notifications.read",
             "notifications.manage",
+            "consult_requests.manage_assigned",
             "weather.public_read",
             "weather.read",
             "social.public_read",
