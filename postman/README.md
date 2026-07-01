@@ -34,3 +34,5 @@ expert_access_token
 consultant_user_access_token
 admin_access_token
 ```
+
+The consultant collection covers the public privacy contract, owner profile management, user request creation/cancellation, approved-consultant assigned workbench, and admin moderation flows. Public consultant responses must not expose `phone`, `email`, or `admin_note`; use `/consultants/me/profile` or admin endpoints when those fields are expected.

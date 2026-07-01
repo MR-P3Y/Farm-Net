@@ -195,6 +195,8 @@ GET /api/v1/consultants
 GET /api/v1/consultants/{id}
 ```
 
+These endpoints are public.
+
 Public consultant profiles expose profile metadata currently supported by the backend:
 
 ```text
@@ -220,6 +222,14 @@ specialties
 
 Public consultant listing/detail returns approved, non-deleted profiles.
 
+Privacy contract:
+
+```text
+Public consultant responses do not include phone, email, or admin_note.
+Owner-only /me responses can include phone and email.
+Admin responses can include admin_note and moderation timestamps.
+```
+
 ## Consultant User APIs
 
 ```http
@@ -235,6 +245,32 @@ PATCH /api/v1/consultants/requests/{request_id}/status
 PATCH /api/v1/consultants/requests/{request_id}/cancel
 ```
 
+Permissions:
+
+```text
+GET/POST/PUT /me/profile and submit: consultants.profile_manage
+POST /requests: consult_requests.create
+GET /requests/me: consult_requests.read_own
+PATCH /requests/{id}/cancel: consult_requests.manage_own
+GET /requests/assigned and PATCH /requests/{id}/status: consult_requests.manage_assigned
+```
+
+Assigned workbench rules:
+
+```text
+The consultant role includes consult_requests.manage_assigned.
+The assigned requests endpoints also require the current user to have an approved consultant profile.
+Non-approved consultant profiles are rejected by the service layer.
+```
+
+Consultant-managed status transitions:
+
+```text
+open -> accepted | rejected
+accepted -> in_progress | cancelled
+in_progress -> completed | cancelled
+```
+
 ## Admin Consultant APIs
 
 ```http
@@ -248,6 +284,28 @@ PATCH /api/v1/admin/consultants/specialties/{specialty_id}
 
 GET   /api/v1/admin/consultants/requests
 PATCH /api/v1/admin/consultants/requests/{request_id}/status
+```
+
+Admin profile moderation statuses:
+
+```text
+approved
+rejected
+suspended
+```
+
+Admin permissions:
+
+```text
+consultants.read
+consultants.approve
+consultants.reject
+consultants.suspend
+consult_specialties.read
+consult_specialties.create
+consult_specialties.update
+consult_requests.read
+consult_requests.manage
 ```
 
 ## Postman Coverage

@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Farm Net - Consultants",
-    "description": "Consultants module APIs: specialties, consultant profiles, consult requests, admin moderation.",
+    "description": "Consultants module APIs: public specialties and consultant profiles, privacy contract, user consultant profile management, consultation request flow, assigned consultant workbench, and admin moderation. Public consultant responses must not expose phone, email, or admin_note.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -55,6 +55,31 @@
         "method": "GET",
         "url": "{{base_url}}/consultants/{{consultant_profile_id}}"
       }
+    },
+    {
+      "name": "Public - Consultant Privacy Contract",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/consultants/{{consultant_profile_id}}",
+        "description": "Public consultant detail must not expose phone, email, or admin_note. Owner/admin fields are only available from /me or admin endpoints."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('public consultant hides owner/admin fields', function () {",
+              "  const json = pm.response.json();",
+              "  const data = json.data || {};",
+              "  pm.expect(data).to.not.have.property('phone');",
+              "  pm.expect(data).to.not.have.property('email');",
+              "  pm.expect(data).to.not.have.property('admin_note');",
+              "});"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "User - Upsert My Consultant Profile",
@@ -125,6 +150,28 @@
       }
     },
     {
+      "name": "User - Cancel Consult Request",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/consultants/requests/{{consult_request_id}}/cancel",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"cancelled\",\n  \"note\": \"لغو تستی از Postman\"\n}"
+        },
+        "description": "Requires consult_requests.manage_own. Performs soft status cancellation for the requester."
+      }
+    },
+    {
       "name": "Consultant - Assigned Requests",
       "request": {
         "method": "GET",
@@ -135,6 +182,20 @@
           }
         ],
         "url": "{{base_url}}/consultants/requests/assigned"
+      }
+    },
+    {
+      "name": "Consultant - Assigned Requests Filtered",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/consultants/requests/assigned?status=open&page=1&page_size=20",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{consultant_user_access_token}}"
+          }
+        ],
+        "description": "Requires consultant role permission consult_requests.manage_assigned and an approved consultant profile."
       }
     },
     {
@@ -156,6 +217,94 @@
           "raw": "{\n  \"status\": \"accepted\",\n  \"note\": \"درخواست بررسی شد و زمان مشاوره هماهنگ می‌شود.\"\n}"
         },
         "url": "{{base_url}}/consultants/requests/{{consult_request_id}}/status"
+      }
+    },
+    {
+      "name": "Consultant - Reject Assigned Request",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/consultants/requests/{{consult_request_id}}/status",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{consultant_user_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"rejected\",\n  \"note\": \"امکان پذیرش این درخواست وجود ندارد.\"\n}"
+        },
+        "description": "Valid consultant transition from open to rejected."
+      }
+    },
+    {
+      "name": "Consultant - Start Assigned Request",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/consultants/requests/{{consult_request_id}}/status",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{consultant_user_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"in_progress\",\n  \"note\": \"مشاوره شروع شد.\"\n}"
+        },
+        "description": "Valid consultant transition from accepted to in_progress."
+      }
+    },
+    {
+      "name": "Consultant - Complete Assigned Request",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/consultants/requests/{{consult_request_id}}/status",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{consultant_user_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"completed\",\n  \"note\": \"مشاوره تکمیل شد.\"\n}"
+        },
+        "description": "Valid consultant transition from in_progress to completed."
+      }
+    },
+    {
+      "name": "Consultant - Cancel Assigned Request",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/consultants/requests/{{consult_request_id}}/status",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{consultant_user_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"cancelled\",\n  \"note\": \"مشاوره از سمت مشاور لغو شد.\"\n}"
+        },
+        "description": "Valid consultant transition from accepted or in_progress to cancelled."
       }
     },
     {
@@ -211,6 +360,50 @@
           "raw": "{\n  \"status\": \"approved\",\n  \"note\": \"مدارک و تخصص تأیید شد.\"\n}"
         },
         "url": "{{base_url}}/admin/consultants/{{consultant_profile_id}}/status"
+      }
+    },
+    {
+      "name": "Admin - Reject Consultant Profile",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/admin/consultants/{{consultant_profile_id}}/status",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"rejected\",\n  \"note\": \"پروفایل نیاز به اصلاح دارد.\"\n}"
+        },
+        "description": "Requires consultants.reject."
+      }
+    },
+    {
+      "name": "Admin - Suspend Consultant Profile",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/admin/consultants/{{consultant_profile_id}}/status",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"suspended\",\n  \"note\": \"تعلیق تستی پروفایل مشاور.\"\n}"
+        },
+        "description": "Requires consultants.suspend."
       }
     },
     {
