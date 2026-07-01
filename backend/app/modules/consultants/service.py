@@ -25,6 +25,7 @@ from app.modules.consultants.repository import ConsultantRepository
 from app.modules.consultants.schemas import (
     ConsultProfileCreateIn,
     ConsultProfileOut,
+    ConsultProfilePublicOut,
     ConsultProfileStatusUpdateIn,
     ConsultProfileUpdateIn,
     ConsultRequestCreateIn,
@@ -218,7 +219,7 @@ class ConsultantService:
         city_id: int | None,
         page: int,
         page_size: int,
-    ) -> tuple[list[ConsultProfileOut], int]:
+    ) -> tuple[list[ConsultProfilePublicOut], int]:
         page = max(page, 1)
         page_size = min(max(page_size, 1), 100)
 
@@ -240,9 +241,9 @@ class ConsultantService:
             page_size=page_size,
         )
 
-        return [self._profile_out(row) for row in rows], total
+        return [self._public_profile_out(row) for row in rows], total
 
-    def get_public_profile(self, profile_id: int) -> ConsultProfileOut:
+    def get_public_profile(self, profile_id: int) -> ConsultProfilePublicOut:
         profile = self.repo.get_profile_by_id(profile_id)
 
         if (
@@ -255,7 +256,7 @@ class ConsultantService:
                 details={"profile_id": profile_id},
             )
 
-        return self._profile_out(profile)
+        return self._public_profile_out(profile)
 
     def list_admin_profiles(
         self,
@@ -692,6 +693,11 @@ class ConsultantService:
             suspended_by=profile.suspended_by,
             created_at=profile.created_at,
             updated_at=profile.updated_at,
+        )
+
+    def _public_profile_out(self, profile: ConsultProfile) -> ConsultProfilePublicOut:
+        return ConsultProfilePublicOut.model_validate(
+            self._profile_out(profile).model_dump()
         )
 
     def _request_out(self, row: ConsultRequest) -> ConsultRequestOut:

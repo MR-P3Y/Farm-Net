@@ -140,6 +140,34 @@ class ConsultProfileOut(BaseModel):
     updated_at: datetime
 
 
+class ConsultProfilePublicOut(BaseModel):
+    id: int
+    user_id: int
+    display_name: str | None = None
+    name: str | None = None
+    title: str | None = None
+    bio: str | None = None
+    experience_years: int | None = None
+    province_id: int | None = None
+    city_id: int | None = None
+    province_name: str | None = None
+    city_name: str | None = None
+    avatar_file_id: str | None = None
+    avatar_media_file_id: int | None = None
+    avatar_url: str | None = None
+    status: str
+    is_verified: bool
+    verification_status: str
+    is_featured: bool
+    rating_average: Decimal
+    reviews_count: int
+    requests_count: int
+    completed_requests_count: int
+    specialties: list[ConsultSpecialtyOut] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+
 class ConsultRequestCreateIn(BaseModel):
     consultant_profile_id: int | None = Field(default=None, ge=1)
     specialty_id: int | None = Field(default=None, ge=1)
