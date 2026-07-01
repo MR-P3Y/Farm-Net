@@ -34,6 +34,21 @@ class ConsultantRepository {
     return _api.detail(profileId);
   }
 
+  Future<ConsultantProfileModel?> myProfile() {
+    return _api.myProfile();
+  }
+
+  Future<ConsultantProfileModel> saveMyProfile({
+    required ConsultantProfileInput input,
+    required bool create,
+  }) {
+    return _api.saveMyProfile(input: input, create: create);
+  }
+
+  Future<ConsultantProfileModel> submitMyProfile() {
+    return _api.submitMyProfile();
+  }
+
   Future<ConsultationRequestModel> createRequest({
     required int? consultantProfileId,
     required int? specialtyId,

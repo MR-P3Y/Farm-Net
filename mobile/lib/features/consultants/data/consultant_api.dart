@@ -80,6 +80,59 @@ class ConsultantApi {
     }
   }
 
+  Future<ConsultantProfileModel?> myProfile() async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/consultants/me/profile',
+      );
+      final data = response.data?['data'];
+
+      if (data == null) return null;
+
+      return ConsultantProfileModel.fromJson(data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
+  Future<ConsultantProfileModel> saveMyProfile({
+    required ConsultantProfileInput input,
+    required bool create,
+  }) async {
+    try {
+      final response =
+          create
+              ? await _client.dio.post<Map<String, dynamic>>(
+                '/consultants/me/profile',
+                data: input.toJson(),
+              )
+              : await _client.dio.put<Map<String, dynamic>>(
+                '/consultants/me/profile',
+                data: input.toJson(),
+              );
+
+      return ConsultantProfileModel.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
+  Future<ConsultantProfileModel> submitMyProfile() async {
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/consultants/me/profile/submit',
+      );
+
+      return ConsultantProfileModel.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
   Future<ConsultationRequestModel> createRequest({
     required int? consultantProfileId,
     required int? specialtyId,

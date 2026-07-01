@@ -40,6 +40,56 @@ void main() {
       expect(consultant.locationText, 'موقعیت ثبت نشده');
       expect(consultant.specialties, isEmpty);
     });
+
+    test('parses owner-only consultant profile fields for me profile', () {
+      final consultant = ConsultantProfileModel.fromJson({
+        'id': 15,
+        'user_id': 9,
+        'display_name': 'مشاور باغبانی',
+        'phone': '09120000000',
+        'email': 'consultant@example.com',
+        'status': 'rejected',
+        'is_verified': false,
+        'is_featured': false,
+        'rating_average': 0,
+        'reviews_count': 0,
+        'requests_count': 0,
+        'completed_requests_count': 0,
+        'admin_note': 'نیاز به تکمیل توضیحات',
+        'submitted_at': '2026-07-01T10:00:00',
+      });
+
+      expect(consultant.phone, '09120000000');
+      expect(consultant.email, 'consultant@example.com');
+      expect(consultant.adminNote, 'نیاز به تکمیل توضیحات');
+      expect(consultant.submittedAt, '2026-07-01T10:00:00');
+    });
+
+    test('serializes consultant profile input for save API', () {
+      const input = ConsultantProfileInput(
+        displayName: 'مشاور خاک',
+        title: 'متخصص تغذیه گیاه',
+        bio: 'تجربه مشاوره باغ و زراعت',
+        experienceYears: 8,
+        phone: '09120000000',
+        email: 'consultant@example.com',
+        provinceName: 'گلستان',
+        cityName: 'گرگان',
+        specialtyIds: [2, 5],
+      );
+
+      expect(input.toJson(), {
+        'display_name': 'مشاور خاک',
+        'title': 'متخصص تغذیه گیاه',
+        'bio': 'تجربه مشاوره باغ و زراعت',
+        'experience_years': 8,
+        'phone': '09120000000',
+        'email': 'consultant@example.com',
+        'province_name': 'گلستان',
+        'city_name': 'گرگان',
+        'specialty_ids': [2, 5],
+      });
+    });
   });
 
   group('ConsultationRequestModel', () {

@@ -14,6 +14,8 @@ class ConsultantProfileModel {
     this.title,
     this.bio,
     this.experienceYears,
+    this.phone,
+    this.email,
     this.provinceName,
     this.cityName,
     this.avatarFileId,
@@ -21,6 +23,11 @@ class ConsultantProfileModel {
     this.avatarUrl,
     this.verificationStatus,
     this.specialties = const [],
+    this.adminNote,
+    this.submittedAt,
+    this.approvedAt,
+    this.rejectedAt,
+    this.suspendedAt,
   });
 
   final int id;
@@ -30,6 +37,8 @@ class ConsultantProfileModel {
   final String? title;
   final String? bio;
   final int? experienceYears;
+  final String? phone;
+  final String? email;
   final String? provinceName;
   final String? cityName;
   final String? avatarFileId;
@@ -44,6 +53,11 @@ class ConsultantProfileModel {
   final int requestsCount;
   final int completedRequestsCount;
   final List<ConsultantSpecialtyModel> specialties;
+  final String? adminNote;
+  final String? submittedAt;
+  final String? approvedAt;
+  final String? rejectedAt;
+  final String? suspendedAt;
 
   String get resolvedName {
     final primary = displayName?.trim();
@@ -80,6 +94,8 @@ class ConsultantProfileModel {
       title: json['title']?.toString(),
       bio: json['bio']?.toString(),
       experienceYears: (json['experience_years'] as num?)?.toInt(),
+      phone: json['phone']?.toString(),
+      email: json['email']?.toString(),
       provinceName: json['province_name']?.toString(),
       cityName: json['city_name']?.toString(),
       avatarFileId: json['avatar_file_id']?.toString(),
@@ -102,7 +118,50 @@ class ConsultantProfileModel {
               .whereType<Map<String, dynamic>>()
               .map(ConsultantSpecialtyModel.fromJson)
               .toList(),
+      adminNote: json['admin_note']?.toString(),
+      submittedAt: json['submitted_at']?.toString(),
+      approvedAt: json['approved_at']?.toString(),
+      rejectedAt: json['rejected_at']?.toString(),
+      suspendedAt: json['suspended_at']?.toString(),
     );
+  }
+}
+
+class ConsultantProfileInput {
+  const ConsultantProfileInput({
+    required this.displayName,
+    required this.title,
+    required this.bio,
+    required this.specialtyIds,
+    this.experienceYears,
+    this.phone,
+    this.email,
+    this.provinceName,
+    this.cityName,
+  });
+
+  final String? displayName;
+  final String? title;
+  final String? bio;
+  final int? experienceYears;
+  final String? phone;
+  final String? email;
+  final String? provinceName;
+  final String? cityName;
+  final List<int> specialtyIds;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'display_name': displayName,
+      'title': title,
+      'bio': bio,
+      'experience_years': experienceYears,
+      'phone': phone,
+      'email': email,
+      'province_name': provinceName,
+      'city_name': cityName,
+      'specialty_ids': specialtyIds,
+    };
   }
 }
 

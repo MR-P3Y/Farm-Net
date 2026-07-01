@@ -4,6 +4,7 @@ import '../../features/auth/presentation/auth_gate.dart';
 import '../../features/consultants/presentation/consultant_detail_screen.dart';
 import '../../features/consultants/presentation/consultant_list_screen.dart';
 import '../../features/consultants/presentation/consultant_request_create_screen.dart';
+import '../../features/consultants/presentation/my_consultant_profile_screen.dart';
 import '../../features/consultants/presentation/my_consultation_requests_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
@@ -75,6 +76,11 @@ final GoRouter appRouter = GoRouter(
       path: '/consultants/requests',
       name: 'my-consultation-requests',
       builder: (context, state) => const MyConsultationRequestsScreen(),
+    ),
+    GoRoute(
+      path: '/consultants/me/profile',
+      name: 'my-consultant-profile',
+      builder: (context, state) => const MyConsultantProfileScreen(),
     ),
     GoRoute(
       path: '/consultants/:profileId/request',
