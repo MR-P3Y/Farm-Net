@@ -128,3 +128,95 @@ class ConsultantSpecialtyModel {
     );
   }
 }
+
+class ConsultationRequestModel {
+  const ConsultationRequestModel({
+    required this.id,
+    required this.requesterUserId,
+    required this.title,
+    required this.description,
+    required this.contactMethod,
+    required this.status,
+    required this.currency,
+    required this.createdAt,
+    required this.updatedAt,
+    this.consultantProfileId,
+    this.specialtyId,
+    this.budgetAmount,
+    this.scheduledAt,
+    this.consultantNote,
+    this.cancelReason,
+    this.acceptedAt,
+    this.completedAt,
+    this.cancelledAt,
+    this.consultant,
+    this.specialty,
+  });
+
+  final int id;
+  final int requesterUserId;
+  final int? consultantProfileId;
+  final int? specialtyId;
+
+  final String title;
+  final String description;
+  final String contactMethod;
+  final String status;
+  final String? budgetAmount;
+  final String currency;
+  final String? scheduledAt;
+  final String? consultantNote;
+  final String? cancelReason;
+  final String? acceptedAt;
+  final String? completedAt;
+  final String? cancelledAt;
+  final String createdAt;
+  final String updatedAt;
+
+  final ConsultantProfileModel? consultant;
+  final ConsultantSpecialtyModel? specialty;
+
+  bool get canCancel {
+    return status == 'open' || status == 'accepted' || status == 'in_progress';
+  }
+
+  factory ConsultationRequestModel.fromJson(Map<String, dynamic> json) {
+    final consultantJson = json['consultant'];
+    final specialtyJson = json['specialty'];
+
+    return ConsultationRequestModel(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      requesterUserId: (json['requester_user_id'] as num?)?.toInt() ?? 0,
+      consultantProfileId:
+          json['consultant_profile_id'] == null
+              ? null
+              : (json['consultant_profile_id'] as num).toInt(),
+      specialtyId:
+          json['specialty_id'] == null
+              ? null
+              : (json['specialty_id'] as num).toInt(),
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      contactMethod: json['contact_method']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      budgetAmount: json['budget_amount']?.toString(),
+      currency: json['currency']?.toString() ?? '',
+      scheduledAt: json['scheduled_at']?.toString(),
+      consultantNote: json['consultant_note']?.toString(),
+      cancelReason: json['cancel_reason']?.toString(),
+      acceptedAt: json['accepted_at']?.toString(),
+      completedAt: json['completed_at']?.toString(),
+      cancelledAt: json['cancelled_at']?.toString(),
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
+      consultant:
+          consultantJson is Map<String, dynamic>
+              ? ConsultantProfileModel.fromJson(consultantJson)
+              : null,
+      specialty:
+          specialtyJson is Map<String, dynamic>
+              ? ConsultantSpecialtyModel.fromJson(specialtyJson)
+              : null,
+    );
+  }
+}

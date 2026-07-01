@@ -33,4 +33,35 @@ class ConsultantRepository {
   Future<ConsultantProfileModel> detail(int profileId) {
     return _api.detail(profileId);
   }
+
+  Future<ConsultationRequestModel> createRequest({
+    required int? consultantProfileId,
+    required int? specialtyId,
+    required String title,
+    required String description,
+    required String contactMethod,
+  }) {
+    return _api.createRequest(
+      consultantProfileId: consultantProfileId,
+      specialtyId: specialtyId,
+      title: title,
+      description: description,
+      contactMethod: contactMethod,
+    );
+  }
+
+  Future<List<ConsultationRequestModel>> myRequests({
+    String? status,
+    int page = 1,
+    int pageSize = 50,
+  }) {
+    return _api.myRequests(status: status, page: page, pageSize: pageSize);
+  }
+
+  Future<ConsultationRequestModel> cancelRequest({
+    required int requestId,
+    String? note,
+  }) {
+    return _api.cancelRequest(requestId: requestId, note: note);
+  }
 }

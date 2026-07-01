@@ -80,6 +80,79 @@ class ConsultantApi {
     }
   }
 
+  Future<ConsultationRequestModel> createRequest({
+    required int? consultantProfileId,
+    required int? specialtyId,
+    required String title,
+    required String description,
+    required String contactMethod,
+  }) async {
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/consultants/requests',
+        data: {
+          'consultant_profile_id': consultantProfileId,
+          'specialty_id': specialtyId,
+          'title': title,
+          'description': description,
+          'contact_method': contactMethod,
+          'currency': 'IRR',
+        },
+      );
+
+      return ConsultationRequestModel.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
+  Future<List<ConsultationRequestModel>> myRequests({
+    String? status,
+    int page = 1,
+    int pageSize = 50,
+  }) async {
+    try {
+      final params = <String, dynamic>{'page': page, 'page_size': pageSize};
+      if (status != null && status.isNotEmpty) params['status'] = status;
+
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/consultants/requests/me',
+        queryParameters: params,
+      );
+      final rows = response.data?['data'] as List? ?? const [];
+
+      return rows
+          .whereType<Map<String, dynamic>>()
+          .map(ConsultationRequestModel.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
+  Future<ConsultationRequestModel> cancelRequest({
+    required int requestId,
+    String? note,
+  }) async {
+    try {
+      final response = await _client.dio.patch<Map<String, dynamic>>(
+        '/consultants/requests/$requestId/cancel',
+        data: {
+          'status': 'cancelled',
+          'note': note ?? 'لغو توسط کاربر از اپلیکیشن موبایل',
+        },
+      );
+
+      return ConsultationRequestModel.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
   ApiError _mapDioError(DioException e) {
     final data = e.response?.data;
 

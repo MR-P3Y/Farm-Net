@@ -41,4 +41,60 @@ void main() {
       expect(consultant.specialties, isEmpty);
     });
   });
+
+  group('ConsultationRequestModel', () {
+    test('parses nested consultant and specialty safely', () {
+      final request = ConsultationRequestModel.fromJson({
+        'id': 31,
+        'requester_user_id': 7,
+        'consultant_profile_id': 12,
+        'specialty_id': 2,
+        'title': 'زردی برگ',
+        'description': 'برگ‌ها زرد شده‌اند و رشد کم شده است.',
+        'contact_method': 'in_app',
+        'status': 'open',
+        'budget_amount': '2500000.00',
+        'currency': 'IRR',
+        'created_at': '2026-06-30T10:00:00',
+        'updated_at': '2026-06-30T10:00:00',
+        'consultant': {
+          'id': 12,
+          'user_id': 4,
+          'display_name': 'مشاور خاک',
+          'status': 'approved',
+          'is_verified': true,
+          'is_featured': false,
+          'rating_average': 4.5,
+          'reviews_count': 8,
+          'requests_count': 19,
+          'completed_requests_count': 15,
+          'specialties': [],
+        },
+        'specialty': {'id': 2, 'code': 'soil', 'title': 'خاک'},
+      });
+
+      expect(request.id, 31);
+      expect(request.canCancel, isTrue);
+      expect(request.consultant?.resolvedName, 'مشاور خاک');
+      expect(request.specialty?.title, 'خاک');
+    });
+
+    test('cancelled requests cannot be cancelled again', () {
+      final request = ConsultationRequestModel.fromJson({
+        'id': 32,
+        'requester_user_id': 7,
+        'title': 'درخواست لغوشده',
+        'description': 'این درخواست قبلاً لغو شده است.',
+        'contact_method': 'phone',
+        'status': 'cancelled',
+        'currency': 'IRR',
+        'created_at': '2026-06-30T10:00:00',
+        'updated_at': '2026-06-30T10:00:00',
+      });
+
+      expect(request.canCancel, isFalse);
+      expect(request.consultant, isNull);
+      expect(request.specialty, isNull);
+    });
+  });
 }

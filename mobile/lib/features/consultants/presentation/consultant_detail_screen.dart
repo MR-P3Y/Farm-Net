@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
@@ -126,6 +127,24 @@ class ConsultantDetailScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
+                          ),
+                          SizedBox(height: r.v(12)),
+                          FilledButton.icon(
+                            onPressed: () {
+                              context.push(
+                                '/consultants/${consultant.id}/request',
+                              );
+                            },
+                            icon: const Icon(Icons.send_outlined),
+                            label: const Text('ثبت درخواست مشاوره'),
+                          ),
+                          SizedBox(height: r.v(8)),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              context.push('/consultants/requests');
+                            },
+                            icon: const Icon(Icons.assignment_outlined),
+                            label: const Text('درخواست‌های من'),
                           ),
                           SizedBox(height: r.v(12)),
                           if (consultant.specialties.isNotEmpty)

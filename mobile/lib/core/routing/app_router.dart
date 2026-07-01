@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/auth_gate.dart';
 import '../../features/consultants/presentation/consultant_detail_screen.dart';
 import '../../features/consultants/presentation/consultant_list_screen.dart';
+import '../../features/consultants/presentation/consultant_request_create_screen.dart';
+import '../../features/consultants/presentation/my_consultation_requests_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/orders/presentation/cart_screen.dart';
@@ -68,6 +70,19 @@ final GoRouter appRouter = GoRouter(
       path: '/consultants',
       name: 'consultants',
       builder: (context, state) => const ConsultantListScreen(),
+    ),
+    GoRoute(
+      path: '/consultants/requests',
+      name: 'my-consultation-requests',
+      builder: (context, state) => const MyConsultationRequestsScreen(),
+    ),
+    GoRoute(
+      path: '/consultants/:profileId/request',
+      name: 'consultant-request-create',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['profileId'] ?? '') ?? 0;
+        return ConsultantRequestCreateScreen(consultantProfileId: id);
+      },
     ),
     GoRoute(
       path: '/consultants/:profileId',
