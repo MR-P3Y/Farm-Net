@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/auth_gate.dart';
 import '../../features/consultants/presentation/consultant_detail_screen.dart';
+import '../../features/consultants/presentation/consultant_list_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/orders/presentation/cart_screen.dart';
@@ -62,6 +63,11 @@ final GoRouter appRouter = GoRouter(
         final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
         return SocialPostDetailScreen(postId: id);
       },
+    ),
+    GoRoute(
+      path: '/consultants',
+      name: 'consultants',
+      builder: (context, state) => const ConsultantListScreen(),
     ),
     GoRoute(
       path: '/consultants/:profileId',

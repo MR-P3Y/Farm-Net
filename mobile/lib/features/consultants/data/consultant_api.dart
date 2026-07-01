@@ -20,6 +20,51 @@ class ConsultantApi {
 
   final ApiClient _client;
 
+  Future<List<ConsultantSpecialtyModel>> specialties() async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/consultants/specialties',
+      );
+      final rows = response.data?['data'] as List? ?? const [];
+
+      return rows
+          .whereType<Map<String, dynamic>>()
+          .map(ConsultantSpecialtyModel.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
+  Future<List<ConsultantProfileModel>> list({
+    int? specialtyId,
+    String? query,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final params = <String, dynamic>{'page': page, 'page_size': pageSize};
+
+      if (specialtyId != null) params['specialty_id'] = specialtyId;
+      if (query != null && query.trim().isNotEmpty) {
+        params['q'] = query.trim();
+      }
+
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/consultants',
+        queryParameters: params,
+      );
+      final rows = response.data?['data'] as List? ?? const [];
+
+      return rows
+          .whereType<Map<String, dynamic>>()
+          .map(ConsultantProfileModel.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw ConsultantApiException(_mapDioError(e));
+    }
+  }
+
   Future<ConsultantProfileModel> detail(int profileId) async {
     try {
       final response = await _client.dio.get<Map<String, dynamic>>(
