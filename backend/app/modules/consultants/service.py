@@ -872,7 +872,7 @@ class ConsultantService:
             body = f"وضعیت پروفایل مشاور شما به {status} تغییر کرد."
 
         NotificationService(self.db).create_event_and_notify_user(
-            event_type=event_type.value,
+            event_type=event_type,
             recipient_user_id=profile.user_id,
             title=title,
             body=body,
