@@ -8,6 +8,8 @@ from app.modules.media.models import MediaFile
 from app.modules.profiles.models import UserProfile
 from app.modules.services.models import (
     ServiceCategory,
+    ServiceOffer,
+    ServiceOfferMedia,
     ServiceProviderCategory,
     ServiceProviderProfile,
 )
@@ -189,6 +191,250 @@ class ServicesRepository:
                         category_id=category_id,
                     )
                 )
+
+        self.db.flush()
+
+    def add_offer(self, row: ServiceOffer) -> ServiceOffer:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def get_offer_by_id(self, offer_id: int) -> ServiceOffer | None:
+        return (
+            self.db.query(ServiceOffer)
+            .options(
+                joinedload(ServiceOffer.category),
+                joinedload(ServiceOffer.media),
+                joinedload(ServiceOffer.provider_profile).joinedload(
+                    ServiceProviderProfile.category_links
+                ).joinedload(ServiceProviderCategory.category),
+            )
+            .filter(ServiceOffer.id == offer_id)
+            .one_or_none()
+        )
+
+    def get_public_offer_by_id(self, offer_id: int) -> ServiceOffer | None:
+        return (
+            self.db.query(ServiceOffer)
+            .join(ServiceProviderProfile)
+            .options(
+                joinedload(ServiceOffer.category),
+                joinedload(ServiceOffer.media),
+                joinedload(ServiceOffer.provider_profile).joinedload(
+                    ServiceProviderProfile.category_links
+                ).joinedload(ServiceProviderCategory.category),
+            )
+            .filter(
+                ServiceOffer.id == offer_id,
+                ServiceOffer.status == "approved",
+                ServiceOffer.is_active.is_(True),
+                ServiceOffer.deleted_at.is_(None),
+                ServiceProviderProfile.status == "approved",
+                ServiceProviderProfile.deleted_at.is_(None),
+            )
+            .one_or_none()
+        )
+
+    def list_public_offers(
+        self,
+        *,
+        category_id: int | None = None,
+        provider_profile_id: int | None = None,
+        pricing_type: str | None = None,
+        q: str | None = None,
+        province_id: int | None = None,
+        city_id: int | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[ServiceOffer], int]:
+        query = (
+            self.db.query(ServiceOffer)
+            .join(ServiceProviderProfile)
+            .options(
+                joinedload(ServiceOffer.category),
+                joinedload(ServiceOffer.media),
+                joinedload(ServiceOffer.provider_profile).joinedload(
+                    ServiceProviderProfile.category_links
+                ).joinedload(ServiceProviderCategory.category),
+            )
+            .filter(
+                ServiceOffer.status == "approved",
+                ServiceOffer.is_active.is_(True),
+                ServiceOffer.deleted_at.is_(None),
+                ServiceProviderProfile.status == "approved",
+                ServiceProviderProfile.deleted_at.is_(None),
+            )
+        )
+
+        if category_id is not None:
+            query = query.filter(ServiceOffer.category_id == category_id)
+
+        if provider_profile_id is not None:
+            query = query.filter(ServiceOffer.provider_profile_id == provider_profile_id)
+
+        if pricing_type:
+            query = query.filter(ServiceOffer.pricing_type == pricing_type)
+
+        if province_id is not None:
+            query = query.filter(ServiceOffer.province_id == province_id)
+
+        if city_id is not None:
+            query = query.filter(ServiceOffer.city_id == city_id)
+
+        if q:
+            like = f"%{q.strip()}%"
+            query = query.filter(
+                or_(
+                    ServiceOffer.title.ilike(like),
+                    ServiceOffer.slug.ilike(like),
+                    ServiceOffer.short_description.ilike(like),
+                    ServiceOffer.description.ilike(like),
+                    ServiceOffer.service_area.ilike(like),
+                    ServiceOffer.province_name.ilike(like),
+                    ServiceOffer.city_name.ilike(like),
+                )
+            )
+
+        total = query.count()
+
+        rows = (
+            query.order_by(
+                ServiceOffer.is_featured.desc(),
+                ServiceOffer.created_at.desc(),
+                ServiceOffer.id.desc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total
+
+    def list_provider_offers(
+        self,
+        *,
+        provider_profile_id: int,
+        status: str | None = None,
+        category_id: int | None = None,
+        q: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[ServiceOffer], int]:
+        query = (
+            self.db.query(ServiceOffer)
+            .options(
+                joinedload(ServiceOffer.category),
+                joinedload(ServiceOffer.media),
+                joinedload(ServiceOffer.provider_profile).joinedload(
+                    ServiceProviderProfile.category_links
+                ).joinedload(ServiceProviderCategory.category),
+            )
+            .filter(
+                ServiceOffer.provider_profile_id == provider_profile_id,
+                ServiceOffer.deleted_at.is_(None),
+            )
+        )
+
+        if status:
+            query = query.filter(ServiceOffer.status == status)
+
+        if category_id is not None:
+            query = query.filter(ServiceOffer.category_id == category_id)
+
+        if q:
+            like = f"%{q.strip()}%"
+            query = query.filter(
+                or_(
+                    ServiceOffer.title.ilike(like),
+                    ServiceOffer.short_description.ilike(like),
+                    ServiceOffer.description.ilike(like),
+                    ServiceOffer.service_area.ilike(like),
+                )
+            )
+
+        total = query.count()
+
+        rows = (
+            query.order_by(ServiceOffer.created_at.desc(), ServiceOffer.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total
+
+    def list_admin_offers(
+        self,
+        *,
+        status: str | None = None,
+        category_id: int | None = None,
+        provider_profile_id: int | None = None,
+        pricing_type: str | None = None,
+        q: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[ServiceOffer], int]:
+        query = (
+            self.db.query(ServiceOffer)
+            .options(
+                joinedload(ServiceOffer.category),
+                joinedload(ServiceOffer.media),
+                joinedload(ServiceOffer.provider_profile).joinedload(
+                    ServiceProviderProfile.category_links
+                ).joinedload(ServiceProviderCategory.category),
+            )
+            .filter(ServiceOffer.deleted_at.is_(None))
+        )
+
+        if status:
+            query = query.filter(ServiceOffer.status == status)
+
+        if category_id is not None:
+            query = query.filter(ServiceOffer.category_id == category_id)
+
+        if provider_profile_id is not None:
+            query = query.filter(ServiceOffer.provider_profile_id == provider_profile_id)
+
+        if pricing_type:
+            query = query.filter(ServiceOffer.pricing_type == pricing_type)
+
+        if q:
+            like = f"%{q.strip()}%"
+            query = query.filter(
+                or_(
+                    ServiceOffer.title.ilike(like),
+                    ServiceOffer.slug.ilike(like),
+                    ServiceOffer.short_description.ilike(like),
+                    ServiceOffer.description.ilike(like),
+                    ServiceOffer.service_area.ilike(like),
+                )
+            )
+
+        total = query.count()
+
+        rows = (
+            query.order_by(ServiceOffer.created_at.desc(), ServiceOffer.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        return rows, total
+
+    def replace_offer_media(
+        self,
+        *,
+        offer: ServiceOffer,
+        rows: list[ServiceOfferMedia],
+    ) -> None:
+        for existing in list(offer.media):
+            self.db.delete(existing)
+
+        self.db.flush()
+
+        for row in rows:
+            row.offer_id = offer.id
+            self.db.add(row)
 
         self.db.flush()
 

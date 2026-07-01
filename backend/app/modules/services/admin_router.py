@@ -12,6 +12,7 @@ from app.modules.auth.repository import AuthRepository
 from app.modules.services.schemas import (
     ServiceCategoryCreateIn,
     ServiceCategoryUpdateIn,
+    ServiceOfferStatusUpdateIn,
     ServiceProviderProfileStatusUpdateIn,
 )
 from app.modules.services.service import ServicesService
@@ -82,6 +83,82 @@ def update_admin_service_category(
     return success_response(
         data=result.model_dump(mode="json"),
         message="Service category updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/offers")
+def list_admin_service_offers(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    category_id: int | None = Query(default=None, ge=1),
+    provider_profile_id: int | None = Query(default=None, ge=1),
+    pricing_type: str | None = Query(default=None),
+    q: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("service_offers.admin_read")),
+):
+    service = ServicesService(db)
+    items, total = service.list_admin_offers(
+        status=status,
+        category_id=category_id,
+        provider_profile_id=provider_profile_id,
+        pricing_type=pricing_type,
+        q=q,
+        page=page,
+        page_size=page_size,
+    )
+
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.get("/offers/{offer_id}")
+def get_admin_service_offer_detail(
+    offer_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("service_offers.admin_read")),
+):
+    service = ServicesService(db)
+    result = service.get_admin_offer(offer_id)
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.patch("/offers/{offer_id}/status")
+def update_admin_service_offer_status(
+    offer_id: int,
+    payload: ServiceOfferStatusUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_offers.admin_moderate")),
+):
+    service = ServicesService(db)
+    result = service.update_offer_status_admin(
+        offer_id=offer_id,
+        admin_user=current_user,
+        payload=payload,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Service offer status updated",
         meta={"trace_id": request.state.trace_id},
     )
 

@@ -13,13 +13,29 @@ from app.modules.auth.repository import AuthRepository
 from app.modules.media.enums import MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType, NotificationPriority
 from app.modules.notifications.service import NotificationService
-from app.modules.services.enums import ServiceProviderStatus
-from app.modules.services.models import ServiceCategory, ServiceProviderProfile
+from app.modules.services.enums import (
+    ServiceOfferStatus,
+    ServicePricingType,
+    ServiceProviderStatus,
+)
+from app.modules.services.models import (
+    ServiceCategory,
+    ServiceOffer,
+    ServiceOfferMedia,
+    ServiceProviderProfile,
+)
 from app.modules.services.repository import ServicesRepository
 from app.modules.services.schemas import (
     ServiceCategoryCreateIn,
     ServiceCategoryOut,
     ServiceCategoryUpdateIn,
+    ServiceOfferCreateIn,
+    ServiceOfferMediaIn,
+    ServiceOfferMediaOut,
+    ServiceOfferOut,
+    ServiceOfferPublicOut,
+    ServiceOfferStatusUpdateIn,
+    ServiceOfferUpdateIn,
     ServiceProviderProfileCreateIn,
     ServiceProviderProfileOut,
     ServiceProviderProfilePublicOut,
@@ -123,6 +139,299 @@ class ServicesService:
             ServiceCategoryOut.model_validate(row)
             for row in self.repo.list_categories(active_only=active_only, q=q)
         ]
+
+    def list_public_offers(
+        self,
+        *,
+        category_id: int | None,
+        provider_profile_id: int | None,
+        pricing_type: str | None,
+        q: str | None,
+        province_id: int | None,
+        city_id: int | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[ServiceOfferPublicOut], int]:
+        page = max(page, 1)
+        page_size = min(max(page_size, 1), 100)
+
+        if category_id is not None:
+            self._validate_offer_category(category_id, require_active=True)
+
+        if pricing_type is not None:
+            self._validate_pricing_type(pricing_type)
+
+        rows, total = self.repo.list_public_offers(
+            category_id=category_id,
+            provider_profile_id=provider_profile_id,
+            pricing_type=pricing_type,
+            q=q,
+            province_id=province_id,
+            city_id=city_id,
+            page=page,
+            page_size=page_size,
+        )
+
+        return [self._public_offer_out(row) for row in rows], total
+
+    def get_public_offer(self, offer_id: int) -> ServiceOfferPublicOut:
+        row = self.repo.get_public_offer_by_id(offer_id)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Service offer not found",
+                details={"offer_id": offer_id},
+            )
+
+        row.views_count += 1
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return self._public_offer_out(row)
+
+    def list_my_offers(
+        self,
+        *,
+        user: AuthUser,
+        status: str | None,
+        category_id: int | None,
+        q: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[ServiceOfferOut], int]:
+        provider = self._get_approved_provider_profile(user)
+
+        if status is not None:
+            self._validate_offer_status(status)
+
+        if category_id is not None:
+            self._validate_offer_category(category_id, require_active=False)
+
+        rows, total = self.repo.list_provider_offers(
+            provider_profile_id=provider.id,
+            status=status,
+            category_id=category_id,
+            q=q,
+            page=max(page, 1),
+            page_size=min(max(page_size, 1), 100),
+        )
+
+        return [self._offer_out(row) for row in rows], total
+
+    def create_my_offer(
+        self,
+        *,
+        user: AuthUser,
+        payload: ServiceOfferCreateIn,
+    ) -> ServiceOfferOut:
+        provider = self._get_approved_provider_profile(user)
+        pricing_type = self._validate_pricing_type(payload.pricing_type)
+        self._validate_offer_price(pricing_type=pricing_type, price_amount=payload.price_amount)
+        if payload.category_id is not None:
+            self._validate_offer_category(payload.category_id, require_active=True)
+
+        row = ServiceOffer(
+            provider_profile_id=provider.id,
+            category_id=payload.category_id,
+            title=payload.title.strip(),
+            slug=self._normalize_slug(payload.slug),
+            short_description=payload.short_description,
+            description=payload.description,
+            status=ServiceOfferStatus.DRAFT.value,
+            pricing_type=pricing_type,
+            price_amount=payload.price_amount,
+            currency=payload.currency.upper(),
+            province_id=payload.province_id,
+            city_id=payload.city_id,
+            village_id=payload.village_id,
+            province_name=payload.province_name,
+            city_name=payload.city_name,
+            village_name=payload.village_name,
+            service_area=payload.service_area,
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+            is_active=payload.is_active,
+            is_featured=False,
+            views_count=0,
+            requests_count=0,
+            completed_requests_count=0,
+        )
+
+        self.repo.add_offer(row)
+        self.repo.replace_offer_media(
+            offer=row,
+            rows=self._offer_media_rows(
+                payload.media_items,
+                owner_user_id=user.id,
+            ),
+        )
+
+        try:
+            self.repo.commit()
+        except IntegrityError as exc:
+            self.repo.rollback()
+            raise ValidationAuthError(
+                message="Service offer slug already exists for this provider",
+                details={"slug": row.slug},
+            ) from exc
+
+        self.repo.refresh(row)
+        return self._offer_out(row)
+
+    def update_my_offer(
+        self,
+        *,
+        user: AuthUser,
+        offer_id: int,
+        payload: ServiceOfferUpdateIn,
+    ) -> ServiceOfferOut:
+        provider = self._get_approved_provider_profile(user)
+        row = self._get_owned_offer(provider_profile_id=provider.id, offer_id=offer_id)
+
+        if row.status in {
+            ServiceOfferStatus.SUSPENDED.value,
+            ServiceOfferStatus.ARCHIVED.value,
+        }:
+            raise ValidationAuthError(
+                message="Service offer cannot be updated in current status",
+                details={"current_status": row.status},
+            )
+
+        self._apply_offer_update(row=row, payload=payload)
+
+        if payload.media_items is not None:
+            self.repo.replace_offer_media(
+                offer=row,
+                rows=self._offer_media_rows(payload.media_items, owner_user_id=user.id),
+            )
+
+        try:
+            self.repo.commit()
+        except IntegrityError as exc:
+            self.repo.rollback()
+            raise ValidationAuthError(
+                message="Service offer slug already exists for this provider",
+                details={"slug": row.slug},
+            ) from exc
+
+        self.repo.refresh(row)
+        return self._offer_out(row)
+
+    def submit_my_offer(
+        self,
+        *,
+        user: AuthUser,
+        offer_id: int,
+    ) -> ServiceOfferOut:
+        provider = self._get_approved_provider_profile(user)
+        row = self._get_owned_offer(provider_profile_id=provider.id, offer_id=offer_id)
+
+        if row.status not in {
+            ServiceOfferStatus.DRAFT.value,
+            ServiceOfferStatus.REJECTED.value,
+        }:
+            raise ValidationAuthError(
+                message="Service offer cannot be submitted in current status",
+                details={"current_status": row.status},
+            )
+
+        self._validate_offer_ready(row)
+
+        row.status = ServiceOfferStatus.PENDING_REVIEW.value
+        row.submitted_at = datetime.utcnow()
+        row.admin_note = None
+
+        self.repo.commit()
+        self.repo.refresh(row)
+        self._notify_offer_submitted(row)
+
+        return self._offer_out(row)
+
+    def list_admin_offers(
+        self,
+        *,
+        status: str | None,
+        category_id: int | None,
+        provider_profile_id: int | None,
+        pricing_type: str | None,
+        q: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[ServiceOfferOut], int]:
+        if status is not None:
+            self._validate_offer_status(status)
+
+        if category_id is not None:
+            self._validate_offer_category(category_id, require_active=False)
+
+        if pricing_type is not None:
+            self._validate_pricing_type(pricing_type)
+
+        rows, total = self.repo.list_admin_offers(
+            status=status,
+            category_id=category_id,
+            provider_profile_id=provider_profile_id,
+            pricing_type=pricing_type,
+            q=q,
+            page=max(page, 1),
+            page_size=min(max(page_size, 1), 100),
+        )
+
+        return [self._offer_out(row) for row in rows], total
+
+    def get_admin_offer(self, offer_id: int) -> ServiceOfferOut:
+        row = self.repo.get_offer_by_id(offer_id)
+
+        if row is None or row.deleted_at is not None:
+            raise ValidationAuthError(
+                message="Service offer not found",
+                details={"offer_id": offer_id},
+            )
+
+        return self._offer_out(row)
+
+    def update_offer_status_admin(
+        self,
+        *,
+        offer_id: int,
+        admin_user: AuthUser,
+        payload: ServiceOfferStatusUpdateIn,
+    ) -> ServiceOfferOut:
+        status = self._validate_offer_status(payload.status)
+        row = self.repo.get_offer_by_id(offer_id)
+
+        if row is None or row.deleted_at is not None:
+            raise ValidationAuthError(
+                message="Service offer not found",
+                details={"offer_id": offer_id},
+            )
+
+        now = datetime.utcnow()
+        row.status = status
+        row.admin_note = payload.note
+
+        if status == ServiceOfferStatus.APPROVED.value:
+            row.approved_at = now
+            row.approved_by = admin_user.id
+            row.rejected_at = None
+            row.rejected_by = None
+            row.suspended_at = None
+            row.suspended_by = None
+        elif status == ServiceOfferStatus.REJECTED.value:
+            row.rejected_at = now
+            row.rejected_by = admin_user.id
+        elif status == ServiceOfferStatus.SUSPENDED.value:
+            row.suspended_at = now
+            row.suspended_by = admin_user.id
+        elif status == ServiceOfferStatus.ARCHIVED.value:
+            row.suspended_at = None
+            row.suspended_by = None
+
+        self.repo.commit()
+        self.repo.refresh(row)
+        self._notify_offer_status(row, status)
+
+        return self._offer_out(row)
 
     def create_category(self, payload: ServiceCategoryCreateIn) -> ServiceCategoryOut:
         code = self._normalize_code(payload.code)
@@ -446,6 +755,378 @@ class ServicesService:
     ) -> ServiceProviderProfilePublicOut:
         return ServiceProviderProfilePublicOut.model_validate(
             self._profile_out(profile).model_dump()
+        )
+
+    def _get_approved_provider_profile(self, user: AuthUser) -> ServiceProviderProfile:
+        profile = self.repo.get_profile_by_user_id(user.id)
+
+        if (
+            profile is None
+            or profile.deleted_at is not None
+            or profile.status != ServiceProviderStatus.APPROVED.value
+        ):
+            raise ValidationAuthError(
+                message="Approved service provider profile is required",
+                details={"user_id": user.id},
+            )
+
+        return profile
+
+    def _get_owned_offer(
+        self,
+        *,
+        provider_profile_id: int,
+        offer_id: int,
+    ) -> ServiceOffer:
+        row = self.repo.get_offer_by_id(offer_id)
+
+        if (
+            row is None
+            or row.deleted_at is not None
+            or row.provider_profile_id != provider_profile_id
+        ):
+            raise ValidationAuthError(
+                message="Service offer not found",
+                details={"offer_id": offer_id},
+            )
+
+        return row
+
+    def _apply_offer_update(
+        self,
+        *,
+        row: ServiceOffer,
+        payload: ServiceOfferUpdateIn,
+    ) -> None:
+        fields = payload.model_fields_set
+
+        if "category_id" in fields:
+            if payload.category_id is not None:
+                self._validate_offer_category(payload.category_id, require_active=True)
+            row.category_id = payload.category_id
+        if "title" in fields:
+            row.title = payload.title.strip() if payload.title else row.title
+        if "slug" in fields and payload.slug is not None:
+            row.slug = self._normalize_slug(payload.slug)
+        if "short_description" in fields:
+            row.short_description = payload.short_description
+        if "description" in fields:
+            row.description = payload.description
+        if "pricing_type" in fields and payload.pricing_type is not None:
+            row.pricing_type = self._validate_pricing_type(payload.pricing_type)
+        if "price_amount" in fields:
+            row.price_amount = payload.price_amount
+        if "currency" in fields and payload.currency is not None:
+            row.currency = payload.currency.upper()
+        if "province_id" in fields:
+            row.province_id = payload.province_id
+        if "city_id" in fields:
+            row.city_id = payload.city_id
+        if "village_id" in fields:
+            row.village_id = payload.village_id
+        if "province_name" in fields:
+            row.province_name = payload.province_name
+        if "city_name" in fields:
+            row.city_name = payload.city_name
+        if "village_name" in fields:
+            row.village_name = payload.village_name
+        if "service_area" in fields:
+            row.service_area = payload.service_area
+        if "latitude" in fields:
+            row.latitude = payload.latitude
+        if "longitude" in fields:
+            row.longitude = payload.longitude
+        if "is_active" in fields and payload.is_active is not None:
+            row.is_active = payload.is_active
+
+        self._validate_offer_price(
+            pricing_type=row.pricing_type,
+            price_amount=row.price_amount,
+        )
+
+    def _offer_media_rows(
+        self,
+        items: list[ServiceOfferMediaIn],
+        *,
+        owner_user_id: int,
+    ) -> list[ServiceOfferMedia]:
+        primary_count = sum(1 for item in items if item.is_primary)
+
+        if primary_count > 1:
+            raise ValidationAuthError(
+                message="Only one primary service offer media item is allowed",
+            )
+
+        rows: list[ServiceOfferMedia] = []
+
+        for item in items:
+            self._validate_offer_media_payload(item, owner_user_id=owner_user_id)
+            rows.append(
+                ServiceOfferMedia(
+                    file_id=item.file_id,
+                    media_file_id=item.media_file_id,
+                    file_path=item.file_path,
+                    alt_text=item.alt_text,
+                    sort_order=item.sort_order,
+                    is_primary=item.is_primary,
+                )
+            )
+
+        if rows and primary_count == 0:
+            rows[0].is_primary = True
+
+        return rows
+
+    def _validate_offer_media_payload(
+        self,
+        item: ServiceOfferMediaIn,
+        *,
+        owner_user_id: int,
+    ) -> None:
+        if item.file_id is None and item.media_file_id is None and item.file_path is None:
+            raise ValidationAuthError(
+                message="Service offer media must reference a file",
+            )
+
+        if item.media_file_id is None:
+            return
+
+        media = self.repo.get_media_file_by_id(item.media_file_id)
+        if media is None or media.owner_user_id != owner_user_id:
+            raise ValidationAuthError(
+                message="Service offer media file not found",
+                details={"media_file_id": item.media_file_id},
+            )
+
+        if media.status != MediaStatus.ACTIVE.value:
+            raise ValidationAuthError(
+                message="Service offer media file is not active",
+                details={"media_file_id": item.media_file_id},
+            )
+
+        if media.visibility != MediaVisibility.PUBLIC.value:
+            raise ValidationAuthError(
+                message="Service offer media must be public",
+                details={"media_file_id": item.media_file_id},
+            )
+
+    def _validate_offer_ready(self, row: ServiceOffer) -> None:
+        missing = []
+        if not row.category_id:
+            missing.append("category_id")
+        if not row.title:
+            missing.append("title")
+        if not row.slug:
+            missing.append("slug")
+        if not row.short_description:
+            missing.append("short_description")
+        if not row.description:
+            missing.append("description")
+
+        self._validate_offer_price(
+            pricing_type=row.pricing_type,
+            price_amount=row.price_amount,
+        )
+
+        if missing:
+            raise ValidationAuthError(
+                message="Service offer is not ready for review",
+                details={"missing": missing},
+            )
+
+    def _offer_out(self, row: ServiceOffer) -> ServiceOfferOut:
+        media = [
+            self._media_out(item)
+            for item in sorted(row.media or [], key=lambda item: (item.sort_order, item.id))
+        ]
+        primary_media = next((item for item in media if item.is_primary), media[0] if media else None)
+
+        category = None
+        if row.category is not None:
+            category = ServiceCategoryOut.model_validate(row.category)
+
+        provider = None
+        if row.provider_profile is not None:
+            provider = self._public_profile_out(row.provider_profile)
+
+        return ServiceOfferOut(
+            id=row.id,
+            provider_profile_id=row.provider_profile_id,
+            category_id=row.category_id,
+            title=row.title,
+            slug=row.slug,
+            short_description=row.short_description,
+            description=row.description,
+            status=row.status,
+            pricing_type=row.pricing_type,
+            price_amount=row.price_amount,
+            currency=row.currency,
+            province_id=row.province_id,
+            city_id=row.city_id,
+            village_id=row.village_id,
+            province_name=row.province_name,
+            city_name=row.city_name,
+            village_name=row.village_name,
+            service_area=row.service_area,
+            latitude=row.latitude,
+            longitude=row.longitude,
+            is_active=row.is_active,
+            is_featured=row.is_featured,
+            views_count=row.views_count,
+            requests_count=row.requests_count,
+            completed_requests_count=row.completed_requests_count,
+            media=media,
+            primary_media=primary_media,
+            category=category,
+            provider=provider,
+            admin_note=row.admin_note,
+            submitted_at=row.submitted_at,
+            approved_at=row.approved_at,
+            approved_by=row.approved_by,
+            rejected_at=row.rejected_at,
+            rejected_by=row.rejected_by,
+            suspended_at=row.suspended_at,
+            suspended_by=row.suspended_by,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+            deleted_at=row.deleted_at,
+        )
+
+    def _public_offer_out(self, row: ServiceOffer) -> ServiceOfferPublicOut:
+        return ServiceOfferPublicOut.model_validate(self._offer_out(row).model_dump())
+
+    def _media_out(self, row: ServiceOfferMedia) -> ServiceOfferMediaOut:
+        file_key = None
+        public_url = None
+
+        if row.media_file_id is not None:
+            media = self.repo.get_media_file_by_id(row.media_file_id)
+            if media is not None:
+                file_key = media.file_key
+                if file_key:
+                    public_url = f"/api/v1/media/public/{file_key}"
+
+        return ServiceOfferMediaOut(
+            id=row.id,
+            offer_id=row.offer_id,
+            file_id=row.file_id,
+            media_file_id=row.media_file_id,
+            file_key=file_key,
+            public_url=public_url,
+            file_path=row.file_path,
+            alt_text=row.alt_text,
+            sort_order=row.sort_order,
+            is_primary=row.is_primary,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+        )
+
+    def _normalize_slug(self, slug: str) -> str:
+        clean = slug.strip().lower().replace(" ", "-")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{1,158}[a-z0-9]", clean):
+            raise ValidationAuthError(
+                message="Invalid service offer slug",
+                details={"format": "lowercase letters, numbers, underscore or dash"},
+            )
+        return clean
+
+    def _validate_pricing_type(self, pricing_type: str) -> str:
+        allowed = {item.value for item in ServicePricingType}
+        if pricing_type not in allowed:
+            raise ValidationAuthError(
+                message="Invalid service offer pricing type",
+                details={"allowed": sorted(allowed)},
+            )
+        return pricing_type
+
+    def _validate_offer_status(self, status: str) -> str:
+        allowed = {item.value for item in ServiceOfferStatus}
+        if status not in allowed:
+            raise ValidationAuthError(
+                message="Invalid service offer status",
+                details={"allowed": sorted(allowed)},
+            )
+        return status
+
+    def _validate_offer_category(
+        self,
+        category_id: int,
+        *,
+        require_active: bool,
+    ) -> None:
+        category = self.repo.get_category_by_id(category_id)
+        if category is None or (require_active and not category.is_active):
+            raise ValidationAuthError(
+                message="Service category not found",
+                details={"category_id": category_id},
+            )
+
+    def _validate_offer_price(
+        self,
+        *,
+        pricing_type: str,
+        price_amount: Decimal | None,
+    ) -> None:
+        if pricing_type == ServicePricingType.NEGOTIABLE.value:
+            return
+
+        if price_amount is None:
+            raise ValidationAuthError(
+                message="Service offer price amount is required",
+                details={"pricing_type": pricing_type},
+            )
+
+    def _notify_offer_submitted(self, row: ServiceOffer) -> None:
+        admin_ids = self.repo.list_service_admin_recipient_user_ids()
+        if not admin_ids:
+            return
+
+        provider_user_id = row.provider_profile.user_id if row.provider_profile else None
+
+        NotificationService(self.db).create_event_and_notify_many(
+            event_type=NotificationEventType.SERVICE_OFFER_SUBMITTED.value,
+            recipient_user_ids=admin_ids,
+            title="خدمت جدید برای بررسی",
+            body=f"خدمت «{row.title}» برای بررسی ارسال شد.",
+            actor_user_id=provider_user_id,
+            source_type="service_offer",
+            source_id=str(row.id),
+            payload_json={
+                "offer_id": row.id,
+                "provider_profile_id": row.provider_profile_id,
+            },
+            action_url=f"/admin/services/offers?offer_id={row.id}",
+            priority=NotificationPriority.HIGH.value,
+            commit=True,
+        )
+
+    def _notify_offer_status(self, row: ServiceOffer, status: str) -> None:
+        if row.provider_profile is None:
+            return
+
+        if status == ServiceOfferStatus.APPROVED.value:
+            event_type = NotificationEventType.SERVICE_OFFER_APPROVED.value
+            title = "خدمت شما تأیید شد"
+            body = f"خدمت «{row.title}» در بازار خدمات منتشر شد."
+        elif status == ServiceOfferStatus.REJECTED.value:
+            event_type = NotificationEventType.SERVICE_OFFER_REJECTED.value
+            title = "خدمت شما رد شد"
+            body = row.admin_note or f"خدمت «{row.title}» نیاز به اصلاح دارد."
+        else:
+            return
+
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=event_type,
+            recipient_user_id=row.provider_profile.user_id,
+            title=title,
+            body=body,
+            actor_user_id=row.approved_by or row.rejected_by or row.suspended_by,
+            source_type="service_offer",
+            source_id=str(row.id),
+            payload_json={"offer_id": row.id, "status": status},
+            action_url=f"/services/me/offers/{row.id}",
+            priority=NotificationPriority.HIGH.value,
+            commit=True,
         )
 
     def _resolved_display_name(self, profile: ServiceProviderProfile) -> str | None:

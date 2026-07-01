@@ -46,6 +46,9 @@ class NotificationEventType(str, Enum):
     SERVICE_PROVIDER_SUBMITTED = "service_provider.submitted"
     SERVICE_PROVIDER_APPROVED = "service_provider.approved"
     SERVICE_PROVIDER_REJECTED = "service_provider.rejected"
+    SERVICE_OFFER_SUBMITTED = "service_offer.submitted"
+    SERVICE_OFFER_APPROVED = "service_offer.approved"
+    SERVICE_OFFER_REJECTED = "service_offer.rejected"
 
     SYSTEM_MESSAGE = "system.message"
 
