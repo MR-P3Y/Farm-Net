@@ -122,6 +122,23 @@ def list_admin_consult_requests(
     )
 
 
+@router.get("/requests/{request_id}")
+def get_admin_consult_request_detail(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("consult_requests.read")),
+):
+    service = ConsultantService(db)
+    result = service.get_admin_request_detail(request_id=request_id)
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
 @router.patch("/requests/{request_id}/status")
 def update_admin_consult_request_status(
     request_id: int,

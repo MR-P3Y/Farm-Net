@@ -594,6 +594,16 @@ class ConsultantService:
         )
         return [self._request_out(row) for row in rows], total
 
+    def get_admin_request_detail(self, *, request_id: int) -> ConsultRequestOut:
+        row = self.repo.get_request_by_id(request_id)
+        if row is None:
+            raise ValidationAuthError(
+                message="Consult request not found",
+                details={"request_id": request_id},
+            )
+
+        return self._request_out(row)
+
     def update_request_status_admin(
         self,
         *,

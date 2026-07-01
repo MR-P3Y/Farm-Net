@@ -448,6 +448,20 @@
       }
     },
     {
+      "name": "Admin - Consult Request Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/consultants/requests/{{consult_request_id}}",
+        "description": "Requires consult_requests.read. Response includes status_logs, consultant summary, specialty summary, and admin/request notes."
+      }
+    },
+    {
       "name": "Admin - Update Consult Request Status",
       "request": {
         "method": "PATCH",

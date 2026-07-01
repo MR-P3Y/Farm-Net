@@ -295,6 +295,7 @@ POST  /api/v1/admin/consultants/specialties
 PATCH /api/v1/admin/consultants/specialties/{specialty_id}
 
 GET   /api/v1/admin/consultants/requests
+GET   /api/v1/admin/consultants/requests/{request_id}
 PATCH /api/v1/admin/consultants/requests/{request_id}/status
 ```
 
@@ -318,6 +319,14 @@ consult_specialties.create
 consult_specialties.update
 consult_requests.read
 consult_requests.manage
+```
+
+Admin request detail contract:
+
+```text
+GET /admin/consultants/requests/{request_id} requires consult_requests.read.
+It returns the full consult request response, including consultant summary, specialty summary, admin_note, consultant_note, cancel metadata, and status_logs.
+The admin panel uses this endpoint for request detail/moderation context before changing status.
 ```
 
 ## Postman Coverage

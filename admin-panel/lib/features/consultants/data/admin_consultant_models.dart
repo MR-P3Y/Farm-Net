@@ -70,8 +70,7 @@ class AdminConsultProfile {
     return AdminConsultProfile(
       id: (json['id'] as num).toInt(),
       userId: (json['user_id'] as num).toInt(),
-      displayName:
-          json['display_name']?.toString() ?? json['name']?.toString(),
+      displayName: json['display_name']?.toString() ?? json['name']?.toString(),
       title: json['title']?.toString(),
       bio: json['bio']?.toString(),
       avatarUrl: json['avatar_url']?.toString(),
@@ -112,10 +111,18 @@ class AdminConsultRequest {
     required this.contactMethod,
     required this.currency,
     required this.createdAt,
+    required this.updatedAt,
     required this.statusLogs,
     this.consultantProfileId,
     this.specialtyId,
     this.budgetAmount,
+    this.scheduledAt,
+    this.adminNote,
+    this.consultantNote,
+    this.cancelReason,
+    this.acceptedAt,
+    this.completedAt,
+    this.cancelledAt,
     this.consultant,
     this.specialty,
   });
@@ -130,7 +137,15 @@ class AdminConsultRequest {
   final String contactMethod;
   final String? budgetAmount;
   final String currency;
+  final String? scheduledAt;
+  final String? adminNote;
+  final String? consultantNote;
+  final String? cancelReason;
+  final String? acceptedAt;
+  final String? completedAt;
+  final String? cancelledAt;
   final String createdAt;
+  final String updatedAt;
   final AdminConsultProfile? consultant;
   final AdminConsultSpecialty? specialty;
   final List<AdminConsultRequestStatusLog> statusLogs;
@@ -155,7 +170,15 @@ class AdminConsultRequest {
       contactMethod: json['contact_method']?.toString() ?? '',
       budgetAmount: json['budget_amount']?.toString(),
       currency: json['currency']?.toString() ?? 'IRR',
+      scheduledAt: json['scheduled_at']?.toString(),
+      adminNote: json['admin_note']?.toString(),
+      consultantNote: json['consultant_note']?.toString(),
+      cancelReason: json['cancel_reason']?.toString(),
+      acceptedAt: json['accepted_at']?.toString(),
+      completedAt: json['completed_at']?.toString(),
+      cancelledAt: json['cancelled_at']?.toString(),
       createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
       consultant:
           json['consultant'] is Map
               ? AdminConsultProfile.fromJson(

@@ -182,11 +182,19 @@ class AdminConsultantController extends StateNotifier<AdminConsultantState> {
     state = state.copyWith(isSaving: true, clearError: true);
 
     try {
-      await _repository.updateRequestStatus(id: id, status: status, note: note);
+      final selectedRequest = await _repository.updateRequestStatus(
+        id: id,
+        status: status,
+        note: note,
+      );
       final requests = await _repository.listRequests(
         status: state.requestStatusFilter,
       );
-      state = state.copyWith(isSaving: false, requests: requests);
+      state = state.copyWith(
+        isSaving: false,
+        requests: requests,
+        selectedRequest: selectedRequest,
+      );
       return true;
     } on AdminConsultantApiException catch (error) {
       state = state.copyWith(
@@ -197,6 +205,32 @@ class AdminConsultantController extends StateNotifier<AdminConsultantState> {
       state = state.copyWith(
         isSaving: false,
         errorMessage: 'خطا در تغییر وضعیت درخواست مشاوره',
+      );
+    }
+
+    return false;
+  }
+
+  Future<bool> loadRequestDetail(int id) async {
+    state = state.copyWith(
+      isSaving: true,
+      clearError: true,
+      clearSelectedRequest: true,
+    );
+
+    try {
+      final request = await _repository.requestDetail(id);
+      state = state.copyWith(isSaving: false, selectedRequest: request);
+      return true;
+    } on AdminConsultantApiException catch (error) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: error.error.message,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: 'خطا در دریافت جزئیات درخواست مشاوره',
       );
     }
 

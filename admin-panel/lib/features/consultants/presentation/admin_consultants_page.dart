@@ -107,8 +107,7 @@ class _AdminConsultantsPageState extends ConsumerState<AdminConsultantsPage> {
                                   children: [
                                     _ProfilesTab(
                                       profiles: state.profiles,
-                                      selectedStatus:
-                                          state.profileStatusFilter,
+                                      selectedStatus: state.profileStatusFilter,
                                       isSaving: state.isSaving,
                                     ),
                                     _SpecialtiesTab(
@@ -117,8 +116,7 @@ class _AdminConsultantsPageState extends ConsumerState<AdminConsultantsPage> {
                                     ),
                                     _RequestsTab(
                                       requests: state.requests,
-                                      selectedStatus:
-                                          state.requestStatusFilter,
+                                      selectedStatus: state.requestStatusFilter,
                                       isSaving: state.isSaving,
                                     ),
                                   ],
@@ -207,10 +205,7 @@ class _SummaryCard extends StatelessWidget {
                   children: [
                     Text(label),
                     const SizedBox(height: 4),
-                    Text(
-                      value,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
+                    Text(value, style: Theme.of(context).textTheme.titleLarge),
                   ],
                 ),
               ),
@@ -406,7 +401,10 @@ class _SpecialtiesTab extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Text('تخصص‌های مشاوره', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'تخصص‌های مشاوره',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const Spacer(),
             FilledButton.icon(
               onPressed:
@@ -623,7 +621,9 @@ class _RequestsTab extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         if (requests.isEmpty)
-          const AdminEmptyView(message: 'درخواست مشاوره‌ای برای نمایش وجود ندارد.')
+          const AdminEmptyView(
+            message: 'درخواست مشاوره‌ای برای نمایش وجود ندارد.',
+          )
         else
           AdminDataTable(
             columns: const [
@@ -654,17 +654,34 @@ class _RequestsTab extends ConsumerWidget {
                         ),
                       ),
                       DataCell(
-                        TextButton.icon(
-                          onPressed:
-                              isSaving
-                                  ? null
-                                  : () => _openRequestStatusDialog(
-                                    context,
-                                    ref,
-                                    request,
-                                  ),
-                          icon: const Icon(Icons.edit_note_outlined),
-                          label: const Text('وضعیت'),
+                        Wrap(
+                          spacing: 6,
+                          children: [
+                            TextButton.icon(
+                              onPressed:
+                                  isSaving
+                                      ? null
+                                      : () => _openRequestDetailDialog(
+                                        context,
+                                        ref,
+                                        request,
+                                      ),
+                              icon: const Icon(Icons.visibility_outlined),
+                              label: const Text('جزئیات'),
+                            ),
+                            TextButton.icon(
+                              onPressed:
+                                  isSaving
+                                      ? null
+                                      : () => _openRequestStatusDialog(
+                                        context,
+                                        ref,
+                                        request,
+                                      ),
+                              icon: const Icon(Icons.edit_note_outlined),
+                              label: const Text('وضعیت'),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -672,6 +689,57 @@ class _RequestsTab extends ConsumerWidget {
                 }).toList(),
           ),
       ],
+    );
+  }
+
+  Future<void> _openRequestDetailDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AdminConsultRequest request,
+  ) async {
+    final ok = await ref
+        .read(adminConsultantControllerProvider.notifier)
+        .loadRequestDetail(request.id);
+
+    if (!ok || !context.mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) {
+        return Consumer(
+          builder: (dialogContext, ref, _) {
+            final state = ref.watch(adminConsultantControllerProvider);
+            final detail = state.selectedRequest ?? request;
+
+            return AlertDialog(
+              title: Text('جزئیات درخواست #${detail.id}'),
+              content: SizedBox(
+                width: 760,
+                child: SingleChildScrollView(
+                  child: _RequestDetailContent(request: detail),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('بستن'),
+                ),
+                FilledButton.icon(
+                  onPressed:
+                      state.isSaving
+                          ? null
+                          : () {
+                            Navigator.pop(dialogContext);
+                            _openRequestStatusDialog(context, ref, detail);
+                          },
+                  icon: const Icon(Icons.edit_note_outlined),
+                  label: const Text('تغییر وضعیت'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -767,6 +835,200 @@ class _RequestsTab extends ConsumerWidget {
   }
 }
 
+class _RequestDetailContent extends StatelessWidget {
+  const _RequestDetailContent({required this.request});
+
+  final AdminConsultRequest request;
+
+  @override
+  Widget build(BuildContext context) {
+    final consultantName = request.consultant?.displayName;
+    final rows = [
+      ('درخواست‌دهنده', '#${request.requesterUserId}'),
+      if (consultantName != null && consultantName.trim().isNotEmpty)
+        ('مشاور', '$consultantName (#${request.consultantProfileId ?? '-'})'),
+      if (request.specialty?.title.trim().isNotEmpty == true)
+        ('تخصص', request.specialty!.title),
+      ('روش ارتباط', _contactMethodLabel(request.contactMethod)),
+      ('وضعیت', _statusLabel(request.status)),
+      ('ثبت', _compactDate(request.createdAt)),
+      ('آخرین تغییر', _compactDate(request.updatedAt)),
+      if (request.scheduledAt != null)
+        ('زمان پیشنهادی', _compactDate(request.scheduledAt!)),
+      if (request.budgetAmount != null)
+        ('بودجه', '${request.budgetAmount} ${request.currency}'),
+    ];
+
+    final notes = [
+      if (request.adminNote != null && request.adminNote!.trim().isNotEmpty)
+        ('یادداشت ادمین', request.adminNote!),
+      if (request.consultantNote != null &&
+          request.consultantNote!.trim().isNotEmpty)
+        ('یادداشت مشاور', request.consultantNote!),
+      if (request.cancelReason != null &&
+          request.cancelReason!.trim().isNotEmpty)
+        ('دلیل لغو', request.cancelReason!),
+      if (request.acceptedAt != null)
+        ('پذیرش', _compactDate(request.acceptedAt!)),
+      if (request.completedAt != null)
+        ('تکمیل', _compactDate(request.completedAt!)),
+      if (request.cancelledAt != null)
+        ('لغو', _compactDate(request.cancelledAt!)),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _DetailSection(title: request.title, child: Text(request.description)),
+        const SizedBox(height: 12),
+        _DetailSection(
+          title: 'اطلاعات درخواست',
+          child: Column(
+            children:
+                rows
+                    .map(
+                      (row) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _DetailRow(label: row.$1, value: row.$2),
+                      ),
+                    )
+                    .toList(),
+          ),
+        ),
+        if (notes.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _DetailSection(
+            title: 'یادداشت‌ها',
+            child: Column(
+              children:
+                  notes
+                      .map(
+                        (row) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _DetailRow(label: row.$1, value: row.$2),
+                        ),
+                      )
+                      .toList(),
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        _DetailSection(
+          title: 'تاریخچه وضعیت',
+          child:
+              request.statusLogs.isEmpty
+                  ? const Text('تغییر وضعیتی ثبت نشده است.')
+                  : Column(
+                    children:
+                        request.statusLogs
+                            .map((log) => _StatusLogTile(log: log))
+                            .toList(),
+                  ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailSection extends StatelessWidget {
+  const _DetailSection({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 10),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 130,
+          child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Text(value)),
+      ],
+    );
+  }
+}
+
+class _StatusLogTile extends StatelessWidget {
+  const _StatusLogTile({required this.log});
+
+  final AdminConsultRequestStatusLog log;
+
+  @override
+  Widget build(BuildContext context) {
+    final change = [
+      if (log.fromStatus != null) _statusLabel(log.fromStatus!),
+      _statusLabel(log.toStatus),
+    ].join(' ← ');
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle_outline, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(change),
+                const SizedBox(height: 3),
+                Text(
+                  _compactDate(log.createdAt),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                if (log.changedBy != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    'تغییر توسط کاربر #${log.changedBy}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                if (log.note != null && log.note!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(log.note!),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FilterBar extends StatelessWidget {
   const _FilterBar({
     required this.label,
@@ -825,13 +1087,12 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final color =
-        switch (status) {
-          'approved' || 'completed' => colorScheme.primaryContainer,
-          'pending_review' || 'open' => colorScheme.tertiaryContainer,
-          'rejected' || 'cancelled' || 'suspended' => colorScheme.errorContainer,
-          _ => colorScheme.surfaceContainerHighest,
-        };
+    final color = switch (status) {
+      'approved' || 'completed' => colorScheme.primaryContainer,
+      'pending_review' || 'open' => colorScheme.tertiaryContainer,
+      'rejected' || 'cancelled' || 'suspended' => colorScheme.errorContainer,
+      _ => colorScheme.surfaceContainerHighest,
+    };
 
     return Chip(label: Text(_statusLabel(status)), backgroundColor: color);
   }
@@ -851,4 +1112,19 @@ String _statusLabel(String status) {
     'cancelled' => 'لغو شده',
     _ => status,
   };
+}
+
+String _contactMethodLabel(String method) {
+  return switch (method) {
+    'in_app' => 'داخل اپلیکیشن',
+    'phone' => 'تلفنی',
+    'video' => 'تصویری',
+    'visit' => 'حضوری',
+    _ => method,
+  };
+}
+
+String _compactDate(String value) {
+  if (value.length < 10) return value;
+  return value.substring(0, 10);
 }

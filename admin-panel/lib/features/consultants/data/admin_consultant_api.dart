@@ -57,9 +57,7 @@ class AdminConsultantApi {
       },
     );
 
-    return AdminConsultSpecialty.fromJson(
-      json['data'] as Map<String, dynamic>,
-    );
+    return AdminConsultSpecialty.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   Future<AdminConsultSpecialty> updateSpecialty({
@@ -83,9 +81,7 @@ class AdminConsultantApi {
       },
     );
 
-    return AdminConsultSpecialty.fromJson(
-      json['data'] as Map<String, dynamic>,
-    );
+    return AdminConsultSpecialty.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   Future<List<AdminConsultProfile>> listProfiles({String? status}) async {
@@ -101,7 +97,9 @@ class AdminConsultantApi {
     final rows = json['data'] as List? ?? [];
 
     return rows
-        .map((item) => AdminConsultProfile.fromJson(item as Map<String, dynamic>))
+        .map(
+          (item) => AdminConsultProfile.fromJson(item as Map<String, dynamic>),
+        )
         .toList();
   }
 
@@ -128,13 +126,26 @@ class AdminConsultantApi {
       query['status'] = status;
     }
 
-    final uri = Uri(path: '/admin/consultants/requests', queryParameters: query);
+    final uri = Uri(
+      path: '/admin/consultants/requests',
+      queryParameters: query,
+    );
     final json = await _get(uri.toString());
     final rows = json['data'] as List? ?? [];
 
     return rows
-        .map((item) => AdminConsultRequest.fromJson(item as Map<String, dynamic>))
+        .map(
+          (item) => AdminConsultRequest.fromJson(item as Map<String, dynamic>),
+        )
         .toList();
+  }
+
+  Future<AdminConsultRequest> requestDetail(int id) async {
+    await _setStoredToken();
+
+    final json = await _get('/admin/consultants/requests/$id');
+
+    return AdminConsultRequest.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   Future<AdminConsultRequest> updateRequestStatus({

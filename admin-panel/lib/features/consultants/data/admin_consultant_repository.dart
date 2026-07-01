@@ -65,6 +65,10 @@ class AdminConsultantRepository {
   Future<List<AdminConsultRequest>> listRequests({String? status}) =>
       _api.listRequests(status: status);
 
+  Future<AdminConsultRequest> requestDetail(int id) {
+    return _api.requestDetail(id);
+  }
+
   Future<AdminConsultRequest> updateRequestStatus({
     required int id,
     required String status,

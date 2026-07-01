@@ -9,6 +9,7 @@ class AdminConsultantState {
     this.specialties = const [],
     this.profiles = const [],
     this.requests = const [],
+    this.selectedRequest,
     this.profileStatusFilter,
     this.requestStatusFilter,
     this.errorMessage,
@@ -19,6 +20,7 @@ class AdminConsultantState {
   final List<AdminConsultSpecialty> specialties;
   final List<AdminConsultProfile> profiles;
   final List<AdminConsultRequest> requests;
+  final AdminConsultRequest? selectedRequest;
   final String? profileStatusFilter;
   final String? requestStatusFilter;
   final String? errorMessage;
@@ -33,9 +35,11 @@ class AdminConsultantState {
     List<AdminConsultSpecialty>? specialties,
     List<AdminConsultProfile>? profiles,
     List<AdminConsultRequest>? requests,
+    AdminConsultRequest? selectedRequest,
     Object? profileStatusFilter = _unset,
     Object? requestStatusFilter = _unset,
     String? errorMessage,
+    bool clearSelectedRequest = false,
     bool clearError = false,
   }) {
     return AdminConsultantState(
@@ -44,6 +48,8 @@ class AdminConsultantState {
       specialties: specialties ?? this.specialties,
       profiles: profiles ?? this.profiles,
       requests: requests ?? this.requests,
+      selectedRequest:
+          clearSelectedRequest ? null : selectedRequest ?? this.selectedRequest,
       profileStatusFilter:
           identical(profileStatusFilter, _unset)
               ? this.profileStatusFilter
