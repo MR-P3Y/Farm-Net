@@ -8,6 +8,10 @@ from app.core.middleware import trace_id_middleware
 from app.core.rate_limit import create_rate_limit_middleware
 from app.modules.admin.router import router as admin_router
 from app.modules.auth.router import router as auth_router
+from app.modules.consultants.admin_router import router as admin_consultants_router
+from app.modules.consultants.router import router as consultants_router
+from app.modules.expert.admin_router import router as admin_expert_router
+from app.modules.expert.router import router as expert_router
 from app.modules.geo.router import router as geo_router
 from app.modules.health.router import router as health_router
 from app.modules.media.access_router import router as media_access_router
@@ -27,6 +31,8 @@ from app.modules.products.router import router as products_router
 from app.modules.profiles.router import router as profile_router
 from app.modules.social.admin_router import router as admin_social_router
 from app.modules.social.router import router as social_router
+from app.modules.services.admin_router import router as admin_services_router
+from app.modules.services.router import router as services_router
 from app.modules.stores.public_router import router as public_stores_router
 from app.modules.stores.router import router as stores_router
 from app.modules.weather.admin_router import router as admin_weather_router
@@ -86,8 +92,14 @@ def create_app() -> FastAPI:
     app.include_router(admin_notifications_router, prefix=settings.api_v1_prefix)
     app.include_router(weather_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_weather_router, prefix=settings.api_v1_prefix)
+    app.include_router(consultants_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_consultants_router, prefix=settings.api_v1_prefix)
+    app.include_router(services_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_services_router, prefix=settings.api_v1_prefix)
     app.include_router(social_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_social_router, prefix=settings.api_v1_prefix)
+    app.include_router(expert_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_expert_router, prefix=settings.api_v1_prefix)
 
     register_exception_handlers(app)
 

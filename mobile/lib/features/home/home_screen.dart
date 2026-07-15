@@ -134,6 +134,38 @@ class HomeScreen extends ConsumerWidget {
                         label: const Text('جامعه کشاورزی'),
                       ),
                       SizedBox(height: r.v(12)),
+                      FilledButton.icon(
+                        onPressed: () {
+                          context.push('/consultants');
+                        },
+                        icon: const Icon(Icons.support_agent_outlined),
+                        label: const Text('مشاوران کشاورزی'),
+                      ),
+                      SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/consultants/me/profile');
+                        },
+                        icon: const Icon(Icons.badge_outlined),
+                        label: const Text('پروفایل مشاور من'),
+                      ),
+                      SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/consultants/requests');
+                        },
+                        icon: const Icon(Icons.assignment_outlined),
+                        label: const Text('درخواست‌های مشاوره من'),
+                      ),
+                      SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/consultants/workbench');
+                        },
+                        icon: const Icon(Icons.work_outline),
+                        label: const Text('میزکار مشاور'),
+                      ),
+                      SizedBox(height: r.v(12)),
                       OutlinedButton.icon(
                         onPressed: () {
                           context.push('/notifications');

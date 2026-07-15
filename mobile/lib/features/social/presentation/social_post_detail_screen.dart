@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
+import '../../../core/utils/dates.dart';
+import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/social_models.dart';
@@ -103,6 +106,8 @@ class _SocialPostDetailScreenState
                               SizedBox(height: r.v(12)),
                             ],
                             _PostDetailCard(post: post),
+                            SizedBox(height: r.v(12)),
+                            _ExpertAnswersSection(answers: post.expertAnswers),
                             SizedBox(height: r.v(12)),
                             Row(
                               children: [
@@ -248,6 +253,295 @@ class _PostDetailCard extends StatelessWidget {
   }
 }
 
+class _ExpertAnswersSection extends StatelessWidget {
+  const _ExpertAnswersSection({required this.answers});
+
+  final List<ExpertAnswerModel> answers;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final publishedAnswers =
+        answers.where((answer) => answer.status == 'published').toList();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.verified_outlined, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'پاسخ‌های متخصص',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                Text(
+                  toPersianDigits(publishedAnswers.length),
+                  style: theme.textTheme.labelLarge,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (publishedAnswers.isEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 18,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Text(
+                  'هنوز پاسخی از متخصص ثبت نشده است.',
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              ...publishedAnswers.map(
+                (answer) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _ExpertAnswerCard(answer: answer),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExpertAnswerCard extends StatelessWidget {
+  const _ExpertAnswerCard({required this.answer});
+
+  final ExpertAnswerModel answer;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (answer.consultant == null)
+              const _MissingConsultantNotice()
+            else
+              _ExpertConsultantCard(consultant: answer.consultant!),
+            const SizedBox(height: 12),
+            Text(answer.body, style: theme.textTheme.bodyLarge),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (answer.isAccepted)
+                  const Chip(
+                    avatar: Icon(Icons.check_circle_outline, size: 18),
+                    label: Text('پاسخ پذیرفته‌شده'),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                Chip(
+                  avatar: const Icon(Icons.thumb_up_alt_outlined, size: 18),
+                  label: Text('مفید: ${toPersianDigits(answer.helpfulCount)}'),
+                  visualDensity: VisualDensity.compact,
+                ),
+                Chip(
+                  avatar: const Icon(Icons.schedule_outlined, size: 18),
+                  label: Text(_formatIsoDate(answer.createdAt)),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExpertConsultantCard extends StatelessWidget {
+  const _ExpertConsultantCard({required this.consultant});
+
+  final ExpertAnswerConsultantModel consultant;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final avatarUrl = absoluteApiUrl(consultant.avatarUrl);
+    final canOpen = consultant.consultantId > 0;
+    final specialties = consultant.specialties.take(3).toList();
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap:
+          canOpen
+              ? () => context.push('/consultants/${consultant.consultantId}')
+              : null,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primaryContainer.withValues(alpha: .28),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ConsultantAvatar(url: avatarUrl),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          consultant.resolvedName,
+                          style: theme.textTheme.titleSmall,
+                        ),
+                      ),
+                      if (consultant.isVerified)
+                        Icon(
+                          Icons.verified,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                    ],
+                  ),
+                  if ((consultant.title ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(consultant.title!, style: theme.textTheme.bodySmall),
+                  ],
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _MiniChip(
+                        icon: Icons.star_rounded,
+                        label: toPersianDigits(
+                          consultant.ratingAverage.toStringAsFixed(1),
+                        ),
+                      ),
+                      _MiniChip(
+                        icon: Icons.rate_review_outlined,
+                        label:
+                            '${toPersianDigits(consultant.reviewsCount)} نظر',
+                      ),
+                      ...specialties.map(
+                        (item) => _MiniChip(
+                          icon: Icons.eco_outlined,
+                          label: item.title,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (canOpen) ...[
+              const SizedBox(width: 6),
+              const Icon(Icons.chevron_left),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ConsultantAvatar extends StatelessWidget {
+  const _ConsultantAvatar({required this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return SizedBox.square(
+      dimension: 54,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: colors.primaryContainer,
+        ),
+        child: ClipOval(
+          child:
+              url == null
+                  ? Icon(
+                    Icons.support_agent_outlined,
+                    color: colors.onPrimaryContainer,
+                  )
+                  : Image.network(
+                    url!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) {
+                      return Icon(
+                        Icons.support_agent_outlined,
+                        color: colors.onPrimaryContainer,
+                      );
+                    },
+                  ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MissingConsultantNotice extends StatelessWidget {
+  const _MissingConsultantNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.info_outline),
+          SizedBox(width: 8),
+          Expanded(child: Text('اطلاعات مشاور برای این پاسخ در دسترس نیست.')),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniChip extends StatelessWidget {
+  const _MiniChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Icon(icon, size: 16),
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+}
+
 class _CommentTile extends StatelessWidget {
   const _CommentTile({required this.comment, required this.onReply});
 
@@ -326,6 +620,13 @@ class _CommentInput extends StatelessWidget {
       ],
     );
   }
+}
+
+String _formatIsoDate(String value) {
+  final date = DateTime.tryParse(value);
+  if (date == null) return 'تاریخ نامشخص';
+
+  return formatJalaliDate(date.toLocal());
 }
 
 class _ErrorBox extends StatelessWidget {

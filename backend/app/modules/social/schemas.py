@@ -5,6 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.modules.expert.schemas import ExpertAnswerPublicOut
+
 
 class SocialCategoryOut(BaseModel):
     id: int
@@ -87,6 +89,10 @@ class SocialPostOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class SocialPostDetailOut(SocialPostOut):
+    expert_answers: list[ExpertAnswerPublicOut] = Field(default_factory=list)
 
 
 class SocialPostListFilter(BaseModel):

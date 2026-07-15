@@ -228,10 +228,12 @@ class NotificationService:
         payload_json: dict[str, Any] | None = None,
         action_url: str | None = None,
         priority: str = NotificationPriority.NORMAL.value,
+        event_key: str | None = None,
         commit: bool = True,
     ) -> NotificationOut:
         event = self.create_event(
             payload=NotificationEventCreateIn(
+                event_key=event_key,
                 event_type=event_type,
                 actor_user_id=actor_user_id,
                 source_type=source_type,
@@ -240,6 +242,14 @@ class NotificationService:
             ),
             commit=False,
         )
+
+        existing = self.repo.get_notification_for_event(
+            event_id=event.id,
+            recipient_user_id=recipient_user_id,
+            channel=NotificationChannel.IN_APP.value,
+        )
+        if existing is not None:
+            return NotificationOut.model_validate(existing)
 
         notification = self.notify_user(
             recipient_user_id=recipient_user_id,
@@ -270,10 +280,12 @@ class NotificationService:
         payload_json: dict[str, Any] | None = None,
         action_url: str | None = None,
         priority: str = NotificationPriority.NORMAL.value,
+        event_key: str | None = None,
         commit: bool = True,
     ) -> list[NotificationOut]:
         event = self.create_event(
             payload=NotificationEventCreateIn(
+                event_key=event_key,
                 event_type=event_type,
                 actor_user_id=actor_user_id,
                 source_type=source_type,
@@ -283,16 +295,28 @@ class NotificationService:
             commit=False,
         )
 
-        notifications = self.notify_many(
-            recipient_user_ids=recipient_user_ids,
-            title=title,
-            body=body,
-            event_id=event.id,
-            channel=NotificationChannel.IN_APP.value,
-            action_url=action_url,
-            priority=priority,
-            commit=False,
-        )
+        notifications: list[NotificationOut] = []
+        for recipient_user_id in sorted(set(recipient_user_ids)):
+            existing = self.repo.get_notification_for_event(
+                event_id=event.id,
+                recipient_user_id=recipient_user_id,
+                channel=NotificationChannel.IN_APP.value,
+            )
+            if existing is not None:
+                notifications.append(NotificationOut.model_validate(existing))
+                continue
+            notifications.append(
+                self.notify_user(
+                    recipient_user_id=recipient_user_id,
+                    title=title,
+                    body=body,
+                    event_id=event.id,
+                    channel=NotificationChannel.IN_APP.value,
+                    action_url=action_url,
+                    priority=priority,
+                    commit=False,
+                )
+            )
 
         if commit:
             self.repo.commit()

@@ -105,7 +105,7 @@ def get_social_post_detail(
 ):
     service = SocialService(db)
 
-    result = service.get_published_post(post_id=post_id)
+    result = service.get_published_post_detail(post_id=post_id)
 
     return success_response(
         data=result.model_dump(mode="json"),

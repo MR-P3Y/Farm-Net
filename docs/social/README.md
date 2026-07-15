@@ -88,9 +88,28 @@ social.post_reported
 social.comment_reported
 social.post_hidden
 social.comment_hidden
+expert_answer_created
 ```
 
 Reaction/bookmark notifications are intentionally skipped to avoid inbox noise.
+
+### Expert Answers
+
+Social post detail can include `expert_answers`:
+
+```text
+GET /api/v1/social/posts/{post_id}
+```
+
+Contract:
+
+```text
+expert_answers is detail-only and is not present on social post list responses.
+Only published expert answers are returned.
+Hidden/deleted expert answers are filtered by the backend.
+consultant is nullable.
+consultant summary is safe and excludes phone/email/admin_note.
+```
 
 ## Database Tables
 

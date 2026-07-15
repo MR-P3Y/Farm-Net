@@ -33,6 +33,29 @@ class NotificationEventType(str, Enum):
     SOCIAL_POST_HIDDEN = "social.post_hidden"
     SOCIAL_COMMENT_HIDDEN = "social.comment_hidden"
 
+    EXPERT_ANSWER_CREATED = "expert_answer_created"
+
+    CONSULTANT_REQUEST_SUBMITTED = "consultant.request_submitted"
+    CONSULTANT_APPROVED = "consultant.approved"
+    CONSULTANT_REJECTED = "consultant.rejected"
+    CONSULT_REQUEST_CREATED = "consult.request_created"
+    CONSULT_REQUEST_ACCEPTED = "consult.request_accepted"
+    CONSULT_REQUEST_COMPLETED = "consult.request_completed"
+    CONSULT_REQUEST_CANCELLED = "consult.request_cancelled"
+
+    SERVICE_PROVIDER_SUBMITTED = "service_provider.submitted"
+    SERVICE_PROVIDER_APPROVED = "service_provider.approved"
+    SERVICE_PROVIDER_REJECTED = "service_provider.rejected"
+    SERVICE_OFFER_SUBMITTED = "service_offer.submitted"
+    SERVICE_OFFER_APPROVED = "service_offer.approved"
+    SERVICE_OFFER_REJECTED = "service_offer.rejected"
+    SERVICE_REQUEST_CREATED = "service_request.created"
+    SERVICE_REQUEST_ACCEPTED = "service_request.accepted"
+    SERVICE_REQUEST_REJECTED = "service_request.rejected"
+    SERVICE_REQUEST_IN_PROGRESS = "service_request.in_progress"
+    SERVICE_REQUEST_COMPLETED = "service_request.completed"
+    SERVICE_REQUEST_CANCELLED = "service_request.cancelled"
+
     SYSTEM_MESSAGE = "system.message"
 
 

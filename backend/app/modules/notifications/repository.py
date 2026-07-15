@@ -55,6 +55,23 @@ class NotificationRepository:
             .one_or_none()
         )
 
+    def get_notification_for_event(
+        self,
+        *,
+        event_id: int,
+        recipient_user_id: int,
+        channel: str,
+    ) -> Notification | None:
+        return (
+            self.db.query(Notification)
+            .filter(
+                Notification.event_id == event_id,
+                Notification.recipient_user_id == recipient_user_id,
+                Notification.channel == channel,
+            )
+            .one_or_none()
+        )
+
     def get_user_notification_by_id(
         self,
         *,

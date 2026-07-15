@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
+from app.modules.expert.service import ExpertAnswerService
 from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType
 from app.modules.notifications.service import NotificationService
@@ -38,6 +39,7 @@ from app.modules.social.schemas import (
     SocialCommentCreateIn,
     SocialCommentOut,
     SocialPostCreateIn,
+    SocialPostDetailOut,
     SocialPostListFilter,
     SocialPostModerationIn,
     SocialPostOut,
@@ -232,6 +234,25 @@ class SocialService:
         self.repo.refresh(row)
 
         return self._social_post_out(row)
+
+    def get_published_post_detail(
+        self,
+        *,
+        post_id: int,
+    ) -> SocialPostDetailOut:
+        row = self.repo.get_published_post_by_id(post_id=post_id)
+
+        if row is None:
+            raise ValidationAuthError(
+                message="Social post not found",
+                details={"post_id": post_id},
+            )
+
+        row.views_count += 1
+        self.repo.commit()
+        self.repo.refresh(row)
+
+        return self._social_post_detail_out(row)
 
     def list_my_posts(
         self,
@@ -1167,6 +1188,19 @@ class SocialService:
 
         result.media_public_url = self._media_public_url(file_key=media.file_key)
         return result
+
+    def _social_post_detail_out(self, row: SocialPost) -> SocialPostDetailOut:
+        post_out = self._social_post_out(row)
+        expert_answers, _ = ExpertAnswerService(self.db).list_published_answers_for_post(
+            post_id=row.id,
+            page=1,
+            page_size=20,
+        )
+
+        return SocialPostDetailOut(
+            **post_out.model_dump(),
+            expert_answers=expert_answers,
+        )
 
     def _media_public_url(self, *, file_key: str | None) -> str | None:
         if not file_key:
