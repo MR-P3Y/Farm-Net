@@ -12,6 +12,9 @@ from app.modules.services.schemas import (
     ServiceOfferUpdateIn,
     ServiceProviderProfileCreateIn,
     ServiceProviderProfileUpdateIn,
+    ServiceRequestCancelIn,
+    ServiceRequestCreateIn,
+    ServiceRequestStatusUpdateIn,
 )
 from app.modules.services.service import ServicesService
 
@@ -194,6 +197,167 @@ def submit_my_service_offer(
     return success_response(
         data=result.model_dump(mode="json"),
         message="Service offer submitted",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/requests")
+def create_service_request(
+    payload: ServiceRequestCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.create")),
+):
+    result = ServicesService(db).create_service_request(user=current_user, payload=payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Service request created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/requests/me")
+def list_my_service_requests(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    offer_id: int | None = Query(default=None, ge=1),
+    category_id: int | None = Query(default=None, ge=1),
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.read_own")),
+):
+    items, total = ServicesService(db).list_my_service_requests(
+        user=current_user,
+        status=status,
+        offer_id=offer_id,
+        category_id=category_id,
+        page=page,
+        page_size=page_size,
+    )
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.get("/requests/assigned")
+def list_assigned_service_requests(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    offer_id: int | None = Query(default=None, ge=1),
+    category_id: int | None = Query(default=None, ge=1),
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(
+        require_permission("service_requests.manage_assigned")
+    ),
+):
+    items, total = ServicesService(db).list_assigned_service_requests(
+        user=current_user,
+        status=status,
+        offer_id=offer_id,
+        category_id=category_id,
+        page=page,
+        page_size=page_size,
+    )
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.get("/requests/assigned/{request_id}")
+def get_assigned_service_request_detail(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(
+        require_permission("service_requests.manage_assigned")
+    ),
+):
+    result = ServicesService(db).get_assigned_service_request_detail(
+        request_id=request_id,
+        user=current_user,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.patch("/requests/{request_id}/status")
+def update_assigned_service_request_status(
+    request_id: int,
+    payload: ServiceRequestStatusUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(
+        require_permission("service_requests.manage_assigned")
+    ),
+):
+    result = ServicesService(db).update_assigned_service_request_status(
+        request_id=request_id,
+        user=current_user,
+        payload=payload,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Service request status updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.patch("/requests/{request_id}/cancel")
+def cancel_my_service_request(
+    request_id: int,
+    payload: ServiceRequestCancelIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage_own")),
+):
+    result = ServicesService(db).cancel_my_service_request(
+        request_id=request_id,
+        user=current_user,
+        payload=payload,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Service request cancelled",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/requests/{request_id}")
+def get_my_service_request_detail(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.read_own")),
+):
+    result = ServicesService(db).get_my_service_request_detail(
+        request_id=request_id,
+        user=current_user,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
         meta={"trace_id": request.state.trace_id},
     )
 

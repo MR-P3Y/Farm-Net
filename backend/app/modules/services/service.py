@@ -7,22 +7,26 @@ from decimal import Decimal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.modules.auth.exceptions import ValidationAuthError
+from app.modules.auth.exceptions import PermissionDeniedError, ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.auth.repository import AuthRepository
 from app.modules.media.enums import MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType, NotificationPriority
 from app.modules.notifications.service import NotificationService
 from app.modules.services.enums import (
+    ServiceContactMethod,
     ServiceOfferStatus,
     ServicePricingType,
     ServiceProviderStatus,
+    ServiceRequestStatus,
 )
 from app.modules.services.models import (
     ServiceCategory,
     ServiceOffer,
     ServiceOfferMedia,
     ServiceProviderProfile,
+    ServiceRequest,
+    ServiceRequestStatusLog,
 )
 from app.modules.services.repository import ServicesRepository
 from app.modules.services.schemas import (
@@ -41,6 +45,12 @@ from app.modules.services.schemas import (
     ServiceProviderProfilePublicOut,
     ServiceProviderProfileStatusUpdateIn,
     ServiceProviderProfileUpdateIn,
+    ServiceRequestCancelIn,
+    ServiceRequestCreateIn,
+    ServiceRequestDetailOut,
+    ServiceRequestOut,
+    ServiceRequestStatusLogOut,
+    ServiceRequestStatusUpdateIn,
 )
 
 
@@ -49,6 +59,30 @@ class ServicesService:
         self.db = db
         self.repo = ServicesRepository(db)
         self.auth_repo = AuthRepository(db)
+
+    PROVIDER_REQUEST_TRANSITIONS = {
+        ServiceRequestStatus.OPEN.value: {
+            ServiceRequestStatus.ACCEPTED.value,
+            ServiceRequestStatus.REJECTED.value,
+        },
+        ServiceRequestStatus.ACCEPTED.value: {ServiceRequestStatus.IN_PROGRESS.value},
+        ServiceRequestStatus.IN_PROGRESS.value: {ServiceRequestStatus.COMPLETED.value},
+    }
+    ADMIN_REQUEST_TRANSITIONS = {
+        ServiceRequestStatus.OPEN.value: {
+            ServiceRequestStatus.ACCEPTED.value,
+            ServiceRequestStatus.REJECTED.value,
+            ServiceRequestStatus.CANCELLED.value,
+        },
+        ServiceRequestStatus.ACCEPTED.value: {
+            ServiceRequestStatus.IN_PROGRESS.value,
+            ServiceRequestStatus.CANCELLED.value,
+        },
+        ServiceRequestStatus.IN_PROGRESS.value: {
+            ServiceRequestStatus.COMPLETED.value,
+            ServiceRequestStatus.CANCELLED.value,
+        },
+    }
 
     def seed_default_categories(self) -> list[ServiceCategoryOut]:
         defaults = [
@@ -687,6 +721,339 @@ class ServicesService:
         self._notify_profile_status(profile, status)
 
         return self._profile_out(profile)
+
+    def create_service_request(
+        self,
+        *,
+        user: AuthUser,
+        payload: ServiceRequestCreateIn,
+    ) -> ServiceRequestDetailOut:
+        offer = self.repo.get_public_offer_by_id(payload.offer_id)
+        if offer is None:
+            raise ValidationAuthError(
+                message="Approved service offer not found",
+                details={"offer_id": payload.offer_id},
+            )
+
+        contact_method = self._validate_request_contact_method(payload.contact_method)
+        row = ServiceRequest(
+            requester_user_id=user.id,
+            provider_profile_id=offer.provider_profile_id,
+            offer_id=offer.id,
+            category_id=offer.category_id,
+            title=payload.title.strip(),
+            description=payload.description.strip(),
+            contact_method=contact_method,
+            status=ServiceRequestStatus.OPEN.value,
+            budget_amount=payload.budget_amount,
+            currency=payload.currency.upper(),
+            scheduled_at=payload.scheduled_at,
+            province_id=payload.province_id,
+            city_id=payload.city_id,
+            village_id=payload.village_id,
+            province_name=payload.province_name,
+            city_name=payload.city_name,
+            village_name=payload.village_name,
+            address_text=payload.address_text,
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+        )
+        self.repo.add_request(row)
+        self._add_request_status_log(
+            request=row,
+            changed_by=user.id,
+            from_status=None,
+            to_status=ServiceRequestStatus.OPEN.value,
+            note="Service request created",
+        )
+        offer.requests_count += 1
+        if offer.provider_profile is not None:
+            offer.provider_profile.requests_count += 1
+        self.repo.commit()
+        self.repo.refresh(row)
+        return self._request_detail_out(row, include_admin_note=False)
+
+    def list_my_service_requests(
+        self,
+        *,
+        user: AuthUser,
+        status: str | None,
+        offer_id: int | None,
+        category_id: int | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[ServiceRequestOut], int]:
+        if status is not None:
+            self._validate_request_status(status)
+        rows, total = self.repo.list_requests(
+            requester_user_id=user.id,
+            status=status,
+            offer_id=offer_id,
+            category_id=category_id,
+            page=max(page, 1),
+            page_size=min(max(page_size, 1), 100),
+        )
+        return [self._request_out(row) for row in rows], total
+
+    def get_my_service_request_detail(
+        self,
+        *,
+        request_id: int,
+        user: AuthUser,
+    ) -> ServiceRequestDetailOut:
+        row = self._get_request(request_id)
+        if row.requester_user_id != user.id:
+            raise PermissionDeniedError()
+        return self._request_detail_out(row, include_admin_note=False)
+
+    def cancel_my_service_request(
+        self,
+        *,
+        request_id: int,
+        user: AuthUser,
+        payload: ServiceRequestCancelIn,
+    ) -> ServiceRequestDetailOut:
+        row = self._get_request(request_id)
+        if row.requester_user_id != user.id:
+            raise PermissionDeniedError()
+        if row.status not in {
+            ServiceRequestStatus.OPEN.value,
+            ServiceRequestStatus.ACCEPTED.value,
+        }:
+            raise ValidationAuthError(
+                message="Service request cannot be cancelled in current status",
+                details={"current_status": row.status},
+            )
+        self._set_request_status(
+            row,
+            ServiceRequestStatus.CANCELLED.value,
+            changed_by=user.id,
+            note=payload.reason,
+        )
+        row.cancel_reason = payload.reason
+        self.repo.commit()
+        self.repo.refresh(row)
+        return self._request_detail_out(row, include_admin_note=False)
+
+    def list_assigned_service_requests(
+        self,
+        *,
+        user: AuthUser,
+        status: str | None,
+        offer_id: int | None,
+        category_id: int | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[ServiceRequestOut], int]:
+        profile = self._approved_request_provider(user)
+        if status is not None:
+            self._validate_request_status(status)
+        rows, total = self.repo.list_requests(
+            provider_profile_id=profile.id,
+            status=status,
+            offer_id=offer_id,
+            category_id=category_id,
+            page=max(page, 1),
+            page_size=min(max(page_size, 1), 100),
+        )
+        return [self._request_out(row) for row in rows], total
+
+    def get_assigned_service_request_detail(
+        self,
+        *,
+        request_id: int,
+        user: AuthUser,
+    ) -> ServiceRequestDetailOut:
+        profile = self._approved_request_provider(user)
+        row = self._get_request(request_id)
+        if row.provider_profile_id != profile.id:
+            raise PermissionDeniedError()
+        return self._request_detail_out(row, include_admin_note=False)
+
+    def update_assigned_service_request_status(
+        self,
+        *,
+        request_id: int,
+        user: AuthUser,
+        payload: ServiceRequestStatusUpdateIn,
+    ) -> ServiceRequestDetailOut:
+        profile = self._approved_request_provider(user)
+        row = self._get_request(request_id)
+        if row.provider_profile_id != profile.id:
+            raise PermissionDeniedError()
+        target = self._validate_request_status(payload.status)
+        self._validate_request_transition(row.status, target, self.PROVIDER_REQUEST_TRANSITIONS)
+        self._set_request_status(row, target, changed_by=user.id, note=payload.note)
+        row.provider_note = payload.note
+        self.repo.commit()
+        self.repo.refresh(row)
+        return self._request_detail_out(row, include_admin_note=False)
+
+    def list_admin_service_requests(
+        self,
+        *,
+        requester_user_id: int | None,
+        provider_user_id: int | None,
+        offer_id: int | None,
+        category_id: int | None,
+        province_id: int | None,
+        city_id: int | None,
+        status: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[ServiceRequestOut], int]:
+        if status is not None:
+            self._validate_request_status(status)
+        rows, total = self.repo.list_requests(
+            requester_user_id=requester_user_id,
+            provider_user_id=provider_user_id,
+            offer_id=offer_id,
+            category_id=category_id,
+            province_id=province_id,
+            city_id=city_id,
+            status=status,
+            page=max(page, 1),
+            page_size=min(max(page_size, 1), 100),
+        )
+        return [self._request_out(row) for row in rows], total
+
+    def get_admin_service_request_detail(self, request_id: int) -> ServiceRequestDetailOut:
+        return self._request_detail_out(self._get_request(request_id), include_admin_note=True)
+
+    def update_admin_service_request_status(
+        self,
+        *,
+        request_id: int,
+        admin_user: AuthUser,
+        payload: ServiceRequestStatusUpdateIn,
+    ) -> ServiceRequestDetailOut:
+        row = self._get_request(request_id)
+        target = self._validate_request_status(payload.status)
+        self._validate_request_transition(row.status, target, self.ADMIN_REQUEST_TRANSITIONS)
+        self._set_request_status(row, target, changed_by=admin_user.id, note=payload.note)
+        row.admin_note = payload.note
+        if target == ServiceRequestStatus.CANCELLED.value:
+            row.cancel_reason = payload.note
+        self.repo.commit()
+        self.repo.refresh(row)
+        return self._request_detail_out(row, include_admin_note=True)
+
+    def _approved_request_provider(self, user: AuthUser) -> ServiceProviderProfile:
+        profile = self.repo.get_profile_by_user_id(user.id)
+        if profile is None or profile.status != ServiceProviderStatus.APPROVED.value:
+            raise PermissionDeniedError()
+        return profile
+
+    def _get_request(self, request_id: int) -> ServiceRequest:
+        row = self.repo.get_request_by_id(request_id)
+        if row is None:
+            raise ValidationAuthError(
+                message="Service request not found",
+                details={"request_id": request_id},
+            )
+        return row
+
+    def _validate_request_status(self, status: str) -> str:
+        normalized = status.strip().lower()
+        allowed = {item.value for item in ServiceRequestStatus}
+        if normalized not in allowed:
+            raise ValidationAuthError(
+                message="Invalid service request status",
+                details={"allowed": sorted(allowed)},
+            )
+        return normalized
+
+    def _validate_request_contact_method(self, method: str) -> str:
+        normalized = method.strip().lower()
+        allowed = {item.value for item in ServiceContactMethod}
+        if normalized not in allowed:
+            raise ValidationAuthError(
+                message="Invalid service request contact method",
+                details={"allowed": sorted(allowed)},
+            )
+        return normalized
+
+    def _validate_request_transition(
+        self,
+        current: str,
+        target: str,
+        transitions: dict[str, set[str]],
+    ) -> None:
+        if target not in transitions.get(current, set()):
+            raise ValidationAuthError(
+                message="Invalid service request status transition",
+                details={"from_status": current, "to_status": target},
+            )
+
+    def _set_request_status(
+        self,
+        row: ServiceRequest,
+        status: str,
+        *,
+        changed_by: int | None,
+        note: str | None,
+    ) -> None:
+        old_status = row.status
+        row.status = status
+        now = datetime.utcnow()
+        if status == ServiceRequestStatus.ACCEPTED.value and row.accepted_at is None:
+            row.accepted_at = now
+        elif status == ServiceRequestStatus.COMPLETED.value:
+            row.completed_at = row.completed_at or now
+            if old_status != ServiceRequestStatus.COMPLETED.value:
+                if row.offer is not None:
+                    row.offer.completed_requests_count += 1
+                if row.provider_profile is not None:
+                    row.provider_profile.completed_requests_count += 1
+        elif status == ServiceRequestStatus.CANCELLED.value and row.cancelled_at is None:
+            row.cancelled_at = now
+        self._add_request_status_log(
+            request=row,
+            changed_by=changed_by,
+            from_status=old_status,
+            to_status=status,
+            note=note,
+        )
+
+    def _add_request_status_log(
+        self,
+        *,
+        request: ServiceRequest,
+        changed_by: int | None,
+        from_status: str | None,
+        to_status: str,
+        note: str | None,
+    ) -> None:
+        self.repo.add_request_status_log(
+            ServiceRequestStatusLog(
+                request_id=request.id,
+                changed_by=changed_by,
+                from_status=from_status,
+                to_status=to_status,
+                note=note,
+            )
+        )
+
+    def _request_out(self, row: ServiceRequest) -> ServiceRequestOut:
+        return ServiceRequestOut.model_validate(row)
+
+    def _request_detail_out(
+        self,
+        row: ServiceRequest,
+        *,
+        include_admin_note: bool,
+    ) -> ServiceRequestDetailOut:
+        logs = self.repo.list_request_status_logs(row.id)
+        return ServiceRequestDetailOut(
+            **self._request_out(row).model_dump(),
+            address_text=row.address_text,
+            latitude=row.latitude,
+            longitude=row.longitude,
+            provider_note=row.provider_note,
+            admin_note=row.admin_note if include_admin_note else None,
+            cancel_reason=row.cancel_reason,
+            status_logs=[ServiceRequestStatusLogOut.model_validate(log) for log in logs],
+        )
 
     def _profile_out(self, profile: ServiceProviderProfile) -> ServiceProviderProfileOut:
         display_name = self._resolved_display_name(profile)

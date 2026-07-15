@@ -390,3 +390,123 @@ class ServiceOfferPublicOut(BaseModel):
     provider: ServiceProviderProfilePublicOut | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class ServiceRequestCreateIn(BaseModel):
+    offer_id: int = Field(ge=1)
+    title: str = Field(min_length=2, max_length=255)
+    description: str = Field(min_length=5, max_length=10000)
+    contact_method: str = Field(default="in_app", min_length=2, max_length=40)
+    budget_amount: Decimal | None = Field(default=None, ge=0)
+    currency: str = Field(default="TOMAN", min_length=2, max_length=10)
+    scheduled_at: datetime | None = None
+    province_id: int | None = Field(default=None, ge=1)
+    city_id: int | None = Field(default=None, ge=1)
+    village_id: int | None = Field(default=None, ge=1)
+    province_name: str | None = Field(default=None, max_length=120)
+    city_name: str | None = Field(default=None, max_length=120)
+    village_name: str | None = Field(default=None, max_length=120)
+    address_text: str | None = Field(default=None, max_length=2000)
+    latitude: str | None = Field(default=None, max_length=40)
+    longitude: str | None = Field(default=None, max_length=40)
+
+    model_config = {"extra": "forbid"}
+
+    @field_validator(
+        "title",
+        "description",
+        "contact_method",
+        "currency",
+        "province_name",
+        "city_name",
+        "village_name",
+        "address_text",
+        "latitude",
+        "longitude",
+        mode="before",
+    )
+    @classmethod
+    def normalize_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class ServiceRequestStatusUpdateIn(BaseModel):
+    status: str = Field(min_length=3, max_length=50)
+    note: str | None = Field(default=None, max_length=2000)
+
+    model_config = {"extra": "forbid"}
+
+    @field_validator("status", "note", mode="before")
+    @classmethod
+    def normalize_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class ServiceRequestCancelIn(BaseModel):
+    reason: str | None = Field(default=None, max_length=2000)
+
+    model_config = {"extra": "forbid"}
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def normalize_reason(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class ServiceRequestStatusLogOut(BaseModel):
+    id: int
+    request_id: int
+    changed_by: int | None = None
+    from_status: str | None = None
+    to_status: str
+    note: str | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ServiceRequestOut(BaseModel):
+    id: int
+    requester_user_id: int
+    provider_profile_id: int | None = None
+    offer_id: int | None = None
+    category_id: int | None = None
+    title: str
+    description: str
+    contact_method: str
+    status: str
+    budget_amount: Decimal | None = None
+    currency: str
+    scheduled_at: datetime | None = None
+    province_id: int | None = None
+    city_id: int | None = None
+    village_id: int | None = None
+    province_name: str | None = None
+    city_name: str | None = None
+    village_name: str | None = None
+    accepted_at: datetime | None = None
+    completed_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ServiceRequestDetailOut(ServiceRequestOut):
+    address_text: str | None = None
+    latitude: str | None = None
+    longitude: str | None = None
+    provider_note: str | None = None
+    admin_note: str | None = None
+    cancel_reason: str | None = None
+    status_logs: list[ServiceRequestStatusLogOut] = Field(default_factory=list)

@@ -12,6 +12,8 @@ from app.modules.services.models import (
     ServiceOfferMedia,
     ServiceProviderCategory,
     ServiceProviderProfile,
+    ServiceRequest,
+    ServiceRequestStatusLog,
 )
 
 
@@ -466,6 +468,99 @@ class ServicesRepository:
         ).fetchall()
 
         return [int(row[0]) for row in rows]
+
+    def add_request(self, row: ServiceRequest) -> ServiceRequest:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def get_request_by_id(self, request_id: int) -> ServiceRequest | None:
+        return (
+            self.db.query(ServiceRequest)
+            .options(
+                joinedload(ServiceRequest.offer),
+                joinedload(ServiceRequest.category),
+                joinedload(ServiceRequest.provider_profile),
+                joinedload(ServiceRequest.status_logs),
+            )
+            .filter(
+                ServiceRequest.id == request_id,
+                ServiceRequest.deleted_at.is_(None),
+            )
+            .one_or_none()
+        )
+
+    def list_requests(
+        self,
+        *,
+        requester_user_id: int | None = None,
+        provider_profile_id: int | None = None,
+        provider_user_id: int | None = None,
+        offer_id: int | None = None,
+        category_id: int | None = None,
+        province_id: int | None = None,
+        city_id: int | None = None,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[ServiceRequest], int]:
+        query = (
+            self.db.query(ServiceRequest)
+            .options(
+                joinedload(ServiceRequest.offer),
+                joinedload(ServiceRequest.category),
+                joinedload(ServiceRequest.provider_profile),
+                joinedload(ServiceRequest.status_logs),
+            )
+            .filter(ServiceRequest.deleted_at.is_(None))
+        )
+
+        if requester_user_id is not None:
+            query = query.filter(ServiceRequest.requester_user_id == requester_user_id)
+        if provider_profile_id is not None:
+            query = query.filter(ServiceRequest.provider_profile_id == provider_profile_id)
+        if provider_user_id is not None:
+            query = query.join(ServiceProviderProfile).filter(
+                ServiceProviderProfile.user_id == provider_user_id
+            )
+        if offer_id is not None:
+            query = query.filter(ServiceRequest.offer_id == offer_id)
+        if category_id is not None:
+            query = query.filter(ServiceRequest.category_id == category_id)
+        if province_id is not None:
+            query = query.filter(ServiceRequest.province_id == province_id)
+        if city_id is not None:
+            query = query.filter(ServiceRequest.city_id == city_id)
+        if status is not None:
+            query = query.filter(ServiceRequest.status == status)
+
+        total = query.count()
+        rows = (
+            query.order_by(ServiceRequest.created_at.desc(), ServiceRequest.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+        return rows, total
+
+    def add_request_status_log(
+        self,
+        row: ServiceRequestStatusLog,
+    ) -> ServiceRequestStatusLog:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def list_request_status_logs(self, request_id: int) -> list[ServiceRequestStatusLog]:
+        return (
+            self.db.query(ServiceRequestStatusLog)
+            .filter(ServiceRequestStatusLog.request_id == request_id)
+            .order_by(
+                ServiceRequestStatusLog.created_at.asc(),
+                ServiceRequestStatusLog.id.asc(),
+            )
+            .all()
+        )
 
     def commit(self) -> None:
         self.db.commit()

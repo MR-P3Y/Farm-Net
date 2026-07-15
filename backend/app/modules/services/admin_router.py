@@ -14,6 +14,7 @@ from app.modules.services.schemas import (
     ServiceCategoryUpdateIn,
     ServiceOfferStatusUpdateIn,
     ServiceProviderProfileStatusUpdateIn,
+    ServiceRequestStatusUpdateIn,
 )
 from app.modules.services.service import ServicesService
 
@@ -162,6 +163,79 @@ def update_admin_service_offer_status(
         meta={"trace_id": request.state.trace_id},
     )
 
+
+@router.get("/requests")
+def list_admin_service_requests(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    requester_user_id: int | None = Query(default=None, ge=1),
+    provider_user_id: int | None = Query(default=None, ge=1),
+    offer_id: int | None = Query(default=None, ge=1),
+    category_id: int | None = Query(default=None, ge=1),
+    province_id: int | None = Query(default=None, ge=1),
+    city_id: int | None = Query(default=None, ge=1),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("service_requests.read")),
+):
+    items, total = ServicesService(db).list_admin_service_requests(
+        requester_user_id=requester_user_id,
+        provider_user_id=provider_user_id,
+        offer_id=offer_id,
+        category_id=category_id,
+        province_id=province_id,
+        city_id=city_id,
+        status=status,
+        page=page,
+        page_size=page_size,
+    )
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.get("/requests/{request_id}")
+def get_admin_service_request_detail(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("service_requests.read")),
+):
+    result = ServicesService(db).get_admin_service_request_detail(request_id)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.patch("/requests/{request_id}/status")
+def update_admin_service_request_status(
+    request_id: int,
+    payload: ServiceRequestStatusUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage")),
+):
+    result = ServicesService(db).update_admin_service_request_status(
+        request_id=request_id,
+        admin_user=current_user,
+        payload=payload,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Service request status updated",
+        meta={"trace_id": request.state.trace_id},
+    )
 
 @router.get("/provider-profiles")
 def list_admin_service_provider_profiles(
