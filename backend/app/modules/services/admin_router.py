@@ -14,6 +14,8 @@ from app.modules.services.schemas import (
     ServiceCategoryUpdateIn,
     ServiceOfferStatusUpdateIn,
     ServiceProviderProfileStatusUpdateIn,
+    ServiceRequestAdminDetailResponse,
+    ServiceRequestAdminListResponse,
     ServiceRequestStatusUpdateIn,
 )
 from app.modules.services.service import ServicesService
@@ -164,7 +166,7 @@ def update_admin_service_offer_status(
     )
 
 
-@router.get("/requests")
+@router.get("/requests", response_model=ServiceRequestAdminListResponse)
 def list_admin_service_requests(
     request: Request,
     page: int = Query(default=1, ge=1),
@@ -203,7 +205,10 @@ def list_admin_service_requests(
     )
 
 
-@router.get("/requests/{request_id}")
+@router.get(
+    "/requests/{request_id}",
+    response_model=ServiceRequestAdminDetailResponse,
+)
 def get_admin_service_request_detail(
     request_id: int,
     request: Request,
@@ -218,7 +223,10 @@ def get_admin_service_request_detail(
     )
 
 
-@router.patch("/requests/{request_id}/status")
+@router.patch(
+    "/requests/{request_id}/status",
+    response_model=ServiceRequestAdminDetailResponse,
+)
 def update_admin_service_request_status(
     request_id: int,
     payload: ServiceRequestStatusUpdateIn,

@@ -14,6 +14,10 @@ from app.modules.services.schemas import (
     ServiceProviderProfileUpdateIn,
     ServiceRequestCancelIn,
     ServiceRequestCreateIn,
+    ServiceRequestAssignedDetailResponse,
+    ServiceRequestAssignedListResponse,
+    ServiceRequestDetailResponse,
+    ServiceRequestListResponse,
     ServiceRequestStatusUpdateIn,
 )
 from app.modules.services.service import ServicesService
@@ -201,7 +205,7 @@ def submit_my_service_offer(
     )
 
 
-@router.post("/requests")
+@router.post("/requests", response_model=ServiceRequestDetailResponse)
 def create_service_request(
     payload: ServiceRequestCreateIn,
     request: Request,
@@ -216,7 +220,7 @@ def create_service_request(
     )
 
 
-@router.get("/requests/me")
+@router.get("/requests/me", response_model=ServiceRequestListResponse)
 def list_my_service_requests(
     request: Request,
     page: int = Query(default=1, ge=1),
@@ -248,7 +252,7 @@ def list_my_service_requests(
     )
 
 
-@router.get("/requests/assigned")
+@router.get("/requests/assigned", response_model=ServiceRequestAssignedListResponse)
 def list_assigned_service_requests(
     request: Request,
     page: int = Query(default=1, ge=1),
@@ -282,7 +286,10 @@ def list_assigned_service_requests(
     )
 
 
-@router.get("/requests/assigned/{request_id}")
+@router.get(
+    "/requests/assigned/{request_id}",
+    response_model=ServiceRequestAssignedDetailResponse,
+)
 def get_assigned_service_request_detail(
     request_id: int,
     request: Request,
@@ -302,7 +309,10 @@ def get_assigned_service_request_detail(
     )
 
 
-@router.patch("/requests/{request_id}/status")
+@router.patch(
+    "/requests/{request_id}/status",
+    response_model=ServiceRequestAssignedDetailResponse,
+)
 def update_assigned_service_request_status(
     request_id: int,
     payload: ServiceRequestStatusUpdateIn,
@@ -324,7 +334,10 @@ def update_assigned_service_request_status(
     )
 
 
-@router.patch("/requests/{request_id}/cancel")
+@router.patch(
+    "/requests/{request_id}/cancel",
+    response_model=ServiceRequestDetailResponse,
+)
 def cancel_my_service_request(
     request_id: int,
     payload: ServiceRequestCancelIn,
@@ -344,7 +357,7 @@ def cancel_my_service_request(
     )
 
 
-@router.get("/requests/{request_id}")
+@router.get("/requests/{request_id}", response_model=ServiceRequestDetailResponse)
 def get_my_service_request_detail(
     request_id: int,
     request: Request,

@@ -12,9 +12,13 @@
 - `orders-payments-commission.postman_collection.json`
 - `products.postman_collection.json`
 - `social-expert.postman_collection.json`
+- `services.postman_collection.json`
 - `stores.postman_collection.json`
 - `weather.postman_collection.json`
 
 `social-expert.postman_collection.json` covers social post detail `expert_answers`, public/expert answer flows, admin expert answer moderation, and notification visibility checks for `expert_answer_created`.
 
 `consultants.postman_collection.json` covers public consultant discovery, the public response privacy contract, user consultant profile management, consultation request creation/cancellation, approved-consultant assigned request workbench endpoints, and admin consultant profile/specialty/request moderation.
+
+`services.postman_collection.json` covers request creation, requester/provider/admin
+lists and details, provider transitions, requester cancellation, and role ownership.

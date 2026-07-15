@@ -1,13 +1,13 @@
 # Farm-Net Project Progress
 
-Last verified: 2026-07-15
+Last verified: 2026-07-16
 Branch at verification: `develop`
 Verified HEAD: `c247d9d`
 
 ## Current Position
 
 The Windows development environment recovery is complete. Product development
-should resume at `Step 17.5 - Services Request Notifications + Contract Hardening`.
+should resume at `Step 17.6 - Mobile Service Discovery + Detail`.
 
 Do not restart Step 17.1, 17.2, or 17.3. Their implementations are already in
 the repository.
@@ -40,8 +40,8 @@ the repository.
 | 17.2 Category + Provider Profile Foundation | Done | `0f3a07d` |
 | 17.3 Service Offers Foundation | Done for backend | `c247d9d` |
 | 17.4 Service Request Flow | Done | APIs, transitions, status logs, tests, runtime smoke |
-| 17.5 Request Notifications + Contract Hardening | Next | Deferred explicitly from 17.4 |
-| 17.6 Mobile Service Discovery + Detail | Planned | Not started |
+| 17.5 Request Notifications + Contract Hardening | Done | Six events, exact-once guards, role contracts, tests and runtime checks |
+| 17.6 Mobile Service Discovery + Detail | Next | Not started |
 | 17.7 Mobile Service Request Flow | Planned | Not started |
 | 17.8 Provider Profile + Offer Management Mobile | Planned | Not started |
 | 17.9 Provider Request Workbench | Planned | Not started |
@@ -49,8 +49,8 @@ the repository.
 | 17.11 Docs/Postman + Runtime Regression | Planned | Not started |
 | Services mobile UI | Not started | No `mobile/lib/features/services` |
 | Services admin UI | Not started | No `admin-panel/lib/features/services` |
-| Services API docs/Postman | Not started | No Services API doc or collection |
-| Services automated tests | Started | Focused Request workflow tests added |
+| Services API docs/Postman | Done for request backend | `docs/api/services.md`, Services collection |
+| Services automated tests | Started | 13 focused Request workflow/contract tests |
 | Services release/tag | Not started | No Services tag after v0.14.0 |
 
 ## Step 17.4 Completion Evidence
@@ -70,6 +70,21 @@ the repository.
   approval, transitions, ordered logs, cancellation, and admin access.
 
 Request notifications were intentionally deferred to Step 17.5.
+
+## Step 17.5 Completion Evidence
+
+- Added created, accepted, rejected, in-progress, completed, and cancelled
+  in-app event contracts with stable event keys.
+- Prevented duplicate recipient notifications and actor self-notifications.
+- Kept notification writes and status logs in the request transaction.
+- Added requester, assigned-provider, and admin list/detail response models and
+  registered them explicitly in OpenAPI.
+- Hardened list privacy, ownership boundaries, admin-only notes, safe event
+  payloads, and exact public status-log field names.
+- Added Services API documentation and a parse-validated Postman collection.
+- Ruff, compileall, and all 13 backend tests passed.
+- Runtime OpenAPI exposed all 10 request paths with named response schemas.
+- Runtime health returned application, database, and Redis as `ok`.
 
 ## Important Existing Gaps
 

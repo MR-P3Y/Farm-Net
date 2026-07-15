@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -465,48 +466,106 @@ class ServiceRequestCancelIn(BaseModel):
 class ServiceRequestStatusLogOut(BaseModel):
     id: int
     request_id: int
-    changed_by: int | None = None
-    from_status: str | None = None
-    to_status: str
+    changed_by_user_id: int | None = None
+    old_status: str | None = None
+    new_status: str
     note: str | None = None
     created_at: datetime
 
-    model_config = {"from_attributes": True}
 
-
-class ServiceRequestOut(BaseModel):
+class ServiceRequestListOut(BaseModel):
     id: int
-    requester_user_id: int
     provider_profile_id: int | None = None
     offer_id: int | None = None
     category_id: int | None = None
+    offer_title: str | None = None
+    category_title: str | None = None
+    provider_display_name: str | None = None
     title: str
-    description: str
-    contact_method: str
     status: str
     budget_amount: Decimal | None = None
     currency: str
     scheduled_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ServiceRequestAssignedListOut(ServiceRequestListOut):
+    requester_user_id: int
+    province_name: str | None = None
+    city_name: str | None = None
+
+
+class ServiceRequestAdminListOut(ServiceRequestAssignedListOut):
+    contact_method: str
+
+
+class ServiceRequestDetailOut(ServiceRequestListOut):
+    requester_user_id: int
+    description: str
+    contact_method: str
     province_id: int | None = None
     city_id: int | None = None
     village_id: int | None = None
     province_name: str | None = None
     city_name: str | None = None
     village_name: str | None = None
-    accepted_at: datetime | None = None
-    completed_at: datetime | None = None
-    cancelled_at: datetime | None = None
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class ServiceRequestDetailOut(ServiceRequestOut):
     address_text: str | None = None
     latitude: str | None = None
     longitude: str | None = None
     provider_note: str | None = None
-    admin_note: str | None = None
     cancel_reason: str | None = None
+    accepted_at: datetime | None = None
+    completed_at: datetime | None = None
+    cancelled_at: datetime | None = None
     status_logs: list[ServiceRequestStatusLogOut] = Field(default_factory=list)
+
+
+class ServiceRequestAssignedDetailOut(ServiceRequestDetailOut):
+    pass
+
+
+class ServiceRequestAdminDetailOut(ServiceRequestDetailOut):
+    admin_note: str | None = None
+
+
+class ServiceRequestListResponse(BaseModel):
+    success: bool
+    data: list[ServiceRequestListOut]
+    message: str
+    meta: dict[str, Any]
+
+
+class ServiceRequestAssignedListResponse(BaseModel):
+    success: bool
+    data: list[ServiceRequestAssignedListOut]
+    message: str
+    meta: dict[str, Any]
+
+
+class ServiceRequestAdminListResponse(BaseModel):
+    success: bool
+    data: list[ServiceRequestAdminListOut]
+    message: str
+    meta: dict[str, Any]
+
+
+class ServiceRequestDetailResponse(BaseModel):
+    success: bool
+    data: ServiceRequestDetailOut
+    message: str
+    meta: dict[str, Any]
+
+
+class ServiceRequestAssignedDetailResponse(BaseModel):
+    success: bool
+    data: ServiceRequestAssignedDetailOut
+    message: str
+    meta: dict[str, Any]
+
+
+class ServiceRequestAdminDetailResponse(BaseModel):
+    success: bool
+    data: ServiceRequestAdminDetailOut
+    message: str
+    meta: dict[str, Any]

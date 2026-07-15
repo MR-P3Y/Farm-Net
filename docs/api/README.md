@@ -12,6 +12,7 @@
 - [Products](products.md)
 - [Profile / Verification](profile-verification.md)
 - [Social](social.md)
+- [Services](services.md)
 - [Expert Answers and Consultants](expert-consultants.md)
 - [Stores](stores.md)
 - [Weather](weather.md)

@@ -1,6 +1,6 @@
 # Farm-Net Project Context
 
-Last verified: 2026-07-15
+Last verified: 2026-07-16
 Repository path: `E:\Farm-Net`
 Primary development branch: `develop`
 
@@ -92,21 +92,20 @@ Database tables already present:
 Categories, provider profiles, and offers have backend repository/service/API
 and admin moderation support. Service Request tables, permissions, schemas,
 repository operations, workflow services, requester/provider/admin routes,
-status logs, privacy boundaries, and focused backend tests are implemented.
-Notifications, UI, API docs, and Postman coverage remain for later steps.
+status logs, role-specific privacy contracts, exact-once in-app notifications,
+API docs, Postman coverage, and focused backend tests are implemented. Mobile
+and admin-panel UI remain for later steps.
 
 The next product implementation step is:
 
 ```text
-Step 17.5 - Services Request Notifications + Contract Hardening
+Step 17.6 - Mobile Service Discovery + Detail
 ```
 
 ## Known Gaps
 
 - Services mobile feature does not exist.
 - Services admin-panel feature does not exist.
-- `docs/api/services.md` does not exist.
-- A Services Postman collection does not exist.
 - Services Request has focused tests; broader Services regression is still required.
 - Real payment gateway integration is not implemented.
 - SMS, email, and push providers are not connected for production delivery.

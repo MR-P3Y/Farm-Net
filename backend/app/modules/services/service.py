@@ -47,8 +47,12 @@ from app.modules.services.schemas import (
     ServiceProviderProfileUpdateIn,
     ServiceRequestCancelIn,
     ServiceRequestCreateIn,
+    ServiceRequestAdminDetailOut,
+    ServiceRequestAdminListOut,
+    ServiceRequestAssignedDetailOut,
+    ServiceRequestAssignedListOut,
     ServiceRequestDetailOut,
-    ServiceRequestOut,
+    ServiceRequestListOut,
     ServiceRequestStatusLogOut,
     ServiceRequestStatusUpdateIn,
 )
@@ -769,9 +773,10 @@ class ServicesService:
         offer.requests_count += 1
         if offer.provider_profile is not None:
             offer.provider_profile.requests_count += 1
+        self._notify_request_created(row, actor_user_id=user.id)
         self.repo.commit()
         self.repo.refresh(row)
-        return self._request_detail_out(row, include_admin_note=False)
+        return self._request_detail_out(row)
 
     def list_my_service_requests(
         self,
@@ -782,7 +787,7 @@ class ServicesService:
         category_id: int | None,
         page: int,
         page_size: int,
-    ) -> tuple[list[ServiceRequestOut], int]:
+    ) -> tuple[list[ServiceRequestListOut], int]:
         if status is not None:
             self._validate_request_status(status)
         rows, total = self.repo.list_requests(
@@ -793,7 +798,7 @@ class ServicesService:
             page=max(page, 1),
             page_size=min(max(page_size, 1), 100),
         )
-        return [self._request_out(row) for row in rows], total
+        return [self._request_list_out(row) for row in rows], total
 
     def get_my_service_request_detail(
         self,
@@ -804,7 +809,7 @@ class ServicesService:
         row = self._get_request(request_id)
         if row.requester_user_id != user.id:
             raise PermissionDeniedError()
-        return self._request_detail_out(row, include_admin_note=False)
+        return self._request_detail_out(row)
 
     def cancel_my_service_request(
         self,
@@ -824,6 +829,7 @@ class ServicesService:
                 message="Service request cannot be cancelled in current status",
                 details={"current_status": row.status},
             )
+        old_status = row.status
         self._set_request_status(
             row,
             ServiceRequestStatus.CANCELLED.value,
@@ -831,9 +837,17 @@ class ServicesService:
             note=payload.reason,
         )
         row.cancel_reason = payload.reason
+        self._notify_request_transition(
+            row,
+            old_status=old_status,
+            new_status=ServiceRequestStatus.CANCELLED.value,
+            actor_user_id=user.id,
+            recipient_user_ids=self._provider_recipient_ids(row),
+            provider_action=True,
+        )
         self.repo.commit()
         self.repo.refresh(row)
-        return self._request_detail_out(row, include_admin_note=False)
+        return self._request_detail_out(row)
 
     def list_assigned_service_requests(
         self,
@@ -844,7 +858,7 @@ class ServicesService:
         category_id: int | None,
         page: int,
         page_size: int,
-    ) -> tuple[list[ServiceRequestOut], int]:
+    ) -> tuple[list[ServiceRequestAssignedListOut], int]:
         profile = self._approved_request_provider(user)
         if status is not None:
             self._validate_request_status(status)
@@ -856,19 +870,19 @@ class ServicesService:
             page=max(page, 1),
             page_size=min(max(page_size, 1), 100),
         )
-        return [self._request_out(row) for row in rows], total
+        return [self._request_assigned_list_out(row) for row in rows], total
 
     def get_assigned_service_request_detail(
         self,
         *,
         request_id: int,
         user: AuthUser,
-    ) -> ServiceRequestDetailOut:
+    ) -> ServiceRequestAssignedDetailOut:
         profile = self._approved_request_provider(user)
         row = self._get_request(request_id)
         if row.provider_profile_id != profile.id:
             raise PermissionDeniedError()
-        return self._request_detail_out(row, include_admin_note=False)
+        return self._request_assigned_detail_out(row)
 
     def update_assigned_service_request_status(
         self,
@@ -876,18 +890,27 @@ class ServicesService:
         request_id: int,
         user: AuthUser,
         payload: ServiceRequestStatusUpdateIn,
-    ) -> ServiceRequestDetailOut:
+    ) -> ServiceRequestAssignedDetailOut:
         profile = self._approved_request_provider(user)
         row = self._get_request(request_id)
         if row.provider_profile_id != profile.id:
             raise PermissionDeniedError()
         target = self._validate_request_status(payload.status)
         self._validate_request_transition(row.status, target, self.PROVIDER_REQUEST_TRANSITIONS)
+        old_status = row.status
         self._set_request_status(row, target, changed_by=user.id, note=payload.note)
         row.provider_note = payload.note
+        self._notify_request_transition(
+            row,
+            old_status=old_status,
+            new_status=target,
+            actor_user_id=user.id,
+            recipient_user_ids=[row.requester_user_id],
+            provider_action=False,
+        )
         self.repo.commit()
         self.repo.refresh(row)
-        return self._request_detail_out(row, include_admin_note=False)
+        return self._request_assigned_detail_out(row)
 
     def list_admin_service_requests(
         self,
@@ -901,7 +924,7 @@ class ServicesService:
         status: str | None,
         page: int,
         page_size: int,
-    ) -> tuple[list[ServiceRequestOut], int]:
+    ) -> tuple[list[ServiceRequestAdminListOut], int]:
         if status is not None:
             self._validate_request_status(status)
         rows, total = self.repo.list_requests(
@@ -915,10 +938,10 @@ class ServicesService:
             page=max(page, 1),
             page_size=min(max(page_size, 1), 100),
         )
-        return [self._request_out(row) for row in rows], total
+        return [self._request_admin_list_out(row) for row in rows], total
 
-    def get_admin_service_request_detail(self, request_id: int) -> ServiceRequestDetailOut:
-        return self._request_detail_out(self._get_request(request_id), include_admin_note=True)
+    def get_admin_service_request_detail(self, request_id: int) -> ServiceRequestAdminDetailOut:
+        return self._request_admin_detail_out(self._get_request(request_id))
 
     def update_admin_service_request_status(
         self,
@@ -926,17 +949,34 @@ class ServicesService:
         request_id: int,
         admin_user: AuthUser,
         payload: ServiceRequestStatusUpdateIn,
-    ) -> ServiceRequestDetailOut:
+    ) -> ServiceRequestAdminDetailOut:
         row = self._get_request(request_id)
         target = self._validate_request_status(payload.status)
         self._validate_request_transition(row.status, target, self.ADMIN_REQUEST_TRANSITIONS)
+        old_status = row.status
         self._set_request_status(row, target, changed_by=admin_user.id, note=payload.note)
         row.admin_note = payload.note
         if target == ServiceRequestStatus.CANCELLED.value:
             row.cancel_reason = payload.note
+        self._notify_request_transition(
+            row,
+            old_status=old_status,
+            new_status=target,
+            actor_user_id=admin_user.id,
+            recipient_user_ids=[row.requester_user_id],
+            provider_action=False,
+        )
+        self._notify_request_transition(
+            row,
+            old_status=old_status,
+            new_status=target,
+            actor_user_id=admin_user.id,
+            recipient_user_ids=self._provider_recipient_ids(row),
+            provider_action=True,
+        )
         self.repo.commit()
         self.repo.refresh(row)
-        return self._request_detail_out(row, include_admin_note=True)
+        return self._request_admin_detail_out(row)
 
     def _approved_request_provider(self, user: AuthUser) -> ServiceProviderProfile:
         profile = self.repo.get_profile_by_user_id(user.id)
@@ -1034,25 +1074,193 @@ class ServicesService:
             )
         )
 
-    def _request_out(self, row: ServiceRequest) -> ServiceRequestOut:
-        return ServiceRequestOut.model_validate(row)
+    def _request_common(self, row: ServiceRequest) -> dict:
+        return {
+            "id": row.id,
+            "provider_profile_id": row.provider_profile_id,
+            "offer_id": row.offer_id,
+            "category_id": row.category_id,
+            "offer_title": row.offer.title if row.offer is not None else None,
+            "category_title": row.category.title if row.category is not None else None,
+            "provider_display_name": (
+                row.provider_profile.display_name
+                if row.provider_profile is not None
+                else None
+            ),
+            "title": row.title,
+            "status": row.status,
+            "budget_amount": row.budget_amount,
+            "currency": row.currency,
+            "scheduled_at": row.scheduled_at,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+        }
 
-    def _request_detail_out(
+    def _request_list_out(self, row: ServiceRequest) -> ServiceRequestListOut:
+        return ServiceRequestListOut(**self._request_common(row))
+
+    def _request_assigned_list_out(
+        self,
+        row: ServiceRequest,
+    ) -> ServiceRequestAssignedListOut:
+        return ServiceRequestAssignedListOut(
+            **self._request_common(row),
+            requester_user_id=row.requester_user_id,
+            province_name=row.province_name,
+            city_name=row.city_name,
+        )
+
+    def _request_admin_list_out(self, row: ServiceRequest) -> ServiceRequestAdminListOut:
+        return ServiceRequestAdminListOut(
+            **self._request_common(row),
+            requester_user_id=row.requester_user_id,
+            province_name=row.province_name,
+            city_name=row.city_name,
+            contact_method=row.contact_method,
+        )
+
+    def _request_detail_values(self, row: ServiceRequest) -> dict:
+        logs = self.repo.list_request_status_logs(row.id)
+        return {
+            **self._request_common(row),
+            "requester_user_id": row.requester_user_id,
+            "description": row.description,
+            "contact_method": row.contact_method,
+            "province_id": row.province_id,
+            "city_id": row.city_id,
+            "village_id": row.village_id,
+            "province_name": row.province_name,
+            "city_name": row.city_name,
+            "village_name": row.village_name,
+            "address_text": row.address_text,
+            "latitude": row.latitude,
+            "longitude": row.longitude,
+            "provider_note": row.provider_note,
+            "cancel_reason": row.cancel_reason,
+            "accepted_at": row.accepted_at,
+            "completed_at": row.completed_at,
+            "cancelled_at": row.cancelled_at,
+            "status_logs": [
+                ServiceRequestStatusLogOut(
+                    id=log.id,
+                    request_id=log.request_id,
+                    changed_by_user_id=log.changed_by,
+                    old_status=log.from_status,
+                    new_status=log.to_status,
+                    note=log.note,
+                    created_at=log.created_at,
+                )
+                for log in logs
+            ],
+        }
+
+    def _request_detail_out(self, row: ServiceRequest) -> ServiceRequestDetailOut:
+        return ServiceRequestDetailOut(**self._request_detail_values(row))
+
+    def _request_assigned_detail_out(
+        self,
+        row: ServiceRequest,
+    ) -> ServiceRequestAssignedDetailOut:
+        return ServiceRequestAssignedDetailOut(**self._request_detail_values(row))
+
+    def _request_admin_detail_out(self, row: ServiceRequest) -> ServiceRequestAdminDetailOut:
+        return ServiceRequestAdminDetailOut(
+            **self._request_detail_values(row),
+            admin_note=row.admin_note,
+        )
+
+    def _provider_recipient_ids(self, row: ServiceRequest) -> list[int]:
+        if row.provider_profile is None:
+            return []
+        return [row.provider_profile.user_id]
+
+    def _request_notification_payload(
         self,
         row: ServiceRequest,
         *,
-        include_admin_note: bool,
-    ) -> ServiceRequestDetailOut:
-        logs = self.repo.list_request_status_logs(row.id)
-        return ServiceRequestDetailOut(
-            **self._request_out(row).model_dump(),
-            address_text=row.address_text,
-            latitude=row.latitude,
-            longitude=row.longitude,
-            provider_note=row.provider_note,
-            admin_note=row.admin_note if include_admin_note else None,
-            cancel_reason=row.cancel_reason,
-            status_logs=[ServiceRequestStatusLogOut.model_validate(log) for log in logs],
+        old_status: str | None,
+        new_status: str,
+    ) -> dict:
+        return {
+            "request_id": row.id,
+            "offer_id": row.offer_id,
+            "offer_title": row.offer.title if row.offer is not None else None,
+            "provider_profile_id": row.provider_profile_id,
+            "requester_user_id": row.requester_user_id,
+            "old_status": old_status,
+            "new_status": new_status,
+            "category_id": row.category_id,
+        }
+
+    def _notify_request_created(self, row: ServiceRequest, *, actor_user_id: int) -> None:
+        recipients = [
+            user_id
+            for user_id in self._provider_recipient_ids(row)
+            if user_id != actor_user_id
+        ]
+        if not recipients:
+            return
+        NotificationService(self.db).create_event_and_notify_many(
+            event_type=NotificationEventType.SERVICE_REQUEST_CREATED.value,
+            event_key=f"service_request:{row.id}:created",
+            recipient_user_ids=recipients,
+            title="درخواست خدمت جدید",
+            body=f"درخواست «{row.title}» برای شما ثبت شد.",
+            actor_user_id=actor_user_id,
+            source_type="service_request",
+            source_id=str(row.id),
+            payload_json=self._request_notification_payload(
+                row,
+                old_status=None,
+                new_status=ServiceRequestStatus.OPEN.value,
+            ),
+            action_url=f"/services/requests/assigned/{row.id}",
+            priority=NotificationPriority.NORMAL.value,
+            commit=False,
+        )
+
+    def _notify_request_transition(
+        self,
+        row: ServiceRequest,
+        *,
+        old_status: str,
+        new_status: str,
+        actor_user_id: int,
+        recipient_user_ids: list[int],
+        provider_action: bool,
+    ) -> None:
+        event_by_status = {
+            ServiceRequestStatus.ACCEPTED.value: NotificationEventType.SERVICE_REQUEST_ACCEPTED,
+            ServiceRequestStatus.REJECTED.value: NotificationEventType.SERVICE_REQUEST_REJECTED,
+            ServiceRequestStatus.IN_PROGRESS.value: NotificationEventType.SERVICE_REQUEST_IN_PROGRESS,
+            ServiceRequestStatus.COMPLETED.value: NotificationEventType.SERVICE_REQUEST_COMPLETED,
+            ServiceRequestStatus.CANCELLED.value: NotificationEventType.SERVICE_REQUEST_CANCELLED,
+        }
+        event_type = event_by_status.get(new_status)
+        recipients = sorted({uid for uid in recipient_user_ids if uid != actor_user_id})
+        if event_type is None or not recipients:
+            return
+        NotificationService(self.db).create_event_and_notify_many(
+            event_type=event_type.value,
+            event_key=f"service_request:{row.id}:{old_status}:{new_status}",
+            recipient_user_ids=recipients,
+            title="وضعیت درخواست خدمت تغییر کرد",
+            body=f"درخواست «{row.title}» به وضعیت {new_status} تغییر کرد.",
+            actor_user_id=actor_user_id,
+            source_type="service_request",
+            source_id=str(row.id),
+            payload_json=self._request_notification_payload(
+                row,
+                old_status=old_status,
+                new_status=new_status,
+            ),
+            action_url=(
+                f"/services/requests/assigned/{row.id}"
+                if provider_action
+                else f"/services/requests/{row.id}"
+            ),
+            priority=NotificationPriority.NORMAL.value,
+            commit=False,
         )
 
     def _profile_out(self, profile: ServiceProviderProfile) -> ServiceProviderProfileOut:

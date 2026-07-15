@@ -1,0 +1,98 @@
+{
+  "info": {
+    "_postman_id": "d4e1c1c1-a228-4c21-9533-175000000005",
+    "name": "Farm-Net Services Request Flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "requester_token", "value": "" },
+    { "key": "provider_token", "value": "" },
+    { "key": "admin_token", "value": "" },
+    { "key": "offer_id", "value": "1" },
+    { "key": "service_request_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Requester",
+      "item": [
+        {
+          "name": "Create request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{requester_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offer_id\": {{offer_id}},\n  \"title\": \"Soil test request\",\n  \"description\": \"Please test this field before planting.\",\n  \"contact_method\": \"in_app\",\n  \"currency\": \"TOMAN\"\n}"
+            },
+            "url": "{{base_url}}/services/requests"
+          }
+        },
+        {
+          "name": "List own requests",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{requester_token}}" }], "url": "{{base_url}}/services/requests/me" }
+        },
+        {
+          "name": "Own request detail",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{requester_token}}" }], "url": "{{base_url}}/services/requests/{{service_request_id}}" }
+        },
+        {
+          "name": "Cancel own request",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{requester_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"No longer required\"\n}" },
+            "url": "{{base_url}}/services/requests/{{service_request_id}}/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Provider",
+      "item": [
+        {
+          "name": "List assigned requests",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }], "url": "{{base_url}}/services/requests/assigned" }
+        },
+        {
+          "name": "Assigned request detail",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }], "url": "{{base_url}}/services/requests/assigned/{{service_request_id}}" }
+        },
+        {
+          "name": "Update assigned status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"accepted\",\n  \"note\": \"Accepted by provider\"\n}" },
+            "url": "{{base_url}}/services/requests/{{service_request_id}}/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "List requests",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/services/requests" }
+        },
+        {
+          "name": "Request detail",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/services/requests/{{service_request_id}}" }
+        },
+        {
+          "name": "Update request status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"cancelled\",\n  \"note\": \"Cancelled by admin\"\n}" },
+            "url": "{{base_url}}/admin/services/requests/{{service_request_id}}/status"
+          }
+        }
+      ]
+    }
+  ]
+}

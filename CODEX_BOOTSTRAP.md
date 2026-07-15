@@ -51,15 +51,16 @@ otherwise.
 
 ## Current Handoff
 
-As of 2026-07-15:
+As of 2026-07-16:
 
 ```text
 Windows environment recovery: completed
 Step 17.1 Services DB + Permissions: completed (3b8af10)
 Step 17.2 Categories + Provider Profiles: completed (0f3a07d)
 Step 17.3 Service Offers backend: completed (c247d9d)
-Step 17.4 Services Request Flow: completed
-Next: Step 17.5 Services Request Notifications + Contract Hardening
+Step 17.4 Services Request Flow: completed (f1adaf5)
+Step 17.5 Request Notifications + Contract Hardening: completed
+Next: Step 17.6 Mobile Service Discovery + Detail
 ```
 
 Services means agricultural operational services, not equipment rental.
