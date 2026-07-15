@@ -7,7 +7,7 @@ Verified HEAD: `c247d9d`
 ## Current Position
 
 The Windows development environment recovery is complete. Product development
-should resume at `Step 17.6 - Mobile Service Discovery + Detail`.
+should resume at `Step 17.7 - Mobile Service Request Flow`.
 
 Do not restart Step 17.1, 17.2, or 17.3. Their implementations are already in
 the repository.
@@ -41,8 +41,8 @@ the repository.
 | 17.3 Service Offers Foundation | Done for backend | `c247d9d` |
 | 17.4 Service Request Flow | Done | APIs, transitions, status logs, tests, runtime smoke |
 | 17.5 Request Notifications + Contract Hardening | Done | Six events, exact-once guards, role contracts, tests and runtime checks |
-| 17.6 Mobile Service Discovery + Detail | Next | Not started |
-| 17.7 Mobile Service Request Flow | Planned | Not started |
+| 17.6 Mobile Service Discovery + Detail | Done | List/detail UI, filters, gallery, navigation and model tests |
+| 17.7 Mobile Service Request Flow | Next | Not started |
 | 17.8 Provider Profile + Offer Management Mobile | Planned | Not started |
 | 17.9 Provider Request Workbench | Planned | Not started |
 | 17.10 Admin Panel Services | Planned | Not started |
@@ -85,6 +85,19 @@ Request notifications were intentionally deferred to Step 17.5.
 - Ruff, compileall, and all 13 backend tests passed.
 - Runtime OpenAPI exposed all 10 request paths with named response schemas.
 - Runtime health returned application, database, and Redis as `ok`.
+
+## Step 17.6 Completion Evidence
+
+- Added a Services mobile feature using the real public contracts:
+  `/services/categories`, `/services/offers`, and `/services/offers/{id}`.
+- Added service search and category, province, city, and pricing-mode filters.
+  Price-range filtering remains deferred because the backend does not expose
+  minimum/maximum price parameters.
+- Added list cards, loading/error/empty states, detail view, provider public
+  summary, media gallery, responsive layout, routing, and Home navigation.
+- Added safe parsing tests for public offers, nested category/provider/media,
+  decimal price strings, optional fields, and fallbacks.
+- Flutter analyze completed with no issues and all 14 mobile tests passed.
 
 ## Important Existing Gaps
 

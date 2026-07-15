@@ -21,6 +21,8 @@ import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/social/presentation/social_create_post_screen.dart';
 import '../../features/social/presentation/social_feed_screen.dart';
 import '../../features/social/presentation/social_post_detail_screen.dart';
+import '../../features/services/presentation/service_detail_screen.dart';
+import '../../features/services/presentation/service_list_screen.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/stores/presentation/my_store_screen.dart';
 import '../../features/stores/presentation/public_store_detail_screen.dart';
@@ -67,6 +69,19 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
         return SocialPostDetailScreen(postId: id);
+      },
+    ),
+    GoRoute(
+      path: '/services',
+      name: 'services',
+      builder: (context, state) => const ServiceListScreen(),
+    ),
+    GoRoute(
+      path: '/services/:offerId',
+      name: 'service-detail',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['offerId'] ?? '') ?? 0;
+        return ServiceDetailScreen(offerId: id);
       },
     ),
     GoRoute(

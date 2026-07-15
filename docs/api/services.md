@@ -51,3 +51,10 @@ at most one in-app notification for an event, duplicate recipient IDs are
 collapsed, and the actor is excluded. Payloads contain identifiers, titles, and
 old/new status only; contact, address, coordinates, and notes are excluded.
 
+## Mobile discovery
+
+The Step 17.6 mobile feature consumes `GET /services/categories`,
+`GET /services/offers`, and `GET /services/offers/{id}`. The list supports `q`,
+`category_id`, `province_id`, `city_id`, and `pricing_type`. A price-range UI is
+not exposed because the current backend list contract has no minimum/maximum
+price parameters.

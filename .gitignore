@@ -39,6 +39,7 @@ ios/.symlinks/
 
 # IDE
 .idea/
+.vs/
 .vscode/
 *.iml
 
