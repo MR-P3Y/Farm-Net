@@ -77,6 +77,7 @@ The following Services work is present on `develop`:
 3b8af10  Step 17.1 - Services DB + Permission Foundation
 0f3a07d  Step 17.2 - Categories + Provider Profile APIs
 c247d9d  Step 17.3 - Service Offer APIs
+bda9699  Step 17.10 - Admin Panel Services
 ```
 
 Database tables already present:
@@ -95,19 +96,21 @@ repository operations, workflow services, requester/provider/admin routes,
 status logs, role-specific privacy contracts, exact-once in-app notifications,
 API docs, Postman coverage, focused backend tests, mobile service discovery and
 detail UI, requester request flow, and provider profile/offer management are
-implemented, including the mobile provider request workbench. Admin-panel UI remains.
+implemented, including the mobile provider request workbench and the typed
+four-tab Services admin panel. The canonical Postman collection now covers the
+complete public, owner, moderation, and request workflow contracts.
 
-The next product implementation step is:
+The Services sequence through Step 17.11 is complete. The next product step
+must be selected from the roadmap and explicitly authorized:
 
 ```text
-Step 17.10 - Admin Panel Services
+Next roadmap step: not selected
 ```
 
 ## Known Gaps
 
-- Services admin-panel feature does not exist yet.
-- Services admin-panel feature does not exist.
-- Services Request has focused tests; broader Services regression is still required.
+- Services has focused backend and client model/widget coverage; broad
+  end-to-end browser/device automation is still required.
 - Real payment gateway integration is not implemented.
 - SMS, email, and push providers are not connected for production delivery.
 - Contracts, subscriptions, promotion, equipment rental, reviews, wallet,

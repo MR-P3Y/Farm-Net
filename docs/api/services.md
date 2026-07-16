@@ -9,6 +9,34 @@ mobile UI, or admin-panel UI.
 All paths use the `/api/v1` prefix and the standard
 `success/data/message/meta` response envelope.
 
+## Endpoint inventory
+
+| Scope | Method and path | Purpose |
+|---|---|---|
+| Public | `GET /services/categories` | Active category discovery |
+| Public | `GET /services/offers` | Approved offer discovery and filters |
+| Public | `GET /services/offers/{offer_id}` | Public offer detail |
+| Provider owner | `GET/POST/PUT /services/me/provider-profile` | Read or save owned profile |
+| Provider owner | `POST /services/me/provider-profile/submit` | Submit profile for moderation |
+| Provider owner | `GET/POST /services/me/offers` | List or create owned offers |
+| Provider owner | `PUT /services/me/offers/{offer_id}` | Update owned offer |
+| Provider owner | `POST /services/me/offers/{offer_id}/submit` | Submit offer for moderation |
+| Requester | `POST /services/requests` | Create request in `open` state |
+| Requester | `GET /services/requests/me` | Paginated owned list |
+| Requester | `GET /services/requests/{request_id}` | Owned operational detail |
+| Requester | `PATCH /services/requests/{request_id}/cancel` | Cancel with `{reason}` |
+| Provider | `GET /services/requests/assigned` | Paginated assigned list |
+| Provider | `GET /services/requests/assigned/{request_id}` | Assigned operational detail |
+| Provider | `PATCH /services/requests/{request_id}/status` | Controlled assigned transition |
+| Admin | `GET/POST /admin/services/categories` | List or create categories |
+| Admin | `PATCH /admin/services/categories/{category_id}` | Update category |
+| Admin | `GET /admin/services/provider-profiles[/{profile_id}]` | List or inspect providers |
+| Admin | `PATCH /admin/services/provider-profiles/{profile_id}/status` | Moderate provider |
+| Admin | `GET /admin/services/offers[/{offer_id}]` | List or inspect offers |
+| Admin | `PATCH /admin/services/offers/{offer_id}/status` | Moderate offer |
+| Admin | `GET /admin/services/requests[/{request_id}]` | List or inspect requests |
+| Admin | `PATCH /admin/services/requests/{request_id}/status` | Controlled admin transition |
+
 | Role | List | Detail and mutation | Ownership |
 |---|---|---|---|
 | Requester | `GET /services/requests/me` | `POST /services/requests`, `GET /services/requests/{id}`, `PATCH /services/requests/{id}/cancel` | Own requests only |
@@ -82,3 +110,20 @@ Step 17.9 consumes `GET /services/requests/assigned`,
 `GET /services/requests/assigned/{id}`, and
 `PATCH /services/requests/{id}/status`. Provider actions strictly follow the
 backend transition table; provider cancellation is not exposed.
+
+## Admin panel
+
+Step 17.10 exposes `/services` in the admin panel with typed category,
+provider-profile, offer, request, and status-log models. The four tabs use only
+the admin endpoints above, surface backend permission failures, paginate list
+contracts, and limit request actions to the backend transition matrix. No raw
+JSON is rendered and no separate Services contract is maintained in the UI.
+
+## Postman and regression
+
+The canonical collection is
+`postman/collections/services.postman_collection.json`. Its tokens and record
+IDs are environment variables and never contain secrets. Runtime verification
+must include collection JSON parsing, OpenAPI path/schema checks, backend
+Services tests, mobile/admin analysis and tests, web builds, and application,
+database, and Redis health.

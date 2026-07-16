@@ -64,7 +64,9 @@ Step 17.6 Mobile Service Discovery + Detail: completed
 Step 17.7 Mobile Service Request Flow: completed
 Step 17.8 Provider Profile + Offer Management Mobile: completed
 Step 17.9 Provider Request Workbench: completed
-Next: Step 17.10 Admin Panel Services
+Step 17.10 Admin Panel Services: completed (bda9699)
+Step 17.11 Docs/Postman + Runtime Regression: completed
+Next: select and authorize the next roadmap step
 ```
 
 Services means agricultural operational services, not equipment rental.

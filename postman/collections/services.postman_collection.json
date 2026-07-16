@@ -9,10 +9,65 @@
     { "key": "requester_token", "value": "" },
     { "key": "provider_token", "value": "" },
     { "key": "admin_token", "value": "" },
+    { "key": "category_id", "value": "1" },
+    { "key": "provider_profile_id", "value": "1" },
     { "key": "offer_id", "value": "1" },
     { "key": "service_request_id", "value": "1" }
   ],
   "item": [
+    {
+      "name": "Public discovery",
+      "item": [
+        { "name": "List categories", "request": { "method": "GET", "header": [], "url": "{{base_url}}/services/categories?q=" } },
+        { "name": "List approved offers", "request": { "method": "GET", "header": [], "url": "{{base_url}}/services/offers?page=1&page_size=20&category_id={{category_id}}" } },
+        { "name": "Offer public detail", "request": { "method": "GET", "header": [], "url": "{{base_url}}/services/offers/{{offer_id}}" } }
+      ]
+    },
+    {
+      "name": "Provider profile and offers",
+      "item": [
+        { "name": "Get my provider profile", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }], "url": "{{base_url}}/services/me/provider-profile" } },
+        {
+          "name": "Create or save provider profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"display_name\": \"Farm-Net Provider\",\n  \"title\": \"Agricultural services provider\",\n  \"bio\": \"Field services and farm support\",\n  \"experience_years\": 5,\n  \"category_ids\": [{{category_id}}]\n}" },
+            "url": "{{base_url}}/services/me/provider-profile"
+          }
+        },
+        {
+          "name": "Update provider profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"display_name\": \"Farm-Net Provider\",\n  \"service_area\": \"Local farms\",\n  \"category_ids\": [{{category_id}}]\n}" },
+            "url": "{{base_url}}/services/me/provider-profile"
+          }
+        },
+        { "name": "Submit provider profile", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }], "url": "{{base_url}}/services/me/provider-profile/submit" } },
+        { "name": "List my offers", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }], "url": "{{base_url}}/services/me/offers?page=1&page_size=20" } },
+        {
+          "name": "Create offer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"category_id\": {{category_id}},\n  \"title\": \"Soil testing\",\n  \"slug\": \"soil-testing-postman\",\n  \"description\": \"Professional agricultural soil testing\",\n  \"pricing_type\": \"fixed\",\n  \"price_amount\": 100000,\n  \"currency\": \"TOMAN\",\n  \"media_items\": []\n}" },
+            "url": "{{base_url}}/services/me/offers"
+          }
+        },
+        {
+          "name": "Update offer",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated soil testing\",\n  \"pricing_type\": \"negotiable\"\n}" },
+            "url": "{{base_url}}/services/me/offers/{{offer_id}}"
+          }
+        },
+        { "name": "Submit offer", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }], "url": "{{base_url}}/services/me/offers/{{offer_id}}/submit" } }
+      ]
+    },
     {
       "name": "Requester",
       "item": [
@@ -75,6 +130,47 @@
     {
       "name": "Admin",
       "item": [
+        { "name": "List categories", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/services/categories" } },
+        {
+          "name": "Create category",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"postman-service\",\n  \"title\": \"Postman service category\",\n  \"sort_order\": 100,\n  \"is_active\": true\n}" },
+            "url": "{{base_url}}/admin/services/categories"
+          }
+        },
+        {
+          "name": "Update category",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated service category\",\n  \"is_active\": true\n}" },
+            "url": "{{base_url}}/admin/services/categories/{{category_id}}"
+          }
+        },
+        { "name": "List provider profiles", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/services/provider-profiles?page=1&page_size=20" } },
+        { "name": "Provider profile detail", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/services/provider-profiles/{{provider_profile_id}}" } },
+        {
+          "name": "Moderate provider profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"approved\",\n  \"note\": \"Approved by admin\"\n}" },
+            "url": "{{base_url}}/admin/services/provider-profiles/{{provider_profile_id}}/status"
+          }
+        },
+        { "name": "List offers", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/services/offers?page=1&page_size=20" } },
+        { "name": "Offer detail", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/services/offers/{{offer_id}}" } },
+        {
+          "name": "Moderate offer",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"approved\",\n  \"note\": \"Approved by admin\"\n}" },
+            "url": "{{base_url}}/admin/services/offers/{{offer_id}}/status"
+          }
+        },
         {
           "name": "List requests",
           "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/services/requests" }

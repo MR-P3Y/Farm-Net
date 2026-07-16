@@ -36,3 +36,11 @@ admin_access_token
 ```
 
 The consultant collection covers the public privacy contract, owner profile management, user request creation/cancellation, approved-consultant assigned workbench, and admin moderation flows. Public consultant responses must not expose `phone`, `email`, or `admin_note`; use `/consultants/me/profile` or admin endpoints when those fields are expected.
+
+## Services Flow
+
+`collections/services.postman_collection.json` is the end-to-end Services
+contract collection. Set `requester_token`, `provider_token`, and `admin_token`,
+then replace the generic category, provider-profile, offer, and request IDs with
+records from the target environment. It covers public discovery, owner
+management, moderation, ownership/privacy, and the request status workflow.

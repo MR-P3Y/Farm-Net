@@ -164,6 +164,24 @@ Request notifications were intentionally deferred to Step 17.5.
   database, and Redis health returned `ok`.
 - Step 17.11 (Docs/Postman and runtime regression) is the next planned step.
 
+## Step 17.11 Completion Evidence
+
+- Expanded the canonical Services Postman collection from request-only coverage
+  to 30 requests spanning public discovery, provider profile/offer ownership,
+  category/provider/offer moderation, and requester/provider/admin workflows.
+- Added the complete 25-path Services endpoint inventory, admin-panel contract,
+  privacy/workflow guidance, and regression procedure to the API documentation.
+- Postman JSON parsed successfully and every required Services resource path was
+  present in the runtime OpenAPI document.
+- Backend Ruff and compileall passed; all 13 focused and full-suite backend tests
+  passed. Four existing `datetime.utcnow()` deprecation warnings remain noted.
+- Mobile analyze passed, all 24 tests passed, and the Web build succeeded.
+- Admin analyze passed, all 3 tests passed, and the Web build succeeded.
+- Runtime health returned application, database, and Redis as `ok`; all three
+  Docker services were running.
+- Services Steps 17.1 through 17.11 are complete. The next roadmap step requires
+  explicit selection rather than being inferred from this sequence.
+
 ## Important Existing Gaps
 
 The following are not considered complete merely because related permissions or

@@ -20,5 +20,7 @@
 
 `consultants.postman_collection.json` covers public consultant discovery, the public response privacy contract, user consultant profile management, consultation request creation/cancellation, approved-consultant assigned request workbench endpoints, and admin consultant profile/specialty/request moderation.
 
-`services.postman_collection.json` covers request creation, requester/provider/admin
-lists and details, provider transitions, requester cancellation, and role ownership.
+`services.postman_collection.json` covers public discovery, provider profile and
+offer ownership, category/provider/offer admin moderation, request creation,
+requester/provider/admin lists and details, controlled status transitions,
+requester cancellation, and role ownership.
