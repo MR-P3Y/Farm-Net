@@ -7,7 +7,7 @@ Verified HEAD: `c247d9d`
 ## Current Position
 
 The Windows development environment recovery is complete. Product development
-should resume at `Step 17.9 - Provider Request Workbench`.
+should resume at `Step 17.10 - Admin Panel Services`.
 
 Do not restart Step 17.1, 17.2, or 17.3. Their implementations are already in
 the repository.
@@ -44,8 +44,8 @@ the repository.
 | 17.6 Mobile Service Discovery + Detail | Done | List/detail UI, filters, gallery, navigation and model tests |
 | 17.7 Mobile Service Request Flow | Done | Create/list/detail/cancel, timeline, routing and tests |
 | 17.8 Provider Profile + Offer Management Mobile | Done | Profile/offers CRUD-submit, media, navigation and tests |
-| 17.9 Provider Request Workbench | Next | Not started |
-| 17.10 Admin Panel Services | Planned | Not started |
+| 17.9 Provider Request Workbench | Done | Assigned list/detail, transitions, timeline and tests |
+| 17.10 Admin Panel Services | Next | Not started |
 | 17.11 Docs/Postman + Runtime Regression | Planned | Not started |
 | Services mobile UI | In progress | Discovery, requester flow, provider profile and offers done |
 | Services admin UI | Not started | No `admin-panel/lib/features/services` |
@@ -131,6 +131,20 @@ Request notifications were intentionally deferred to Step 17.5.
   build completed successfully.
 - OpenAPI exposed all eight owner profile/offer methods; runtime database and
   Redis health returned `ok`.
+
+## Step 17.9 Completion Evidence
+
+- Added assigned-request API integration, supported filters, assigned detail,
+  and the exact `{status, note}` update payload.
+- Added the provider workbench list/detail, pull-to-refresh, operational fields,
+  safe requester ID, status timeline, confirmation dialogs, and Home routing.
+- Exposed only `open -> accepted|rejected`, `accepted -> in_progress`, and
+  `in_progress -> completed`; provider cancellation is not allowed by backend.
+- Added explicit Persian handling for unapproved-provider 403 responses,
+  duplicate-tap prevention, and list/detail refresh after updates.
+- Flutter analyze passed with no issues, all 24 tests passed, and Flutter Web
+  build completed successfully.
+- OpenAPI exposed all three assigned operations; database and Redis were `ok`.
 
 ## Important Existing Gaps
 

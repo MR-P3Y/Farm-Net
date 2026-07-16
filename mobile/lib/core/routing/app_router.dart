@@ -30,6 +30,8 @@ import '../../features/services/presentation/offer_edit_screen.dart';
 import '../../features/services/data/service_models.dart';
 import '../../features/services/presentation/service_request_create_screen.dart';
 import '../../features/services/presentation/service_request_detail_screen.dart';
+import '../../features/services/presentation/service_workbench_screen.dart';
+import '../../features/services/presentation/service_workbench_detail_screen.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/stores/presentation/my_store_screen.dart';
 import '../../features/stores/presentation/public_store_detail_screen.dart';
@@ -82,6 +84,20 @@ final GoRouter appRouter = GoRouter(
       path: '/services',
       name: 'services',
       builder: (context, state) => const ServiceListScreen(),
+    ),
+    GoRoute(
+      path: '/services/workbench',
+      name: 'service-workbench',
+      builder: (context, state) => const ServiceWorkbenchScreen(),
+    ),
+    GoRoute(
+      path: '/services/workbench/requests/:requestId',
+      name: 'service-workbench-request-detail',
+      builder:
+          (context, state) => ServiceWorkbenchDetailScreen(
+            requestId:
+                int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+          ),
     ),
     GoRoute(
       path: '/services/me/provider-profile',

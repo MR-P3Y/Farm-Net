@@ -215,6 +215,46 @@ class ServiceApi {
     }
   }
 
+  Future<List<ServiceRequest>> assignedRequests({
+    String? status,
+    int? offerId,
+    int? categoryId,
+  }) async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/services/requests/assigned',
+        queryParameters: {
+          if (status != null) 'status': status,
+          if (offerId != null) 'offer_id': offerId,
+          if (categoryId != null) 'category_id': categoryId,
+          'page_size': 100,
+        },
+      );
+      return (response.data?['data'] as List? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(ServiceRequest.fromJson)
+          .toList();
+    } on DioException catch (error) {
+      throw ServiceApiException(_mapError(error));
+    }
+  }
+
+  Future<ServiceRequest> assignedRequestDetail(int id) => _request(
+    () => _client.dio.get<Map<String, dynamic>>(
+      '/services/requests/assigned/$id',
+    ),
+  );
+
+  Future<ServiceRequest> updateAssignedRequest(
+    int id,
+    ServiceRequestStatusUpdateInput input,
+  ) => _request(
+    () => _client.dio.patch<Map<String, dynamic>>(
+      '/services/requests/$id/status',
+      data: input.toJson(),
+    ),
+  );
+
   ApiError _mapError(DioException error) {
     final data = error.response?.data;
     return data is Map<String, dynamic>

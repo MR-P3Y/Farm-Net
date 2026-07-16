@@ -194,4 +194,64 @@ void main() {
     expect(media.first['is_primary'], isTrue);
     expect(media.last['is_primary'], isFalse);
   });
+
+  group('provider workbench', () {
+    test('parses assigned request operational fields and timeline', () {
+      final request = ServiceRequest.fromJson({
+        'id': 91,
+        'requester_user_id': 12,
+        'offer_title': 'سم‌پاشی',
+        'category_title': 'عملیات مزرعه',
+        'title': 'سم‌پاشی باغ',
+        'status': 'open',
+        'currency': 'TOMAN',
+        'province_name': 'فارس',
+        'city_name': 'شیراز',
+        'created_at': '2026-07-16T08:00:00',
+        'status_logs': [
+          {
+            'id': 1,
+            'old_status': null,
+            'new_status': 'open',
+            'created_at': '2026-07-16T08:00:00',
+          },
+        ],
+      });
+      expect(request.requesterUserId, 12);
+      expect(request.offerTitle, 'سم‌پاشی');
+      expect(request.statusLogs.single.oldStatus, isNull);
+      expect(request.canAccept, isTrue);
+      expect(request.canReject, isTrue);
+    });
+
+    test('provider transitions expose only valid actions', () {
+      ServiceRequest request(String status) => ServiceRequest.fromJson({
+        'id': 1,
+        'title': 'کار',
+        'status': status,
+        'currency': 'TOMAN',
+        'created_at': '2026-07-16T08:00:00',
+      });
+      expect(request('open').providerNextStatuses, ['accepted', 'rejected']);
+      expect(request('accepted').providerNextStatuses, ['in_progress']);
+      expect(request('in_progress').providerNextStatuses, ['completed']);
+      for (final status in ['completed', 'rejected', 'cancelled']) {
+        expect(request(status).providerNextStatuses, isEmpty);
+      }
+      expect(request('in_progress').statusLabelFa, 'در حال انجام');
+    });
+
+    test('status update payload omits empty note', () {
+      const empty = ServiceRequestStatusUpdateInput(
+        status: 'accepted',
+        note: ' ',
+      );
+      const noted = ServiceRequestStatusUpdateInput(
+        status: 'rejected',
+        note: 'نامناسب',
+      );
+      expect(empty.toJson(), {'status': 'accepted'});
+      expect(noted.toJson(), {'status': 'rejected', 'note': 'نامناسب'});
+    });
+  });
 }

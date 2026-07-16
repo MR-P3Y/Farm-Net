@@ -63,7 +63,8 @@ Step 17.5 Request Notifications + Contract Hardening: completed
 Step 17.6 Mobile Service Discovery + Detail: completed
 Step 17.7 Mobile Service Request Flow: completed
 Step 17.8 Provider Profile + Offer Management Mobile: completed
-Next: Step 17.9 Provider Request Workbench
+Step 17.9 Provider Request Workbench: completed
+Next: Step 17.10 Admin Panel Services
 ```
 
 Services means agricultural operational services, not equipment rental.

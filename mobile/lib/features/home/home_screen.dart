@@ -72,6 +72,14 @@ class HomeScreen extends ConsumerWidget {
                       SizedBox(height: r.v(12)),
                       OutlinedButton.icon(
                         onPressed: () {
+                          context.push('/services/workbench');
+                        },
+                        icon: const Icon(Icons.work_outline),
+                        label: const Text('میزکار خدمات‌دهنده'),
+                      ),
+                      SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
                           context.push('/services/me/provider-profile');
                         },
                         icon: const Icon(Icons.engineering_outlined),

@@ -75,3 +75,10 @@ Step 17.8 consumes the owner profile endpoints under
 pricing modes (`fixed`, `hourly`, `daily`, `hectare`, `project`, `negotiable`).
 The existing public media uploader supplies `avatar_media_file_id` and offer
 `media_items[].media_file_id`; no parallel upload protocol was introduced.
+
+## Mobile provider workbench
+
+Step 17.9 consumes `GET /services/requests/assigned`,
+`GET /services/requests/assigned/{id}`, and
+`PATCH /services/requests/{id}/status`. Provider actions strictly follow the
+backend transition table; provider cancellation is not exposed.

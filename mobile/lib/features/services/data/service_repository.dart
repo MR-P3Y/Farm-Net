@@ -47,4 +47,19 @@ class ServiceRepository {
     int? offerId,
   }) => _api.saveOffer(input, offerId: offerId);
   Future<ServiceOfferOwner> submitOffer(int id) => _api.submitOffer(id);
+  Future<List<ServiceRequest>> assignedRequests({
+    String? status,
+    int? offerId,
+    int? categoryId,
+  }) => _api.assignedRequests(
+    status: status,
+    offerId: offerId,
+    categoryId: categoryId,
+  );
+  Future<ServiceRequest> assignedRequestDetail(int id) =>
+      _api.assignedRequestDetail(id);
+  Future<ServiceRequest> updateAssignedRequest(
+    int id,
+    ServiceRequestStatusUpdateInput input,
+  ) => _api.updateAssignedRequest(id, input);
 }

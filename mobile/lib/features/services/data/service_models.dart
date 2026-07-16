@@ -224,6 +224,7 @@ class ServiceRequest {
     this.offerTitle,
     this.categoryTitle,
     this.providerDisplayName,
+    this.requesterUserId,
     this.description,
     this.contactMethod,
     this.budgetAmount,
@@ -239,6 +240,7 @@ class ServiceRequest {
     this.statusLogs = const [],
   });
   final int id;
+  final int? requesterUserId;
   final int? offerId;
   final String? offerTitle;
   final String? categoryTitle;
@@ -265,6 +267,7 @@ class ServiceRequest {
 
   factory ServiceRequest.fromJson(Map<String, dynamic> json) => ServiceRequest(
     id: (json['id'] as num?)?.toInt() ?? 0,
+    requesterUserId: (json['requester_user_id'] as num?)?.toInt(),
     offerId: (json['offer_id'] as num?)?.toInt(),
     offerTitle: json['offer_title']?.toString(),
     categoryTitle: json['category_title']?.toString(),
@@ -291,6 +294,39 @@ class ServiceRequest {
             .map(ServiceRequestStatusLog.fromJson)
             .toList(),
   );
+
+  List<String> get providerNextStatuses => switch (status) {
+    'open' => const ['accepted', 'rejected'],
+    'accepted' => const ['in_progress'],
+    'in_progress' => const ['completed'],
+    _ => const [],
+  };
+  bool get canAccept => providerNextStatuses.contains('accepted');
+  bool get canReject => providerNextStatuses.contains('rejected');
+  bool get canStart => providerNextStatuses.contains('in_progress');
+  bool get canComplete => providerNextStatuses.contains('completed');
+  String get statusLabelFa => requestStatusLabel(status);
+}
+
+String requestStatusLabel(String status) =>
+    const {
+      'open': 'باز',
+      'accepted': 'پذیرفته‌شده',
+      'rejected': 'ردشده',
+      'in_progress': 'در حال انجام',
+      'completed': 'تکمیل‌شده',
+      'cancelled': 'لغوشده',
+    }[status] ??
+    status;
+
+class ServiceRequestStatusUpdateInput {
+  const ServiceRequestStatusUpdateInput({required this.status, this.note});
+  final String status;
+  final String? note;
+  Map<String, dynamic> toJson() => {
+    'status': status,
+    if (note?.trim().isNotEmpty ?? false) 'note': note!.trim(),
+  };
 }
 
 class ServiceRequestInput {
