@@ -55,6 +55,12 @@ class AdminSidebar extends StatelessWidget {
                 ),
                 _SidebarItem(
                   icon: Icons.receipt_long_outlined,
+                  label: 'خدمات کشاورزی',
+                  compact: isCompact,
+                  onTap: () => context.go('/services'),
+                ),
+                _SidebarItem(
+                  icon: Icons.receipt_long_outlined,
                   label: 'سفارش‌ها',
                   compact: isCompact,
                   onTap: () => context.go('/orders'),

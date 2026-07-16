@@ -146,6 +146,24 @@ Request notifications were intentionally deferred to Step 17.5.
   build completed successfully.
 - OpenAPI exposed all three assigned operations; database and Redis were `ok`.
 
+## Step 17.10 Completion Evidence
+
+- Added the admin Services route and sidebar entry with four management tabs:
+  categories, provider profiles, offers, and service requests.
+- Added typed Dart models and API integration for category create/edit,
+  provider and offer moderation, paginated request lists, request detail,
+  exact status logs, and admin request status updates.
+- Limited request actions to the backend transition matrix and used the real
+  provider and offer status values; moderation notes are sent with status
+  updates and backend permission errors are shown to the operator.
+- Added loading, empty, error, refresh, and pagination states without rendering
+  raw JSON in the interface.
+- Flutter analyze passed with no issues, all admin tests passed, and Flutter Web
+  build completed successfully.
+- Runtime OpenAPI exposed all four admin Services resource groups; application,
+  database, and Redis health returned `ok`.
+- Step 17.11 (Docs/Postman and runtime regression) is the next planned step.
+
 ## Important Existing Gaps
 
 The following are not considered complete merely because related permissions or
