@@ -73,4 +73,62 @@ void main() {
     expect(provider.location, 'فارس، شیراز');
     expect(provider.completedRequestsCount, 0);
   });
+
+  group('ServiceRequest', () {
+    test('parses hardened detail and exact status log names', () {
+      final request = ServiceRequest.fromJson({
+        'id': 21,
+        'offer_id': 7,
+        'offer_title': 'آزمایش خاک',
+        'provider_display_name': 'آزمایشگاه سبز',
+        'title': 'آزمایش زمین شمالی',
+        'description': 'نمونه‌برداری و آزمایش کامل خاک',
+        'contact_method': 'in_app',
+        'status': 'accepted',
+        'budget_amount': '350000.00',
+        'currency': 'TOMAN',
+        'created_at': '2026-07-16T10:00:00',
+        'status_logs': [
+          {
+            'id': 1,
+            'old_status': 'open',
+            'new_status': 'accepted',
+            'note': 'پذیرفته شد',
+            'created_at': '2026-07-16T11:00:00',
+          },
+        ],
+      });
+      expect(request.canCancel, isTrue);
+      expect(request.budgetAmount, 350000);
+      expect(request.statusLogs.single.oldStatus, 'open');
+      expect(request.statusLogs.single.newStatus, 'accepted');
+    });
+
+    test('terminal requests cannot be cancelled', () {
+      final request = ServiceRequest.fromJson({
+        'id': 22,
+        'title': 'برداشت',
+        'status': 'completed',
+        'currency': 'TOMAN',
+        'created_at': '2026-07-16T10:00:00',
+      });
+      expect(request.canCancel, isFalse);
+    });
+
+    test('serializes only populated create fields', () {
+      const input = ServiceRequestInput(
+        offerId: 7,
+        title: 'آزمایش خاک',
+        description: 'آزمایش کامل زمین',
+        contactMethod: 'visit',
+        provinceId: 1,
+        provinceName: 'تهران',
+      );
+      expect(input.toJson()['offer_id'], 7);
+      expect(input.toJson()['contact_method'], 'visit');
+      expect(input.toJson()['province_name'], 'تهران');
+      expect(input.toJson().containsKey('city_id'), isFalse);
+      expect(input.toJson().containsKey('budget_amount'), isFalse);
+    });
+  });
 }

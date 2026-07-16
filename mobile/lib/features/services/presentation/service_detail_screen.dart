@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
@@ -91,6 +92,15 @@ class ServiceDetailScreen extends ConsumerWidget {
                               const Divider(height: 32),
                               _ProviderCard(provider: offer.provider!),
                             ],
+                            const SizedBox(height: 20),
+                            FilledButton.icon(
+                              onPressed:
+                                  () => context.push(
+                                    '/services/${offer.id}/request',
+                                  ),
+                              icon: const Icon(Icons.assignment_add),
+                              label: const Text('ثبت درخواست این خدمت'),
+                            ),
                           ],
                         ),
                       ),

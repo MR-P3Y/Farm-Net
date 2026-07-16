@@ -93,19 +93,19 @@ Categories, provider profiles, and offers have backend repository/service/API
 and admin moderation support. Service Request tables, permissions, schemas,
 repository operations, workflow services, requester/provider/admin routes,
 status logs, role-specific privacy contracts, exact-once in-app notifications,
-API docs, Postman coverage, focused backend tests, and mobile service discovery
-and detail UI are implemented. Mobile request/provider flows and admin-panel UI
-remain for later steps.
+API docs, Postman coverage, focused backend tests, mobile service discovery and
+detail UI, and the requester mobile request flow are implemented. Mobile
+provider management/workbench and admin-panel UI remain for later steps.
 
 The next product implementation step is:
 
 ```text
-Step 17.7 - Mobile Service Request Flow
+Step 17.8 - Provider Profile + Offer Management Mobile
 ```
 
 ## Known Gaps
 
-- Services mobile request and provider workbench flows do not exist yet.
+- Services mobile provider management and provider workbench flows do not exist yet.
 - Services admin-panel feature does not exist.
 - Services Request has focused tests; broader Services regression is still required.
 - Real payment gateway integration is not implemented.

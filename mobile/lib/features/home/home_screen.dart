@@ -70,6 +70,14 @@ class HomeScreen extends ConsumerWidget {
                         label: const Text('پروفایل من'),
                       ),
                       SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/services/requests');
+                        },
+                        icon: const Icon(Icons.assignment_outlined),
+                        label: const Text('درخواست‌های خدمات من'),
+                      ),
+                      SizedBox(height: r.v(12)),
                       FilledButton.icon(
                         onPressed: () {
                           context.push('/stores');

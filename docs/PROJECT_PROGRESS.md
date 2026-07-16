@@ -7,7 +7,7 @@ Verified HEAD: `c247d9d`
 ## Current Position
 
 The Windows development environment recovery is complete. Product development
-should resume at `Step 17.7 - Mobile Service Request Flow`.
+should resume at `Step 17.8 - Provider Profile + Offer Management Mobile`.
 
 Do not restart Step 17.1, 17.2, or 17.3. Their implementations are already in
 the repository.
@@ -42,8 +42,8 @@ the repository.
 | 17.4 Service Request Flow | Done | APIs, transitions, status logs, tests, runtime smoke |
 | 17.5 Request Notifications + Contract Hardening | Done | Six events, exact-once guards, role contracts, tests and runtime checks |
 | 17.6 Mobile Service Discovery + Detail | Done | List/detail UI, filters, gallery, navigation and model tests |
-| 17.7 Mobile Service Request Flow | Next | Not started |
-| 17.8 Provider Profile + Offer Management Mobile | Planned | Not started |
+| 17.7 Mobile Service Request Flow | Done | Create/list/detail/cancel, timeline, routing and tests |
+| 17.8 Provider Profile + Offer Management Mobile | Next | Not started |
 | 17.9 Provider Request Workbench | Planned | Not started |
 | 17.10 Admin Panel Services | Planned | Not started |
 | 17.11 Docs/Postman + Runtime Regression | Planned | Not started |
@@ -98,6 +98,21 @@ Request notifications were intentionally deferred to Step 17.5.
 - Added safe parsing tests for public offers, nested category/provider/media,
   decimal price strings, optional fields, and fallbacks.
 - Flutter analyze completed with no issues and all 14 mobile tests passed.
+
+## Step 17.7 Completion Evidence
+
+- Added authenticated request creation from service detail with title,
+  description, contact method, optional budget, schedule, province/city, and
+  address fields matching the backend create contract.
+- Added requester-owned list and detail screens, refresh/loading/error/empty
+  states, status labels, operational detail, and exact status-log timeline.
+- Added cancellation only for `open` and `accepted` requests and sends the
+  backend `reason` contract.
+- Added Home and service-detail navigation for request creation and requester
+  request management.
+- Added model/input tests for decimal parsing, hardened status-log field names,
+  cancellation rules, and omission of unpopulated optional fields.
+- Flutter analyze completed with no issues and all 17 mobile tests passed.
 
 ## Important Existing Gaps
 

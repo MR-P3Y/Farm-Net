@@ -69,6 +69,53 @@ class ServiceApi {
     }
   }
 
+  Future<ServiceRequest> createRequest(ServiceRequestInput input) async =>
+      _request(
+        () => _client.dio.post<Map<String, dynamic>>(
+          '/services/requests',
+          data: input.toJson(),
+        ),
+      );
+
+  Future<List<ServiceRequest>> myRequests({String? status}) async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/services/requests/me',
+        queryParameters: status == null ? null : {'status': status},
+      );
+      return (response.data?['data'] as List? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(ServiceRequest.fromJson)
+          .toList();
+    } on DioException catch (error) {
+      throw ServiceApiException(_mapError(error));
+    }
+  }
+
+  Future<ServiceRequest> requestDetail(int id) => _request(
+    () => _client.dio.get<Map<String, dynamic>>('/services/requests/$id'),
+  );
+
+  Future<ServiceRequest> cancelRequest(int id, {String? reason}) => _request(
+    () => _client.dio.patch<Map<String, dynamic>>(
+      '/services/requests/$id/cancel',
+      data: {'reason': reason},
+    ),
+  );
+
+  Future<ServiceRequest> _request(
+    Future<Response<Map<String, dynamic>>> Function() call,
+  ) async {
+    try {
+      final response = await call();
+      return ServiceRequest.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw ServiceApiException(_mapError(error));
+    }
+  }
+
   ApiError _mapError(DioException error) {
     final data = error.response?.data;
     return data is Map<String, dynamic>

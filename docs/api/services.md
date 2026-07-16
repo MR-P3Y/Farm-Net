@@ -58,3 +58,11 @@ The Step 17.6 mobile feature consumes `GET /services/categories`,
 `category_id`, `province_id`, `city_id`, and `pricing_type`. A price-range UI is
 not exposed because the current backend list contract has no minimum/maximum
 price parameters.
+
+## Mobile requester flow
+
+Step 17.7 consumes `POST /services/requests`,
+`GET /services/requests/me`, `GET /services/requests/{id}`, and
+`PATCH /services/requests/{id}/cancel`. The mobile client sends `reason` for
+cancellation, permits cancellation only from `open` or `accepted`, and parses
+the hardened `old_status`/`new_status` status-log contract.

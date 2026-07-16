@@ -61,7 +61,8 @@ Step 17.3 Service Offers backend: completed (c247d9d)
 Step 17.4 Services Request Flow: completed (f1adaf5)
 Step 17.5 Request Notifications + Contract Hardening: completed
 Step 17.6 Mobile Service Discovery + Detail: completed
-Next: Step 17.7 Mobile Service Request Flow
+Step 17.7 Mobile Service Request Flow: completed
+Next: Step 17.8 Provider Profile + Offer Management Mobile
 ```
 
 Services means agricultural operational services, not equipment rental.

@@ -23,6 +23,9 @@ import '../../features/social/presentation/social_feed_screen.dart';
 import '../../features/social/presentation/social_post_detail_screen.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/service_list_screen.dart';
+import '../../features/services/presentation/my_service_requests_screen.dart';
+import '../../features/services/presentation/service_request_create_screen.dart';
+import '../../features/services/presentation/service_request_detail_screen.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/stores/presentation/my_store_screen.dart';
 import '../../features/stores/presentation/public_store_detail_screen.dart';
@@ -75,6 +78,28 @@ final GoRouter appRouter = GoRouter(
       path: '/services',
       name: 'services',
       builder: (context, state) => const ServiceListScreen(),
+    ),
+    GoRoute(
+      path: '/services/requests',
+      name: 'my-service-requests',
+      builder: (context, state) => const MyServiceRequestsScreen(),
+    ),
+    GoRoute(
+      path: '/services/requests/:requestId',
+      name: 'service-request-detail',
+      builder:
+          (context, state) => ServiceRequestDetailScreen(
+            requestId:
+                int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+          ),
+    ),
+    GoRoute(
+      path: '/services/:offerId/request',
+      name: 'service-request-create',
+      builder:
+          (context, state) => ServiceRequestCreateScreen(
+            offerId: int.tryParse(state.pathParameters['offerId'] ?? '') ?? 0,
+          ),
     ),
     GoRoute(
       path: '/services/:offerId',
