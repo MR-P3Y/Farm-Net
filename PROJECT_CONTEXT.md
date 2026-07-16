@@ -94,18 +94,18 @@ and admin moderation support. Service Request tables, permissions, schemas,
 repository operations, workflow services, requester/provider/admin routes,
 status logs, role-specific privacy contracts, exact-once in-app notifications,
 API docs, Postman coverage, focused backend tests, mobile service discovery and
-detail UI, and the requester mobile request flow are implemented. Mobile
-provider management/workbench and admin-panel UI remain for later steps.
+detail UI, requester request flow, and provider profile/offer management are
+implemented. The mobile provider request workbench and admin-panel UI remain.
 
 The next product implementation step is:
 
 ```text
-Step 17.8 - Provider Profile + Offer Management Mobile
+Step 17.9 - Provider Request Workbench
 ```
 
 ## Known Gaps
 
-- Services mobile provider management and provider workbench flows do not exist yet.
+- Services mobile provider request workbench does not exist yet.
 - Services admin-panel feature does not exist.
 - Services Request has focused tests; broader Services regression is still required.
 - Real payment gateway integration is not implemented.

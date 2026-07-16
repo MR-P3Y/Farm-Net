@@ -116,6 +116,105 @@ class ServiceApi {
     }
   }
 
+  Future<ServiceProviderProfileOwner?> myProviderProfile() async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/services/me/provider-profile',
+      );
+      final data = response.data?['data'];
+      if (data == null || data is Map && data.isEmpty) return null;
+      return ServiceProviderProfileOwner.fromJson(data as Map<String, dynamic>);
+    } on DioException catch (error) {
+      throw ServiceApiException(_mapError(error));
+    }
+  }
+
+  Future<ServiceProviderProfileOwner> saveProviderProfile(
+    ServiceProviderProfileInput input, {
+    required bool create,
+  }) async {
+    try {
+      final response =
+          create
+              ? await _client.dio.post<Map<String, dynamic>>(
+                '/services/me/provider-profile',
+                data: input.toJson(),
+              )
+              : await _client.dio.put<Map<String, dynamic>>(
+                '/services/me/provider-profile',
+                data: input.toJson(),
+              );
+      return ServiceProviderProfileOwner.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw ServiceApiException(_mapError(error));
+    }
+  }
+
+  Future<ServiceProviderProfileOwner> submitProviderProfile() async {
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/services/me/provider-profile/submit',
+      );
+      return ServiceProviderProfileOwner.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw ServiceApiException(_mapError(error));
+    }
+  }
+
+  Future<List<ServiceOfferOwner>> myOffers() async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/services/me/offers',
+      );
+      return (response.data?['data'] as List? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(ServiceOfferOwner.fromJson)
+          .toList();
+    } on DioException catch (error) {
+      throw ServiceApiException(_mapError(error));
+    }
+  }
+
+  Future<ServiceOfferOwner> saveOffer(
+    ServiceOfferInput input, {
+    int? offerId,
+  }) async {
+    try {
+      final response =
+          offerId == null
+              ? await _client.dio.post<Map<String, dynamic>>(
+                '/services/me/offers',
+                data: input.toJson(),
+              )
+              : await _client.dio.put<Map<String, dynamic>>(
+                '/services/me/offers/$offerId',
+                data: input.toJson(),
+              );
+      return ServiceOfferOwner.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw ServiceApiException(_mapError(error));
+    }
+  }
+
+  Future<ServiceOfferOwner> submitOffer(int id) async {
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/services/me/offers/$id/submit',
+      );
+      return ServiceOfferOwner.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw ServiceApiException(_mapError(error));
+    }
+  }
+
   ApiError _mapError(DioException error) {
     final data = error.response?.data;
     return data is Map<String, dynamic>

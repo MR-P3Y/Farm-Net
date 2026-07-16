@@ -66,3 +66,12 @@ Step 17.7 consumes `POST /services/requests`,
 `PATCH /services/requests/{id}/cancel`. The mobile client sends `reason` for
 cancellation, permits cancellation only from `open` or `accepted`, and parses
 the hardened `old_status`/`new_status` status-log contract.
+
+## Mobile provider management
+
+Step 17.8 consumes the owner profile endpoints under
+`/services/me/provider-profile` and owner offer endpoints under
+`/services/me/offers`. It uses the exact `pending_review` status and backend
+pricing modes (`fixed`, `hourly`, `daily`, `hectare`, `project`, `negotiable`).
+The existing public media uploader supplies `avatar_media_file_id` and offer
+`media_items[].media_file_id`; no parallel upload protocol was introduced.

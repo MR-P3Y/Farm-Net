@@ -62,7 +62,8 @@ Step 17.4 Services Request Flow: completed (f1adaf5)
 Step 17.5 Request Notifications + Contract Hardening: completed
 Step 17.6 Mobile Service Discovery + Detail: completed
 Step 17.7 Mobile Service Request Flow: completed
-Next: Step 17.8 Provider Profile + Offer Management Mobile
+Step 17.8 Provider Profile + Offer Management Mobile: completed
+Next: Step 17.9 Provider Request Workbench
 ```
 
 Services means agricultural operational services, not equipment rental.

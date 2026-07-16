@@ -7,7 +7,7 @@ Verified HEAD: `c247d9d`
 ## Current Position
 
 The Windows development environment recovery is complete. Product development
-should resume at `Step 17.8 - Provider Profile + Offer Management Mobile`.
+should resume at `Step 17.9 - Provider Request Workbench`.
 
 Do not restart Step 17.1, 17.2, or 17.3. Their implementations are already in
 the repository.
@@ -43,11 +43,11 @@ the repository.
 | 17.5 Request Notifications + Contract Hardening | Done | Six events, exact-once guards, role contracts, tests and runtime checks |
 | 17.6 Mobile Service Discovery + Detail | Done | List/detail UI, filters, gallery, navigation and model tests |
 | 17.7 Mobile Service Request Flow | Done | Create/list/detail/cancel, timeline, routing and tests |
-| 17.8 Provider Profile + Offer Management Mobile | Next | Not started |
-| 17.9 Provider Request Workbench | Planned | Not started |
+| 17.8 Provider Profile + Offer Management Mobile | Done | Profile/offers CRUD-submit, media, navigation and tests |
+| 17.9 Provider Request Workbench | Next | Not started |
 | 17.10 Admin Panel Services | Planned | Not started |
 | 17.11 Docs/Postman + Runtime Regression | Planned | Not started |
-| Services mobile UI | Not started | No `mobile/lib/features/services` |
+| Services mobile UI | In progress | Discovery, requester flow, provider profile and offers done |
 | Services admin UI | Not started | No `admin-panel/lib/features/services` |
 | Services API docs/Postman | Done for request backend | `docs/api/services.md`, Services collection |
 | Services automated tests | Started | 13 focused Request workflow/contract tests |
@@ -113,6 +113,24 @@ Request notifications were intentionally deferred to Step 17.5.
 - Added model/input tests for decimal parsing, hardened status-log field names,
   cancellation rules, and omission of unpopulated optional fields.
 - Flutter analyze completed with no issues and all 17 mobile tests passed.
+
+## Step 17.8 Completion Evidence
+
+- Added provider owner-profile GET/create/update/submit integration, nullable
+  no-profile state, status helpers, category selection, admin-note rendering,
+  duplicate-submit protection, and Persian management UI.
+- Added approved-provider offer list/create/update/submit integration with real
+  backend status and pricing enums, moderation notes, and eligibility helpers.
+- Reused the existing authenticated media uploader. Public uploads map to
+  `avatar_media_file_id` and `media_items[].media_file_id`; existing offer
+  media retain their underlying media-file IDs during editing.
+- Added Home entries and non-conflicting provider profile/offer routes.
+- Backend envelope errors, including 401, 403, and validation messages, flow
+  through the existing `ApiError` mapping into retryable UI states.
+- Flutter analyze passed with no issues, all 21 tests passed, and Flutter Web
+  build completed successfully.
+- OpenAPI exposed all eight owner profile/offer methods; runtime database and
+  Redis health returned `ok`.
 
 ## Important Existing Gaps
 

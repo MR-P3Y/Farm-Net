@@ -20,6 +20,7 @@ class ServiceCategory {
 class ServiceMedia {
   const ServiceMedia({
     required this.id,
+    this.mediaFileId,
     this.publicUrl,
     this.filePath,
     this.altText,
@@ -27,6 +28,7 @@ class ServiceMedia {
   });
 
   final int id;
+  final int? mediaFileId;
   final String? publicUrl;
   final String? filePath;
   final String? altText;
@@ -36,6 +38,7 @@ class ServiceMedia {
 
   factory ServiceMedia.fromJson(Map<String, dynamic> json) => ServiceMedia(
     id: (json['id'] as num?)?.toInt() ?? 0,
+    mediaFileId: (json['media_file_id'] as num?)?.toInt(),
     publicUrl: json['public_url']?.toString(),
     filePath: json['file_path']?.toString(),
     altText: json['alt_text']?.toString(),
@@ -329,5 +332,244 @@ class ServiceRequestInput {
     if (cityName != null) 'city_name': cityName,
     if (addressText?.trim().isNotEmpty ?? false)
       'address_text': addressText!.trim(),
+  };
+}
+
+String serviceStatusLabel(String status) =>
+    const {
+      'draft': 'پیش‌نویس',
+      'pending_review': 'در انتظار بررسی',
+      'approved': 'تأییدشده',
+      'rejected': 'ردشده',
+      'suspended': 'تعلیق‌شده',
+      'archived': 'بایگانی‌شده',
+    }[status] ??
+    status;
+
+class ServiceProviderProfileOwner {
+  const ServiceProviderProfileOwner({
+    required this.id,
+    required this.userId,
+    required this.status,
+    this.displayName,
+    this.title,
+    this.bio,
+    this.experienceYears,
+    this.phone,
+    this.email,
+    this.provinceId,
+    this.cityId,
+    this.provinceName,
+    this.cityName,
+    this.serviceArea,
+    this.avatarMediaFileId,
+    this.avatarUrl,
+    this.categories = const [],
+    this.adminNote,
+  });
+  final int id;
+  final int userId;
+  final String status;
+  final String? displayName;
+  final String? title;
+  final String? bio;
+  final int? experienceYears;
+  final String? phone;
+  final String? email;
+  final int? provinceId;
+  final int? cityId;
+  final String? provinceName;
+  final String? cityName;
+  final String? serviceArea;
+  final int? avatarMediaFileId;
+  final String? avatarUrl;
+  final List<ServiceCategory> categories;
+  final String? adminNote;
+  bool get canEdit => status != 'suspended';
+  bool get canSubmit => status == 'draft' || status == 'rejected';
+  bool get isApproved => status == 'approved';
+  String get statusLabelFa => serviceStatusLabel(status);
+  factory ServiceProviderProfileOwner.fromJson(Map<String, dynamic> json) =>
+      ServiceProviderProfileOwner(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        userId: (json['user_id'] as num?)?.toInt() ?? 0,
+        status: json['status']?.toString() ?? 'draft',
+        displayName: json['display_name']?.toString(),
+        title: json['title']?.toString(),
+        bio: json['bio']?.toString(),
+        experienceYears: (json['experience_years'] as num?)?.toInt(),
+        phone: json['phone']?.toString(),
+        email: json['email']?.toString(),
+        provinceId: (json['province_id'] as num?)?.toInt(),
+        cityId: (json['city_id'] as num?)?.toInt(),
+        provinceName: json['province_name']?.toString(),
+        cityName: json['city_name']?.toString(),
+        serviceArea: json['service_area']?.toString(),
+        avatarMediaFileId: (json['avatar_media_file_id'] as num?)?.toInt(),
+        avatarUrl: json['avatar_url']?.toString(),
+        categories:
+            (json['categories'] as List? ?? const [])
+                .whereType<Map<String, dynamic>>()
+                .map(ServiceCategory.fromJson)
+                .toList(),
+        adminNote: json['admin_note']?.toString(),
+      );
+}
+
+class ServiceProviderProfileInput {
+  const ServiceProviderProfileInput({
+    required this.categoryIds,
+    this.displayName,
+    this.title,
+    this.bio,
+    this.experienceYears,
+    this.phone,
+    this.email,
+    this.provinceId,
+    this.cityId,
+    this.provinceName,
+    this.cityName,
+    this.serviceArea,
+    this.avatarMediaFileId,
+  });
+  final List<int> categoryIds;
+  final String? displayName;
+  final String? title;
+  final String? bio;
+  final int? experienceYears;
+  final String? phone;
+  final String? email;
+  final int? provinceId;
+  final int? cityId;
+  final String? provinceName;
+  final String? cityName;
+  final String? serviceArea;
+  final int? avatarMediaFileId;
+  Map<String, dynamic> toJson() => {
+    'display_name': displayName,
+    'title': title,
+    'bio': bio,
+    'experience_years': experienceYears,
+    'phone': phone,
+    'email': email,
+    'province_id': provinceId,
+    'city_id': cityId,
+    'province_name': provinceName,
+    'city_name': cityName,
+    'service_area': serviceArea,
+    'avatar_media_file_id': avatarMediaFileId,
+    'category_ids': categoryIds,
+  };
+}
+
+class ServiceOfferOwner extends ServiceOffer {
+  const ServiceOfferOwner({
+    required super.id,
+    required super.providerProfileId,
+    required super.title,
+    required super.pricingType,
+    required super.currency,
+    required super.media,
+    required this.status,
+    super.categoryId,
+    super.slug,
+    super.shortDescription,
+    super.description,
+    super.priceAmount,
+    super.provinceName,
+    super.cityName,
+    super.serviceArea,
+    super.category,
+    super.provider,
+    super.primaryMedia,
+    this.adminNote,
+  });
+  final String status;
+  final String? adminNote;
+  bool get canEdit => status != 'suspended' && status != 'archived';
+  bool get canSubmit => status == 'draft' || status == 'rejected';
+  String get statusLabelFa => serviceStatusLabel(status);
+  factory ServiceOfferOwner.fromJson(Map<String, dynamic> json) {
+    final base = ServiceOffer.fromJson(json);
+    return ServiceOfferOwner(
+      id: base.id,
+      providerProfileId: base.providerProfileId,
+      title: base.title,
+      pricingType: base.pricingType,
+      currency: base.currency,
+      media: base.media,
+      status: json['status']?.toString() ?? 'draft',
+      categoryId: base.categoryId,
+      slug: base.slug,
+      shortDescription: base.shortDescription,
+      description: base.description,
+      priceAmount: base.priceAmount,
+      provinceName: base.provinceName,
+      cityName: base.cityName,
+      serviceArea: base.serviceArea,
+      category: base.category,
+      provider: base.provider,
+      primaryMedia: base.primaryMedia,
+      adminNote: json['admin_note']?.toString(),
+    );
+  }
+}
+
+class ServiceOfferInput {
+  const ServiceOfferInput({
+    required this.title,
+    required this.slug,
+    required this.pricingType,
+    required this.mediaFileIds,
+    this.categoryId,
+    this.shortDescription,
+    this.description,
+    this.priceAmount,
+    this.provinceId,
+    this.cityId,
+    this.provinceName,
+    this.cityName,
+    this.serviceArea,
+  });
+  final int? categoryId;
+  final String title;
+  final String slug;
+  final String? shortDescription;
+  final String? description;
+  final String pricingType;
+  final double? priceAmount;
+  final int? provinceId;
+  final int? cityId;
+  final String? provinceName;
+  final String? cityName;
+  final String? serviceArea;
+  final List<int> mediaFileIds;
+  Map<String, dynamic> toJson() => {
+    'category_id': categoryId,
+    'title': title,
+    'slug': slug,
+    'short_description': shortDescription,
+    'description': description,
+    'pricing_type': pricingType,
+    'price_amount': priceAmount,
+    'currency': 'TOMAN',
+    'province_id': provinceId,
+    'city_id': cityId,
+    'province_name': provinceName,
+    'city_name': cityName,
+    'service_area': serviceArea,
+    'is_active': true,
+    'media_items':
+        mediaFileIds
+            .asMap()
+            .entries
+            .map(
+              (entry) => {
+                'media_file_id': entry.value,
+                'sort_order': entry.key,
+                'is_primary': entry.key == 0,
+              },
+            )
+            .toList(),
   };
 }

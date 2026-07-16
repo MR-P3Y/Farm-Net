@@ -33,4 +33,18 @@ class ServiceRepository {
   Future<ServiceRequest> requestDetail(int id) => _api.requestDetail(id);
   Future<ServiceRequest> cancelRequest(int id, {String? reason}) =>
       _api.cancelRequest(id, reason: reason);
+  Future<ServiceProviderProfileOwner?> myProviderProfile() =>
+      _api.myProviderProfile();
+  Future<ServiceProviderProfileOwner> saveProviderProfile(
+    ServiceProviderProfileInput input, {
+    required bool create,
+  }) => _api.saveProviderProfile(input, create: create);
+  Future<ServiceProviderProfileOwner> submitProviderProfile() =>
+      _api.submitProviderProfile();
+  Future<List<ServiceOfferOwner>> myOffers() => _api.myOffers();
+  Future<ServiceOfferOwner> saveOffer(
+    ServiceOfferInput input, {
+    int? offerId,
+  }) => _api.saveOffer(input, offerId: offerId);
+  Future<ServiceOfferOwner> submitOffer(int id) => _api.submitOffer(id);
 }

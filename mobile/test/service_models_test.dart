@@ -131,4 +131,67 @@ void main() {
       expect(input.toJson().containsKey('budget_amount'), isFalse);
     });
   });
+
+  test('owner provider profile parses moderation fields and helpers', () {
+    final profile = ServiceProviderProfileOwner.fromJson({
+      'id': 4,
+      'user_id': 9,
+      'status': 'rejected',
+      'display_name': 'گروه خدمات سبز',
+      'admin_note': 'تکمیل سوابق',
+      'categories': [
+        {'id': 2, 'title': 'سم‌پاشی'},
+      ],
+    });
+    expect(profile.canEdit, isTrue);
+    expect(profile.canSubmit, isTrue);
+    expect(profile.isApproved, isFalse);
+    expect(profile.statusLabelFa, 'ردشده');
+    expect(profile.adminNote, 'تکمیل سوابق');
+    expect(profile.categories.single.id, 2);
+  });
+
+  test('provider profile input serializes category and media IDs', () {
+    const input = ServiceProviderProfileInput(
+      categoryIds: [2, 5],
+      displayName: 'خدمات سبز',
+      avatarMediaFileId: 18,
+    );
+    expect(input.toJson()['category_ids'], [2, 5]);
+    expect(input.toJson()['avatar_media_file_id'], 18);
+  });
+
+  test('owner offer parses media and submit eligibility', () {
+    final offer = ServiceOfferOwner.fromJson({
+      'id': 7,
+      'provider_profile_id': 4,
+      'title': 'سم‌پاشی',
+      'slug': 'spraying',
+      'status': 'draft',
+      'pricing_type': 'hectare',
+      'price_amount': '500000',
+      'currency': 'TOMAN',
+      'media': [
+        {'id': 3, 'media_file_id': 19, 'is_primary': true},
+      ],
+    });
+    expect(offer.canEdit, isTrue);
+    expect(offer.canSubmit, isTrue);
+    expect(offer.media.single.mediaFileId, 19);
+    expect(offer.priceAmount, 500000);
+  });
+
+  test('offer input maps uploaded media to backend contract', () {
+    const input = ServiceOfferInput(
+      title: 'سم‌پاشی',
+      slug: 'spraying',
+      pricingType: 'fixed',
+      priceAmount: 100,
+      mediaFileIds: [11, 12],
+    );
+    final media = input.toJson()['media_items'] as List;
+    expect(media.first['media_file_id'], 11);
+    expect(media.first['is_primary'], isTrue);
+    expect(media.last['is_primary'], isFalse);
+  });
 }

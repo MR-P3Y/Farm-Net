@@ -24,6 +24,10 @@ import '../../features/social/presentation/social_post_detail_screen.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/service_list_screen.dart';
 import '../../features/services/presentation/my_service_requests_screen.dart';
+import '../../features/services/presentation/my_offers_screen.dart';
+import '../../features/services/presentation/my_provider_profile_screen.dart';
+import '../../features/services/presentation/offer_edit_screen.dart';
+import '../../features/services/data/service_models.dart';
 import '../../features/services/presentation/service_request_create_screen.dart';
 import '../../features/services/presentation/service_request_detail_screen.dart';
 import '../../features/splash/splash_screen.dart';
@@ -78,6 +82,28 @@ final GoRouter appRouter = GoRouter(
       path: '/services',
       name: 'services',
       builder: (context, state) => const ServiceListScreen(),
+    ),
+    GoRoute(
+      path: '/services/me/provider-profile',
+      name: 'my-service-provider-profile',
+      builder: (context, state) => const MyProviderProfileScreen(),
+    ),
+    GoRoute(
+      path: '/services/me/offers',
+      name: 'my-service-offers',
+      builder: (context, state) => const MyOffersScreen(),
+    ),
+    GoRoute(
+      path: '/services/me/offers/new',
+      name: 'new-service-offer',
+      builder: (context, state) => const OfferEditScreen(),
+    ),
+    GoRoute(
+      path: '/services/me/offers/:offerId/edit',
+      name: 'edit-service-offer',
+      builder:
+          (context, state) =>
+              OfferEditScreen(offer: state.extra as ServiceOfferOwner?),
     ),
     GoRoute(
       path: '/services/requests',
