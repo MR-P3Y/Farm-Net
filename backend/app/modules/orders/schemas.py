@@ -294,3 +294,17 @@ class FinancialRefundOut(BaseModel):
     processed_at: str | None = None
     created_at: str
     updated_at: str
+
+
+class AdminAuditLogOut(BaseModel):
+    id: int
+    admin_user_id: int
+    action: str
+    target_type: str
+    target_id: str
+    old_value: str | None = None
+    new_value: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    trace_id: str | None = None
+    created_at: str

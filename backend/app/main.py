@@ -22,6 +22,7 @@ from app.modules.notifications.admin_router import router as admin_notifications
 from app.modules.notifications.router import router as notifications_router
 from app.modules.orders.admin_router import router as admin_orders_router
 from app.modules.orders.checkout_router import router as checkout_router
+from app.modules.orders.finance_router import router as finance_router
 from app.modules.orders.commission_router import router as commission_router
 from app.modules.orders.payments_router import router as payments_router
 from app.modules.orders.router import router as orders_router
@@ -83,6 +84,7 @@ def create_app() -> FastAPI:
     app.include_router(payments_router, prefix=settings.api_v1_prefix)
     app.include_router(seller_orders_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_orders_router, prefix=settings.api_v1_prefix)
+    app.include_router(finance_router, prefix=settings.api_v1_prefix)
     app.include_router(commission_router, prefix=settings.api_v1_prefix)
     app.include_router(media_router, prefix=settings.api_v1_prefix)
     app.include_router(media_access_router, prefix=settings.api_v1_prefix)

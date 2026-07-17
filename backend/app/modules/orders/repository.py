@@ -15,6 +15,7 @@ from app.modules.orders.enums import (
     PaymentStatus,
 )
 from app.modules.orders.models import (
+    AdminAuditLog,
     Cart,
     CartItem,
     CheckoutRequest,
@@ -549,6 +550,23 @@ class OrderRepository:
         self.db.add(row)
         self.db.flush()
         return row
+
+    def create_admin_audit(self, **values) -> AdminAuditLog:
+        row = AdminAuditLog(**values)
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def list_finance_rows(self, model, *, page: int, page_size: int):
+        query = self.db.query(model)
+        total = query.count()
+        rows = query.order_by(model.created_at.desc(), model.id.desc()).offset(
+            (page - 1) * page_size
+        ).limit(page_size).all()
+        return rows, total
+
+    def get_finance_row(self, model, *, row_id: int):
+        return self.db.query(model).filter(model.id == row_id).one_or_none()
 
     def get_invoice_by_order(self, *, order_id: int) -> FinancialInvoice | None:
         return (

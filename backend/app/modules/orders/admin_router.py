@@ -24,7 +24,14 @@ def create_refund(
     db: Session = Depends(get_db),
     current_user: AuthUser = Depends(require_permission("finance.refunds.create")),
 ):
-    result = RefundService(db).create(user=current_user, payload=payload)
+    result = RefundService(db).create(
+        user=current_user, payload=payload,
+        audit_context={
+            "ip_address": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "trace_id": request.state.trace_id,
+        },
+    )
     return success_response(
         data=result.model_dump(mode="json"), message="Refund requested",
         meta={"trace_id": request.state.trace_id},
@@ -40,7 +47,12 @@ def complete_refund(
     current_user: AuthUser = Depends(require_permission("finance.refunds.create")),
 ):
     result = RefundService(db).complete_mock(
-        user=current_user, refund_id=refund_id, payload=payload
+        user=current_user, refund_id=refund_id, payload=payload,
+        audit_context={
+            "ip_address": request.client.host if request.client else None,
+            "user_agent": request.headers.get("user-agent"),
+            "trace_id": request.state.trace_id,
+        },
     )
     return success_response(
         data=result.model_dump(mode="json"), message="Refund completed",

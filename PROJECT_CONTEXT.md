@@ -132,6 +132,10 @@ Step 9.6 activates the existing refund contract for Admin: idempotent full-refun
 requests and exact-once Mock completion. Partial refunds and real provider money
 movement remain deferred so financial state is not overstated.
 
+Step 9.7 adds typed paginated Admin finance read APIs and the first persistent
+`admin_audit_logs` contract. Refund request/completion audit actor, target,
+old/new state, request metadata, and trace ID atomically with the finance change.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

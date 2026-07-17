@@ -90,6 +90,20 @@ POST /api/v1/admin/orders/refunds/{refund_id}/complete
 
 Repeated completion is exact-once and cannot create another refund transaction.
 
+## Admin finance read APIs
+
+```text
+GET /api/v1/admin/finance/invoices
+GET /api/v1/admin/finance/invoices/{invoice_id}
+GET /api/v1/admin/finance/payment-attempts
+GET /api/v1/admin/finance/transactions
+GET /api/v1/admin/finance/refunds
+GET /api/v1/admin/finance/audit-logs
+```
+
+All list responses are typed and paginated. Each endpoint enforces its finance
+permission; audit entries expose traceability metadata without gateway secrets.
+
 ---
 
 ## Business Rules

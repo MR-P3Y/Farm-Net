@@ -41,6 +41,11 @@ Step 9.6 جریان Refund را برای Admin فعال کرد. درخواست R
 Transaction، Invoice، Order و Payment را دقیقاً یک‌بار به وضعیت بازپرداخت‌شده
 می‌برد. جابه‌جایی واقعی پول و Partial Refund هنوز پیاده نشده‌اند.
 
+Step 9.7 Read Modelهای تایپ‌شده و صفحه‌بندی‌شده Admin را برای Invoice، Payment
+Attempt، Transaction، Refund و Audit Log اضافه کرد. درخواست و تکمیل Refund اکنون
+actor، action، target، old/new value، IP، user-agent و trace ID را در همان
+Transaction مالی داخل `admin_audit_logs` ثبت می‌کنند.
+
 ## 1. هدف سند
 
 این سند استاندارد مالی پروژه «فارم نت» را مشخص می‌کند.

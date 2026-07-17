@@ -16,6 +16,7 @@ from app.modules.orders.enums import (
     RefundStatus,
 )
 from app.modules.orders.models import (
+    AdminAuditLog,
     CommissionSnapshot,
     FinancialInvoice,
     FinancialInvoiceItem,
@@ -37,6 +38,7 @@ from app.modules.orders.service import AdminOrderService, CheckoutService, Payme
 
 
 def test_financial_contract_tables_are_registered() -> None:
+    assert AdminAuditLog.__tablename__ == "admin_audit_logs"
     assert FinancialInvoice.__tablename__ == "finance_invoices"
     assert FinancialInvoiceItem.__tablename__ == "finance_invoice_items"
     assert CommissionSnapshot.__tablename__ == "commission_snapshots"

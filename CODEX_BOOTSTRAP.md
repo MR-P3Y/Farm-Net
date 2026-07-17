@@ -73,7 +73,8 @@ Phase 9.3 Atomic Checkout + Inventory Reservation: completed
 Phase 9.4 Checkout Idempotency + Contract Hardening: completed
 Phase 9.5 Payment Orchestration + Idempotent Verify: completed
 Phase 9.6 Refund Request + Idempotent Processing: completed
-Next: Phase 9.7 Admin Finance Read Models + Audit
+Phase 9.7 Admin Finance Read Models + Audit: completed
+Next: Phase 9.8 Admin Finance UI
 ```
 
 Services means agricultural operational services, not equipment rental.

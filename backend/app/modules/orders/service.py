@@ -1386,7 +1386,10 @@ class RefundService:
         self.db = db
         self.repo = OrderRepository(db)
 
-    def create(self, *, user: AuthUser, payload: RefundCreateIn) -> FinancialRefundOut:
+    def create(
+        self, *, user: AuthUser, payload: RefundCreateIn,
+        audit_context: dict | None = None,
+    ) -> FinancialRefundOut:
         existing = self.repo.get_refund_by_key(idempotency_key=payload.idempotency_key)
         if existing is not None:
             if existing.invoice_id != payload.invoice_id or existing.amount != payload.amount:
@@ -1412,13 +1415,20 @@ class RefundService:
             invoice=invoice, amount=payload.amount, reason=payload.reason,
             idempotency_key=payload.idempotency_key, requested_by_user_id=user.id,
         )
+        self.repo.create_admin_audit(
+            admin_user_id=user.id, action="FINANCE_REFUND_REQUESTED",
+            target_type="finance_refund", target_id=str(row.id), old_value=None,
+            new_value=json.dumps({"status": row.status, "amount": str(row.amount)}),
+            **(audit_context or {}),
+        )
         invoice.status = InvoiceStatus.REFUND_PENDING.value
         self.repo.commit()
         self.repo.refresh(row)
         return self._out(row)
 
     def complete_mock(
-        self, *, user: AuthUser, refund_id: int, payload: RefundProcessIn
+        self, *, user: AuthUser, refund_id: int, payload: RefundProcessIn,
+        audit_context: dict | None = None,
     ) -> FinancialRefundOut:
         row = self.repo.get_refund_for_update(refund_id=refund_id)
         if row is None:
@@ -1439,6 +1449,13 @@ class RefundService:
         row.provider_reference = payload.provider_reference
         row.processed_by_user_id = user.id
         row.processed_at = now
+        self.repo.create_admin_audit(
+            admin_user_id=user.id, action="FINANCE_REFUND_COMPLETED",
+            target_type="finance_refund", target_id=str(row.id),
+            old_value=json.dumps({"status": RefundStatus.REQUESTED.value}),
+            new_value=json.dumps({"status": row.status, "provider_reference": row.provider_reference}),
+            **(audit_context or {}),
+        )
         transaction = self.repo.create_refund_transaction(
             refund=row, provider_reference=payload.provider_reference
         )
