@@ -72,7 +72,8 @@ Phase 9.2 Financial Contracts + DB Hardening: completed
 Phase 9.3 Atomic Checkout + Inventory Reservation: completed
 Phase 9.4 Checkout Idempotency + Contract Hardening: completed
 Phase 9.5 Payment Orchestration + Idempotent Verify: completed
-Next: select Phase 9.6 from callback/refund/admin financial gaps
+Phase 9.6 Refund Request + Idempotent Processing: completed
+Next: Phase 9.7 Admin Finance Read Models + Audit
 ```
 
 Services means agricultural operational services, not equipment rental.

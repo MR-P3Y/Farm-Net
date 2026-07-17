@@ -36,6 +36,11 @@ exact-once روی Attempt، Payment، Invoice، Order، Transaction و Reservati
 می‌کند. در این گام فقط Provider آزمایشی `mock` مجاز است؛ Callback و درگاه واقعی
 هنوز پیاده نشده‌اند.
 
+Step 9.6 جریان Refund را برای Admin فعال کرد. درخواست Refund با کلید idempotency
+ثبت می‌شود و در این مرحله فقط بازپرداخت کامل مجاز است. تکمیل Mock، Refund،
+Transaction، Invoice، Order و Payment را دقیقاً یک‌بار به وضعیت بازپرداخت‌شده
+می‌برد. جابه‌جایی واقعی پول و Partial Refund هنوز پیاده نشده‌اند.
+
 ## 1. هدف سند
 
 این سند استاندارد مالی پروژه «فارم نت» را مشخص می‌کند.

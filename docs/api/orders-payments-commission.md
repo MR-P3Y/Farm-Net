@@ -73,6 +73,23 @@ POST /api/v1/payments/verify
 Only the Mock provider is enabled in Step 9.5. A repeated successful verify
 returns the existing success and does not create a duplicate transaction.
 
+## Request full refund (Admin)
+
+```http
+POST /api/v1/admin/orders/refunds
+```
+
+Requires `finance.refunds.create`. The invoice must be paid or refund-pending;
+Step 9.6 supports full refunds only and requires an idempotency key.
+
+## Complete Mock refund (Admin)
+
+```http
+POST /api/v1/admin/orders/refunds/{refund_id}/complete
+```
+
+Repeated completion is exact-once and cannot create another refund transaction.
+
 ---
 
 ## Business Rules

@@ -59,6 +59,7 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
 | 9.3 Atomic Checkout + Inventory Reservation | Done | Row locks, atomic stock decrement and reservation lifecycle |
 | 9.4 Checkout Idempotency + Contract Hardening | Done | Persistent replay keys, role privacy contracts and reservation expiry |
 | 9.5 Payment Orchestration + Idempotent Verify | Done | Mock provider initiation, exact-once verify and atomic financial state changes |
+| 9.6 Refund Request + Idempotent Processing | Done | Full-refund policy, Mock completion and exact-once transaction |
 
 ### Step 9.2 Completion Evidence
 
@@ -119,6 +120,16 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
   callback handling, and external money movement remain explicitly deferred.
 - 25 focused Backend tests, Ruff, compileall, OpenAPI route checks, and runtime
   application/database/Redis health pass.
+
+### Step 9.6 Completion Evidence
+
+- Added permission-protected Admin refund request and Mock completion APIs.
+- Refund creation is idempotent, requires a paid/refund-pending invoice, and
+  currently permits only a full refund to prevent ambiguous partial accounting.
+- Completion locks the refund and updates refund, transaction, invoice, order,
+  legacy payment, status history, and notification exactly once.
+- Repeated completion returns the existing successful refund without a second
+  financial transaction. Real provider money movement remains deferred.
 
 ## Step 17.4 Completion Evidence
 

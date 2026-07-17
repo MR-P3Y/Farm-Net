@@ -213,6 +213,10 @@ class RefundCreateIn(BaseModel):
     idempotency_key: str = Field(min_length=8, max_length=160)
 
 
+class RefundProcessIn(BaseModel):
+    provider_reference: str = Field(min_length=3, max_length=255)
+
+
 class FinancialInvoiceOut(BaseModel):
     id: int
     invoice_number: str

@@ -22,6 +22,7 @@ from app.modules.orders.models import (
     CommissionSetting,
     FinancialInvoice,
     FinancialInvoiceItem,
+    FinancialRefund,
     FinancialTransaction,
     InventoryReservation,
     Order,
@@ -503,12 +504,63 @@ class OrderRepository:
             .one_or_none()
         )
 
+    def get_refund_by_key(self, *, idempotency_key: str) -> FinancialRefund | None:
+        return self.db.query(FinancialRefund).filter(
+            FinancialRefund.idempotency_key == idempotency_key
+        ).one_or_none()
+
+    def get_refund_for_update(self, *, refund_id: int) -> FinancialRefund | None:
+        return self.db.query(FinancialRefund).filter(
+            FinancialRefund.id == refund_id
+        ).with_for_update().one_or_none()
+
+    def create_refund(
+        self, *, invoice: FinancialInvoice, amount, reason: str,
+        idempotency_key: str, requested_by_user_id: int,
+    ) -> FinancialRefund:
+        attempt = self.db.query(PaymentAttempt).filter(
+            PaymentAttempt.invoice_id == invoice.id,
+            PaymentAttempt.status == PaymentAttemptStatus.SUCCEEDED.value,
+        ).order_by(PaymentAttempt.verified_at.desc(), PaymentAttempt.id.desc()).first()
+        row = FinancialRefund(
+            invoice_id=invoice.id, order_id=invoice.order_id,
+            payment_attempt_id=attempt.id if attempt else None,
+            status="requested", amount=amount, currency=invoice.currency,
+            idempotency_key=idempotency_key, reason=reason,
+            requested_by_user_id=requested_by_user_id,
+        )
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def create_refund_transaction(
+        self, *, refund: FinancialRefund, provider_reference: str
+    ) -> FinancialTransaction:
+        row = FinancialTransaction(
+            invoice_id=refund.invoice_id, order_id=refund.order_id,
+            payment_attempt_id=refund.payment_attempt_id,
+            transaction_type=FinancialTransactionType.REFUND.value,
+            status=FinancialTransactionStatus.SUCCEEDED.value,
+            amount=refund.amount, currency=refund.currency, provider="mock",
+            provider_reference=provider_reference,
+            idempotency_key=f"refund:{refund.id}:succeeded",
+            description=refund.reason,
+        )
+        self.db.add(row)
+        self.db.flush()
+        return row
+
     def get_invoice_by_order(self, *, order_id: int) -> FinancialInvoice | None:
         return (
             self.db.query(FinancialInvoice)
             .filter(FinancialInvoice.order_id == order_id)
             .one_or_none()
         )
+
+    def get_invoice_by_id(self, *, invoice_id: int) -> FinancialInvoice | None:
+        return self.db.query(FinancialInvoice).filter(
+            FinancialInvoice.id == invoice_id
+        ).one_or_none()
 
     def get_payment_attempt_by_legacy_payment(self, *, payment_id: int) -> PaymentAttempt | None:
         return (

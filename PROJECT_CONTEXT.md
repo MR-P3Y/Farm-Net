@@ -128,6 +128,10 @@ is idempotent and verification is exact-once across payment attempt, invoice,
 legacy payment, order, transaction, reservation, history, and notifications.
 No real gateway secret, callback, or external money movement is implemented.
 
+Step 9.6 activates the existing refund contract for Admin: idempotent full-refund
+requests and exact-once Mock completion. Partial refunds and real provider money
+movement remain deferred so financial state is not overstated.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

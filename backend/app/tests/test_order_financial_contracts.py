@@ -31,8 +31,9 @@ from app.modules.orders.schemas import (
     PaymentCheckoutIn,
     PaymentVerifyIn,
     RefundCreateIn,
+    RefundProcessIn,
 )
-from app.modules.orders.service import AdminOrderService, CheckoutService, PaymentService
+from app.modules.orders.service import AdminOrderService, CheckoutService, PaymentService, RefundService
 
 
 def test_financial_contract_tables_are_registered() -> None:
@@ -324,6 +325,61 @@ def test_payment_verify_is_exact_once_after_success() -> None:
 
     assert result is attempt
     service.repo.create_payment_transaction.assert_not_called()
+    service.repo.commit.assert_not_called()
+
+
+def test_refund_create_replays_same_idempotency_key() -> None:
+    refund = SimpleNamespace(invoice_id=11, amount=1000)
+    service = RefundService(MagicMock())
+    service.repo = MagicMock()
+    service.repo.get_refund_by_key.return_value = refund
+    service._out = lambda value: value
+
+    result = service.create(
+        user=SimpleNamespace(id=1),
+        payload=RefundCreateIn(
+            invoice_id=11, amount=1000, reason="Full cancellation",
+            idempotency_key="refund-invoice-11",
+        ),
+    )
+
+    assert result is refund
+    service.repo.create_refund.assert_not_called()
+
+
+def test_refund_create_rejects_partial_amount() -> None:
+    invoice = SimpleNamespace(id=11, status="paid", total_amount=1000)
+    service = RefundService(MagicMock())
+    service.repo = MagicMock()
+    service.repo.get_refund_by_key.return_value = None
+    service.repo.get_invoice_by_id.return_value = invoice
+
+    with pytest.raises(ValidationAuthError) as error:
+        service.create(
+            user=SimpleNamespace(id=1),
+            payload=RefundCreateIn(
+                invoice_id=11, amount=500, reason="Partial refund",
+                idempotency_key="refund-partial-11",
+            ),
+        )
+
+    assert error.value.details["error_code"] == "PARTIAL_REFUND_NOT_SUPPORTED"
+
+
+def test_refund_completion_is_exact_once() -> None:
+    refund = SimpleNamespace(status="succeeded")
+    service = RefundService(MagicMock())
+    service.repo = MagicMock()
+    service.repo.get_refund_for_update.return_value = refund
+    service._out = lambda value: value
+
+    result = service.complete_mock(
+        user=SimpleNamespace(id=1), refund_id=3,
+        payload=RefundProcessIn(provider_reference="MOCK-REFUND-3"),
+    )
+
+    assert result is refund
+    service.repo.create_refund_transaction.assert_not_called()
     service.repo.commit.assert_not_called()
 
 

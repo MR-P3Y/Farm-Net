@@ -16,6 +16,7 @@ from app.modules.orders.enums import (
     OrderStatus,
     PaymentAttemptStatus,
     PaymentStatus,
+    RefundStatus,
 )
 from app.modules.orders.models import (
     Cart,
@@ -45,6 +46,9 @@ from app.modules.orders.schemas import (
     PaymentAttemptOut,
     PaymentCheckoutIn,
     PaymentVerifyIn,
+    FinancialRefundOut,
+    RefundCreateIn,
+    RefundProcessIn,
     SellerOrderStatusUpdateIn,
 )
 from app.modules.notifications.enums import NotificationEventType
@@ -1374,6 +1378,105 @@ class CommissionService:
             updated_by=setting.updated_by,
             created_at=setting.created_at.isoformat(),
             updated_at=setting.updated_at.isoformat(),
+        )
+
+
+class RefundService:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+        self.repo = OrderRepository(db)
+
+    def create(self, *, user: AuthUser, payload: RefundCreateIn) -> FinancialRefundOut:
+        existing = self.repo.get_refund_by_key(idempotency_key=payload.idempotency_key)
+        if existing is not None:
+            if existing.invoice_id != payload.invoice_id or existing.amount != payload.amount:
+                raise ValidationAuthError(
+                    message="Refund idempotency key conflicts with another request",
+                    details={"error_code": "REFUND_IDEMPOTENCY_CONFLICT"},
+                )
+            return self._out(existing)
+        invoice = self.repo.get_invoice_by_id(invoice_id=payload.invoice_id)
+        if invoice is None:
+            raise ValidationAuthError(message="Invoice not found")
+        if invoice.status not in {InvoiceStatus.PAID.value, InvoiceStatus.REFUND_PENDING.value}:
+            raise ValidationAuthError(
+                message="Invoice is not refundable",
+                details={"error_code": "INVOICE_NOT_REFUNDABLE", "status": invoice.status},
+            )
+        if payload.amount != invoice.total_amount:
+            raise ValidationAuthError(
+                message="Only full refunds are supported in this phase",
+                details={"error_code": "PARTIAL_REFUND_NOT_SUPPORTED"},
+            )
+        row = self.repo.create_refund(
+            invoice=invoice, amount=payload.amount, reason=payload.reason,
+            idempotency_key=payload.idempotency_key, requested_by_user_id=user.id,
+        )
+        invoice.status = InvoiceStatus.REFUND_PENDING.value
+        self.repo.commit()
+        self.repo.refresh(row)
+        return self._out(row)
+
+    def complete_mock(
+        self, *, user: AuthUser, refund_id: int, payload: RefundProcessIn
+    ) -> FinancialRefundOut:
+        row = self.repo.get_refund_for_update(refund_id=refund_id)
+        if row is None:
+            raise ValidationAuthError(message="Refund not found")
+        if row.status == RefundStatus.SUCCEEDED.value:
+            return self._out(row)
+        if row.status != RefundStatus.REQUESTED.value:
+            raise ValidationAuthError(
+                message="Refund cannot be completed in current status",
+                details={"error_code": "REFUND_INVALID_STATUS", "status": row.status},
+            )
+        invoice = self.repo.get_invoice_by_id(invoice_id=row.invoice_id)
+        order = self.repo.get_order_by_id(order_id=row.order_id)
+        if invoice is None or order is None:
+            raise ValidationAuthError(message="Refund financial contract is incomplete")
+        now = datetime.utcnow()
+        row.status = RefundStatus.SUCCEEDED.value
+        row.provider_reference = payload.provider_reference
+        row.processed_by_user_id = user.id
+        row.processed_at = now
+        transaction = self.repo.create_refund_transaction(
+            refund=row, provider_reference=payload.provider_reference
+        )
+        row.transaction_id = transaction.id
+        invoice.status = InvoiceStatus.REFUNDED.value
+        invoice.refunded_at = now
+        old_status = order.status
+        order.status = OrderStatus.REFUNDED.value
+        order.payment_status = PaymentStatus.REFUNDED.value
+        payment = self.repo.get_payment_by_order(
+            order_id=order.id, user_id=order.buyer_user_id
+        )
+        if payment is not None:
+            payment.status = PaymentStatus.REFUNDED.value
+        self.repo.create_order_status_history(
+            order_id=order.id, changed_by=user.id, from_status=old_status,
+            to_status=OrderStatus.REFUNDED.value, note=row.reason,
+        )
+        _notify_order_status_changed(
+            db=self.db, order=order, old_status=old_status,
+            new_status=OrderStatus.REFUNDED.value, actor_user_id=user.id,
+        )
+        self.repo.commit()
+        self.repo.refresh(row)
+        return self._out(row)
+
+    def _out(self, row) -> FinancialRefundOut:
+        return FinancialRefundOut(
+            id=row.id, invoice_id=row.invoice_id, order_id=row.order_id,
+            payment_attempt_id=row.payment_attempt_id, transaction_id=row.transaction_id,
+            status=row.status, amount=row.amount, currency=row.currency,
+            reason=row.reason, provider_reference=row.provider_reference,
+            requested_by_user_id=row.requested_by_user_id,
+            processed_by_user_id=row.processed_by_user_id,
+            failure_message=row.failure_message,
+            requested_at=row.requested_at.isoformat(),
+            processed_at=row.processed_at.isoformat() if row.processed_at else None,
+            created_at=row.created_at.isoformat(), updated_at=row.updated_at.isoformat(),
         )
 
 

@@ -7,14 +7,45 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
-from app.modules.orders.schemas import AdminOrderStatusUpdateIn
-from app.modules.orders.service import AdminOrderService
+from app.modules.orders.schemas import AdminOrderStatusUpdateIn, RefundCreateIn, RefundProcessIn
+from app.modules.orders.service import AdminOrderService, RefundService
 
 
 router = APIRouter(
     prefix="/admin/orders",
     tags=["Admin Orders"],
 )
+
+
+@router.post("/refunds")
+def create_refund(
+    payload: RefundCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("finance.refunds.create")),
+):
+    result = RefundService(db).create(user=current_user, payload=payload)
+    return success_response(
+        data=result.model_dump(mode="json"), message="Refund requested",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/refunds/{refund_id}/complete")
+def complete_refund(
+    refund_id: int,
+    payload: RefundProcessIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("finance.refunds.create")),
+):
+    result = RefundService(db).complete_mock(
+        user=current_user, refund_id=refund_id, payload=payload
+    )
+    return success_response(
+        data=result.model_dump(mode="json"), message="Refund completed",
+        meta={"trace_id": request.state.trace_id},
+    )
 
 
 @router.get("")
