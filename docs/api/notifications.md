@@ -377,6 +377,25 @@ Current MVP supports sending system message to one specific user.
 Mass/broadcast send is intentionally not enabled yet.
 ```
 
+### Delivery operations
+
+```http
+GET  /api/v1/admin/notifications/deliveries
+GET  /api/v1/admin/notifications/deliveries/{delivery_log_id}
+POST /api/v1/admin/notifications/deliveries/{delivery_log_id}/retry
+```
+
+Read operations require `notifications.admin_read`; retry requires
+`notifications.admin_manage`. Detail includes the ordered, immutable attempt
+history. Manual retry is rejected for in-app, processing, sent, or delivered
+records.
+
+Workers claim ready external deliveries using row locks with `SKIP LOCKED`.
+Each claim creates a monotonically numbered attempt and a time-limited lease.
+Retryable failures return to `pending` with capped exponential backoff; reaching
+`max_attempts` produces terminal `failed`. An expired lease closes the abandoned
+attempt as failed before a new claim.
+
 ---
 
 ## Integrated Events
@@ -545,3 +564,4 @@ super_admin: all 5
 * Broadcast/mass messaging is intentionally not enabled in this foundation.
 * Email/SMS preferences create pending delivery work only for verified contact
   details; real providers are not connected yet.
+* Admin retry only schedules work; it never calls a provider synchronously.

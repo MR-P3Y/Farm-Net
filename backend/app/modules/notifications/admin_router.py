@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
 from app.modules.notifications.schemas import NotificationSystemMessageIn
+from app.modules.notifications.delivery_service import NotificationDeliveryService
 from app.modules.notifications.service import NotificationService
 
 
@@ -66,13 +67,74 @@ def create_system_message(
         payload=payload,
         actor_user_id=current_user.id,
     )
-
     return success_response(
         data=result.model_dump(mode="json"),
         message="System message created",
         meta={"trace_id": request.state.trace_id},
     )
 
+
+@router.get("/deliveries")
+def list_notification_deliveries(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    channel: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("notifications.admin_read")),
+):
+    items, total = NotificationDeliveryService(db).list_deliveries(
+        status=status,
+        channel=channel,
+        page=page,
+        page_size=page_size,
+    )
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.get("/deliveries/{delivery_log_id}")
+def get_notification_delivery(
+    delivery_log_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("notifications.admin_read")),
+):
+    result = NotificationDeliveryService(db).get_detail(
+        delivery_log_id=delivery_log_id
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/deliveries/{delivery_log_id}/retry")
+def retry_notification_delivery(
+    delivery_log_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("notifications.admin_manage")),
+):
+    result = NotificationDeliveryService(db).requeue(
+        delivery_log_id=delivery_log_id
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Notification delivery requeued",
+        meta={"trace_id": request.state.trace_id},
+    )
 
 @router.get("/{notification_id}")
 def get_admin_notification(

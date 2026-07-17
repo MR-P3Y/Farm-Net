@@ -168,6 +168,11 @@ Alembic head `f84c2a1d9037`. In-app remains default; opted-in Email/SMS create
 pending delivery work, while Push/Telegram await destination foundations.
 Step 11.4 retry queue and delivery operations is next.
 
+Step 11.4 completed the provider-neutral retry queue at Alembic head
+`a16d7c4e52b9`: atomic claim/lease, monotonic attempts, backoff, terminal
+failure, expired-worker recovery, and Admin delivery observability/requeue.
+Step 11.5 Email Provider Foundation is next; no real provider is connected yet.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

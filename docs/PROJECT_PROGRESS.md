@@ -375,6 +375,19 @@ model fields exist:
 - Backend Ruff passed and all 36 tests passed with 16 existing UTC warnings.
 - Evidence: `docs/notifications/phase-11-preferences-routing.md`.
 
+### Step 11.4 Retry Queue + Failure/Delivery Logs
+
+- Added durable monotonic attempt history and atomic external-channel claims
+  using row locks, skip-locked concurrency, and worker leases.
+- Added expired-lease recovery, capped exponential backoff, terminal failure,
+  provider-neutral success/failure recording, and controlled Admin requeue.
+- Added permission-protected Admin delivery list/detail/history/retry APIs.
+- Alembic upgraded MySQL to `a16d7c4e52b9`; health remained `ok` and all three
+  Admin delivery paths are present in runtime OpenAPI.
+- Backend Ruff/compileall passed and all 40 tests passed with 16 existing UTC
+  warnings. No provider network call is implemented in this step.
+- Evidence: `docs/notifications/phase-11-retry-queue.md`.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -123,3 +123,26 @@ class NotificationDeliveryLogOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class NotificationDeliveryAttemptOut(BaseModel):
+    id: int
+    delivery_log_id: int
+    attempt_number: int
+    provider: str | None = None
+    status: str
+    error_code: str | None = None
+    error_message: str | None = None
+    started_at: datetime
+    finished_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class NotificationDeliveryDetailOut(NotificationDeliveryLogOut):
+    attempts: list[NotificationDeliveryAttemptOut]
+
+
+class NotificationDeliveryFailureIn(BaseModel):
+    error_code: str = Field(min_length=1, max_length=80)
+    error_message: str = Field(min_length=1)

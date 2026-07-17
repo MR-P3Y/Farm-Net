@@ -21,6 +21,7 @@ Phase 11 - Notifications / Events / Messaging Foundation
 * Provider-neutral retry and worker-lease fields
 * User-owned global and event-specific channel preferences
 * Verified Email/SMS destination routing to pending delivery state
+* Atomic external-channel queue claim, retry backoff, and attempt history
 
 ## Tables
 
@@ -29,6 +30,7 @@ notification_events
 notifications
 notification_delivery_logs
 notification_preferences
+notification_delivery_attempts
 ```
 
 ## Current Channel
@@ -55,6 +57,9 @@ PUT    /api/v1/notifications/preferences
 GET   /api/v1/admin/notifications
 GET   /api/v1/admin/notifications/{id}
 POST  /api/v1/admin/notifications/system-message
+GET   /api/v1/admin/notifications/deliveries
+GET   /api/v1/admin/notifications/deliveries/{id}
+POST  /api/v1/admin/notifications/deliveries/{id}/retry
 ```
 
 ## Notes
@@ -69,6 +74,9 @@ contracts but does not claim that an external delivery worker exists.
 
 Step 11.3 preference precedence and destination rules are documented in
 `docs/notifications/phase-11-preferences-routing.md`.
+
+Step 11.4 queue, lease, backoff, and attempt history contracts are documented
+in `docs/notifications/phase-11-retry-queue.md`.
 
 The verified current-state analysis and hardening boundary are recorded in
 `docs/notifications/phase-11-real-state-audit.md`. In particular, pending rows

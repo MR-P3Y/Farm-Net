@@ -22,6 +22,10 @@
       "value": ""
     },
     {
+      "key": "delivery_log_id",
+      "value": ""
+    },
+    {
       "key": "recipient_user_id",
       "value": "1"
     },
@@ -236,6 +240,45 @@
           }
         ],
         "description": "Run as the social post owner after an expert creates a published answer. Look for title پاسخ تخصصی جدید and action_url /social/posts/{post_id}."
+      }
+    },
+    {
+      "name": "Admin Notifications - Delivery Queue",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/notifications/deliveries?page=1&page_size=20&status=pending"
+      }
+    },
+    {
+      "name": "Admin Notifications - Delivery Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/notifications/deliveries/{{delivery_log_id}}"
+      }
+    },
+    {
+      "name": "Admin Notifications - Retry Delivery",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/notifications/deliveries/{{delivery_log_id}}/retry"
       }
     },
     {

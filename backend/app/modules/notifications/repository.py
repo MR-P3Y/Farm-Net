@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+from datetime import datetime
+
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 
 from app.modules.auth.models import AuthUser
 
 from app.modules.notifications.models import (
     Notification,
     NotificationDeliveryLog,
+    NotificationDeliveryAttempt,
     NotificationEvent,
     NotificationPreference,
 )
@@ -40,6 +43,103 @@ class NotificationRepository:
         self.db.add(row)
         self.db.flush()
         return row
+
+    def add_delivery_attempt(
+        self, row: NotificationDeliveryAttempt
+    ) -> NotificationDeliveryAttempt:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def claim_ready_deliveries(
+        self, *, now: datetime, lease_cutoff: datetime, limit: int
+    ) -> list[NotificationDeliveryLog]:
+        return (
+            self.db.query(NotificationDeliveryLog)
+            .filter(
+                NotificationDeliveryLog.channel != "in_app",
+                or_(
+                    and_(
+                        NotificationDeliveryLog.status == "pending",
+                        NotificationDeliveryLog.attempt_count
+                        < NotificationDeliveryLog.max_attempts,
+                        or_(
+                            (NotificationDeliveryLog.next_attempt_at.is_(None))
+                            , NotificationDeliveryLog.next_attempt_at <= now
+                        ),
+                    ),
+                    and_(
+                        NotificationDeliveryLog.status == "processing",
+                        NotificationDeliveryLog.locked_at <= lease_cutoff,
+                    ),
+                ),
+            )
+            .order_by(
+                NotificationDeliveryLog.next_attempt_at,
+                NotificationDeliveryLog.created_at,
+                NotificationDeliveryLog.id,
+            )
+            .with_for_update(skip_locked=True)
+            .limit(limit)
+            .all()
+        )
+
+    def get_delivery_log(
+        self, *, delivery_log_id: int, for_update: bool = False
+    ) -> NotificationDeliveryLog | None:
+        query = self.db.query(NotificationDeliveryLog).filter(
+            NotificationDeliveryLog.id == delivery_log_id
+        )
+        if for_update:
+            query = query.with_for_update()
+        return query.one_or_none()
+
+    def get_delivery_attempt(
+        self, *, delivery_log_id: int, attempt_number: int
+    ) -> NotificationDeliveryAttempt | None:
+        return (
+            self.db.query(NotificationDeliveryAttempt)
+            .filter(
+                NotificationDeliveryAttempt.delivery_log_id == delivery_log_id,
+                NotificationDeliveryAttempt.attempt_number == attempt_number,
+            )
+            .one_or_none()
+        )
+
+    def list_delivery_attempts(
+        self, *, delivery_log_id: int
+    ) -> list[NotificationDeliveryAttempt]:
+        return (
+            self.db.query(NotificationDeliveryAttempt)
+            .filter(NotificationDeliveryAttempt.delivery_log_id == delivery_log_id)
+            .order_by(NotificationDeliveryAttempt.attempt_number)
+            .all()
+        )
+
+    def list_delivery_logs(
+        self,
+        *,
+        status: str | None,
+        channel: str | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[NotificationDeliveryLog], int]:
+        query = self.db.query(NotificationDeliveryLog)
+        if status:
+            query = query.filter(NotificationDeliveryLog.status == status)
+        if channel:
+            query = query.filter(NotificationDeliveryLog.channel == channel)
+        total = query.count()
+        rows = (
+            query.order_by(
+                NotificationDeliveryLog.created_at.desc(),
+                NotificationDeliveryLog.id.desc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+        return rows, total
 
     def add_preference(self, row: NotificationPreference) -> NotificationPreference:
         self.db.add(row)

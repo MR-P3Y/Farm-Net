@@ -281,3 +281,41 @@ class NotificationPreference(Base):
             "event_type",
         ),
     )
+
+
+class NotificationDeliveryAttempt(Base):
+    __tablename__ = "notification_delivery_attempts"
+
+    id: Mapped[int] = mapped_column(
+        BigInteger, primary_key=True, autoincrement=True
+    )
+    delivery_log_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("notification_delivery_logs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    provider: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False)
+    error_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "delivery_log_id",
+            "attempt_number",
+            name="uq_notification_delivery_attempt_number",
+        ),
+        Index(
+            "ix_notification_delivery_attempts_status_started",
+            "status",
+            "started_at",
+        ),
+    )
