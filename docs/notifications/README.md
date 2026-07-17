@@ -25,6 +25,7 @@ Phase 11 - Notifications / Events / Messaging Foundation
 * Fail-closed SMTP Email transport and one-batch dispatcher
 * Fail-closed HTTPS JSON SMS transport and one-batch dispatcher
 * Push device registry and fail-closed HTTPS JSON batch dispatcher
+* Admin delivery queue, attempt timeline, filters, pagination, and controlled retry UI
 
 ## Tables
 
@@ -92,6 +93,9 @@ Step 11.7 device registry and Push dispatch are documented in
 
 Step 11.8 Mobile preferences, action routing, and the exact vendor-SDK gap are
 documented in `docs/notifications/phase-11-mobile-hardening.md`.
+
+Step 11.9 typed Admin delivery operations and retry controls are documented in
+`docs/notifications/phase-11-admin-operations.md`.
 
 The verified current-state analysis and hardening boundary are recorded in
 `docs/notifications/phase-11-real-state-audit.md`. In particular, pending rows

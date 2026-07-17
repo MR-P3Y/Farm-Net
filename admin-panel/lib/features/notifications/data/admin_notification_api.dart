@@ -107,6 +107,69 @@ class AdminNotificationApi {
     }
   }
 
+  Future<AdminDeliveryPage> listDeliveries({
+    int page = 1,
+    String? status,
+    String? channel,
+  }) async {
+    await _setStoredToken();
+    final query = <String, String>{'page': '$page', 'page_size': '20'};
+    if (status != null) query['status'] = status;
+    if (channel != null) query['channel'] = channel;
+    final uri = Uri(
+      path: '/admin/notifications/deliveries',
+      queryParameters: query,
+    );
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        uri.toString(),
+      );
+      final json = response.data ?? {};
+      final meta = json['meta'] as Map<String, dynamic>? ?? {};
+      return AdminDeliveryPage(
+        items:
+            (json['data'] as List? ?? [])
+                .map(
+                  (item) =>
+                      AdminDeliveryModel.fromJson(item as Map<String, dynamic>),
+                )
+                .toList(),
+        page: (meta['page'] as num?)?.toInt() ?? page,
+        totalPages: (meta['total_pages'] as num?)?.toInt() ?? 0,
+      );
+    } on DioException catch (error) {
+      throw AdminNotificationApiException(_mapDioError(error));
+    }
+  }
+
+  Future<AdminDeliveryModel> getDelivery(int id) async {
+    await _setStoredToken();
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/admin/notifications/deliveries/$id',
+      );
+      return AdminDeliveryModel.fromJson(
+        (response.data ?? {})['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw AdminNotificationApiException(_mapDioError(error));
+    }
+  }
+
+  Future<AdminDeliveryModel> retryDelivery(int id) async {
+    await _setStoredToken();
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/admin/notifications/deliveries/$id/retry',
+      );
+      return AdminDeliveryModel.fromJson(
+        (response.data ?? {})['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw AdminNotificationApiException(_mapDioError(error));
+    }
+  }
+
   Future<void> _setStoredToken() async {
     final token = await _tokenStorage.getAccessToken();
     _client.setToken(token);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/admin_responsive.dart';
 import '../../../core/widgets/admin_data_table.dart';
@@ -95,6 +96,12 @@ class _AdminNotificationsPageState
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: () => context.go('/notification-deliveries'),
+                    icon: const Icon(Icons.outbox_outlined),
+                    label: const Text('عملیات ارسال'),
+                  ),
+                  const SizedBox(width: 8),
                   FilledButton.icon(
                     onPressed: state.isSaving ? null : _openSystemMessageDialog,
                     icon: const Icon(Icons.add_comment_outlined),

@@ -193,6 +193,11 @@ device contracts, channel settings UI, resilient updates, and expanded action
 routing. Real vendor token acquisition remains explicitly blocked on SDK/vendor
 credentials. Step 11.9 Admin Notification Operations is next.
 
+Step 11.9 completed typed Admin delivery operations: queue filtering and
+pagination, detail/error inspection, attempt timeline, permission guarding, and
+controlled retry matching Backend eligibility rules. Step 11.10 consolidated
+Docs/Postman + Runtime Regression is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

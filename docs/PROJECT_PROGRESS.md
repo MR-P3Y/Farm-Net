@@ -434,6 +434,18 @@ model fields exist:
   refresh are not wired; no fake device token is registered.
 - Evidence: `docs/notifications/phase-11-mobile-hardening.md`.
 
+### Step 11.9 Admin Notification Operations
+
+- Added typed paginated delivery log and attempt models plus list/detail/retry
+  repository contracts; no raw JSON reaches the UI.
+- Added a permission-protected operations page with status/channel filters,
+  pagination, delivery failure details, attempt timeline, and controlled retry.
+- Retry visibility matches Backend rules, while Backend permissions and
+  validation remain authoritative.
+- Admin analyze passed, all 7 tests passed, and Web build/Wasm dry run passed.
+- No Backend API behavior, Mobile behavior, schema, or provider was changed.
+- Evidence: `docs/notifications/phase-11-admin-operations.md`.
+
 ## Progress Update Rule
 
 After every completed step:

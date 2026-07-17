@@ -8,6 +8,7 @@ import '../../features/dashboard/admin_dashboard_page.dart';
 import '../../features/finance/presentation/admin_finance_page.dart';
 import '../../features/media/presentation/admin_media_page.dart';
 import '../../features/notifications/presentation/admin_notifications_page.dart';
+import '../../features/notifications/presentation/admin_delivery_operations_page.dart';
 import '../../features/orders/presentation/admin_orders_page.dart';
 import '../../features/products/presentation/admin_products_page.dart';
 import '../../features/services/presentation/admin_services_page.dart';
@@ -136,6 +137,16 @@ final GoRouter adminRouter = GoRouter(
             return const AdminPermissionGuard(
               permission: 'notifications.admin_read',
               child: AdminNotificationsPage(),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/notification-deliveries',
+          name: 'admin-notification-deliveries',
+          builder: (context, state) {
+            return const AdminPermissionGuard(
+              permission: 'notifications.admin_read',
+              child: AdminDeliveryOperationsPage(),
             );
           },
         ),
