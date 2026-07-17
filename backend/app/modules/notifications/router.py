@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
 from app.modules.notifications.service import NotificationService
+from app.modules.notifications.schemas import NotificationPreferenceIn
 
 
 router = APIRouter(
@@ -62,6 +63,38 @@ def my_unread_count(
     return success_response(
         data={"unread_count": count},
         message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/preferences")
+def list_my_notification_preferences(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("notifications.read")),
+):
+    items = NotificationService(db).list_preferences(user_id=current_user.id)
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.put("/preferences")
+def set_my_notification_preference(
+    payload: NotificationPreferenceIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("notifications.manage")),
+):
+    result = NotificationService(db).set_preference(
+        user_id=current_user.id,
+        payload=payload,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Notification preference saved",
         meta={"trace_id": request.state.trace_id},
     )
 

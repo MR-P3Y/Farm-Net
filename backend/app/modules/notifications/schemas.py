@@ -40,6 +40,24 @@ class NotificationSystemMessageIn(BaseModel):
     priority: str = Field(default="normal", max_length=30)
 
 
+class NotificationPreferenceIn(BaseModel):
+    event_type: str = Field(default="*", min_length=1, max_length=80)
+    channel: str = Field(max_length=30)
+    is_enabled: bool
+
+
+class NotificationPreferenceOut(BaseModel):
+    id: int
+    user_id: int
+    event_type: str
+    channel: str
+    is_enabled: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class NotificationEventOut(BaseModel):
     id: int
     event_key: str

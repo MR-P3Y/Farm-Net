@@ -4,6 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -234,5 +235,49 @@ class NotificationDeliveryLog(Base):
             "provider",
             "provider_message_id",
             name="uq_notification_delivery_provider_message",
+        ),
+    )
+
+
+class NotificationPreference(Base):
+    __tablename__ = "notification_preferences"
+
+    id: Mapped[int] = mapped_column(
+        BigInteger,
+        primary_key=True,
+        autoincrement=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    event_type: Mapped[str] = mapped_column(
+        String(80), nullable=False, default="*"
+    )
+    channel: Mapped[str] = mapped_column(String(30), nullable=False)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "event_type",
+            "channel",
+            name="uq_notification_preferences_user_event_channel",
+        ),
+        Index(
+            "ix_notification_preferences_user_event",
+            "user_id",
+            "event_type",
         ),
     )

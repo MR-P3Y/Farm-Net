@@ -80,7 +80,8 @@ Phase 9.10 Docs/Postman + Release Regression: completed
 Phase 9.11 Release Gate + Tag: completed (v0.18.0-orders-finance-foundation)
 Phase 11.1 Notifications real-state audit: completed
 Phase 11.2 Delivery Contracts + DB Hardening: completed (e72b9f4c31a6)
-Next: Phase 11.3 User Preferences + Channel Routing
+Phase 11.3 User Preferences + Channel Routing: completed (f84c2a1d9037)
+Next: Phase 11.4 Retry Queue + Failure/Delivery Logs
 ```
 
 Services means agricultural operational services, not equipment rental.

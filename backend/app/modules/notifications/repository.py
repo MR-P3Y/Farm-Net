@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
+
+from app.modules.auth.models import AuthUser
 
 from app.modules.notifications.models import (
     Notification,
     NotificationDeliveryLog,
     NotificationEvent,
+    NotificationPreference,
 )
 
 
@@ -36,6 +40,50 @@ class NotificationRepository:
         self.db.add(row)
         self.db.flush()
         return row
+
+    def add_preference(self, row: NotificationPreference) -> NotificationPreference:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def get_recipient(self, *, user_id: int) -> AuthUser | None:
+        return self.db.query(AuthUser).filter(AuthUser.id == user_id).one_or_none()
+
+    def get_preference(
+        self, *, user_id: int, event_type: str, channel: str
+    ) -> NotificationPreference | None:
+        return (
+            self.db.query(NotificationPreference)
+            .filter(
+                NotificationPreference.user_id == user_id,
+                NotificationPreference.event_type == event_type,
+                NotificationPreference.channel == channel,
+            )
+            .one_or_none()
+        )
+
+    def list_preferences(self, *, user_id: int) -> list[NotificationPreference]:
+        return (
+            self.db.query(NotificationPreference)
+            .filter(NotificationPreference.user_id == user_id)
+            .order_by(NotificationPreference.event_type, NotificationPreference.channel)
+            .all()
+        )
+
+    def list_routing_preferences(
+        self, *, user_id: int, event_type: str
+    ) -> list[NotificationPreference]:
+        return (
+            self.db.query(NotificationPreference)
+            .filter(
+                NotificationPreference.user_id == user_id,
+                or_(
+                    NotificationPreference.event_type == "*",
+                    NotificationPreference.event_type == event_type,
+                ),
+            )
+            .all()
+        )
 
     def get_event_by_key(self, *, event_key: str) -> NotificationEvent | None:
         return (

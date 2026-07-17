@@ -163,6 +163,11 @@ head `e72b9f4c31a6`: exact-once notification identity, deterministic source
 event keys, explicit self-notification policy, and durable retry/lease fields.
 No external delivery worker or provider was added. Step 11.3 is next.
 
+Step 11.3 completed user preferences and verified-destination routing at
+Alembic head `f84c2a1d9037`. In-app remains default; opted-in Email/SMS create
+pending delivery work, while Push/Telegram await destination foundations.
+Step 11.4 retry queue and delivery operations is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

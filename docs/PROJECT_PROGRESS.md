@@ -363,6 +363,18 @@ model fields exist:
   E402 findings remain outside this step.
 - Evidence: `docs/notifications/phase-11-delivery-contracts.md`.
 
+### Step 11.3 User Preferences + Channel Routing
+
+- Added owner-scoped global and event-specific preferences with deterministic
+  precedence and an idempotent GET/PUT API.
+- Preserved in-app as the default; Email/SMS are opt-in and require verified
+  AuthUser destinations. Push/Telegram remain unroutable until destination
+  registries exist, and system messages remain mandatory in-app.
+- Alembic upgraded MySQL to `f84c2a1d9037`; health remained `ok` and OpenAPI
+  exposes 9 notification paths including both preference methods.
+- Backend Ruff passed and all 36 tests passed with 16 existing UTC warnings.
+- Evidence: `docs/notifications/phase-11-preferences-routing.md`.
+
 ## Progress Update Rule
 
 After every completed step:

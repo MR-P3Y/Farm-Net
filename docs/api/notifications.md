@@ -2,19 +2,24 @@
 
 ## Purpose
 
-Notifications foundation provides internal in-app notifications for users and admins.
+Notifications provides an in-app inbox plus user-controlled channel routing.
 
-Current supported channel:
+Default channel:
 
 ```text
 in_app
 ```
 
-Future channels:
+Opt-in queued channels (verified destination required):
 
 ```text
 sms
 email
+```
+
+Reserved destination integrations:
+
+```text
 push
 telegram
 ```
@@ -126,6 +131,38 @@ urgent
 ---
 
 ## User APIs
+
+### List my explicit preferences
+
+```http
+GET /api/v1/notifications/preferences
+```
+
+The list contains saved overrides. With no override, `in_app` is enabled and
+all external channels are disabled.
+
+### Set a preference
+
+```http
+PUT /api/v1/notifications/preferences
+```
+
+```json
+{
+  "event_type": "*",
+  "channel": "email",
+  "is_enabled": true
+}
+```
+
+Use `*` for a global channel preference or a real notification event type for
+an override. Event-specific settings take precedence. Email and SMS route only
+to verified AuthUser destinations. Push and Telegram settings can be stored but
+do not route until their destination registries exist.
+
+System messages remain mandatory in-app messages and bypass user routing.
+
+---
 
 ### List my notifications
 
@@ -506,4 +543,5 @@ super_admin: all 5
 * Admin access is permission-protected.
 * System messages require explicit permission.
 * Broadcast/mass messaging is intentionally not enabled in this foundation.
-* External channels are modeled but not yet delivered.
+* Email/SMS preferences create pending delivery work only for verified contact
+  details; real providers are not connected yet.

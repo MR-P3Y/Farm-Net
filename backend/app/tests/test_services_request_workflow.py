@@ -207,6 +207,13 @@ def test_notification_service_reuses_existing_recipient_notification() -> None:
         updated_at=datetime.utcnow(),
     )
     service.repo.get_notification_for_event.return_value = existing
+    service.repo.get_recipient.return_value = SimpleNamespace(
+        email=None,
+        phone=None,
+        is_email_verified=False,
+        is_phone_verified=False,
+    )
+    service.repo.list_routing_preferences.return_value = []
     service.notify_user = Mock()
 
     rows = service.create_event_and_notify_many(

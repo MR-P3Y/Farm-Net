@@ -105,6 +105,40 @@
       }
     },
     {
+      "name": "User Notifications - List Preferences",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/notifications/preferences"
+      }
+    },
+    {
+      "name": "User Notifications - Set Email Preference",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/notifications/preferences",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_type\": \"*\",\n  \"channel\": \"email\",\n  \"is_enabled\": true\n}"
+        }
+      }
+    },
+    {
       "name": "User Notifications - Mark All Read",
       "request": {
         "method": "PATCH",

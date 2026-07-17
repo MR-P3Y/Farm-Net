@@ -19,6 +19,8 @@ Phase 11 - Notifications / Events / Messaging Foundation
 * Admin panel notification management foundation
 * Database exact-once notification identity
 * Provider-neutral retry and worker-lease fields
+* User-owned global and event-specific channel preferences
+* Verified Email/SMS destination routing to pending delivery state
 
 ## Tables
 
@@ -26,6 +28,7 @@ Phase 11 - Notifications / Events / Messaging Foundation
 notification_events
 notifications
 notification_delivery_logs
+notification_preferences
 ```
 
 ## Current Channel
@@ -42,6 +45,8 @@ GET    /api/v1/notifications/me/unread-count
 PATCH  /api/v1/notifications/{id}/read
 PATCH  /api/v1/notifications/read-all
 DELETE /api/v1/notifications/{id}
+GET    /api/v1/notifications/preferences
+PUT    /api/v1/notifications/preferences
 ```
 
 ## Admin APIs
@@ -61,6 +66,9 @@ They are reserved for future delivery integration.
 Step 11.2 hardening is documented in
 `docs/notifications/phase-11-delivery-contracts.md`. It adds durable delivery
 contracts but does not claim that an external delivery worker exists.
+
+Step 11.3 preference precedence and destination rules are documented in
+`docs/notifications/phase-11-preferences-routing.md`.
 
 The verified current-state analysis and hardening boundary are recorded in
 `docs/notifications/phase-11-real-state-audit.md`. In particular, pending rows

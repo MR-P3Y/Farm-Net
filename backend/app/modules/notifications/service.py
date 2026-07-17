@@ -21,12 +21,15 @@ from app.modules.notifications.models import (
     Notification,
     NotificationDeliveryLog,
     NotificationEvent,
+    NotificationPreference,
 )
 from app.modules.notifications.repository import NotificationRepository
 from app.modules.notifications.schemas import (
     NotificationEventCreateIn,
     NotificationEventOut,
     NotificationOut,
+    NotificationPreferenceIn,
+    NotificationPreferenceOut,
     NotificationSystemMessageIn,
 )
 
@@ -270,29 +273,20 @@ class NotificationService:
             commit=False,
         )
 
-        existing = self.repo.get_notification_for_event(
+        notifications = self._notify_routed_channels(
             event_id=event.id,
-            recipient_user_id=recipient_user_id,
-            channel=NotificationChannel.IN_APP.value,
-        )
-        if existing is not None:
-            return NotificationOut.model_validate(existing)
-
-        notification = self.notify_user(
+            event_type=event_type,
             recipient_user_id=recipient_user_id,
             title=title,
             body=body,
-            event_id=event.id,
-            channel=NotificationChannel.IN_APP.value,
             action_url=action_url,
             priority=priority,
-            commit=False,
         )
 
         if commit:
             self.repo.commit()
 
-        return notification
+        return notifications[0] if notifications else None
 
     def create_event_and_notify_many(
         self,
@@ -333,10 +327,107 @@ class NotificationService:
 
         notifications: list[NotificationOut] = []
         for recipient_user_id in sorted(recipients):
+            notifications.extend(
+                self._notify_routed_channels(
+                    event_id=event.id,
+                    event_type=event_type,
+                    recipient_user_id=recipient_user_id,
+                    title=title,
+                    body=body,
+                    action_url=action_url,
+                    priority=priority,
+                )
+            )
+
+        if commit:
+            self.repo.commit()
+
+        return notifications
+
+    def list_preferences(self, *, user_id: int) -> list[NotificationPreferenceOut]:
+        return [
+            NotificationPreferenceOut.model_validate(row)
+            for row in self.repo.list_preferences(user_id=user_id)
+        ]
+
+    def set_preference(
+        self, *, user_id: int, payload: NotificationPreferenceIn
+    ) -> NotificationPreferenceOut:
+        self._validate_channel(payload.channel)
+        if payload.event_type != "*":
+            self._validate_event_type(payload.event_type)
+
+        row = self.repo.get_preference(
+            user_id=user_id,
+            event_type=payload.event_type,
+            channel=payload.channel,
+        )
+        if row is None:
+            row = self.repo.add_preference(
+                NotificationPreference(
+                    user_id=user_id,
+                    event_type=payload.event_type,
+                    channel=payload.channel,
+                    is_enabled=payload.is_enabled,
+                )
+            )
+        else:
+            row.is_enabled = payload.is_enabled
+
+        self.repo.commit()
+        self.repo.refresh(row)
+        return NotificationPreferenceOut.model_validate(row)
+
+    def resolve_channels(self, *, user_id: int, event_type: str) -> list[str]:
+        self._validate_event_type(event_type)
+        recipient = self.repo.get_recipient(user_id=user_id)
+        if recipient is None:
+            return []
+
+        preferences = self.repo.list_routing_preferences(
+            user_id=user_id, event_type=event_type
+        )
+        global_preferences = {
+            row.channel: row.is_enabled for row in preferences if row.event_type == "*"
+        }
+        event_preferences = {
+            row.channel: row.is_enabled
+            for row in preferences
+            if row.event_type == event_type
+        }
+
+        routed: list[str] = []
+        for channel in NotificationChannel:
+            enabled = event_preferences.get(
+                channel.value,
+                global_preferences.get(
+                    channel.value,
+                    channel == NotificationChannel.IN_APP,
+                ),
+            )
+            if enabled and self._has_routable_destination(recipient, channel):
+                routed.append(channel.value)
+        return routed
+
+    def _notify_routed_channels(
+        self,
+        *,
+        event_id: int,
+        event_type: str,
+        recipient_user_id: int,
+        title: str,
+        body: str,
+        action_url: str | None,
+        priority: str,
+    ) -> list[NotificationOut]:
+        notifications: list[NotificationOut] = []
+        for channel in self.resolve_channels(
+            user_id=recipient_user_id, event_type=event_type
+        ):
             existing = self.repo.get_notification_for_event(
-                event_id=event.id,
+                event_id=event_id,
                 recipient_user_id=recipient_user_id,
-                channel=NotificationChannel.IN_APP.value,
+                channel=channel,
             )
             if existing is not None:
                 notifications.append(NotificationOut.model_validate(existing))
@@ -346,18 +437,27 @@ class NotificationService:
                     recipient_user_id=recipient_user_id,
                     title=title,
                     body=body,
-                    event_id=event.id,
-                    channel=NotificationChannel.IN_APP.value,
+                    event_id=event_id,
+                    channel=channel,
                     action_url=action_url,
                     priority=priority,
                     commit=False,
                 )
             )
 
-        if commit:
-            self.repo.commit()
-
         return notifications
+
+    def _has_routable_destination(
+        self, recipient: Any, channel: NotificationChannel
+    ) -> bool:
+        if channel == NotificationChannel.IN_APP:
+            return True
+        if channel == NotificationChannel.EMAIL:
+            return bool(recipient.email and recipient.is_email_verified)
+        if channel == NotificationChannel.SMS:
+            return bool(recipient.phone and recipient.is_phone_verified)
+        # Push and Telegram require destination registries in later steps.
+        return False
 
     def list_user_notifications(
         self,
