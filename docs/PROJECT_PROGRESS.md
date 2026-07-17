@@ -56,7 +56,8 @@ completion has resumed; Step 9.2 is complete and Step 9.3 is next.
 |---|---|---|
 | 9.1 Existing Orders/Payments Audit | Done | Read-only contract and gap audit |
 | 9.2 Financial Contracts + DB Hardening | Done | Seven financial tables, explicit enums, idempotency/amount constraints and tests |
-| 9.3 Atomic Checkout + Inventory Reservation | Next | Not started |
+| 9.3 Atomic Checkout + Inventory Reservation | Done | Row locks, atomic stock decrement and reservation lifecycle |
+| 9.4 Checkout Idempotency + Contract Hardening | Next | Not started |
 
 ### Step 9.2 Completion Evidence
 
@@ -71,6 +72,21 @@ completion has resumed; Step 9.2 is complete and Step 9.3 is next.
 - Alembic upgraded to `a7c9f2e14b30`; all seven new tables and critical unique
   constraints were verified in MySQL. Application, database, and Redis health
   remained `ok`.
+
+### Step 9.3 Completion Evidence
+
+- Checkout locks the active cart and products in stable ID order before
+  revalidation, snapshot refresh, and stock decrement.
+- Order, invoice/items, commission snapshot, Mock payment/attempt, inventory
+  reservations, status history, and notifications commit in one transaction;
+  any error explicitly rolls back.
+- Successful Mock payment marks its attempt and invoice successful, records a
+  financial transaction, and consumes reservations.
+- Admin cancellation releases reserved or consumed inventory exactly once;
+  paid cancellations move the invoice to `refund_pending` without claiming a
+  completed financial refund.
+- Added atomic checkout, rollback, consume, and cancellation-release tests. All
+  21 Backend tests pass and runtime database/Redis health remains `ok`.
 
 ## Step 17.4 Completion Evidence
 

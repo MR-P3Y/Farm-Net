@@ -15,6 +15,13 @@ Mock به این جدول‌ها مهاجرت نکرده است.
 شده‌اند. Step 9.3 باید Checkout را با قفل موجودی و Reservation اتمیک به این
 قراردادها متصل کند.
 
+Step 9.3 این اتصال را انجام داد: Cart و Productها با ترتیب ثابت و `FOR UPDATE`
+قفل می‌شوند، موجودی در همان Transaction کاهش می‌یابد و برای هر Order، Invoice،
+Invoice Items، Commission Snapshot، Payment Attempt و Inventory Reservation
+ساخته می‌شود. هر خطا کل عملیات را Rollback می‌کند. پرداخت موفق Mock رزرو را
+`consumed` کرده و Transaction ثبت می‌کند؛ لغو Admin نیز موجودی را دقیقاً یک‌بار
+برمی‌گرداند. اتصال درگاه واقعی و Idempotency خود Checkout مربوط به گام‌های بعدی است.
+
 ## 1. هدف سند
 
 این سند استاندارد مالی پروژه «فارم نت» را مشخص می‌کند.

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -8,7 +8,13 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
-from app.modules.orders.enums import CartStatus, OrderStatus, PaymentStatus
+from app.modules.orders.enums import (
+    CartStatus,
+    InvoiceStatus,
+    OrderStatus,
+    PaymentAttemptStatus,
+    PaymentStatus,
+)
 from app.modules.orders.models import (
     Cart,
     CartItem,
@@ -308,10 +314,7 @@ class CartService:
                 },
             )
 
-        if (
-            product.max_order_quantity is not None
-            and quantity > product.max_order_quantity
-        ):
+        if product.max_order_quantity is not None and quantity > product.max_order_quantity:
             raise ValidationAuthError(
                 message="Quantity is greater than product maximum order quantity",
                 details={
@@ -358,9 +361,7 @@ class CartService:
             subtotal_amount=subtotal,
             created_at=cart.created_at.isoformat(),
             updated_at=cart.updated_at.isoformat(),
-            checked_out_at=cart.checked_out_at.isoformat()
-            if cart.checked_out_at
-            else None,
+            checked_out_at=cart.checked_out_at.isoformat() if cart.checked_out_at else None,
         )
 
     def _cart_item_out(self, item: CartItem) -> CartItemOut:
@@ -392,7 +393,19 @@ class CheckoutService:
         user: AuthUser,
         payload: CheckoutIn,
     ) -> CheckoutOut:
-        cart = self.repo.get_active_cart_by_user(user_id=user.id)
+        try:
+            return self._checkout_atomic(user=user, payload=payload)
+        except Exception:
+            self.repo.rollback()
+            raise
+
+    def _checkout_atomic(
+        self,
+        *,
+        user: AuthUser,
+        payload: CheckoutIn,
+    ) -> CheckoutOut:
+        cart = self.repo.get_active_cart_for_checkout(user_id=user.id)
 
         if cart is None:
             raise ValidationAuthError(
@@ -408,9 +421,12 @@ class CheckoutService:
                 details={"cart_id": cart.id},
             )
 
+        products = self.repo.lock_products_for_checkout(
+            product_ids=[item.product_id for item in cart_items]
+        )
         validated_items = []
         for item in cart_items:
-            product = self.repo.get_product_for_cart(product_id=item.product_id)
+            product = products.get(item.product_id)
 
             if product is None:
                 raise ValidationAuthError(
@@ -426,6 +442,7 @@ class CheckoutService:
             item.product_slug_snapshot = product.slug
             item.product_sku_snapshot = product.sku
             item.unit_snapshot = product.unit
+            product.stock_quantity -= item.quantity
 
             validated_items.append(item)
 
@@ -441,6 +458,8 @@ class CheckoutService:
             grouped[item.store_id].append(item)
 
         orders: list[Order] = []
+
+        reservation_expires_at = datetime.utcnow() + timedelta(minutes=30)
 
         for store_id, items in grouped.items():
             subtotal = sum((item.line_total for item in items), Decimal("0.00"))
@@ -475,10 +494,28 @@ class CheckoutService:
                 shipping_phone=payload.shipping_phone,
             )
 
+            invoice = self.repo.create_financial_invoice(
+                invoice_number=f"INV-{order.order_number}",
+                order=order,
+            )
+            self.repo.create_commission_snapshot(
+                order=order,
+                invoice_id=invoice.id,
+                commission_setting_id=commission.id,
+            )
+
             for item in items:
-                self.repo.create_order_item(
+                order_item = self.repo.create_order_item(
                     order_id=order.id,
                     cart_item=item,
+                )
+                self.repo.create_financial_invoice_item(
+                    invoice_id=invoice.id,
+                    order_item=order_item,
+                )
+                self.repo.create_inventory_reservation(
+                    order_item=order_item,
+                    expires_at=reservation_expires_at,
                 )
 
             payment = self.repo.create_payment(
@@ -486,6 +523,12 @@ class CheckoutService:
                 user_id=user.id,
                 amount=total,
                 currency=cart.currency,
+            )
+            self.repo.create_payment_attempt(
+                invoice=invoice,
+                payment=payment,
+                idempotency_key=f"checkout-order:{order.id}:mock",
+                expires_at=reservation_expires_at,
             )
 
             self.repo.create_order_status_history(
@@ -575,10 +618,7 @@ class CheckoutService:
                 },
             )
 
-        if (
-            product.max_order_quantity is not None
-            and item.quantity > product.max_order_quantity
-        ):
+        if product.max_order_quantity is not None and item.quantity > product.max_order_quantity:
             raise ValidationAuthError(
                 message="Cart item quantity is greater than product maximum",
                 details={
@@ -642,15 +682,9 @@ class CheckoutService:
             shipping_postal_code=order.shipping_postal_code,
             shipping_phone=order.shipping_phone,
             paid_at=order.paid_at.isoformat() if order.paid_at else None,
-            confirmed_at=order.confirmed_at.isoformat()
-            if order.confirmed_at
-            else None,
-            cancelled_at=order.cancelled_at.isoformat()
-            if order.cancelled_at
-            else None,
-            delivered_at=order.delivered_at.isoformat()
-            if order.delivered_at
-            else None,
+            confirmed_at=order.confirmed_at.isoformat() if order.confirmed_at else None,
+            cancelled_at=order.cancelled_at.isoformat() if order.cancelled_at else None,
+            delivered_at=order.delivered_at.isoformat() if order.delivered_at else None,
             created_at=order.created_at.isoformat(),
             updated_at=order.updated_at.isoformat(),
             items=[self._order_item_out(item) for item in items],
@@ -688,9 +722,7 @@ class CheckoutService:
             provider_reference=payment.provider_reference,
             paid_at=payment.paid_at.isoformat() if payment.paid_at else None,
             failed_at=payment.failed_at.isoformat() if payment.failed_at else None,
-            cancelled_at=payment.cancelled_at.isoformat()
-            if payment.cancelled_at
-            else None,
+            cancelled_at=payment.cancelled_at.isoformat() if payment.cancelled_at else None,
             created_at=payment.created_at.isoformat(),
             updated_at=payment.updated_at.isoformat(),
         )
@@ -805,8 +837,7 @@ class SellerOrderService:
             changed_by=user.id,
             from_status=old_status,
             to_status=payload.status,
-            note=payload.seller_note
-            or f"Seller changed order status to {payload.status}",
+            note=payload.seller_note or f"Seller changed order status to {payload.status}",
         )
 
         _notify_order_status_changed(
@@ -900,15 +931,9 @@ class SellerOrderService:
             shipping_postal_code=order.shipping_postal_code,
             shipping_phone=order.shipping_phone,
             paid_at=order.paid_at.isoformat() if order.paid_at else None,
-            confirmed_at=order.confirmed_at.isoformat()
-            if order.confirmed_at
-            else None,
-            cancelled_at=order.cancelled_at.isoformat()
-            if order.cancelled_at
-            else None,
-            delivered_at=order.delivered_at.isoformat()
-            if order.delivered_at
-            else None,
+            confirmed_at=order.confirmed_at.isoformat() if order.confirmed_at else None,
+            cancelled_at=order.cancelled_at.isoformat() if order.cancelled_at else None,
+            delivered_at=order.delivered_at.isoformat() if order.delivered_at else None,
             created_at=order.created_at.isoformat(),
             updated_at=order.updated_at.isoformat(),
             items=[self._order_item_out(item) for item in items],
@@ -946,9 +971,7 @@ class SellerOrderService:
             provider_reference=payment.provider_reference,
             paid_at=payment.paid_at.isoformat() if payment.paid_at else None,
             failed_at=payment.failed_at.isoformat() if payment.failed_at else None,
-            cancelled_at=payment.cancelled_at.isoformat()
-            if payment.cancelled_at
-            else None,
+            cancelled_at=payment.cancelled_at.isoformat() if payment.cancelled_at else None,
             created_at=payment.created_at.isoformat(),
             updated_at=payment.updated_at.isoformat(),
         )
@@ -1044,6 +1067,19 @@ class AdminOrderService:
 
         if payload.status == OrderStatus.CANCELLED.value:
             order.cancelled_at = now
+            self.repo.release_order_inventory(
+                order_id=order.id,
+                now=now,
+                reason=payload.admin_note or "Order cancelled by admin",
+                include_consumed=True,
+            )
+            invoice = self.repo.get_invoice_by_order(order_id=order.id)
+            if invoice is not None:
+                if order.payment_status == PaymentStatus.PAID.value:
+                    invoice.status = InvoiceStatus.REFUND_PENDING.value
+                else:
+                    invoice.status = InvoiceStatus.CANCELLED.value
+                    invoice.cancelled_at = now
 
         if payload.status == OrderStatus.REFUNDED.value:
             order.payment_status = PaymentStatus.REFUNDED.value
@@ -1053,8 +1089,7 @@ class AdminOrderService:
             changed_by=user.id,
             from_status=old_status,
             to_status=payload.status,
-            note=payload.admin_note
-            or f"Admin changed order status to {payload.status}",
+            note=payload.admin_note or f"Admin changed order status to {payload.status}",
         )
 
         _notify_order_status_changed(
@@ -1156,15 +1191,9 @@ class AdminOrderService:
             shipping_postal_code=order.shipping_postal_code,
             shipping_phone=order.shipping_phone,
             paid_at=order.paid_at.isoformat() if order.paid_at else None,
-            confirmed_at=order.confirmed_at.isoformat()
-            if order.confirmed_at
-            else None,
-            cancelled_at=order.cancelled_at.isoformat()
-            if order.cancelled_at
-            else None,
-            delivered_at=order.delivered_at.isoformat()
-            if order.delivered_at
-            else None,
+            confirmed_at=order.confirmed_at.isoformat() if order.confirmed_at else None,
+            cancelled_at=order.cancelled_at.isoformat() if order.cancelled_at else None,
+            delivered_at=order.delivered_at.isoformat() if order.delivered_at else None,
             created_at=order.created_at.isoformat(),
             updated_at=order.updated_at.isoformat(),
             items=[self._order_item_out(item) for item in items],
@@ -1202,9 +1231,7 @@ class AdminOrderService:
             provider_reference=payment.provider_reference,
             paid_at=payment.paid_at.isoformat() if payment.paid_at else None,
             failed_at=payment.failed_at.isoformat() if payment.failed_at else None,
-            cancelled_at=payment.cancelled_at.isoformat()
-            if payment.cancelled_at
-            else None,
+            cancelled_at=payment.cancelled_at.isoformat() if payment.cancelled_at else None,
             created_at=payment.created_at.isoformat(),
             updated_at=payment.updated_at.isoformat(),
         )
@@ -1374,6 +1401,21 @@ class PaymentService:
         order.status = OrderStatus.PAID.value
         order.paid_at = now
 
+        attempt = self.repo.get_payment_attempt_by_legacy_payment(payment_id=payment.id)
+        invoice = self.repo.get_invoice_by_order(order_id=order.id)
+        if attempt is not None and invoice is not None:
+            attempt.status = PaymentAttemptStatus.SUCCEEDED.value
+            attempt.provider_reference = payment.provider_reference
+            attempt.verified_at = now
+            invoice.status = InvoiceStatus.PAID.value
+            invoice.paid_at = now
+            self.repo.create_payment_transaction(
+                invoice=invoice,
+                attempt=attempt,
+                provider_reference=payment.provider_reference,
+            )
+        self.repo.consume_order_reservations(order_id=order.id, now=now)
+
         self.repo.create_order_status_history(
             order_id=order.id,
             changed_by=user.id,
@@ -1441,6 +1483,12 @@ class PaymentService:
         payment.failed_at = now
         payment.failure_reason = payload.reason or "Mock payment failed"
 
+        attempt = self.repo.get_payment_attempt_by_legacy_payment(payment_id=payment.id)
+        if attempt is not None:
+            attempt.status = PaymentAttemptStatus.FAILED.value
+            attempt.failure_code = "MOCK_PAYMENT_FAILED"
+            attempt.failure_message = payment.failure_reason
+
         order.payment_status = PaymentStatus.FAILED.value
 
         _notify_payment_status_changed(
@@ -1480,9 +1528,7 @@ class PaymentService:
             provider_reference=payment.provider_reference,
             paid_at=payment.paid_at.isoformat() if payment.paid_at else None,
             failed_at=payment.failed_at.isoformat() if payment.failed_at else None,
-            cancelled_at=payment.cancelled_at.isoformat()
-            if payment.cancelled_at
-            else None,
+            cancelled_at=payment.cancelled_at.isoformat() if payment.cancelled_at else None,
             created_at=payment.created_at.isoformat(),
             updated_at=payment.updated_at.isoformat(),
         )

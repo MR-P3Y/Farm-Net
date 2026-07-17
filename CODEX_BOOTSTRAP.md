@@ -69,7 +69,8 @@ Step 17.11 Docs/Postman + Runtime Regression: completed
 Step 17.12 Services Release Gate + Tag: completed (v0.17.0-services-foundation)
 Phase 9.1 Orders/Payments audit: completed
 Phase 9.2 Financial Contracts + DB Hardening: completed
-Next: Phase 9.3 Atomic Checkout + Inventory Reservation
+Phase 9.3 Atomic Checkout + Inventory Reservation: completed
+Next: Phase 9.4 Checkout Idempotency + Contract Hardening
 ```
 
 Services means agricultural operational services, not equipment rental.
