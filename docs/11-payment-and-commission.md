@@ -46,6 +46,10 @@ Attempt، Transaction، Refund و Audit Log اضافه کرد. درخواست و
 actor، action، target، old/new value، IP، user-agent و trace ID را در همان
 Transaction مالی داخل `admin_audit_logs` ثبت می‌کنند.
 
+Step 9.8 رابط Admin Finance را با پنج تب تایپ‌شده برای Invoice، Payment Attempt،
+Transaction، Refund و Audit Log تکمیل کرد. مسیر با Permission Guard محافظت شده و
+حالت‌های loading/empty/error، retry و pagination دارد.
+
 ## 1. هدف سند
 
 این سند استاندارد مالی پروژه «فارم نت» را مشخص می‌کند.

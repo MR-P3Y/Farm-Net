@@ -5,6 +5,7 @@ import '../../features/auth/admin_login_page.dart';
 import '../../features/commission/presentation/admin_commission_page.dart';
 import '../../features/consultants/presentation/admin_consultants_page.dart';
 import '../../features/dashboard/admin_dashboard_page.dart';
+import '../../features/finance/presentation/admin_finance_page.dart';
 import '../../features/media/presentation/admin_media_page.dart';
 import '../../features/notifications/presentation/admin_notifications_page.dart';
 import '../../features/orders/presentation/admin_orders_page.dart';
@@ -30,6 +31,15 @@ final GoRouter adminRouter = GoRouter(
         return AdminAuthGate(child: AdminAppShell(child: child));
       },
       routes: [
+        GoRoute(
+          path: '/finance',
+          name: 'admin-finance',
+          builder:
+              (context, state) => const AdminPermissionGuard(
+                permission: 'finance.invoices.read',
+                child: AdminFinancePage(),
+              ),
+        ),
         GoRoute(
           path: '/dashboard',
           name: 'admin-dashboard',

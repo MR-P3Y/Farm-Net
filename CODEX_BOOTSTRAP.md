@@ -74,7 +74,8 @@ Phase 9.4 Checkout Idempotency + Contract Hardening: completed
 Phase 9.5 Payment Orchestration + Idempotent Verify: completed
 Phase 9.6 Refund Request + Idempotent Processing: completed
 Phase 9.7 Admin Finance Read Models + Audit: completed
-Next: Phase 9.8 Admin Finance UI
+Phase 9.8 Admin Finance UI: completed
+Next: Phase 9.9 Mobile Payment UX + Contract Migration
 ```
 
 Services means agricultural operational services, not equipment rental.

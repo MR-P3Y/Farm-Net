@@ -105,7 +105,7 @@ class AdminSidebar extends StatelessWidget {
                   icon: Icons.payments_outlined,
                   label: l10n.finance,
                   compact: isCompact,
-                  onTap: () {},
+                  onTap: () => context.go('/finance'),
                 ),
                 _SidebarItem(
                   icon: Icons.verified_user_outlined,

@@ -61,6 +61,7 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
 | 9.5 Payment Orchestration + Idempotent Verify | Done | Mock provider initiation, exact-once verify and atomic financial state changes |
 | 9.6 Refund Request + Idempotent Processing | Done | Full-refund policy, Mock completion and exact-once transaction |
 | 9.7 Admin Finance Read Models + Audit | Done | Typed finance APIs, pagination, permissions and immutable admin audit trail |
+| 9.8 Admin Finance UI | Done | Five typed finance tabs, pagination, guarded navigation and responsive states |
 
 ### Step 9.2 Completion Evidence
 
@@ -143,6 +144,15 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
   auth seed remains idempotent at 12 roles and 215 permissions.
 - Alembic head is `c91e4a8d52b7`; all six routes are registered and runtime
   application/database/Redis health remains `ok`.
+
+### Step 9.8 Completion Evidence
+
+- Added the guarded `/finance` Admin route and connected the existing Finance
+  sidebar entry.
+- Added typed tabs for invoices, payment attempts, transactions, refunds, and
+  audit logs with pagination plus loading, empty, error, and retry states.
+- No raw JSON is rendered; finance and audit model parsing has focused tests.
+- Admin analyze, tests, and Web build pass.
 
 ## Step 17.4 Completion Evidence
 
