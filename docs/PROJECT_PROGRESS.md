@@ -388,6 +388,19 @@ model fields exist:
   warnings. No provider network call is implemented in this step.
 - Evidence: `docs/notifications/phase-11-retry-queue.md`.
 
+### Step 11.5 Email Provider Foundation
+
+- Added escaped text/HTML Email envelopes, SMTP STARTTLS/SSL transport, and an
+  Email-only dispatcher integrated with claim, attempt, success, and failure.
+- Added dispatch-time verified-recipient checks, terminal recipient rejection,
+  provider message IDs, and a one-batch CLI worker.
+- Activation is fail-closed: incomplete/disabled configuration claims no work.
+- Backend Ruff/compileall passed and all 43 tests passed with 16 existing UTC
+  warnings. Docker runtime confirmed disabled configuration claimed/sent zero;
+  application/database/Redis health remained `ok`.
+- No live credential was used and no real Email was sent.
+- Evidence: `docs/notifications/phase-11-email-provider.md`.
+
 ## Progress Update Rule
 
 After every completed step:

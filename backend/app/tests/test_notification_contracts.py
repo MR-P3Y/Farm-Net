@@ -4,6 +4,9 @@ from unittest.mock import Mock
 
 from sqlalchemy import UniqueConstraint
 
+from app.core.config import Settings
+from app.modules.notifications.email_dispatcher import EmailDeliveryDispatcher
+from app.modules.notifications.email_provider import build_email_envelope
 from app.modules.notifications.enums import NotificationDeliveryStatus
 from app.modules.notifications.delivery_service import NotificationDeliveryService
 from app.modules.notifications.models import (
@@ -274,3 +277,71 @@ def test_stale_worker_lease_closes_attempt_before_reclaim() -> None:
     assert stale_attempt.finished_at is not None
     assert row.status == "processing"
     assert row.attempt_count == 2
+
+
+def email_settings(**overrides) -> Settings:
+    values = {
+        "database_url": "mysql+pymysql://unused",
+        "email_enabled": True,
+        "email_provider": "smtp",
+        "email_host": "smtp.example.com",
+        "email_from": "no-reply@example.com",
+    }
+    values.update(overrides)
+    return Settings(**values)
+
+
+def test_email_dispatcher_is_fail_closed_when_disabled() -> None:
+    dispatcher = EmailDeliveryDispatcher(
+        None,
+        settings=email_settings(email_enabled=False),
+        transport=Mock(),
+    )
+    dispatcher.delivery = Mock()
+
+    result = dispatcher.run_once()
+
+    assert result.disabled is True
+    dispatcher.delivery.claim_ready.assert_not_called()
+
+
+def test_email_dispatcher_sends_only_verified_target_through_transport() -> None:
+    transport = Mock()
+    transport.send.return_value = "message-1"
+    dispatcher = EmailDeliveryDispatcher(
+        None,
+        settings=email_settings(),
+        transport=transport,
+    )
+    dispatcher.delivery = Mock()
+    dispatcher.repo = Mock()
+    dispatcher.delivery.claim_ready.return_value = [SimpleNamespace(id=5)]
+    dispatcher.repo.get_delivery_target.return_value = (
+        SimpleNamespace(id=5),
+        SimpleNamespace(title="Alert", body="Body", action_url="/orders/1"),
+        SimpleNamespace(email="verified@example.com", is_email_verified=True),
+    )
+
+    result = dispatcher.run_once(limit=1)
+
+    assert result.sent == 1
+    envelope = transport.send.call_args.args[0]
+    assert envelope.to == "verified@example.com"
+    dispatcher.delivery.record_success.assert_called_once_with(
+        delivery_log_id=5,
+        provider="smtp",
+        provider_message_id="message-1",
+    )
+
+
+def test_email_envelope_escapes_html_content() -> None:
+    envelope = build_email_envelope(
+        to="user@example.com",
+        title="Title",
+        body="<script>alert(1)</script>",
+        action_url='https://example.com/?q="unsafe"',
+    )
+
+    assert "<script>" not in envelope.html_body
+    assert "&lt;script&gt;" in envelope.html_body
+    assert "&quot;unsafe&quot;" in envelope.html_body

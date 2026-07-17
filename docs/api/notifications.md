@@ -565,3 +565,15 @@ super_admin: all 5
 * Email/SMS preferences create pending delivery work only for verified contact
   details; real providers are not connected yet.
 * Admin retry only schedules work; it never calls a provider synchronously.
+
+## Email Worker
+
+Email delivery is processed out of request scope:
+
+```powershell
+python scripts/process_email_notifications.py --limit 50
+```
+
+The command is fail-closed. Unless `EMAIL_ENABLED=true`, provider is `smtp`,
+and host/from are configured, it returns `disabled=true` without claiming any
+queue row. SMTP credentials must be supplied only through runtime environment.

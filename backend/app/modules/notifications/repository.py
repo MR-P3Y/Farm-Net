@@ -52,11 +52,9 @@ class NotificationRepository:
         return row
 
     def claim_ready_deliveries(
-        self, *, now: datetime, lease_cutoff: datetime, limit: int
+        self, *, now: datetime, lease_cutoff: datetime, limit: int, channel: str | None
     ) -> list[NotificationDeliveryLog]:
-        return (
-            self.db.query(NotificationDeliveryLog)
-            .filter(
+        query = self.db.query(NotificationDeliveryLog).filter(
                 NotificationDeliveryLog.channel != "in_app",
                 or_(
                     and_(
@@ -74,6 +72,10 @@ class NotificationRepository:
                     ),
                 ),
             )
+        if channel is not None:
+            query = query.filter(NotificationDeliveryLog.channel == channel)
+        return (
+            query
             .order_by(
                 NotificationDeliveryLog.next_attempt_at,
                 NotificationDeliveryLog.created_at,
@@ -83,6 +85,18 @@ class NotificationRepository:
             .limit(limit)
             .all()
         )
+
+    def get_delivery_target(
+        self, *, delivery_log_id: int
+    ) -> tuple[NotificationDeliveryLog, Notification, AuthUser] | None:
+        row = (
+            self.db.query(NotificationDeliveryLog, Notification, AuthUser)
+            .join(Notification, Notification.id == NotificationDeliveryLog.notification_id)
+            .join(AuthUser, AuthUser.id == Notification.recipient_user_id)
+            .filter(NotificationDeliveryLog.id == delivery_log_id)
+            .one_or_none()
+        )
+        return row
 
     def get_delivery_log(
         self, *, delivery_log_id: int, for_update: bool = False

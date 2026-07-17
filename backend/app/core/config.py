@@ -36,6 +36,17 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
 
+    email_enabled: bool = False
+    email_provider: str = "smtp"
+    email_host: str = ""
+    email_port: int = 587
+    email_user: str = ""
+    email_password: str = ""
+    email_from: str = ""
+    email_starttls: bool = True
+    email_use_ssl: bool = False
+    email_timeout_seconds: int = 15
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

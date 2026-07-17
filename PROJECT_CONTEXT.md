@@ -173,6 +173,11 @@ Step 11.4 completed the provider-neutral retry queue at Alembic head
 failure, expired-worker recovery, and Admin delivery observability/requeue.
 Step 11.5 Email Provider Foundation is next; no real provider is connected yet.
 
+Step 11.5 completed a fail-closed SMTP Email foundation with safe envelope
+rendering, verified destination checks, queue integration, provider result
+recording, and a one-batch CLI worker. It was verified without credentials or
+network delivery. Step 11.6 SMS Provider Foundation is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

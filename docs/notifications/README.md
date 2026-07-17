@@ -22,6 +22,7 @@ Phase 11 - Notifications / Events / Messaging Foundation
 * User-owned global and event-specific channel preferences
 * Verified Email/SMS destination routing to pending delivery state
 * Atomic external-channel queue claim, retry backoff, and attempt history
+* Fail-closed SMTP Email transport and one-batch dispatcher
 
 ## Tables
 
@@ -77,6 +78,9 @@ Step 11.3 preference precedence and destination rules are documented in
 
 Step 11.4 queue, lease, backoff, and attempt history contracts are documented
 in `docs/notifications/phase-11-retry-queue.md`.
+
+Step 11.5 SMTP configuration and safe activation are documented in
+`docs/notifications/phase-11-email-provider.md`.
 
 The verified current-state analysis and hardening boundary are recorded in
 `docs/notifications/phase-11-real-state-audit.md`. In particular, pending rows

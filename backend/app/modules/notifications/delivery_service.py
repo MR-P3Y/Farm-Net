@@ -21,13 +21,14 @@ class NotificationDeliveryService:
         self.repo = NotificationRepository(db)
 
     def claim_ready(
-        self, *, limit: int = 50, lease_seconds: int = 300
+        self, *, limit: int = 50, lease_seconds: int = 300, channel: str | None = None
     ) -> list[NotificationDeliveryLogOut]:
         now = datetime.now(UTC)
         rows = self.repo.claim_ready_deliveries(
             now=now,
             lease_cutoff=now - timedelta(seconds=max(lease_seconds, 30)),
             limit=min(max(limit, 1), 100),
+            channel=channel,
         )
         claimed: list[NotificationDeliveryLogOut] = []
         for row in rows:
@@ -88,10 +89,11 @@ class NotificationDeliveryService:
         error_message: str,
         base_delay_seconds: int = 60,
         max_delay_seconds: int = 3600,
+        terminal: bool = False,
     ) -> NotificationDeliveryDetailOut:
         row = self._processing_delivery(delivery_log_id)
         now = datetime.now(UTC)
-        terminal = row.attempt_count >= row.max_attempts
+        terminal = terminal or row.attempt_count >= row.max_attempts
         row.status = (
             NotificationDeliveryStatus.FAILED.value
             if terminal
