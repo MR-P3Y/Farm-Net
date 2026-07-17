@@ -148,6 +148,9 @@ Step 9.10 completes Phase 9 documentation/Postman and release regression: 29
 OpenAPI paths, 34 collection requests, Backend 28 tests, Mobile 26 tests, Admin
 5 tests, both Web builds, migration/seed, and DB/Redis health all pass.
 
+Phase 9 completion passed its release gate and is released as
+`v0.18.0-orders-finance-foundation`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -64,6 +64,7 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
 | 9.8 Admin Finance UI | Done | Five typed finance tabs, pagination, guarded navigation and responsive states |
 | 9.9 Mobile Payment UX + Contract Migration | Done | Buyer invoice contract, idempotent initiate/verify UX and privacy cleanup |
 | 9.10 Docs/Postman + Release Regression | Done | 29 OpenAPI paths, 34 Postman requests and full three-surface regression |
+| 9.11 Release Gate + Tag | Done | `v0.18.0-orders-finance-foundation` |
 
 ### Step 9.2 Completion Evidence
 
@@ -175,6 +176,12 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
   `c91e4a8d52b7`, auth seed is idempotent, and DB/Redis health is `ok`.
 - Mobile analyze, 26 tests, and Web build pass.
 - Admin analyze, 5 tests, and Web build pass.
+
+### Step 9.11 Release Gate
+
+- Final Backend, Mobile, Admin, OpenAPI, Postman, migration, seed, and health
+  checks passed on clean, pushed `develop`.
+- Release tag: `v0.18.0-orders-finance-foundation`.
 
 ## Step 17.4 Completion Evidence
 
