@@ -17,6 +17,8 @@ Phase 11 - Notifications / Events / Messaging Foundation
 * Verification/media event integration
 * Flutter mobile notification inbox foundation
 * Admin panel notification management foundation
+* Database exact-once notification identity
+* Provider-neutral retry and worker-lease fields
 
 ## Tables
 
@@ -55,6 +57,10 @@ POST  /api/v1/admin/notifications/system-message
 SMS, email, push, and Telegram channels are not yet connected to real providers.
 
 They are reserved for future delivery integration.
+
+Step 11.2 hardening is documented in
+`docs/notifications/phase-11-delivery-contracts.md`. It adds durable delivery
+contracts but does not claim that an external delivery worker exists.
 
 The verified current-state analysis and hardening boundary are recorded in
 `docs/notifications/phase-11-real-state-audit.md`. In particular, pending rows

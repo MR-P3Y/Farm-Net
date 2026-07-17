@@ -134,3 +134,10 @@ create_system_message
 create_event_and_notify_user
 create_event_and_notify_many
 ```
+
+Source-backed events now receive a deterministic key derived from event type,
+source identity, and canonical payload. Producers may supply a more explicit
+stable key. Source-less/manual events intentionally remain unique.
+
+Self-notification is suppressed by default in the combined create-and-notify
+methods. Confirmation flows must opt in explicitly.

@@ -171,6 +171,7 @@ class ProfileService:
             },
             action_url="/verification",
             priority="normal",
+            allow_self_notification=True,
             commit=False,
         )
 

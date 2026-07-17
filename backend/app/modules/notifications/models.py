@@ -7,6 +7,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    Integer,
     JSON,
     String,
     Text,
@@ -131,6 +132,12 @@ class Notification(Base):
     )
 
     __table_args__ = (
+        UniqueConstraint(
+            "event_id",
+            "recipient_user_id",
+            "channel",
+            name="uq_notifications_event_recipient_channel",
+        ),
         Index(
             "ix_notifications_recipient_status_created",
             "recipient_user_id",
@@ -179,6 +186,18 @@ class NotificationDeliveryLog(Base):
     error_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_attempt_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    locked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     sent_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
@@ -201,6 +220,16 @@ class NotificationDeliveryLog(Base):
             "channel",
         ),
         Index("ix_notification_delivery_logs_status_created", "status", "created_at"),
+        Index(
+            "ix_notification_delivery_logs_retry_ready",
+            "status",
+            "next_attempt_at",
+        ),
+        UniqueConstraint(
+            "notification_id",
+            "channel",
+            name="uq_notification_delivery_notification_channel",
+        ),
         UniqueConstraint(
             "provider",
             "provider_message_id",

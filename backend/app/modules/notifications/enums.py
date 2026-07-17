@@ -83,6 +83,7 @@ class NotificationPriority(str, Enum):
 
 class NotificationDeliveryStatus(str, Enum):
     PENDING = "pending"
+    PROCESSING = "processing"
     SENT = "sent"
     DELIVERED = "delivered"
     FAILED = "failed"

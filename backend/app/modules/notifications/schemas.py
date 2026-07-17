@@ -94,6 +94,12 @@ class NotificationDeliveryLogOut(BaseModel):
     error_code: str | None = None
     error_message: str | None = None
 
+    attempt_count: int
+    max_attempts: int
+    next_attempt_at: datetime | None = None
+    last_attempt_at: datetime | None = None
+    locked_at: datetime | None = None
+
     sent_at: datetime | None = None
     delivered_at: datetime | None = None
     created_at: datetime

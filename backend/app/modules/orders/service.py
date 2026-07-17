@@ -76,6 +76,7 @@ def _notify_order_created(
         },
         action_url=f"/orders/{order.id}",
         priority="normal",
+        allow_self_notification=True,
         commit=False,
     )
 
@@ -103,6 +104,7 @@ def _notify_order_status_changed(
         },
         action_url=f"/orders/{order.id}",
         priority="normal",
+        allow_self_notification=True,
         commit=False,
     )
 
@@ -129,6 +131,7 @@ def _notify_payment_created(
         },
         action_url=f"/orders/{order.id}",
         priority="normal",
+        allow_self_notification=True,
         commit=False,
     )
 
@@ -169,6 +172,7 @@ def _notify_payment_status_changed(
         },
         action_url=f"/orders/{order.id}",
         priority="normal" if succeeded else "high",
+        allow_self_notification=True,
         commit=False,
     )
 

@@ -954,6 +954,7 @@ class ConsultantService:
             },
             action_url=f"/admin/consultants?request_id={row.id}",
             priority=NotificationPriority.NORMAL.value,
+            allow_self_notification=True,
             commit=True,
         )
 

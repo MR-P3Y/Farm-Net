@@ -158,6 +158,11 @@ and device tokens do not. Step 11.2 is the next authorized implementation
 boundary and must begin with database exact-once and deterministic event
 contracts. See `docs/notifications/phase-11-real-state-audit.md`.
 
+Step 11.2 completed database and provider-neutral delivery hardening at Alembic
+head `e72b9f4c31a6`: exact-once notification identity, deterministic source
+event keys, explicit self-notification policy, and durable retry/lease fields.
+No external delivery worker or provider was added. Step 11.3 is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

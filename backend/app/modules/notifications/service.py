@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
+from hashlib import sha256
+import json
 from typing import Any
 from uuid import uuid4
 
@@ -46,6 +48,7 @@ class NotificationService:
             event_type=payload.event_type,
             source_type=payload.source_type,
             source_id=payload.source_id,
+            payload_json=payload.payload_json,
         )
 
         existing = self.repo.get_event_by_key(event_key=event_key)
@@ -62,7 +65,8 @@ class NotificationService:
         )
 
         try:
-            self.repo.add_event(row)
+            with self.db.begin_nested():
+                self.repo.add_event(row)
 
             if commit:
                 self.repo.commit()
@@ -72,8 +76,6 @@ class NotificationService:
             return NotificationEventOut.model_validate(row)
 
         except IntegrityError:
-            self.db.rollback()
-
             existing = self.repo.get_event_by_key(event_key=event_key)
             if existing is not None:
                 return NotificationEventOut.model_validate(existing)
@@ -118,21 +120,43 @@ class NotificationService:
             status=NotificationStatus.UNREAD.value,
         )
 
-        self.repo.add_notification(row)
-
-        self.repo.add_delivery_log(
-            NotificationDeliveryLog(
-                notification_id=row.id,
+        if event_id is not None:
+            existing = self.repo.get_notification_for_event(
+                event_id=event_id,
+                recipient_user_id=recipient_user_id,
                 channel=channel,
-                provider="in_app" if channel == NotificationChannel.IN_APP.value else None,
-                status=NotificationDeliveryStatus.SENT.value
-                if channel == NotificationChannel.IN_APP.value
-                else NotificationDeliveryStatus.PENDING.value,
-                sent_at=datetime.utcnow()
-                if channel == NotificationChannel.IN_APP.value
-                else None,
             )
-        )
+            if existing is not None:
+                return NotificationOut.model_validate(existing)
+
+        try:
+            with self.db.begin_nested():
+                self.repo.add_notification(row)
+                self.repo.add_delivery_log(
+                    NotificationDeliveryLog(
+                        notification_id=row.id,
+                        channel=channel,
+                        provider="in_app"
+                        if channel == NotificationChannel.IN_APP.value
+                        else None,
+                        status=NotificationDeliveryStatus.SENT.value
+                        if channel == NotificationChannel.IN_APP.value
+                        else NotificationDeliveryStatus.PENDING.value,
+                        sent_at=datetime.utcnow()
+                        if channel == NotificationChannel.IN_APP.value
+                        else None,
+                    )
+                )
+        except IntegrityError:
+            if event_id is not None:
+                existing = self.repo.get_notification_for_event(
+                    event_id=event_id,
+                    recipient_user_id=recipient_user_id,
+                    channel=channel,
+                )
+                if existing is not None:
+                    return NotificationOut.model_validate(existing)
+            raise
 
         if commit:
             self.repo.commit()
@@ -229,8 +253,11 @@ class NotificationService:
         action_url: str | None = None,
         priority: str = NotificationPriority.NORMAL.value,
         event_key: str | None = None,
+        allow_self_notification: bool = False,
         commit: bool = True,
-    ) -> NotificationOut:
+    ) -> NotificationOut | None:
+        if actor_user_id == recipient_user_id and not allow_self_notification:
+            return None
         event = self.create_event(
             payload=NotificationEventCreateIn(
                 event_key=event_key,
@@ -281,8 +308,17 @@ class NotificationService:
         action_url: str | None = None,
         priority: str = NotificationPriority.NORMAL.value,
         event_key: str | None = None,
+        allow_self_notification: bool = False,
         commit: bool = True,
     ) -> list[NotificationOut]:
+        recipients = {
+            recipient_user_id
+            for recipient_user_id in recipient_user_ids
+            if allow_self_notification or recipient_user_id != actor_user_id
+        }
+        if not recipients:
+            return []
+
         event = self.create_event(
             payload=NotificationEventCreateIn(
                 event_key=event_key,
@@ -296,7 +332,7 @@ class NotificationService:
         )
 
         notifications: list[NotificationOut] = []
-        for recipient_user_id in sorted(set(recipient_user_ids)):
+        for recipient_user_id in sorted(recipients):
             existing = self.repo.get_notification_for_event(
                 event_id=event.id,
                 recipient_user_id=recipient_user_id,
@@ -470,15 +506,30 @@ class NotificationService:
         event_type: str,
         source_type: str | None,
         source_id: str | None,
+        payload_json: dict[str, Any] | None,
     ) -> str:
-        unique_suffix = uuid4().hex
         clean_event_type = event_type.replace(".", "_")
 
         if source_type and source_id:
             base = f"{clean_event_type}:{source_type}:{source_id}"
-        else:
-            base = clean_event_type
+            canonical_identity = json.dumps(
+                {
+                    "event_type": event_type,
+                    "source_type": source_type,
+                    "source_id": source_id,
+                    "payload": payload_json or {},
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=True,
+                default=str,
+            )
+            digest = sha256(canonical_identity.encode("utf-8")).hexdigest()[:12]
+            max_base_length = 80 - len(digest) - 1
+            return f"{base[:max_base_length]}:{digest}"
 
+        unique_suffix = uuid4().hex
+        base = clean_event_type
         max_base_length = 80 - len(unique_suffix) - 1
         return f"{base[:max_base_length]}:{unique_suffix}"
 

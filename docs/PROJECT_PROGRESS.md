@@ -347,6 +347,22 @@ model fields exist:
   channel adapters remain later steps.
 - Evidence: `docs/notifications/phase-11-real-state-audit.md`.
 
+### Step 11.2 Delivery Contracts + DB Hardening
+
+- Added database exact-once constraints for event/recipient/channel and one
+  durable delivery state per notification/channel, with legacy deduplication.
+- Added savepoint-based race handling, deterministic source event keys, and an
+  explicit suppress-by-default self-notification policy with confirmation-flow
+  opt-ins.
+- Added provider-neutral processing/retry counters, scheduling timestamps, and
+  worker lease state without connecting an external provider.
+- Alembic upgraded MySQL to `e72b9f4c31a6`; runtime inspection confirmed the
+  constraints and columns, and database/Redis health returned `ok`.
+- Backend application/migration Ruff and compileall passed; all 33 Backend tests
+  passed with 16 existing UTC deprecation warnings. Eight unrelated seed-script
+  E402 findings remain outside this step.
+- Evidence: `docs/notifications/phase-11-delivery-contracts.md`.
+
 ## Progress Update Rule
 
 After every completed step:
