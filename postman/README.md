@@ -44,3 +44,11 @@ contract collection. Set `requester_token`, `provider_token`, and `admin_token`,
 then replace the generic category, provider-profile, offer, and request IDs with
 records from the target environment. It covers public discovery, owner
 management, moderation, ownership/privacy, and the request status workflow.
+
+## Orders / Payments / Finance Flow
+
+`collections/orders-payments-commission.postman_collection.json` contains 34
+requests covering Cart, atomic/idempotent Checkout, Buyer/Seller/Admin orders,
+payment initiation and exact-once verification, full Refund processing,
+commission settings, and all Admin Finance read models. Set user/admin tokens
+and the product, cart, order, payment, invoice, attempt, and refund IDs.

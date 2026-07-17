@@ -63,6 +63,7 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
 | 9.7 Admin Finance Read Models + Audit | Done | Typed finance APIs, pagination, permissions and immutable admin audit trail |
 | 9.8 Admin Finance UI | Done | Five typed finance tabs, pagination, guarded navigation and responsive states |
 | 9.9 Mobile Payment UX + Contract Migration | Done | Buyer invoice contract, idempotent initiate/verify UX and privacy cleanup |
+| 9.10 Docs/Postman + Release Regression | Done | 29 OpenAPI paths, 34 Postman requests and full three-surface regression |
 
 ### Step 9.2 Completion Evidence
 
@@ -164,6 +165,16 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
 - Retry uses a stable per-invoice key, loading/error states remain controlled,
   and internal commission/seller amounts are no longer rendered for buyers.
 - Typed Payment Attempt and Checkout replay-key model tests were added.
+
+### Step 9.10 Completion Evidence
+
+- Completed Phase 9 API documentation and expanded the Postman collection to
+  34 valid requests with payment/refund/finance variables and replay keys.
+- OpenAPI exposes 29 Phase 9 paths; collection JSON parsing succeeds.
+- Backend Ruff/compileall and 28 focused regressions pass; Alembic remains at
+  `c91e4a8d52b7`, auth seed is idempotent, and DB/Redis health is `ok`.
+- Mobile analyze, 26 tests, and Web build pass.
+- Admin analyze, 5 tests, and Web build pass.
 
 ## Step 17.4 Completion Evidence
 

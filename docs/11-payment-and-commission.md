@@ -55,6 +55,10 @@ Payment Attempt و Verify منتقل کرد. `invoice_id` امن در جزئیا
 می‌شود، retry از کلید پایدار هر Invoice استفاده می‌کند و مبالغ داخلی کمیسیون و
 سهم فروشنده دیگر در UI خریدار نمایش داده نمی‌شوند.
 
+Step 9.10 مستندات و Postman فاز را تکمیل کرد: ۲۹ path واقعی OpenAPI و ۳۴
+درخواست معتبر Postman پوشش داده می‌شوند. Regression کامل Backend، Mobile و Admin،
+هر دو Web build، migration/seed و سلامت Database/Redis موفق هستند.
+
 ## 1. هدف سند
 
 این سند استاندارد مالی پروژه «فارم نت» را مشخص می‌کند.

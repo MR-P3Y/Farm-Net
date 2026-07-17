@@ -144,6 +144,10 @@ Step 9.9 migrates Mobile payment UX from the legacy Mock Pay action to the
 idempotent initiate/verify contracts. Buyer order detail exposes only its safe
 invoice identifier and no longer renders platform commission or seller amount.
 
+Step 9.10 completes Phase 9 documentation/Postman and release regression: 29
+OpenAPI paths, 34 collection requests, Backend 28 tests, Mobile 26 tests, Admin
+5 tests, both Web builds, migration/seed, and DB/Redis health all pass.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

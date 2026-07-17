@@ -24,3 +24,7 @@
 offer ownership, category/provider/offer admin moderation, request creation,
 requester/provider/admin lists and details, controlled status transitions,
 requester cancellation, and role ownership.
+
+`orders-payments-commission.postman_collection.json` covers 34 Phase 9 requests,
+including idempotent Checkout/payment, verify, full Refund, Admin Finance, and
+Audit Log contracts.
