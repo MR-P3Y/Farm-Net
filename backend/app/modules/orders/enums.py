@@ -35,3 +35,50 @@ class PaymentMethod(StrEnum):
 class CommissionSettingStatus(StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"
+
+
+class InvoiceStatus(StrEnum):
+    ISSUED = "issued"
+    PAYMENT_PENDING = "payment_pending"
+    PAID = "paid"
+    CANCELLED = "cancelled"
+    REFUND_PENDING = "refund_pending"
+    REFUNDED = "refunded"
+
+
+class PaymentAttemptStatus(StrEnum):
+    CREATED = "created"
+    REDIRECTED = "redirected"
+    VERIFYING = "verifying"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+
+
+class FinancialTransactionType(StrEnum):
+    PAYMENT = "payment"
+    REFUND = "refund"
+    ADJUSTMENT = "adjustment"
+
+
+class FinancialTransactionStatus(StrEnum):
+    PENDING = "pending"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    REVERSED = "reversed"
+
+
+class RefundStatus(StrEnum):
+    REQUESTED = "requested"
+    PROCESSING = "processing"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class InventoryReservationStatus(StrEnum):
+    RESERVED = "reserved"
+    CONSUMED = "consumed"
+    RELEASED = "released"
+    EXPIRED = "expired"

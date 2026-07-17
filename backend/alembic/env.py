@@ -15,6 +15,7 @@ from app.modules.media import models as media_models  # noqa: F401
 from app.modules.notifications import models as notification_models  # noqa: F401
 from app.modules.weather import models as weather_models  # noqa: F401
 from app.modules.social import models as social_models  # noqa: F401
+from app.modules.services import models as service_models  # noqa: F401
 from app.modules.expert import models as expert_models  # noqa: F401
 from app.modules.consultants import models as consultant_models  # noqa: F401
 

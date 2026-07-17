@@ -1,6 +1,20 @@
 # 11 — Payment and Commission
 # پرداخت، فاکتور و کمیسیون پروژه فارم نت
 
+## وضعیت اجرای Phase 9
+
+Step 9.2 قراردادهای مالی و سخت‌سازی دیتابیس را بدون تغییر رفتار API موجود
+اضافه کرد. جدول‌های `finance_invoices`، `finance_invoice_items`،
+`commission_snapshots`، `payment_attempts`، `finance_transactions`،
+`finance_refunds` و `inventory_reservations` اکنون مبنای گام‌های اتمیک Checkout،
+Verify و Refund هستند. در این مرحله هنوز درگاه واقعی متصل نشده و جریان فعلی
+Mock به این جدول‌ها مهاجرت نکرده است.
+
+قیدهای یکتای `idempotency_key` و شناسه‌های Provider، مبالغ مثبت، Snapshot
+یک‌به‌یک سفارش/فاکتور و Reservation یک‌به‌یک هر Order Item در سطح دیتابیس ثبت
+شده‌اند. Step 9.3 باید Checkout را با قفل موجودی و Reservation اتمیک به این
+قراردادها متصل کند.
+
 ## 1. هدف سند
 
 این سند استاندارد مالی پروژه «فارم نت» را مشخص می‌کند.

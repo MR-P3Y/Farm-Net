@@ -107,6 +107,13 @@ must be selected from the roadmap and explicitly authorized:
 Next roadmap step: not selected
 ```
 
+Phase 9 completion resumed after the Services release. Steps 9.1 (read-only
+audit) and 9.2 (financial contracts and database hardening) are complete.
+Seven additive financial tables now provide the foundation for atomic checkout,
+inventory reservation, idempotent payment attempts, transactions, and refunds.
+Current API and client behavior remains on the existing Mock payment flow until
+Step 9.3 and later explicitly connect these contracts.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -160,8 +167,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.14.0-expert-consultants-foundation
+v0.17.0-services-foundation
 ```
-
-Services commits currently follow that tag and have not yet been released as a
-Services foundation tag.

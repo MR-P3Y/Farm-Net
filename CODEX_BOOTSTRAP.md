@@ -66,7 +66,10 @@ Step 17.8 Provider Profile + Offer Management Mobile: completed
 Step 17.9 Provider Request Workbench: completed
 Step 17.10 Admin Panel Services: completed (bda9699)
 Step 17.11 Docs/Postman + Runtime Regression: completed
-Next: select and authorize the next roadmap step
+Step 17.12 Services Release Gate + Tag: completed (v0.17.0-services-foundation)
+Phase 9.1 Orders/Payments audit: completed
+Phase 9.2 Financial Contracts + DB Hardening: completed
+Next: Phase 9.3 Atomic Checkout + Inventory Reservation
 ```
 
 Services means agricultural operational services, not equipment rental.

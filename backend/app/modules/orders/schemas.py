@@ -192,3 +192,100 @@ class CommissionSettingOut(BaseModel):
 class CommissionSettingUpdateIn(BaseModel):
     percent: Decimal = Field(ge=0, le=100)
     description: str | None = Field(default=None, max_length=2000)
+
+
+class PaymentCheckoutIn(BaseModel):
+    invoice_id: int = Field(ge=1)
+    provider: str = Field(min_length=2, max_length=80)
+    idempotency_key: str = Field(min_length=8, max_length=160)
+
+
+class PaymentVerifyIn(BaseModel):
+    payment_attempt_id: int = Field(ge=1)
+    provider_payment_id: str = Field(min_length=1, max_length=255)
+
+
+class RefundCreateIn(BaseModel):
+    invoice_id: int = Field(ge=1)
+    amount: Decimal = Field(gt=0)
+    reason: str = Field(min_length=3, max_length=2000)
+    idempotency_key: str = Field(min_length=8, max_length=160)
+
+
+class FinancialInvoiceOut(BaseModel):
+    id: int
+    invoice_number: str
+    order_id: int
+    buyer_user_id: int
+    store_id: int
+    status: str
+    currency: str
+    subtotal_amount: Decimal
+    discount_amount: Decimal
+    shipping_amount: Decimal
+    total_amount: Decimal
+    platform_amount: Decimal
+    provider_amount: Decimal
+    issued_at: str
+    paid_at: str | None = None
+    cancelled_at: str | None = None
+    refunded_at: str | None = None
+    created_at: str
+    updated_at: str
+
+
+class PaymentAttemptOut(BaseModel):
+    id: int
+    invoice_id: int
+    order_id: int
+    user_id: int
+    provider: str
+    status: str
+    amount: Decimal
+    currency: str
+    idempotency_key: str
+    provider_payment_id: str | None = None
+    provider_reference: str | None = None
+    redirect_url: str | None = None
+    failure_code: str | None = None
+    failure_message: str | None = None
+    expires_at: str | None = None
+    verified_at: str | None = None
+    created_at: str
+    updated_at: str
+
+
+class FinancialTransactionOut(BaseModel):
+    id: int
+    invoice_id: int
+    order_id: int
+    payment_attempt_id: int | None = None
+    transaction_type: str
+    status: str
+    amount: Decimal
+    currency: str
+    provider: str | None = None
+    provider_reference: str | None = None
+    description: str | None = None
+    occurred_at: str
+    created_at: str
+
+
+class FinancialRefundOut(BaseModel):
+    id: int
+    invoice_id: int
+    order_id: int
+    payment_attempt_id: int | None = None
+    transaction_id: int | None = None
+    status: str
+    amount: Decimal
+    currency: str
+    reason: str
+    provider_reference: str | None = None
+    requested_by_user_id: int | None = None
+    processed_by_user_id: int | None = None
+    failure_message: str | None = None
+    requested_at: str
+    processed_at: str | None = None
+    created_at: str
+    updated_at: str

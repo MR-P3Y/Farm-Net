@@ -2,15 +2,12 @@
 
 Last verified: 2026-07-16
 Branch at verification: `develop`
-Verified HEAD: `c247d9d`
+Verified HEAD before Phase 9.2 commit: `f2b96be`
 
 ## Current Position
 
-The Windows development environment recovery is complete. Product development
-should resume at `Step 17.10 - Admin Panel Services`.
-
-Do not restart Step 17.1, 17.2, or 17.3. Their implementations are already in
-the repository.
+The Services foundation is released as `v0.17.0-services-foundation`. Phase 9
+completion has resumed; Step 9.2 is complete and Step 9.3 is next.
 
 ## Completed Foundations
 
@@ -45,13 +42,35 @@ the repository.
 | 17.7 Mobile Service Request Flow | Done | Create/list/detail/cancel, timeline, routing and tests |
 | 17.8 Provider Profile + Offer Management Mobile | Done | Profile/offers CRUD-submit, media, navigation and tests |
 | 17.9 Provider Request Workbench | Done | Assigned list/detail, transitions, timeline and tests |
-| 17.10 Admin Panel Services | Next | Not started |
-| 17.11 Docs/Postman + Runtime Regression | Planned | Not started |
-| Services mobile UI | In progress | Discovery, requester flow, provider profile and offers done |
-| Services admin UI | Not started | No `admin-panel/lib/features/services` |
-| Services API docs/Postman | Done for request backend | `docs/api/services.md`, Services collection |
-| Services automated tests | Started | 13 focused Request workflow/contract tests |
-| Services release/tag | Not started | No Services tag after v0.14.0 |
+| 17.10 Admin Panel Services | Done | `bda9699` |
+| 17.11 Docs/Postman + Runtime Regression | Done | `f2b96be` |
+| Services mobile UI | Done at foundation level | Discovery, requester and provider workflows |
+| Services admin UI | Done at foundation level | Four typed management tabs |
+| Services API docs/Postman | Done | Complete Services docs and 30-request collection |
+| Services automated tests | Done at focused level | 13 request workflow/contract tests |
+| Services release/tag | Done | `v0.17.0-services-foundation` |
+
+## Phase 9 Completion Progress
+
+| Step | Status | Evidence |
+|---|---|---|
+| 9.1 Existing Orders/Payments Audit | Done | Read-only contract and gap audit |
+| 9.2 Financial Contracts + DB Hardening | Done | Seven financial tables, explicit enums, idempotency/amount constraints and tests |
+| 9.3 Atomic Checkout + Inventory Reservation | Next | Not started |
+
+### Step 9.2 Completion Evidence
+
+- Added invoice/item, commission snapshot, payment-attempt, transaction, refund,
+  and inventory-reservation database contracts without changing current API,
+  Mobile, Admin, or Mock payment behavior.
+- Added explicit lifecycle enums and typed input/output contracts for future
+  checkout, verify, transaction, and refund operations.
+- Enforced positive amounts/quantities, one invoice and commission snapshot per
+  order, one reservation per order item, and unique idempotency/provider keys.
+- Added four focused contract tests; the full Backend suite has 17 passing tests.
+- Alembic upgraded to `a7c9f2e14b30`; all seven new tables and critical unique
+  constraints were verified in MySQL. Application, database, and Redis health
+  remained `ok`.
 
 ## Step 17.4 Completion Evidence
 
