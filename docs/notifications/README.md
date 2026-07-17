@@ -55,3 +55,7 @@ POST  /api/v1/admin/notifications/system-message
 SMS, email, push, and Telegram channels are not yet connected to real providers.
 
 They are reserved for future delivery integration.
+
+The verified current-state analysis and hardening boundary are recorded in
+`docs/notifications/phase-11-real-state-audit.md`. In particular, pending rows
+for external channels do not mean that delivery or retry is implemented.

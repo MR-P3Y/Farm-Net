@@ -332,6 +332,21 @@ model fields exist:
   hardening;
 - broad backend, Flutter, and integration test coverage.
 
+## Phase 11 - Notifications
+
+### Step 11.1 Real-State Audit
+
+- Audited the three notification tables, service/repository behavior, user and
+  Admin APIs, producer integrations, Mobile/Admin clients, and provider config.
+- Confirmed the in-app inbox foundation is implemented and ownership protected.
+- Confirmed external channels have no dispatcher/provider/retry implementation.
+- Identified missing DB exact-once enforcement, inconsistent deterministic
+  event keys, producer-specific self-notification behavior, and the absence of
+  preferences, device tokens, and a focused notification test suite.
+- Defined Step 11.2 as provider-neutral DB/delivery contract hardening; real
+  channel adapters remain later steps.
+- Evidence: `docs/notifications/phase-11-real-state-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:

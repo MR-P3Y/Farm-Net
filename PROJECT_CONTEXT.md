@@ -151,6 +151,13 @@ OpenAPI paths, 34 collection requests, Backend 28 tests, Mobile 26 tests, Admin
 Phase 9 completion passed its release gate and is released as
 `v0.18.0-orders-finance-foundation`.
 
+Phase 11 Notifications is active. Step 11.1 completed the real-state audit:
+the in-app inbox, ownership APIs, producer integration, and Mobile/Admin
+foundations exist; external provider delivery, durable retries, preferences,
+and device tokens do not. Step 11.2 is the next authorized implementation
+boundary and must begin with database exact-once and deterministic event
+contracts. See `docs/notifications/phase-11-real-state-audit.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

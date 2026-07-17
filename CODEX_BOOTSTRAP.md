@@ -78,7 +78,8 @@ Phase 9.8 Admin Finance UI: completed
 Phase 9.9 Mobile Payment UX + Contract Migration: completed
 Phase 9.10 Docs/Postman + Release Regression: completed
 Phase 9.11 Release Gate + Tag: completed (v0.18.0-orders-finance-foundation)
-Next: select the next roadmap phase from the current real project gaps
+Phase 11.1 Notifications real-state audit: completed
+Next: Phase 11.2 Delivery Contracts + DB Hardening
 ```
 
 Services means agricultural operational services, not equipment rental.
