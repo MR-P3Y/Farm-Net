@@ -469,6 +469,40 @@ class OrderRepository:
         self.db.flush()
         return row
 
+    def get_invoice_for_buyer(self, *, invoice_id: int, buyer_user_id: int) -> FinancialInvoice | None:
+        return (
+            self.db.query(FinancialInvoice)
+            .filter(
+                FinancialInvoice.id == invoice_id,
+                FinancialInvoice.buyer_user_id == buyer_user_id,
+            )
+            .one_or_none()
+        )
+
+    def get_payment_by_order(self, *, order_id: int, user_id: int) -> Payment | None:
+        return (
+            self.db.query(Payment)
+            .filter(Payment.order_id == order_id, Payment.user_id == user_id)
+            .one_or_none()
+        )
+
+    def get_payment_attempt_by_key(self, *, idempotency_key: str) -> PaymentAttempt | None:
+        return (
+            self.db.query(PaymentAttempt)
+            .filter(PaymentAttempt.idempotency_key == idempotency_key)
+            .one_or_none()
+        )
+
+    def get_payment_attempt_for_buyer(
+        self, *, attempt_id: int, user_id: int
+    ) -> PaymentAttempt | None:
+        return (
+            self.db.query(PaymentAttempt)
+            .filter(PaymentAttempt.id == attempt_id, PaymentAttempt.user_id == user_id)
+            .with_for_update()
+            .one_or_none()
+        )
+
     def get_invoice_by_order(self, *, order_id: int) -> FinancialInvoice | None:
         return (
             self.db.query(FinancialInvoice)

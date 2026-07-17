@@ -122,6 +122,12 @@ conflict detection, exact-once reservation expiry release, and role-specific
 Buyer/Seller/Admin response privacy. Mobile now supplies the required Checkout
 idempotency key. A real payment gateway remains deferred to a later step.
 
+Step 9.5 adds provider-neutral payment initiation and verification API
+contracts, currently backed only by the deterministic Mock provider. Initiation
+is idempotent and verification is exact-once across payment attempt, invoice,
+legacy payment, order, transaction, reservation, history, and notifications.
+No real gateway secret, callback, or external money movement is implemented.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -16,6 +16,7 @@ Implemented:
 Cart APIs
 Checkout / Order Creation APIs
 Mock Payment APIs
+Idempotent Payment Attempt + Verify APIs (Mock provider)
 Seller Order APIs
 Admin Order APIs
 Commission Settings Admin APIs
@@ -35,6 +36,42 @@ Shipping provider integration
 Advanced stock reservation
 Discount/coupon integration
 ```
+
+---
+
+## Start payment attempt
+
+```http
+POST /api/v1/payments/checkout
+```
+
+```json
+{
+  "invoice_id": 10,
+  "provider": "mock",
+  "idempotency_key": "payment-invoice-10-attempt-1"
+}
+```
+
+The invoice must belong to the authenticated buyer and remain payable. Reusing
+the same key with the same invoice/provider returns the existing attempt;
+conflicting reuse is rejected.
+
+## Verify payment attempt
+
+```http
+POST /api/v1/payments/verify
+```
+
+```json
+{
+  "payment_attempt_id": 20,
+  "provider_payment_id": "MOCK-20"
+}
+```
+
+Only the Mock provider is enabled in Step 9.5. A repeated successful verify
+returns the existing success and does not create a duplicate transaction.
 
 ---
 

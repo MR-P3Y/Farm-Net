@@ -42,6 +42,9 @@ from app.modules.orders.schemas import (
     OrderOut,
     OrderStatusHistoryOut,
     PaymentOut,
+    PaymentAttemptOut,
+    PaymentCheckoutIn,
+    PaymentVerifyIn,
     SellerOrderStatusUpdateIn,
 )
 from app.modules.notifications.enums import NotificationEventType
@@ -1378,6 +1381,164 @@ class PaymentService:
     def __init__(self, db: Session) -> None:
         self.db = db
         self.repo = OrderRepository(db)
+
+    def initiate(self, *, user: AuthUser, payload: PaymentCheckoutIn) -> PaymentAttemptOut:
+        existing = self.repo.get_payment_attempt_by_key(
+            idempotency_key=payload.idempotency_key
+        )
+        if existing is not None:
+            if (
+                existing.user_id != user.id
+                or existing.invoice_id != payload.invoice_id
+                or existing.provider != payload.provider
+            ):
+                raise ValidationAuthError(
+                    message="Payment idempotency key conflicts with another request",
+                    details={"error_code": "PAYMENT_IDEMPOTENCY_CONFLICT"},
+                )
+            return self._attempt_out(existing)
+
+        if payload.provider != "mock":
+            raise ValidationAuthError(
+                message="Payment provider is not enabled",
+                details={"error_code": "PAYMENT_PROVIDER_UNAVAILABLE", "provider": payload.provider},
+            )
+        invoice = self.repo.get_invoice_for_buyer(
+            invoice_id=payload.invoice_id, buyer_user_id=user.id
+        )
+        if invoice is None:
+            raise ValidationAuthError(message="Invoice not found")
+        if invoice.status != InvoiceStatus.PAYMENT_PENDING.value:
+            raise ValidationAuthError(
+                message="Invoice cannot start payment in current status",
+                details={"error_code": "INVOICE_NOT_PAYABLE", "status": invoice.status},
+            )
+        payment = self.repo.get_payment_by_order(order_id=invoice.order_id, user_id=user.id)
+        if payment is None:
+            raise ValidationAuthError(message="Payment contract not found for invoice")
+        try:
+            attempt = self.repo.create_payment_attempt(
+                invoice=invoice,
+                payment=payment,
+                idempotency_key=payload.idempotency_key,
+                expires_at=datetime.utcnow() + timedelta(minutes=30),
+            )
+            attempt.provider = payload.provider
+            attempt.status = PaymentAttemptStatus.REDIRECTED.value
+            attempt.redirect_url = f"farmnet://payments/mock/{attempt.id}"
+            self.repo.commit()
+        except IntegrityError:
+            self.repo.rollback()
+            attempt = self.repo.get_payment_attempt_by_key(
+                idempotency_key=payload.idempotency_key
+            )
+            if attempt is None or (
+                attempt.user_id != user.id
+                or attempt.invoice_id != payload.invoice_id
+                or attempt.provider != payload.provider
+            ):
+                raise ValidationAuthError(
+                    message="Payment idempotency key conflicts with another request",
+                    details={"error_code": "PAYMENT_IDEMPOTENCY_CONFLICT"},
+                )
+        self.repo.refresh(attempt)
+        return self._attempt_out(attempt)
+
+    def verify(self, *, user: AuthUser, payload: PaymentVerifyIn) -> PaymentAttemptOut:
+        attempt = self.repo.get_payment_attempt_for_buyer(
+            attempt_id=payload.payment_attempt_id, user_id=user.id
+        )
+        if attempt is None:
+            raise ValidationAuthError(message="Payment attempt not found")
+        if attempt.status == PaymentAttemptStatus.SUCCEEDED.value:
+            return self._attempt_out(attempt)
+        now = datetime.utcnow()
+        if attempt.expires_at is not None and attempt.expires_at <= now:
+            raise ValidationAuthError(
+                message="Payment attempt has expired",
+                details={"error_code": "PAYMENT_ATTEMPT_EXPIRED"},
+            )
+        if attempt.provider != "mock":
+            raise ValidationAuthError(
+                message="Payment provider verification is not enabled",
+                details={"error_code": "PAYMENT_PROVIDER_UNAVAILABLE"},
+            )
+        if attempt.legacy_payment_id is None:
+            raise ValidationAuthError(message="Legacy payment link is missing")
+        payment = self.repo.get_my_payment_by_id(
+            user_id=user.id, payment_id=attempt.legacy_payment_id
+        )
+        order = self.repo.get_order_by_id(order_id=attempt.order_id)
+        invoice = self.repo.get_invoice_by_order(order_id=attempt.order_id)
+        if payment is None or order is None or invoice is None:
+            raise ValidationAuthError(message="Payment verification contract is incomplete")
+        reference = payload.provider_payment_id
+        old_payment_status = payment.status
+        old_order_status = order.status
+        attempt.status = PaymentAttemptStatus.SUCCEEDED.value
+        attempt.provider_payment_id = reference
+        attempt.provider_reference = reference
+        attempt.verified_at = now
+        payment.status = PaymentStatus.PAID.value
+        payment.paid_at = now
+        payment.provider_payment_id = reference
+        payment.provider_reference = reference
+        order.status = OrderStatus.PAID.value
+        order.payment_status = PaymentStatus.PAID.value
+        order.paid_at = now
+        invoice.status = InvoiceStatus.PAID.value
+        invoice.paid_at = now
+        self.repo.create_payment_transaction(
+            invoice=invoice, attempt=attempt, provider_reference=reference
+        )
+        self.repo.consume_order_reservations(order_id=order.id, now=now)
+        self.repo.create_order_status_history(
+            order_id=order.id,
+            changed_by=user.id,
+            from_status=OrderStatus.PENDING_PAYMENT.value,
+            to_status=OrderStatus.PAID.value,
+            note="Payment verified by mock provider",
+        )
+        _notify_payment_status_changed(
+            db=self.db,
+            payment=payment,
+            order=order,
+            old_status=old_payment_status,
+            new_status=PaymentStatus.PAID.value,
+            actor_user_id=user.id,
+        )
+        _notify_order_status_changed(
+            db=self.db,
+            order=order,
+            old_status=old_order_status,
+            new_status=OrderStatus.PAID.value,
+            actor_user_id=user.id,
+        )
+        self.repo.commit()
+        self.repo.refresh(attempt)
+        return self._attempt_out(attempt)
+
+    def _attempt_out(self, attempt) -> PaymentAttemptOut:
+        return PaymentAttemptOut(
+            id=attempt.id,
+            invoice_id=attempt.invoice_id,
+            order_id=attempt.order_id,
+            user_id=attempt.user_id,
+            provider=attempt.provider,
+            status=attempt.status,
+            amount=attempt.amount,
+            currency=attempt.currency,
+            idempotency_key=attempt.idempotency_key,
+            provider_payment_id=attempt.provider_payment_id,
+            provider_reference=attempt.provider_reference,
+            redirect_url=attempt.redirect_url,
+            failure_code=attempt.failure_code,
+            failure_message=attempt.failure_message,
+            expires_at=attempt.expires_at.isoformat() if attempt.expires_at else None,
+            verified_at=attempt.verified_at.isoformat() if attempt.verified_at else None,
+            created_at=attempt.created_at.isoformat(),
+            updated_at=attempt.updated_at.isoformat(),
+        )
 
     def list_my_payments(
         self,

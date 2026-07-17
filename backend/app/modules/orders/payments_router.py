@@ -7,7 +7,7 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
-from app.modules.orders.schemas import MockPaymentFailIn
+from app.modules.orders.schemas import MockPaymentFailIn, PaymentCheckoutIn, PaymentVerifyIn
 from app.modules.orders.service import PaymentService
 
 
@@ -15,6 +15,36 @@ router = APIRouter(
     prefix="/payments",
     tags=["Payments"],
 )
+
+
+@router.post("/checkout")
+def initiate_payment(
+    payload: PaymentCheckoutIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("payments.create")),
+):
+    result = PaymentService(db).initiate(user=current_user, payload=payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Payment attempt created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/verify")
+def verify_payment(
+    payload: PaymentVerifyIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("payments.create")),
+):
+    result = PaymentService(db).verify(user=current_user, payload=payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Payment verified",
+        meta={"trace_id": request.state.trace_id},
+    )
 
 
 @router.get("/me")

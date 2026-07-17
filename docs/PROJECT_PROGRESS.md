@@ -58,6 +58,7 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
 | 9.2 Financial Contracts + DB Hardening | Done | Seven financial tables, explicit enums, idempotency/amount constraints and tests |
 | 9.3 Atomic Checkout + Inventory Reservation | Done | Row locks, atomic stock decrement and reservation lifecycle |
 | 9.4 Checkout Idempotency + Contract Hardening | Done | Persistent replay keys, role privacy contracts and reservation expiry |
+| 9.5 Payment Orchestration + Idempotent Verify | Done | Mock provider initiation, exact-once verify and atomic financial state changes |
 
 ### Step 9.2 Completion Evidence
 
@@ -103,6 +104,21 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
 - Migration head is `b84d1c7e29f0`; 22 focused Backend tests, Ruff, compileall,
   Mobile analyze, and runtime database/Redis health pass. Mobile has no test
   directory, so `flutter test --no-pub` remains unavailable for that exact reason.
+
+### Step 9.5 Completion Evidence
+
+- Added authenticated `POST /api/v1/payments/checkout` for buyer-owned invoices.
+- Payment initiation replays an existing attempt for the same idempotency key
+  and rejects cross-user, invoice, or provider conflicts.
+- Added authenticated `POST /api/v1/payments/verify`; successful Mock verify
+  updates the attempt, legacy payment, invoice, order, transaction, inventory
+  reservation, history, and notifications in one unit of work.
+- Repeated successful verify returns the existing attempt without creating a
+  second transaction or consuming inventory again.
+- Only the non-secret Mock provider is enabled. Real gateway credentials,
+  callback handling, and external money movement remain explicitly deferred.
+- 25 focused Backend tests, Ruff, compileall, OpenAPI route checks, and runtime
+  application/database/Redis health pass.
 
 ## Step 17.4 Completion Evidence
 

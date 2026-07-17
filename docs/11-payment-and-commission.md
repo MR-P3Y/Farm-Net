@@ -29,6 +29,13 @@ Step 9.4 نیز Idempotency خود Checkout را عملیاتی کرد. هر د�
 دقیقاً یک‌بار آزاد می‌شود. خروجی‌های Buyer و Seller نیز از اطلاعات مالی/یادداشت‌های
 داخلی نامرتبط پاک شده‌اند. درگاه پرداخت واقعی همچنان پیاده نشده است.
 
+Step 9.5 قرارداد استاندارد شروع و Verify پرداخت را فعال کرد. مسیر
+`POST /api/v1/payments/checkout` برای Invoice متعلق به Buyer یک Payment Attempt
+idempotent می‌سازد و مسیر `POST /api/v1/payments/verify` نتیجه Provider را
+exact-once روی Attempt، Payment، Invoice، Order، Transaction و Reservation اعمال
+می‌کند. در این گام فقط Provider آزمایشی `mock` مجاز است؛ Callback و درگاه واقعی
+هنوز پیاده نشده‌اند.
+
 ## 1. هدف سند
 
 این سند استاندارد مالی پروژه «فارم نت» را مشخص می‌کند.

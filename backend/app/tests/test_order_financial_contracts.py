@@ -29,6 +29,7 @@ from app.modules.orders.schemas import (
     CheckoutIn,
     OrderOut,
     PaymentCheckoutIn,
+    PaymentVerifyIn,
     RefundCreateIn,
 )
 from app.modules.orders.service import AdminOrderService, CheckoutService, PaymentService
@@ -270,6 +271,60 @@ def test_mock_payment_rejects_expired_inventory_reservation() -> None:
 
     assert error.value.details["error_code"] == "PAYMENT_RESERVATION_EXPIRED"
     service.repo.consume_order_reservations.assert_not_called()
+
+
+def test_payment_initiate_replays_same_idempotency_key() -> None:
+    attempt = SimpleNamespace(
+        user_id=7, invoice_id=11, provider="mock", idempotency_key="payment-replay-7"
+    )
+    service = PaymentService(MagicMock())
+    service.repo = MagicMock()
+    service.repo.get_payment_attempt_by_key.return_value = attempt
+    service._attempt_out = lambda value: value
+
+    result = service.initiate(
+        user=SimpleNamespace(id=7),
+        payload=PaymentCheckoutIn(
+            invoice_id=11, provider="mock", idempotency_key="payment-replay-7"
+        ),
+    )
+
+    assert result is attempt
+    service.repo.create_payment_attempt.assert_not_called()
+
+
+def test_payment_initiate_rejects_idempotency_conflict() -> None:
+    attempt = SimpleNamespace(user_id=8, invoice_id=11, provider="mock")
+    service = PaymentService(MagicMock())
+    service.repo = MagicMock()
+    service.repo.get_payment_attempt_by_key.return_value = attempt
+
+    with pytest.raises(ValidationAuthError) as error:
+        service.initiate(
+            user=SimpleNamespace(id=7),
+            payload=PaymentCheckoutIn(
+                invoice_id=11, provider="mock", idempotency_key="payment-conflict-7"
+            ),
+        )
+
+    assert error.value.details["error_code"] == "PAYMENT_IDEMPOTENCY_CONFLICT"
+
+
+def test_payment_verify_is_exact_once_after_success() -> None:
+    attempt = SimpleNamespace(status="succeeded")
+    service = PaymentService(MagicMock())
+    service.repo = MagicMock()
+    service.repo.get_payment_attempt_for_buyer.return_value = attempt
+    service._attempt_out = lambda value: value
+
+    result = service.verify(
+        user=SimpleNamespace(id=7),
+        payload=PaymentVerifyIn(payment_attempt_id=12, provider_payment_id="MOCK-12"),
+    )
+
+    assert result is attempt
+    service.repo.create_payment_transaction.assert_not_called()
+    service.repo.commit.assert_not_called()
 
 
 def test_admin_cancel_releases_reserved_or_consumed_inventory(monkeypatch) -> None:
