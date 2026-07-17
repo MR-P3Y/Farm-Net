@@ -401,6 +401,17 @@ model fields exist:
 - No live credential was used and no real Email was sent.
 - Evidence: `docs/notifications/phase-11-email-provider.md`.
 
+### Step 11.6 SMS Provider Foundation
+
+- Added provider-neutral SMS contracts and a fail-closed HTTPS JSON adapter
+  with Bearer authentication, verified-phone checks, safe URL filtering, and
+  bounded message length.
+- Integrated SMS claim/success/failure with retry history and added a one-batch
+  CLI worker; retryable network/timeout/429 and terminal 4xx are distinguished.
+- Backend Ruff/compileall passed and all 46 tests passed with 16 existing UTC
+  warnings. Docker disabled runtime claimed/sent zero; no real SMS was sent.
+- Evidence: `docs/notifications/phase-11-sms-provider.md`.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -577,3 +577,13 @@ python scripts/process_email_notifications.py --limit 50
 The command is fail-closed. Unless `EMAIL_ENABLED=true`, provider is `smtp`,
 and host/from are configured, it returns `disabled=true` without claiming any
 queue row. SMTP credentials must be supplied only through runtime environment.
+
+## SMS Worker
+
+```powershell
+python scripts/process_sms_notifications.py --limit 50
+```
+
+SMS is also fail-closed and requires explicit enablement, `http_json`, an HTTPS
+API URL, API key, and sender. It processes only SMS queue rows and never exposes
+credentials in output.

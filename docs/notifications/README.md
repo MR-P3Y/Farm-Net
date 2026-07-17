@@ -23,6 +23,7 @@ Phase 11 - Notifications / Events / Messaging Foundation
 * Verified Email/SMS destination routing to pending delivery state
 * Atomic external-channel queue claim, retry backoff, and attempt history
 * Fail-closed SMTP Email transport and one-batch dispatcher
+* Fail-closed HTTPS JSON SMS transport and one-batch dispatcher
 
 ## Tables
 
@@ -81,6 +82,9 @@ in `docs/notifications/phase-11-retry-queue.md`.
 
 Step 11.5 SMTP configuration and safe activation are documented in
 `docs/notifications/phase-11-email-provider.md`.
+
+Step 11.6 SMS transport and safe activation are documented in
+`docs/notifications/phase-11-sms-provider.md`.
 
 The verified current-state analysis and hardening boundary are recorded in
 `docs/notifications/phase-11-real-state-audit.md`. In particular, pending rows

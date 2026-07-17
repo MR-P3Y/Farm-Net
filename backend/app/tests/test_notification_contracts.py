@@ -7,6 +7,8 @@ from sqlalchemy import UniqueConstraint
 from app.core.config import Settings
 from app.modules.notifications.email_dispatcher import EmailDeliveryDispatcher
 from app.modules.notifications.email_provider import build_email_envelope
+from app.modules.notifications.sms_dispatcher import SmsDeliveryDispatcher
+from app.modules.notifications.sms_provider import build_sms_message
 from app.modules.notifications.enums import NotificationDeliveryStatus
 from app.modules.notifications.delivery_service import NotificationDeliveryService
 from app.modules.notifications.models import (
@@ -345,3 +347,64 @@ def test_email_envelope_escapes_html_content() -> None:
     assert "<script>" not in envelope.html_body
     assert "&lt;script&gt;" in envelope.html_body
     assert "&quot;unsafe&quot;" in envelope.html_body
+
+
+def sms_settings(**overrides) -> Settings:
+    values = {
+        "database_url": "mysql+pymysql://unused",
+        "sms_enabled": True,
+        "sms_provider": "http_json",
+        "sms_api_url": "https://sms.example.com/send",
+        "sms_api_key": "test-key",
+        "sms_sender": "FarmNet",
+    }
+    values.update(overrides)
+    return Settings(**values)
+
+
+def test_sms_dispatcher_is_fail_closed_when_disabled() -> None:
+    dispatcher = SmsDeliveryDispatcher(
+        None, settings=sms_settings(sms_enabled=False), transport=Mock()
+    )
+    dispatcher.delivery = Mock()
+
+    result = dispatcher.run_once()
+
+    assert result.disabled is True
+    dispatcher.delivery.claim_ready.assert_not_called()
+
+
+def test_sms_dispatcher_uses_verified_phone_and_fake_transport() -> None:
+    transport = Mock()
+    transport.send.return_value = "sms-1"
+    dispatcher = SmsDeliveryDispatcher(None, settings=sms_settings(), transport=transport)
+    dispatcher.delivery = Mock()
+    dispatcher.repo = Mock()
+    dispatcher.delivery.claim_ready.return_value = [SimpleNamespace(id=6)]
+    dispatcher.repo.get_delivery_target.return_value = (
+        SimpleNamespace(id=6),
+        SimpleNamespace(title="Alert", body="Body", action_url="/orders/1"),
+        SimpleNamespace(phone="09120000000", is_phone_verified=True),
+    )
+
+    result = dispatcher.run_once(limit=1)
+
+    assert result.sent == 1
+    assert transport.send.call_args.args[0].to == "09120000000"
+    dispatcher.delivery.record_success.assert_called_once_with(
+        delivery_log_id=6,
+        provider="http_json",
+        provider_message_id="sms-1",
+    )
+
+
+def test_sms_message_drops_unsafe_url_and_enforces_length() -> None:
+    message = build_sms_message(
+        to="09120000000",
+        title="Title",
+        body="x" * 600,
+        action_url="javascript:alert(1)",
+    )
+
+    assert len(message.body) == 480
+    assert "javascript:" not in message.body

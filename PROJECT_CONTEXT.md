@@ -178,6 +178,11 @@ rendering, verified destination checks, queue integration, provider result
 recording, and a one-batch CLI worker. It was verified without credentials or
 network delivery. Step 11.6 SMS Provider Foundation is next.
 
+Step 11.6 completed a fail-closed, provider-neutral HTTPS JSON SMS foundation
+with verified destinations, safe bounded messages, queue result recording, and
+a one-batch CLI worker. No vendor credential or live SMS was used. Step 11.7
+Push Notification Foundation is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

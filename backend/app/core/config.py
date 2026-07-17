@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     email_use_ssl: bool = False
     email_timeout_seconds: int = 15
 
+    sms_enabled: bool = False
+    sms_provider: str = ""
+    sms_api_url: str = ""
+    sms_api_key: str = ""
+    sms_sender: str = ""
+    sms_timeout_seconds: int = 15
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
