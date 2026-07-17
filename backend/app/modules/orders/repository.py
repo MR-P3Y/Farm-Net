@@ -17,6 +17,7 @@ from app.modules.orders.enums import (
 from app.modules.orders.models import (
     Cart,
     CartItem,
+    CheckoutRequest,
     CommissionSnapshot,
     CommissionSetting,
     FinancialInvoice,
@@ -393,6 +394,56 @@ class OrderRepository:
         self.db.add(row)
         self.db.flush()
         return row
+
+    def get_checkout_request(self, *, user_id: int, idempotency_key: str) -> CheckoutRequest | None:
+        return (
+            self.db.query(CheckoutRequest)
+            .filter(
+                CheckoutRequest.user_id == user_id,
+                CheckoutRequest.idempotency_key == idempotency_key,
+            )
+            .one_or_none()
+        )
+
+    def create_checkout_request(
+        self, *, user_id: int, cart_id: int, idempotency_key: str, request_fingerprint: str
+    ) -> CheckoutRequest:
+        row = CheckoutRequest(
+            user_id=user_id,
+            cart_id=cart_id,
+            idempotency_key=idempotency_key,
+            request_fingerprint=request_fingerprint,
+        )
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def list_orders_by_ids(self, *, order_ids: list[int]) -> list[Order]:
+        rows = self.db.query(Order).filter(Order.id.in_(order_ids)).all()
+        by_id = {row.id: row for row in rows}
+        return [by_id[order_id] for order_id in order_ids if order_id in by_id]
+
+    def release_expired_reservations(self, *, now: datetime) -> int:
+        rows = (
+            self.db.query(InventoryReservation)
+            .filter(
+                InventoryReservation.status == InventoryReservationStatus.RESERVED.value,
+                InventoryReservation.expires_at <= now,
+            )
+            .order_by(InventoryReservation.product_id.asc(), InventoryReservation.id.asc())
+            .with_for_update()
+            .all()
+        )
+        products = self.lock_products_by_ids(product_ids=[row.product_id for row in rows])
+        for row in rows:
+            product = products.get(row.product_id)
+            if product is not None:
+                product.stock_quantity += row.quantity
+            row.status = InventoryReservationStatus.EXPIRED.value
+            row.released_at = now
+            row.release_reason = "Payment reservation expired"
+        self.db.flush()
+        return len(rows)
 
     def create_payment_attempt(
         self,

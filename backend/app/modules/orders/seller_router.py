@@ -36,7 +36,18 @@ def list_seller_orders(
     )
 
     return success_response(
-        data=[item.model_dump(mode="json") for item in items],
+        data=[
+            item.model_dump(
+                mode="json",
+                exclude={
+                    "commission_percent", "commission_amount", "admin_note", "buyer_note",
+                    "shipping_province_id", "shipping_county_id", "shipping_city_id",
+                    "shipping_address", "shipping_postal_code", "shipping_phone",
+                    "payments", "status_history",
+                },
+            )
+            for item in items
+        ],
         message="OK",
         meta={
             "page": page,
@@ -63,7 +74,9 @@ def get_seller_order(
     )
 
     return success_response(
-        data=result.model_dump(mode="json"),
+        data=result.model_dump(
+            mode="json", exclude={"commission_percent", "commission_amount", "admin_note"}
+        ),
         message="OK",
         meta={"trace_id": request.state.trace_id},
     )
@@ -86,7 +99,9 @@ def update_seller_order_status(
     )
 
     return success_response(
-        data=result.model_dump(mode="json"),
+        data=result.model_dump(
+            mode="json", exclude={"commission_percent", "commission_amount", "admin_note"}
+        ),
         message="Seller order status updated",
         meta={"trace_id": request.state.trace_id},
     )

@@ -70,7 +70,8 @@ Step 17.12 Services Release Gate + Tag: completed (v0.17.0-services-foundation)
 Phase 9.1 Orders/Payments audit: completed
 Phase 9.2 Financial Contracts + DB Hardening: completed
 Phase 9.3 Atomic Checkout + Inventory Reservation: completed
-Next: Phase 9.4 Checkout Idempotency + Contract Hardening
+Phase 9.4 Checkout Idempotency + Contract Hardening: completed
+Next: select Phase 9.5 scope from the real payment/refund gaps
 ```
 
 Services means agricultural operational services, not equipment rental.

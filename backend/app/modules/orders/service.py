@@ -1,6 +1,8 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 from decimal import Decimal
+import hashlib
+import json
 from uuid import uuid4
 
 from sqlalchemy.exc import IntegrityError
@@ -394,7 +396,28 @@ class CheckoutService:
         payload: CheckoutIn,
     ) -> CheckoutOut:
         try:
+            if self.repo.release_expired_reservations(now=datetime.utcnow()):
+                self.repo.commit()
             return self._checkout_atomic(user=user, payload=payload)
+        except IntegrityError:
+            self.repo.rollback()
+            previous = self.repo.get_checkout_request(
+                user_id=user.id, idempotency_key=payload.idempotency_key
+            )
+            if previous is not None and previous.request_fingerprint == self._fingerprint(payload):
+                if previous.order_ids:
+                    orders = self.repo.list_orders_by_ids(
+                        order_ids=[int(value) for value in json.loads(previous.order_ids)]
+                    )
+                    return self._checkout_out(orders)
+                raise ValidationAuthError(
+                    message="Checkout with this idempotency key is still processing",
+                    details={"error_code": "CHECKOUT_IDEMPOTENCY_IN_PROGRESS"},
+                )
+            raise ValidationAuthError(
+                message="Idempotency key was already used with a different checkout payload",
+                details={"error_code": "CHECKOUT_IDEMPOTENCY_CONFLICT"},
+            )
         except Exception:
             self.repo.rollback()
             raise
@@ -405,6 +428,26 @@ class CheckoutService:
         user: AuthUser,
         payload: CheckoutIn,
     ) -> CheckoutOut:
+        fingerprint = self._fingerprint(payload)
+        previous = self.repo.get_checkout_request(
+            user_id=user.id, idempotency_key=payload.idempotency_key
+        )
+        if previous is not None:
+            if previous.request_fingerprint != fingerprint:
+                raise ValidationAuthError(
+                    message="Idempotency key was already used with a different checkout payload",
+                    details={"error_code": "CHECKOUT_IDEMPOTENCY_CONFLICT"},
+                )
+            if not previous.order_ids:
+                raise ValidationAuthError(
+                    message="Checkout with this idempotency key is still processing",
+                    details={"error_code": "CHECKOUT_IDEMPOTENCY_IN_PROGRESS"},
+                )
+            orders = self.repo.list_orders_by_ids(
+                order_ids=[int(value) for value in json.loads(previous.order_ids)]
+            )
+            return self._checkout_out(orders)
+
         cart = self.repo.get_active_cart_for_checkout(user_id=user.id)
 
         if cart is None:
@@ -420,6 +463,13 @@ class CheckoutService:
                 message="Cart is empty",
                 details={"cart_id": cart.id},
             )
+
+        checkout_request = self.repo.create_checkout_request(
+            user_id=user.id,
+            cart_id=cart.id,
+            idempotency_key=payload.idempotency_key,
+            request_fingerprint=fingerprint,
+        )
 
         products = self.repo.lock_products_for_checkout(
             product_ids=[item.product_id for item in cart_items]
@@ -547,18 +597,30 @@ class CheckoutService:
         cart.status = CartStatus.CHECKED_OUT.value
         cart.checked_out_at = datetime.utcnow()
 
+        checkout_request.order_ids = json.dumps([order.id for order in orders])
+        checkout_request.completed_at = datetime.utcnow()
+
         self.repo.commit()
 
         for order in orders:
             self.repo.refresh(order)
 
-        total_amount = sum((order.total_amount for order in orders), Decimal("0.00"))
+        return self._checkout_out(orders)
 
+    def _checkout_out(self, orders: list[Order]) -> CheckoutOut:
         return CheckoutOut(
             orders=[self._order_out(order) for order in orders],
             orders_count=len(orders),
-            total_amount=total_amount,
+            total_amount=sum((order.total_amount for order in orders), Decimal("0.00")),
         )
+
+    def _fingerprint(self, payload: CheckoutIn) -> str:
+        canonical = json.dumps(
+            payload.model_dump(exclude={"idempotency_key"}, mode="json"),
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(canonical.encode()).hexdigest()
 
     def list_my_orders(
         self,
@@ -1390,6 +1452,12 @@ class PaymentService:
             )
 
         now = datetime.utcnow()
+        attempt = self.repo.get_payment_attempt_by_legacy_payment(payment_id=payment.id)
+        if attempt is not None and attempt.expires_at is not None and attempt.expires_at <= now:
+            raise ValidationAuthError(
+                message="Payment reservation has expired; create a new checkout",
+                details={"error_code": "PAYMENT_RESERVATION_EXPIRED"},
+            )
 
         old_payment_status = payment.status
         payment.status = PaymentStatus.PAID.value
@@ -1401,7 +1469,6 @@ class PaymentService:
         order.status = OrderStatus.PAID.value
         order.paid_at = now
 
-        attempt = self.repo.get_payment_attempt_by_legacy_payment(payment_id=payment.id)
         invoice = self.repo.get_invoice_by_order(order_id=order.id)
         if attempt is not None and invoice is not None:
             attempt.status = PaymentAttemptStatus.SUCCEEDED.value

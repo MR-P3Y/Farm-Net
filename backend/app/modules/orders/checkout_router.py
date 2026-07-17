@@ -31,7 +31,10 @@ def checkout(
     )
 
     return success_response(
-        data=result.model_dump(mode="json"),
+        data=result.model_dump(
+            mode="json",
+            exclude={"orders": {"__all__": {"commission_percent", "commission_amount", "seller_amount", "seller_note", "admin_note"}}},
+        ),
         message="Checkout completed",
         meta={"trace_id": request.state.trace_id},
     )
@@ -56,7 +59,13 @@ def list_my_orders(
     )
 
     return success_response(
-        data=[item.model_dump(mode="json") for item in items],
+        data=[
+            item.model_dump(
+                mode="json",
+                exclude={"commission_percent", "commission_amount", "seller_amount", "seller_note", "admin_note"},
+            )
+            for item in items
+        ],
         message="OK",
         meta={
             "page": page,
@@ -83,7 +92,10 @@ def get_my_order(
     )
 
     return success_response(
-        data=result.model_dump(mode="json"),
+        data=result.model_dump(
+            mode="json",
+            exclude={"commission_percent", "commission_amount", "seller_amount", "seller_note", "admin_note"},
+        ),
         message="OK",
         meta={"trace_id": request.state.trace_id},
     )

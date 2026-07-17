@@ -348,12 +348,14 @@ class Order {
 
 class CheckoutInput {
   const CheckoutInput({
+    required this.idempotencyKey,
     this.buyerNote,
     this.shippingAddress,
     this.shippingPostalCode,
     this.shippingPhone,
   });
 
+  final String idempotencyKey;
   final String? buyerNote;
   final String? shippingAddress;
   final String? shippingPostalCode;
@@ -361,6 +363,7 @@ class CheckoutInput {
 
   Map<String, dynamic> toJson() {
     return {
+      'idempotency_key': idempotencyKey,
       'buyer_note': buyerNote,
       'shipping_address': shippingAddress,
       'shipping_postal_code': shippingPostalCode,

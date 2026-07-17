@@ -49,6 +49,7 @@ class CartOut(BaseModel):
 
 
 class CheckoutIn(BaseModel):
+    idempotency_key: str = Field(min_length=8, max_length=160)
     buyer_note: str | None = Field(default=None, max_length=2000)
 
     shipping_province_id: int | None = Field(default=None, ge=1)

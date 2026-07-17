@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -97,10 +97,13 @@ def test_checkout_and_refund_inputs_require_idempotency() -> None:
 def test_checkout_rolls_back_when_atomic_validation_fails() -> None:
     service = CheckoutService(MagicMock())
     service.repo = MagicMock()
+    service.repo.release_expired_reservations.return_value = 0
     service.repo.get_active_cart_for_checkout.return_value = None
 
     with pytest.raises(ValidationAuthError):
-        service.checkout(user=SimpleNamespace(id=7), payload=CheckoutIn())
+        service.checkout(
+            user=SimpleNamespace(id=7), payload=CheckoutIn(idempotency_key="checkout-test-7")
+        )
 
     service.repo.rollback.assert_called_once_with()
 
@@ -158,6 +161,8 @@ def test_checkout_locks_stock_and_builds_financial_contracts(monkeypatch) -> Non
     payment = SimpleNamespace(id=10)
     service = CheckoutService(MagicMock())
     service.repo = MagicMock()
+    service.repo.release_expired_reservations.return_value = 0
+    service.repo.get_checkout_request.return_value = None
     service.repo.get_active_cart_for_checkout.return_value = cart
     service.repo.list_cart_items.return_value = [item]
     service.repo.lock_products_for_checkout.return_value = {3: product}
@@ -187,7 +192,9 @@ def test_checkout_locks_stock_and_builds_financial_contracts(monkeypatch) -> Non
     monkeypatch.setattr("app.modules.orders.service._notify_order_created", lambda **_: None)
     monkeypatch.setattr("app.modules.orders.service._notify_payment_created", lambda **_: None)
 
-    result = service.checkout(user=SimpleNamespace(id=7), payload=CheckoutIn())
+    result = service.checkout(
+        user=SimpleNamespace(id=7), payload=CheckoutIn(idempotency_key="checkout-test-7")
+    )
 
     assert result.orders_count == 1
     assert product.stock_quantity == 3
@@ -223,6 +230,7 @@ def test_mock_payment_consumes_reservation_and_creates_transaction(monkeypatch) 
     attempt = SimpleNamespace(
         id=12,
         status="created",
+        expires_at=None,
         provider_reference=None,
         verified_at=None,
     )
@@ -244,6 +252,24 @@ def test_mock_payment_consumes_reservation_and_creates_transaction(monkeypatch) 
     assert invoice.status == "paid"
     service.repo.consume_order_reservations.assert_called_once_with(order_id=9, now=payment.paid_at)
     service.repo.create_payment_transaction.assert_called_once()
+
+
+def test_mock_payment_rejects_expired_inventory_reservation() -> None:
+    now = datetime.utcnow()
+    payment = SimpleNamespace(id=4, order_id=9, status="pending")
+    order = SimpleNamespace(id=9, status="pending_payment", payment_status="pending")
+    attempt = SimpleNamespace(id=12, expires_at=now - timedelta(seconds=1))
+    service = PaymentService(MagicMock())
+    service.repo = MagicMock()
+    service.repo.get_my_payment_by_id.return_value = payment
+    service.repo.get_order_by_id.return_value = order
+    service.repo.get_payment_attempt_by_legacy_payment.return_value = attempt
+
+    with pytest.raises(ValidationAuthError) as error:
+        service.mock_pay(user=SimpleNamespace(id=2), payment_id=4)
+
+    assert error.value.details["error_code"] == "PAYMENT_RESERVATION_EXPIRED"
+    service.repo.consume_order_reservations.assert_not_called()
 
 
 def test_admin_cancel_releases_reserved_or_consumed_inventory(monkeypatch) -> None:

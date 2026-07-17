@@ -117,7 +117,10 @@ Step 9.3 and later explicitly connect these contracts.
 Step 9.3 now connects Checkout and the Mock lifecycle to these contracts with
 row-level locks, atomic stock decrement, reservations, invoice/snapshot
 creation, transaction recording, and cancellation release. Checkout request
-idempotency and a real gateway remain deferred to Step 9.4 and later.
+Step 9.4 adds persistent Checkout replay protection, request fingerprint
+conflict detection, exact-once reservation expiry release, and role-specific
+Buyer/Seller/Admin response privacy. Mobile now supplies the required Checkout
+idempotency key. A real payment gateway remains deferred to a later step.
 
 ## Known Gaps
 

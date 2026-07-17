@@ -1,13 +1,13 @@
 # Farm-Net Project Progress
 
-Last verified: 2026-07-16
+Last verified: 2026-07-17
 Branch at verification: `develop`
 Verified HEAD before Phase 9.2 commit: `f2b96be`
 
 ## Current Position
 
 The Services foundation is released as `v0.17.0-services-foundation`. Phase 9
-completion has resumed; Step 9.2 is complete and Step 9.3 is next.
+completion has resumed; Steps 9.1 through 9.4 are complete.
 
 ## Completed Foundations
 
@@ -57,7 +57,7 @@ completion has resumed; Step 9.2 is complete and Step 9.3 is next.
 | 9.1 Existing Orders/Payments Audit | Done | Read-only contract and gap audit |
 | 9.2 Financial Contracts + DB Hardening | Done | Seven financial tables, explicit enums, idempotency/amount constraints and tests |
 | 9.3 Atomic Checkout + Inventory Reservation | Done | Row locks, atomic stock decrement and reservation lifecycle |
-| 9.4 Checkout Idempotency + Contract Hardening | Next | Not started |
+| 9.4 Checkout Idempotency + Contract Hardening | Done | Persistent replay keys, role privacy contracts and reservation expiry |
 
 ### Step 9.2 Completion Evidence
 
@@ -87,6 +87,22 @@ completion has resumed; Step 9.2 is complete and Step 9.3 is next.
   completed financial refund.
 - Added atomic checkout, rollback, consume, and cancellation-release tests. All
   21 Backend tests pass and runtime database/Redis health remains `ok`.
+
+### Step 9.4 Completion Evidence
+
+- Checkout now requires a client idempotency key and persists its user, cart,
+  canonical request fingerprint, resulting order IDs, and completion time.
+- An exact replay returns the original orders without a second stock decrement;
+  reuse with a different payload is rejected with a stable conflict code.
+- Expired `reserved` inventory is locked, restored, and marked `expired` exactly
+  once before a new checkout proceeds.
+- Buyer responses hide commission/seller/admin internals. Seller list responses
+  hide buyer delivery/contact data, notes, payments, and history; seller details
+  retain operational delivery data while hiding admin and commission internals.
+- Mobile checkout generates and submits the new idempotency key.
+- Migration head is `b84d1c7e29f0`; 22 focused Backend tests, Ruff, compileall,
+  Mobile analyze, and runtime database/Redis health pass. Mobile has no test
+  directory, so `flutter test --no-pub` remains unavailable for that exact reason.
 
 ## Step 17.4 Completion Evidence
 

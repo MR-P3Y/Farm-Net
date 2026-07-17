@@ -47,6 +47,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         .read(orderControllerProvider.notifier)
         .checkout(
           CheckoutInput(
+            idempotencyKey:
+                'mobile-${DateTime.now().microsecondsSinceEpoch.toString()}',
             buyerNote: 'Mobile checkout',
             shippingAddress: _addressController.text.trim(),
             shippingPhone: _phoneController.text.trim(),

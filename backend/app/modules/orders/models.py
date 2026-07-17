@@ -676,3 +676,24 @@ class InventoryReservation(Base):
         CheckConstraint("quantity > 0", name="ck_inventory_reservations_quantity_positive"),
         Index("ix_inventory_reservations_product_status", "product_id", "status"),
     )
+
+
+class CheckoutRequest(Base):
+    __tablename__ = "checkout_requests"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    cart_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("carts.id", ondelete="RESTRICT"), nullable=False
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(160), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    order_ids: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "idempotency_key", name="uq_checkout_requests_user_key"),
+    )
