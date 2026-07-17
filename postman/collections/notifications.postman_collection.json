@@ -26,6 +26,10 @@
       "value": ""
     },
     {
+      "key": "notification_device_id",
+      "value": ""
+    },
+    {
       "key": "recipient_user_id",
       "value": "1"
     },
@@ -240,6 +244,26 @@
           }
         ],
         "description": "Run as the social post owner after an expert creates a published answer. Look for title پاسخ تخصصی جدید and action_url /social/posts/{post_id}."
+      }
+    },
+    {
+      "name": "User Notifications - Register Push Device",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": "{{base_url}}/notifications/devices",
+        "body": {"mode": "raw", "raw": "{\n  \"token\": \"replace-with-device-token\",\n  \"platform\": \"android\"\n}"}
+      }
+    },
+    {
+      "name": "User Notifications - Unregister Push Device",
+      "request": {
+        "method": "DELETE",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/notifications/devices/{{notification_device_id}}"
       }
     },
     {

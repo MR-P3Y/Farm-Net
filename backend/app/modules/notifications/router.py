@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
 from app.modules.notifications.service import NotificationService
-from app.modules.notifications.schemas import NotificationPreferenceIn
+from app.modules.notifications.schemas import NotificationDeviceIn, NotificationPreferenceIn
 
 
 router = APIRouter(
@@ -99,6 +99,36 @@ def set_my_notification_preference(
     )
 
 
+@router.post("/devices")
+def register_notification_device(
+    payload: NotificationDeviceIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("notifications.manage")),
+):
+    result = NotificationService(db).register_device(user_id=current_user.id, payload=payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Notification device registered",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.delete("/devices/{device_id}")
+def unregister_notification_device(
+    device_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("notifications.manage")),
+):
+    result = NotificationService(db).unregister_device(
+        user_id=current_user.id, device_id=device_id
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Notification device unregistered",
+        meta={"trace_id": request.state.trace_id},
+    )
 @router.patch("/read-all")
 def mark_all_notifications_read(
     request: Request,

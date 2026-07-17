@@ -412,6 +412,17 @@ model fields exist:
   warnings. Docker disabled runtime claimed/sent zero; no real SMS was sent.
 - Evidence: `docs/notifications/phase-11-sms-provider.md`.
 
+### Step 11.7 Push Notification Foundation
+
+- Added owner-scoped Android/iOS/Web device registration and deactivation;
+  tokens are unique and never exposed by output contracts.
+- Enabled Push routing only for active devices and added a fail-closed HTTPS
+  JSON batch dispatcher integrated with queue results and a one-batch CLI.
+- Alembic upgraded MySQL to `b27e8d5f64c1`; OpenAPI exposes both device paths,
+  health is `ok`, and all 49 Backend tests passed with 16 existing warnings.
+- Docker disabled runtime claimed/sent zero; no real Push was sent.
+- Evidence: `docs/notifications/phase-11-push-provider.md`.
+
 ## Progress Update Rule
 
 After every completed step:

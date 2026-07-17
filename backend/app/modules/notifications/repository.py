@@ -11,6 +11,7 @@ from app.modules.notifications.models import (
     Notification,
     NotificationDeliveryLog,
     NotificationDeliveryAttempt,
+    NotificationDevice,
     NotificationEvent,
     NotificationPreference,
 )
@@ -162,6 +163,33 @@ class NotificationRepository:
 
     def get_recipient(self, *, user_id: int) -> AuthUser | None:
         return self.db.query(AuthUser).filter(AuthUser.id == user_id).one_or_none()
+
+    def get_device_by_token(self, *, token: str) -> NotificationDevice | None:
+        return (
+            self.db.query(NotificationDevice)
+            .filter(NotificationDevice.token == token)
+            .one_or_none()
+        )
+
+    def list_active_devices(self, *, user_id: int) -> list[NotificationDevice]:
+        return (
+            self.db.query(NotificationDevice)
+            .filter(
+                NotificationDevice.user_id == user_id,
+                NotificationDevice.is_active.is_(True),
+            )
+            .order_by(NotificationDevice.id)
+            .all()
+        )
+
+    def get_user_device(
+        self, *, user_id: int, device_id: int
+    ) -> NotificationDevice | None:
+        return (
+            self.db.query(NotificationDevice)
+            .filter(NotificationDevice.user_id == user_id, NotificationDevice.id == device_id)
+            .one_or_none()
+        )
 
     def get_preference(
         self, *, user_id: int, event_type: str, channel: str

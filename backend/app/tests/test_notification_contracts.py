@@ -9,6 +9,7 @@ from app.modules.notifications.email_dispatcher import EmailDeliveryDispatcher
 from app.modules.notifications.email_provider import build_email_envelope
 from app.modules.notifications.sms_dispatcher import SmsDeliveryDispatcher
 from app.modules.notifications.sms_provider import build_sms_message
+from app.modules.notifications.push_dispatcher import PushDeliveryDispatcher
 from app.modules.notifications.enums import NotificationDeliveryStatus
 from app.modules.notifications.delivery_service import NotificationDeliveryService
 from app.modules.notifications.models import (
@@ -16,6 +17,7 @@ from app.modules.notifications.models import (
     NotificationDeliveryLog,
     NotificationDeliveryAttempt,
     NotificationPreference,
+    NotificationDevice,
 )
 from app.modules.notifications.service import NotificationService
 
@@ -132,6 +134,7 @@ def routing_service(
     service.repo = Mock()
     service.repo.get_recipient.return_value = recipient
     service.repo.list_routing_preferences.return_value = preferences
+    service.repo.list_active_devices.return_value = []
     return service
 
 
@@ -408,3 +411,64 @@ def test_sms_message_drops_unsafe_url_and_enforces_length() -> None:
 
     assert len(message.body) == 480
     assert "javascript:" not in message.body
+
+
+def test_device_token_is_unique_and_not_exposed_by_output_schema() -> None:
+    token_unique = {
+        tuple(constraint.columns.keys())
+        for constraint in NotificationDevice.__table__.constraints
+        if isinstance(constraint, UniqueConstraint)
+    }
+    assert ("token",) in token_unique
+
+
+def push_settings(**overrides) -> Settings:
+    values = {
+        "database_url": "mysql+pymysql://unused",
+        "push_enabled": True,
+        "push_provider": "http_json",
+        "push_api_url": "https://push.example.com/send",
+        "push_api_key": "test-key",
+    }
+    values.update(overrides)
+    return Settings(**values)
+
+
+def test_push_routing_requires_active_device() -> None:
+    service = routing_service(
+        recipient=SimpleNamespace(
+            id=1, email=None, phone=None, is_email_verified=False, is_phone_verified=False
+        ),
+        preferences=[SimpleNamespace(event_type="*", channel="push", is_enabled=True)],
+    )
+    service.repo.list_active_devices.return_value = [SimpleNamespace(id=3)]
+    assert service.resolve_channels(user_id=1, event_type="order.created") == [
+        "in_app",
+        "push",
+    ]
+
+
+def test_push_dispatcher_uses_active_device_tokens_with_fake_transport() -> None:
+    transport = Mock()
+    transport.send.return_value = "push-1"
+    dispatcher = PushDeliveryDispatcher(None, settings=push_settings(), transport=transport)
+    dispatcher.delivery = Mock()
+    dispatcher.repo = Mock()
+    dispatcher.delivery.claim_ready.return_value = [SimpleNamespace(id=8)]
+    dispatcher.repo.get_delivery_target.return_value = (
+        SimpleNamespace(id=8),
+        SimpleNamespace(title="Alert", body="Body", action_url="/orders/1"),
+        SimpleNamespace(id=4),
+    )
+    dispatcher.repo.list_active_devices.return_value = [
+        SimpleNamespace(token="device-token-one"),
+        SimpleNamespace(token="device-token-two"),
+    ]
+
+    result = dispatcher.run_once(limit=1)
+
+    assert result.sent == 1
+    assert transport.send.call_args.args[0].tokens == [
+        "device-token-one",
+        "device-token-two",
+    ]

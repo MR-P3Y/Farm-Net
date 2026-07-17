@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from hashlib import sha256
 import json
 from typing import Any
@@ -21,12 +21,15 @@ from app.modules.notifications.models import (
     Notification,
     NotificationDeliveryLog,
     NotificationEvent,
+    NotificationDevice,
     NotificationPreference,
 )
 from app.modules.notifications.repository import NotificationRepository
 from app.modules.notifications.schemas import (
     NotificationEventCreateIn,
     NotificationEventOut,
+    NotificationDeviceIn,
+    NotificationDeviceOut,
     NotificationOut,
     NotificationPreferenceIn,
     NotificationPreferenceOut,
@@ -350,6 +353,39 @@ class NotificationService:
             for row in self.repo.list_preferences(user_id=user_id)
         ]
 
+    def register_device(
+        self, *, user_id: int, payload: NotificationDeviceIn
+    ) -> NotificationDeviceOut:
+        token = payload.token.strip()
+        row = self.repo.get_device_by_token(token=token)
+        now = datetime.now(UTC)
+        if row is None:
+            row = NotificationDevice(
+                user_id=user_id,
+                token=token,
+                platform=payload.platform,
+                is_active=True,
+                last_seen_at=now,
+            )
+            self.db.add(row)
+        else:
+            row.user_id = user_id
+            row.platform = payload.platform
+            row.is_active = True
+            row.last_seen_at = now
+        self.repo.commit()
+        self.repo.refresh(row)
+        return NotificationDeviceOut.model_validate(row)
+
+    def unregister_device(self, *, user_id: int, device_id: int) -> NotificationDeviceOut:
+        row = self.repo.get_user_device(user_id=user_id, device_id=device_id)
+        if row is None:
+            raise ValidationAuthError(message="Notification device not found")
+        row.is_active = False
+        self.repo.commit()
+        self.repo.refresh(row)
+        return NotificationDeviceOut.model_validate(row)
+
     def set_preference(
         self, *, user_id: int, payload: NotificationPreferenceIn
     ) -> NotificationPreferenceOut:
@@ -405,7 +441,7 @@ class NotificationService:
                     channel == NotificationChannel.IN_APP,
                 ),
             )
-            if enabled and self._has_routable_destination(recipient, channel):
+            if enabled and self._has_routable_destination(recipient, channel, user_id=user_id):
                 routed.append(channel.value)
         return routed
 
@@ -448,7 +484,7 @@ class NotificationService:
         return notifications
 
     def _has_routable_destination(
-        self, recipient: Any, channel: NotificationChannel
+        self, recipient: Any, channel: NotificationChannel, *, user_id: int
     ) -> bool:
         if channel == NotificationChannel.IN_APP:
             return True
@@ -456,7 +492,9 @@ class NotificationService:
             return bool(recipient.email and recipient.is_email_verified)
         if channel == NotificationChannel.SMS:
             return bool(recipient.phone and recipient.is_phone_verified)
-        # Push and Telegram require destination registries in later steps.
+        if channel == NotificationChannel.PUSH:
+            return bool(self.repo.list_active_devices(user_id=user_id))
+        # Telegram requires a destination registry in a later step.
         return False
 
     def list_user_notifications(

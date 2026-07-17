@@ -146,3 +146,20 @@ class NotificationDeliveryDetailOut(NotificationDeliveryLogOut):
 class NotificationDeliveryFailureIn(BaseModel):
     error_code: str = Field(min_length=1, max_length=80)
     error_message: str = Field(min_length=1)
+
+
+class NotificationDeviceIn(BaseModel):
+    token: str = Field(min_length=16, max_length=500)
+    platform: str = Field(pattern="^(android|ios|web)$")
+
+
+class NotificationDeviceOut(BaseModel):
+    id: int
+    user_id: int
+    platform: str
+    is_active: bool
+    last_seen_at: datetime
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}

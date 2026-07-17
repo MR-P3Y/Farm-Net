@@ -183,6 +183,11 @@ with verified destinations, safe bounded messages, queue result recording, and
 a one-batch CLI worker. No vendor credential or live SMS was used. Step 11.7
 Push Notification Foundation is next.
 
+Step 11.7 completed device ownership, active-device routing, and a fail-closed
+provider-neutral Push batch dispatcher at Alembic head `b27e8d5f64c1`. No live
+Push credential/message was used. Step 11.8 Mobile Notification Center
+Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     sms_sender: str = ""
     sms_timeout_seconds: int = 15
 
+    push_enabled: bool = False
+    push_provider: str = ""
+    push_api_url: str = ""
+    push_api_key: str = ""
+    push_timeout_seconds: int = 15
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

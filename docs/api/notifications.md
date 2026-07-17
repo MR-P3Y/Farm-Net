@@ -587,3 +587,18 @@ python scripts/process_sms_notifications.py --limit 50
 SMS is also fail-closed and requires explicit enablement, `http_json`, an HTTPS
 API URL, API key, and sender. It processes only SMS queue rows and never exposes
 credentials in output.
+
+## Push Devices and Worker
+
+```http
+POST   /api/v1/notifications/devices
+DELETE /api/v1/notifications/devices/{device_id}
+```
+
+Registration accepts `{token, platform}` where platform is android, ios, or
+web. Token values are never returned. Push routing requires an active device.
+The fail-closed worker is:
+
+```powershell
+python scripts/process_push_notifications.py --limit 50
+```
