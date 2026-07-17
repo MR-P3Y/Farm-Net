@@ -67,3 +67,44 @@ class NotificationUnreadCount {
     );
   }
 }
+
+class NotificationPreferenceModel {
+  const NotificationPreferenceModel({
+    required this.id,
+    required this.eventType,
+    required this.channel,
+    required this.isEnabled,
+  });
+  final int id;
+  final String eventType;
+  final String channel;
+  final bool isEnabled;
+
+  factory NotificationPreferenceModel.fromJson(Map<String, dynamic> json) {
+    return NotificationPreferenceModel(
+      id: (json['id'] as num).toInt(),
+      eventType: json['event_type']?.toString() ?? '*',
+      channel: json['channel']?.toString() ?? 'in_app',
+      isEnabled: json['is_enabled'] == true,
+    );
+  }
+}
+
+class NotificationDeviceModel {
+  const NotificationDeviceModel({
+    required this.id,
+    required this.platform,
+    required this.isActive,
+  });
+  final int id;
+  final String platform;
+  final bool isActive;
+
+  factory NotificationDeviceModel.fromJson(Map<String, dynamic> json) {
+    return NotificationDeviceModel(
+      id: (json['id'] as num).toInt(),
+      platform: json['platform']?.toString() ?? '',
+      isActive: json['is_active'] == true,
+    );
+  }
+}

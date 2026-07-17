@@ -41,4 +41,28 @@ class NotificationRepository {
   Future<NotificationModel> deleteNotification(int notificationId) {
     return _api.deleteNotification(notificationId);
   }
+
+  Future<List<NotificationPreferenceModel>> listPreferences() =>
+      _api.listPreferences();
+
+  Future<NotificationPreferenceModel> setPreference({
+    required String channel,
+    required bool isEnabled,
+  }) {
+    return _api.setPreference(
+      eventType: '*',
+      channel: channel,
+      isEnabled: isEnabled,
+    );
+  }
+
+  Future<NotificationDeviceModel> registerDevice({
+    required String token,
+    required String platform,
+  }) {
+    return _api.registerDevice(token: token, platform: platform);
+  }
+
+  Future<void> unregisterDevice(int deviceId) =>
+      _api.unregisterDevice(deviceId);
 }

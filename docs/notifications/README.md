@@ -90,6 +90,9 @@ Step 11.6 SMS transport and safe activation are documented in
 Step 11.7 device registry and Push dispatch are documented in
 `docs/notifications/phase-11-push-provider.md`.
 
+Step 11.8 Mobile preferences, action routing, and the exact vendor-SDK gap are
+documented in `docs/notifications/phase-11-mobile-hardening.md`.
+
 The verified current-state analysis and hardening boundary are recorded in
 `docs/notifications/phase-11-real-state-audit.md`. In particular, pending rows
 for external channels do not mean that delivery or retry is implemented.

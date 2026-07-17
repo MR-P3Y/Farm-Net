@@ -82,6 +82,54 @@ class NotificationApi {
     return NotificationModel.fromJson(json['data'] as Map<String, dynamic>);
   }
 
+  Future<List<NotificationPreferenceModel>> listPreferences() async {
+    await _setStoredToken();
+    final json = await _get('/notifications/preferences');
+    final rows = json['data'] as List? ?? [];
+    return rows
+        .map(
+          (item) => NotificationPreferenceModel.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
+        .toList();
+  }
+
+  Future<NotificationPreferenceModel> setPreference({
+    required String eventType,
+    required String channel,
+    required bool isEnabled,
+  }) async {
+    await _setStoredToken();
+    final json = await _put('/notifications/preferences', {
+      'event_type': eventType,
+      'channel': channel,
+      'is_enabled': isEnabled,
+    });
+    return NotificationPreferenceModel.fromJson(
+      json['data'] as Map<String, dynamic>,
+    );
+  }
+
+  Future<NotificationDeviceModel> registerDevice({
+    required String token,
+    required String platform,
+  }) async {
+    await _setStoredToken();
+    final json = await _post('/notifications/devices', {
+      'token': token,
+      'platform': platform,
+    });
+    return NotificationDeviceModel.fromJson(
+      json['data'] as Map<String, dynamic>,
+    );
+  }
+
+  Future<void> unregisterDevice(int deviceId) async {
+    await _setStoredToken();
+    await _delete('/notifications/devices/$deviceId');
+  }
+
   Future<void> _setStoredToken() async {
     final token = await _tokenStorage.getAccessToken();
     _client.setToken(token);
@@ -108,6 +156,36 @@ class NotificationApi {
   Future<Map<String, dynamic>> _delete(String path) async {
     try {
       final response = await _client.dio.delete<Map<String, dynamic>>(path);
+      return response.data ?? {};
+    } on DioException catch (e) {
+      throw NotificationApiException(_mapDioError(e));
+    }
+  }
+
+  Future<Map<String, dynamic>> _put(
+    String path,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await _client.dio.put<Map<String, dynamic>>(
+        path,
+        data: data,
+      );
+      return response.data ?? {};
+    } on DioException catch (e) {
+      throw NotificationApiException(_mapDioError(e));
+    }
+  }
+
+  Future<Map<String, dynamic>> _post(
+    String path,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        path,
+        data: data,
+      );
       return response.data ?? {};
     } on DioException catch (e) {
       throw NotificationApiException(_mapDioError(e));

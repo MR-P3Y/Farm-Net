@@ -423,6 +423,17 @@ model fields exist:
 - Docker disabled runtime claimed/sent zero; no real Push was sent.
 - Evidence: `docs/notifications/phase-11-push-provider.md`.
 
+### Step 11.8 Mobile Notification Center Hardening
+
+- Added typed preferences/device contracts and a global channel settings screen
+  with optimistic update rollback and backend error handling.
+- Expanded action routing for Social, Services, and Consultants while preserving
+  the existing inbox/loading/empty/error/filter/read/delete/badge behavior.
+- Flutter analyze passed, all 28 tests passed, and Web build/Wasm dry run passed.
+- Exact gap: no vendor Push SDK/credential exists, so real token acquisition and
+  refresh are not wired; no fake device token is registered.
+- Evidence: `docs/notifications/phase-11-mobile-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:

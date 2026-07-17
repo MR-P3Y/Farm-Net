@@ -188,6 +188,11 @@ provider-neutral Push batch dispatcher at Alembic head `b27e8d5f64c1`. No live
 Push credential/message was used. Step 11.8 Mobile Notification Center
 Hardening is next.
 
+Step 11.8 completed Mobile Notification Center hardening: typed preferences and
+device contracts, channel settings UI, resilient updates, and expanded action
+routing. Real vendor token acquisition remains explicitly blocked on SDK/vendor
+credentials. Step 11.9 Admin Notification Operations is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

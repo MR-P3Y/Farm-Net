@@ -10,6 +10,7 @@ import '../../features/consultants/presentation/my_consultant_profile_screen.dar
 import '../../features/consultants/presentation/my_consultation_requests_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../features/notifications/presentation/notification_preferences_screen.dart';
 import '../../features/orders/presentation/cart_screen.dart';
 import '../../features/orders/presentation/my_orders_screen.dart';
 import '../../features/orders/presentation/order_detail_screen.dart';
@@ -56,6 +57,11 @@ final GoRouter appRouter = GoRouter(
       path: '/notifications',
       name: 'notifications',
       builder: (context, state) => const NotificationsScreen(),
+    ),
+    GoRoute(
+      path: '/notifications/preferences',
+      name: 'notification-preferences',
+      builder: (context, state) => const NotificationPreferencesScreen(),
     ),
     GoRoute(
       path: '/weather',

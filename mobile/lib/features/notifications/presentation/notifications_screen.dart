@@ -81,6 +81,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       return;
     }
 
+    if (actionUrl.startsWith('/social/posts/')) {
+      context.go('/social/detail/${actionUrl.split('/').last}');
+      return;
+    }
+
+    if (actionUrl.startsWith('/services') ||
+        actionUrl.startsWith('/consultants')) {
+      context.go(actionUrl);
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('مسیر اعلان پشتیبانی نمی‌شود: $actionUrl')),
     );
@@ -94,6 +105,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       appBar: FarmAppBar(
         title: 'اعلان‌ها',
         actions: [
+          IconButton(
+            onPressed: () => context.push('/notifications/preferences'),
+            icon: const Icon(Icons.tune_outlined),
+            tooltip: 'تنظیمات اعلان‌ها',
+          ),
           IconButton(
             onPressed:
                 state.isSaving
