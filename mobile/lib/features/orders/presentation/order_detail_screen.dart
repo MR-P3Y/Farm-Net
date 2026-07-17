@@ -34,26 +34,14 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
   String _price(num value) => '${value.toStringAsFixed(0)} تومان';
 
-  Future<void> _mockPay(Order order) async {
-    Payment? pendingPayment;
-    for (final payment in order.payments) {
-      if (payment.status == 'pending') {
-        pendingPayment = payment;
-        break;
-      }
-    }
-
-    if (pendingPayment == null) return;
-
-    final ok = await ref
-        .read(orderControllerProvider.notifier)
-        .mockPay(pendingPayment.id);
+  Future<void> _pay(Order order) async {
+    final ok = await ref.read(orderControllerProvider.notifier).payOrder(order);
 
     if (!ok || !mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('پرداخت mock با موفقیت انجام شد.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('پرداخت با موفقیت تأیید شد.')));
   }
 
   @override
@@ -83,9 +71,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             return const Center(child: Text('سفارش پیدا نشد.'));
           }
 
-          final canMockPay = order.payments.any(
-            (payment) => payment.status == 'pending',
-          );
+          final canPay =
+              order.paymentStatus == 'pending' && order.invoiceId != null;
 
           return RefreshIndicator(
             onRefresh: () {
@@ -106,15 +93,6 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       label: 'مبلغ کل',
                       value: _price(order.totalAmount),
                     ),
-                    _InfoRow(
-                      label: 'کمیسیون',
-                      value:
-                          '${order.commissionPercent}% / ${_price(order.commissionAmount)}',
-                    ),
-                    _InfoRow(
-                      label: 'مبلغ فروشنده',
-                      value: _price(order.sellerAmount),
-                    ),
                     if (order.shippingAddress != null)
                       _InfoRow(label: 'آدرس', value: order.shippingAddress!),
                     if (order.shippingPhone != null)
@@ -122,11 +100,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ],
                 ),
                 SizedBox(height: r.v(12)),
-                if (canMockPay) ...[
+                if (canPay) ...[
                   FilledButton.icon(
-                    onPressed: state.isSaving ? null : () => _mockPay(order),
+                    onPressed: state.isSaving ? null : () => _pay(order),
                     icon: const Icon(Icons.payments_outlined),
-                    label: const Text('پرداخت mock'),
+                    label: const Text('پرداخت سفارش'),
                   ),
                   SizedBox(height: r.v(12)),
                 ],

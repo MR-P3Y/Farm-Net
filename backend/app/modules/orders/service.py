@@ -725,9 +725,11 @@ class CheckoutService:
         items = self.repo.list_order_items(order_id=order.id)
         payments = self.repo.list_order_payments(order_id=order.id)
         history = self.repo.list_order_status_history(order_id=order.id)
+        invoice = self.repo.get_invoice_by_order(order_id=order.id)
 
         return OrderOut(
             id=order.id,
+            invoice_id=invoice.id if invoice else None,
             order_number=order.order_number,
             buyer_user_id=order.buyer_user_id,
             store_id=order.store_id,

@@ -235,6 +235,7 @@ class OrderStatusHistory {
 class Order {
   const Order({
     required this.id,
+    this.invoiceId,
     required this.orderNumber,
     required this.buyerUserId,
     required this.storeId,
@@ -266,6 +267,7 @@ class Order {
   });
 
   final int id;
+  final int? invoiceId;
   final String orderNumber;
   final int buyerUserId;
   final int storeId;
@@ -302,6 +304,7 @@ class Order {
 
     return Order(
       id: (json['id'] as num).toInt(),
+      invoiceId: (json['invoice_id'] as num?)?.toInt(),
       orderNumber: json['order_number']?.toString() ?? '',
       buyerUserId: (json['buyer_user_id'] as num).toInt(),
       storeId: (json['store_id'] as num).toInt(),
@@ -394,6 +397,35 @@ class CheckoutResult {
       totalAmount: _numFromJson(json['total_amount']),
     );
   }
+}
+
+class PaymentAttempt {
+  const PaymentAttempt({
+    required this.id,
+    required this.invoiceId,
+    required this.orderId,
+    required this.status,
+    required this.provider,
+    this.redirectUrl,
+    this.providerReference,
+  });
+  final int id;
+  final int invoiceId;
+  final int orderId;
+  final String status;
+  final String provider;
+  final String? redirectUrl;
+  final String? providerReference;
+
+  factory PaymentAttempt.fromJson(Map<String, dynamic> json) => PaymentAttempt(
+    id: (json['id'] as num).toInt(),
+    invoiceId: (json['invoice_id'] as num).toInt(),
+    orderId: (json['order_id'] as num).toInt(),
+    status: json['status']?.toString() ?? '',
+    provider: json['provider']?.toString() ?? '',
+    redirectUrl: json['redirect_url']?.toString(),
+    providerReference: json['provider_reference']?.toString(),
+  );
 }
 
 num _numFromJson(dynamic value) {

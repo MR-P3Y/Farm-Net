@@ -75,7 +75,8 @@ Phase 9.5 Payment Orchestration + Idempotent Verify: completed
 Phase 9.6 Refund Request + Idempotent Processing: completed
 Phase 9.7 Admin Finance Read Models + Audit: completed
 Phase 9.8 Admin Finance UI: completed
-Next: Phase 9.9 Mobile Payment UX + Contract Migration
+Phase 9.9 Mobile Payment UX + Contract Migration: completed
+Next: Phase 9.10 Phase 9 Docs/Postman + Release Regression
 ```
 
 Services means agricultural operational services, not equipment rental.

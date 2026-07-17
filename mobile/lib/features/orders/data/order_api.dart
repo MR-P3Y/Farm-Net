@@ -122,12 +122,32 @@ class OrderApi {
         .toList();
   }
 
-  Future<Payment> mockPay(int paymentId) async {
+  Future<PaymentAttempt> initiatePayment({
+    required int invoiceId,
+    required String idempotencyKey,
+  }) async {
     await _setStoredToken();
+    final json = await _post(
+      '/payments/checkout',
+      data: {
+        'invoice_id': invoiceId,
+        'provider': 'mock',
+        'idempotency_key': idempotencyKey,
+      },
+    );
+    return PaymentAttempt.fromJson(json['data'] as Map<String, dynamic>);
+  }
 
-    final json = await _post('/payments/$paymentId/mock/pay', data: {});
-
-    return Payment.fromJson(json['data'] as Map<String, dynamic>);
+  Future<PaymentAttempt> verifyPayment({required int attemptId}) async {
+    await _setStoredToken();
+    final json = await _post(
+      '/payments/verify',
+      data: {
+        'payment_attempt_id': attemptId,
+        'provider_payment_id': 'MOCK-$attemptId',
+      },
+    );
+    return PaymentAttempt.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   Future<void> _setStoredToken() async {

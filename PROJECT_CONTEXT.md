@@ -140,6 +140,10 @@ Step 9.8 exposes those contracts in the Admin Panel through five typed,
 paginated finance tabs behind `finance.invoices.read`, with loading, empty,
 error/retry states and sidebar navigation.
 
+Step 9.9 migrates Mobile payment UX from the legacy Mock Pay action to the
+idempotent initiate/verify contracts. Buyer order detail exposes only its safe
+invoice identifier and no longer renders platform commission or seller amount.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

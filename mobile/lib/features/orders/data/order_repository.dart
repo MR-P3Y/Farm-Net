@@ -48,7 +48,14 @@ class OrderRepository {
     return _api.listMyPayments(status: status);
   }
 
-  Future<Payment> mockPay(int paymentId) {
-    return _api.mockPay(paymentId);
-  }
+  Future<PaymentAttempt> initiatePayment({
+    required int invoiceId,
+    required String idempotencyKey,
+  }) => _api.initiatePayment(
+    invoiceId: invoiceId,
+    idempotencyKey: idempotencyKey,
+  );
+
+  Future<PaymentAttempt> verifyPayment({required int attemptId}) =>
+      _api.verifyPayment(attemptId: attemptId);
 }

@@ -115,6 +115,7 @@ class OrderStatusHistoryOut(BaseModel):
 
 class OrderOut(BaseModel):
     id: int
+    invoice_id: int | None = None
     order_number: str
 
     buyer_user_id: int

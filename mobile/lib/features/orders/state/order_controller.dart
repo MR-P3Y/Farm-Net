@@ -168,19 +168,32 @@ class OrderController extends StateNotifier<OrderState> {
     }
   }
 
-  Future<bool> mockPay(int paymentId) async {
+  Future<bool> payOrder(Order order) async {
+    final invoiceId = order.invoiceId;
+    if (invoiceId == null) {
+      state = state.copyWith(
+        errorMessage: 'فاکتور پرداخت برای این سفارش موجود نیست',
+      );
+      return false;
+    }
     state = state.copyWith(isSaving: true, clearError: true);
-
     try {
-      final payment = await _repository.mockPay(paymentId);
-      await loadOrderDetail(payment.orderId);
+      final attempt = await _repository.initiatePayment(
+        invoiceId: invoiceId,
+        idempotencyKey: 'mobile-payment-invoice-$invoiceId',
+      );
+      await _repository.verifyPayment(attemptId: attempt.id);
+      await loadOrderDetail(order.id);
       state = state.copyWith(isSaving: false);
       return true;
     } on OrderApiException catch (e) {
       state = state.copyWith(isSaving: false, errorMessage: e.error.message);
       return false;
     } catch (_) {
-      state = state.copyWith(isSaving: false, errorMessage: 'خطا در پرداخت');
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: 'خطا در شروع یا تأیید پرداخت',
+      );
       return false;
     }
   }

@@ -104,6 +104,13 @@ GET /api/v1/admin/finance/audit-logs
 All list responses are typed and paginated. Each endpoint enforces its finance
 permission; audit entries expose traceability metadata without gateway secrets.
 
+## Mobile payment contract
+
+Buyer order responses include `invoice_id`. Mobile uses that identifier to call
+`POST /payments/checkout` with a stable per-invoice idempotency key and then
+`POST /payments/verify` for the returned attempt. Buyer UI does not render
+platform commission or seller settlement amounts.
+
 ---
 
 ## Business Rules

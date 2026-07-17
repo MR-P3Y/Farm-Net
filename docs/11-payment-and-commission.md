@@ -50,6 +50,11 @@ Step 9.8 رابط Admin Finance را با پنج تب تایپ‌شده برای
 Transaction، Refund و Audit Log تکمیل کرد. مسیر با Permission Guard محافظت شده و
 حالت‌های loading/empty/error، retry و pagination دارد.
 
+Step 9.9 پرداخت Mobile را از endpoint قدیمی Mock Pay به جریان idempotent شروع
+Payment Attempt و Verify منتقل کرد. `invoice_id` امن در جزئیات سفارش Buyer ارائه
+می‌شود، retry از کلید پایدار هر Invoice استفاده می‌کند و مبالغ داخلی کمیسیون و
+سهم فروشنده دیگر در UI خریدار نمایش داده نمی‌شوند.
+
 ## 1. هدف سند
 
 این سند استاندارد مالی پروژه «فارم نت» را مشخص می‌کند.

@@ -167,6 +167,7 @@ def test_checkout_locks_stock_and_builds_financial_contracts(monkeypatch) -> Non
     service.repo = MagicMock()
     service.repo.release_expired_reservations.return_value = 0
     service.repo.get_checkout_request.return_value = None
+    service.repo.get_invoice_by_order.return_value = None
     service.repo.get_active_cart_for_checkout.return_value = cart
     service.repo.list_cart_items.return_value = [item]
     service.repo.lock_products_for_checkout.return_value = {3: product}

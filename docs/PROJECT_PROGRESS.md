@@ -62,6 +62,7 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
 | 9.6 Refund Request + Idempotent Processing | Done | Full-refund policy, Mock completion and exact-once transaction |
 | 9.7 Admin Finance Read Models + Audit | Done | Typed finance APIs, pagination, permissions and immutable admin audit trail |
 | 9.8 Admin Finance UI | Done | Five typed finance tabs, pagination, guarded navigation and responsive states |
+| 9.9 Mobile Payment UX + Contract Migration | Done | Buyer invoice contract, idempotent initiate/verify UX and privacy cleanup |
 
 ### Step 9.2 Completion Evidence
 
@@ -153,6 +154,16 @@ completion has resumed; Steps 9.1 through 9.4 are complete.
   audit logs with pagination plus loading, empty, error, and retry states.
 - No raw JSON is rendered; finance and audit model parsing has focused tests.
 - Admin analyze, tests, and Web build pass.
+
+### Step 9.9 Completion Evidence
+
+- Buyer order responses now include the non-secret `invoice_id` required by the
+  payment initiation contract.
+- Mobile payment uses idempotent `payments/checkout` followed by exact-once
+  `payments/verify`; the legacy Mock Pay endpoint is no longer called by UI.
+- Retry uses a stable per-invoice key, loading/error states remain controlled,
+  and internal commission/seller amounts are no longer rendered for buyers.
+- Typed Payment Attempt and Checkout replay-key model tests were added.
 
 ## Step 17.4 Completion Evidence
 
