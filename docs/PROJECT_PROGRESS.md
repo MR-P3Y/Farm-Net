@@ -555,6 +555,22 @@ model fields exist:
   analyze, 12 tests, and Web/Wasm build checks.
 - Evidence: `docs/categories/phase-12-runtime-regression.md`.
 
+### Step 12.8 Category Management Release Gate + Tag
+
+- Reverified the complete Phase 12 commit chain on clean, pushed `develop`.
+- Backend Ruff/compileall passed; all 59 tests passed with 16 existing UTC
+  deprecation warnings. Alembic remained at `b27e8d5f64c1` and auth seed
+  confirmed 12 roles and 221 permissions.
+- Product, Services, and Social seeds remained idempotent at 24, 8, and 6 rows;
+  Consultant specialties intentionally remained empty pending approved data.
+- Runtime OpenAPI exposed all 12 taxonomy paths and application/database/Redis
+  health returned `ok`.
+- All four Postman collections parsed with 23 Product, 30 Services, 22 Social +
+  Expert, and 31 Consultant requests.
+- Mobile passed analyze, 28 tests, and Web/Wasm build checks; Admin passed
+  analyze, 12 tests, and Web/Wasm build checks.
+- Release tag: `v0.20.0-category-management-foundation`.
+
 ## Progress Update Rule
 
 After every completed step:

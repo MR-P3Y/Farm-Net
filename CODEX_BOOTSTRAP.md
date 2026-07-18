@@ -96,7 +96,8 @@ Phase 12.4 Social Category Management: completed
 Phase 12.5 Consultant Specialty Usage + Admin Search Hardening: completed
 Phase 12.6 Unified Admin Taxonomy Navigation + UX Consistency: completed
 Phase 12.7 Docs/Postman + Runtime Regression: completed
-Next: Phase 12.8 Category Management Release Gate + Tag
+Phase 12.8 Category Management Release Gate + Tag: completed (v0.20.0-category-management-foundation)
+Next: select the next roadmap phase explicitly
 ```
 
 Services means agricultural operational services, not equipment rental.

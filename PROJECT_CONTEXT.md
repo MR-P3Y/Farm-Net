@@ -239,7 +239,9 @@ the four canonical domain Postman collections, and passed full Backend/Mobile/
 Admin runtime regression. Runtime reference rows are Product 24, Services 8,
 Social 6, and Consultant 0; Consultant defaults remain intentionally absent
 until an authoritative specialty taxonomy is approved. Step 12.8 Category
-Management Release Gate + Tag is next.
+Management Release Gate passed independently. Phase 12 is released as
+`v0.20.0-category-management-foundation`; the Consultant default taxonomy
+remains an explicit future business-data decision.
 
 ## Known Gaps
 
@@ -294,5 +296,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.19.0-notifications-delivery-foundation
+v0.20.0-category-management-foundation
 ```
