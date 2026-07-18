@@ -521,7 +521,7 @@
       "name": "Admin - List Specialties",
       "request": {
         "method": "GET",
-        "url": "{{base_url}}/admin/consultants/specialties",
+        "url": "{{base_url}}/admin/consultants/specialties?q=&active_only=false",
         "header": [
           {
             "key": "Authorization",

@@ -225,6 +225,11 @@ Step 12.4 completed Social Category Management with category-specific
 permissions, Admin APIs/UI, post usage counts, and non-destructive seed behavior.
 Step 12.5 Consultant Specialty Usage + Admin Search Hardening is next.
 
+Step 12.5 added Consultant specialty profile/request usage counts and wired
+Backend search into Admin UI. Runtime has no specialty reference rows and no
+unapproved defaults were invented. Step 12.6 Unified Admin Taxonomy Navigation
++ UX Consistency is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

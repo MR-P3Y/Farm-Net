@@ -14,8 +14,8 @@ class AdminConsultantRepository {
 
   final AdminConsultantApi _api;
 
-  Future<List<AdminConsultSpecialty>> listSpecialties() =>
-      _api.listSpecialties();
+  Future<List<AdminConsultSpecialty>> listSpecialties({String? q}) =>
+      _api.listSpecialties(q: q);
 
   Future<AdminConsultSpecialty> createSpecialty({
     required String code,

@@ -45,6 +45,8 @@ class ConsultSpecialtyOut(BaseModel):
     description: str | None = None
     sort_order: int
     is_active: bool
+    profiles_count: int = 0
+    requests_count: int = 0
     created_at: datetime
     updated_at: datetime
 

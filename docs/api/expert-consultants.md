@@ -299,6 +299,12 @@ GET   /api/v1/admin/consultants/requests/{request_id}
 PATCH /api/v1/admin/consultants/requests/{request_id}/status
 ```
 
+Admin specialty listing accepts `q` across code, title, and description plus
+`active_only`. Specialty responses expose `profiles_count` and
+`requests_count`, allowing administrators to assess usage before deactivation.
+Specialties remain flat and non-destructive; no artificial default taxonomy is
+seeded until the product owner approves an authoritative list.
+
 Admin profile moderation statuses:
 
 ```text

@@ -517,6 +517,16 @@ model fields exist:
   Web/Wasm build passed. Runtime OpenAPI, Postman, seed, and health passed.
 - Evidence: `docs/categories/phase-12-social-category-management.md`.
 
+### Step 12.5 Consultant Specialty Usage + Admin Search Hardening
+
+- Added profile/request usage counts to Backend and typed Admin contracts.
+- Connected the existing Backend code/title/description search to Admin UI.
+- Backend Ruff/compileall and 59 tests passed; Admin analyze, 11 tests, and
+  Web/Wasm build passed. OpenAPI, Postman, and runtime health passed.
+- Runtime remains at zero specialties because no authoritative default taxonomy
+  has been approved; no synthetic business data was introduced.
+- Evidence: `docs/categories/phase-12-consultant-specialty-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:

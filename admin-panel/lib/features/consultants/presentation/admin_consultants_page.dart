@@ -417,6 +417,19 @@ class _SpecialtiesTab extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 12),
+        TextFormField(
+          decoration: const InputDecoration(
+            labelText: 'جستجوی کد، عنوان یا توضیحات تخصص',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.search),
+          ),
+          textInputAction: TextInputAction.search,
+          onFieldSubmitted:
+              (value) => ref
+                  .read(adminConsultantControllerProvider.notifier)
+                  .searchSpecialties(value),
+        ),
+        const SizedBox(height: 12),
         if (specialties.isEmpty)
           const AdminEmptyView(message: 'تخصصی ثبت نشده است.')
         else
@@ -427,6 +440,8 @@ class _SpecialtiesTab extends ConsumerWidget {
               DataColumn(label: Text('عنوان')),
               DataColumn(label: Text('ترتیب')),
               DataColumn(label: Text('فعال')),
+              DataColumn(label: Text('پروفایل‌ها')),
+              DataColumn(label: Text('درخواست‌ها')),
               DataColumn(label: Text('عملیات')),
             ],
             rows:
@@ -438,6 +453,8 @@ class _SpecialtiesTab extends ConsumerWidget {
                       DataCell(Text(specialty.title)),
                       DataCell(Text(specialty.sortOrder.toString())),
                       DataCell(Text(specialty.isActive ? 'بله' : 'خیر')),
+                      DataCell(Text(specialty.profilesCount.toString())),
+                      DataCell(Text(specialty.requestsCount.toString())),
                       DataCell(
                         TextButton.icon(
                           onPressed:

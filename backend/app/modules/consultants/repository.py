@@ -68,6 +68,11 @@ class ConsultantRepository:
             .all()
         )
 
+    def specialty_usage_counts(self, specialty_id: int) -> tuple[int, int]:
+        profiles = self.db.query(ConsultProfileSpecialty).filter(ConsultProfileSpecialty.specialty_id == specialty_id).count()
+        requests = self.db.query(ConsultRequest).filter(ConsultRequest.specialty_id == specialty_id).count()
+        return profiles, requests
+
     def add_profile(self, row: ConsultProfile) -> ConsultProfile:
         self.db.add(row)
         self.db.flush()

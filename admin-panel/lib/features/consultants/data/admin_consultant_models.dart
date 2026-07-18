@@ -5,6 +5,8 @@ class AdminConsultSpecialty {
     required this.title,
     required this.sortOrder,
     required this.isActive,
+    required this.profilesCount,
+    required this.requestsCount,
     this.description,
   });
 
@@ -14,6 +16,8 @@ class AdminConsultSpecialty {
   final String? description;
   final int sortOrder;
   final bool isActive;
+  final int profilesCount;
+  final int requestsCount;
 
   factory AdminConsultSpecialty.fromJson(Map<String, dynamic> json) {
     return AdminConsultSpecialty(
@@ -23,6 +27,8 @@ class AdminConsultSpecialty {
       description: json['description']?.toString(),
       sortOrder: (json['sort_order'] as num?)?.toInt() ?? 100,
       isActive: json['is_active'] == true,
+      profilesCount: (json['profiles_count'] as num?)?.toInt() ?? 0,
+      requestsCount: (json['requests_count'] as num?)?.toInt() ?? 0,
     );
   }
 }

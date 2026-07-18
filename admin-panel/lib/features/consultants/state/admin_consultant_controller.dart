@@ -51,6 +51,24 @@ class AdminConsultantController extends StateNotifier<AdminConsultantState> {
     }
   }
 
+  Future<void> searchSpecialties(String query) async {
+    state = state.copyWith(isSaving: true, clearError: true);
+    try {
+      final specialties = await _repository.listSpecialties(q: query);
+      state = state.copyWith(isSaving: false, specialties: specialties);
+    } on AdminConsultantApiException catch (error) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: error.error.message,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: 'خطا در جستجوی تخصص‌ها',
+      );
+    }
+  }
+
   Future<void> filterProfiles(String? status) async {
     state = state.copyWith(
       isSaving: true,

@@ -54,7 +54,7 @@ class ConsultantService:
         q: str | None = None,
     ) -> list[ConsultSpecialtyOut]:
         return [
-            ConsultSpecialtyOut.model_validate(row)
+            self._specialty_out(row)
             for row in self.repo.list_specialties(active_only=active_only, q=q)
         ]
 
@@ -81,7 +81,7 @@ class ConsultantService:
             ) from exc
 
         self.repo.refresh(row)
-        return ConsultSpecialtyOut.model_validate(row)
+        return self._specialty_out(row)
 
     def update_specialty(
         self,
@@ -118,7 +118,13 @@ class ConsultantService:
             ) from exc
 
         self.repo.refresh(row)
-        return ConsultSpecialtyOut.model_validate(row)
+        return self._specialty_out(row)
+
+    def _specialty_out(self, row: ConsultSpecialty) -> ConsultSpecialtyOut:
+        profiles, requests = self.repo.specialty_usage_counts(row.id)
+        data = ConsultSpecialtyOut.model_validate(row).model_dump()
+        data.update(profiles_count=profiles, requests_count=requests)
+        return ConsultSpecialtyOut.model_validate(data)
 
     def get_my_profile(self, user: AuthUser) -> ConsultProfileOut | None:
         profile = self.repo.get_profile_by_user_id(user.id)

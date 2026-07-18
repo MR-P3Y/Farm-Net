@@ -23,10 +23,13 @@ class AdminConsultantApi {
   final AdminApiClient _client;
   final AdminTokenStorage _tokenStorage;
 
-  Future<List<AdminConsultSpecialty>> listSpecialties() async {
+  Future<List<AdminConsultSpecialty>> listSpecialties({String? q}) async {
     await _setStoredToken();
-
-    final json = await _get('/admin/consultants/specialties');
+    final uri = Uri(
+      path: '/admin/consultants/specialties',
+      queryParameters: q == null || q.trim().isEmpty ? null : {'q': q.trim()},
+    );
+    final json = await _get(uri.toString());
     final rows = json['data'] as List? ?? [];
 
     return rows
