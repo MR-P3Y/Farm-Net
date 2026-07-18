@@ -14,6 +14,7 @@ import '../../features/products/presentation/admin_products_page.dart';
 import '../../features/products/presentation/admin_product_categories_page.dart';
 import '../../features/services/presentation/admin_services_page.dart';
 import '../../features/social/presentation/admin_social_page.dart';
+import '../../features/social/presentation/admin_social_categories_page.dart';
 import '../../features/stores/presentation/admin_stores_page.dart';
 import '../../features/verifications/presentation/admin_verifications_page.dart';
 import '../../features/weather/presentation/admin_weather_page.dart';
@@ -179,6 +180,15 @@ final GoRouter adminRouter = GoRouter(
               child: AdminSocialPage(),
             );
           },
+        ),
+        GoRoute(
+          path: '/social-categories',
+          name: 'admin-social-categories',
+          builder:
+              (context, state) => const AdminPermissionGuard(
+                permission: 'social_categories.admin_read',
+                child: AdminSocialCategoriesPage(),
+              ),
         ),
       ],
     ),

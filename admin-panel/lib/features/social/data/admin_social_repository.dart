@@ -12,6 +12,13 @@ class AdminSocialRepository {
 
   final AdminSocialApi _api;
 
+  Future<List<AdminSocialCategory>> categories({String? q}) =>
+      _api.categories(q: q);
+  Future<AdminSocialCategory> saveCategory({
+    int? id,
+    required Map<String, dynamic> data,
+  }) => _api.saveCategory(id: id, data: data);
+
   Future<List<AdminSocialReport>> reports({
     String? status,
     String? targetType,

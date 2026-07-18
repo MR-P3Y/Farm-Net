@@ -45,6 +45,42 @@ class AdminSocialApi {
         .toList();
   }
 
+  Future<List<AdminSocialCategory>> categories({String? q}) async {
+    await _setStoredToken();
+    final uri = Uri(
+      path: '/admin/social/categories',
+      queryParameters: q == null || q.trim().isEmpty ? null : {'q': q.trim()},
+    );
+    final json = await _get(uri.toString());
+    return (json['data'] as List? ?? const [])
+        .map((item) => AdminSocialCategory.fromJson((item as Map).cast()))
+        .toList();
+  }
+
+  Future<AdminSocialCategory> saveCategory({
+    int? id,
+    required Map<String, dynamic> data,
+  }) async {
+    await _setStoredToken();
+    try {
+      final response =
+          id == null
+              ? await _client.dio.post<Map<String, dynamic>>(
+                '/admin/social/categories',
+                data: data,
+              )
+              : await _client.dio.patch<Map<String, dynamic>>(
+                '/admin/social/categories/$id',
+                data: data,
+              );
+      return AdminSocialCategory.fromJson(
+        (((response.data ?? {})['data']) as Map).cast(),
+      );
+    } on DioException catch (error) {
+      throw AdminSocialApiException(_mapDioError(error));
+    }
+  }
+
   Future<AdminSocialReport> updateReportStatus({
     required int reportId,
     required String status,

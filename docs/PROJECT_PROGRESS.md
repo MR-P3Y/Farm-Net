@@ -508,6 +508,15 @@ model fields exist:
   app/database/Redis health remained `ok`.
 - Evidence: `docs/categories/phase-12-services-category-hardening.md`.
 
+### Step 12.4 Social Category Management
+
+- Added category-specific permissions and public/Admin typed category contracts.
+- Added search, create/update, activation/order controls, and post usage counts.
+- Added a typed Admin management page and non-destructive six-category seed CLI.
+- Backend Ruff/compileall and 58 tests passed; Admin analyze, 10 tests, and
+  Web/Wasm build passed. Runtime OpenAPI, Postman, seed, and health passed.
+- Evidence: `docs/categories/phase-12-social-category-management.md`.
+
 ## Progress Update Rule
 
 After every completed step:

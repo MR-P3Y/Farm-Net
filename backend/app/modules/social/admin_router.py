@@ -8,6 +8,8 @@ from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
 from app.modules.social.schemas import (
+    SocialCategoryCreateIn,
+    SocialCategoryUpdateIn,
     SocialPostModerationIn,
     SocialReportStatusUpdateIn,
 )
@@ -18,6 +20,40 @@ router = APIRouter(
     prefix="/admin/social",
     tags=["Admin Social"],
 )
+
+
+@router.get("/categories")
+def list_social_categories_admin(
+    request: Request,
+    q: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("social_categories.admin_read")),
+):
+    items = SocialService(db).list_categories_admin(q=q.strip() if q else None)
+    return success_response(data=[item.model_dump(mode="json") for item in items], message="OK", meta={"trace_id": request.state.trace_id})
+
+
+@router.post("/categories")
+def create_social_category_admin(
+    payload: SocialCategoryCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("social_categories.create")),
+):
+    item = SocialService(db).create_category(payload)
+    return success_response(data=item.model_dump(mode="json"), message="Social category created", meta={"trace_id": request.state.trace_id})
+
+
+@router.patch("/categories/{category_id}")
+def update_social_category_admin(
+    category_id: int,
+    payload: SocialCategoryUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("social_categories.update")),
+):
+    item = SocialService(db).update_category(category_id=category_id, payload=payload)
+    return success_response(data=item.model_dump(mode="json"), message="Social category updated", meta={"trace_id": request.state.trace_id})
 
 
 @router.get("/reports")

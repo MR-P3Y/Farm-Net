@@ -82,6 +82,19 @@ Public endpoint.
 
 Returns active social categories.
 
+Admin category management:
+
+```http
+GET   /api/v1/admin/social/categories
+POST  /api/v1/admin/social/categories
+PATCH /api/v1/admin/social/categories/{category_id}
+```
+
+Admin contracts support search, normalized unique code, title/description,
+ordering, active/inactive state, and post usage count. Deactivation is
+non-destructive. The bootstrap seed only creates missing defaults and does not
+overwrite categories already managed by an administrator.
+
 ---
 
 ### List Posts

@@ -3,9 +3,41 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.modules.expert.schemas import ExpertAnswerPublicOut
+
+
+class SocialCategoryCreateIn(BaseModel):
+    code: str = Field(min_length=2, max_length=80, pattern=r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
+    title: str = Field(min_length=2, max_length=160)
+    description: str | None = Field(default=None, max_length=2000)
+    sort_order: int = Field(default=100, ge=0)
+    is_active: bool = True
+
+    @field_validator("code", "title", "description", mode="before")
+    @classmethod
+    def normalize_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class SocialCategoryUpdateIn(BaseModel):
+    code: str | None = Field(default=None, min_length=2, max_length=80, pattern=r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
+    title: str | None = Field(default=None, min_length=2, max_length=160)
+    description: str | None = Field(default=None, max_length=2000)
+    sort_order: int | None = Field(default=None, ge=0)
+    is_active: bool | None = None
+
+    @field_validator("code", "title", "description", mode="before")
+    @classmethod
+    def normalize_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
 
 
 class SocialCategoryOut(BaseModel):
@@ -15,6 +47,7 @@ class SocialCategoryOut(BaseModel):
     description: str | None = None
     sort_order: int
     is_active: bool
+    posts_count: int = 0
     created_at: datetime
     updated_at: datetime
 

@@ -54,6 +54,16 @@ class SocialRepository:
             .all()
         )
 
+    def list_categories_admin(self, *, q: str | None = None) -> list[SocialCategory]:
+        query = self.db.query(SocialCategory)
+        if q:
+            like = f"%{q.strip()}%"
+            query = query.filter(or_(SocialCategory.code.ilike(like), SocialCategory.title.ilike(like)))
+        return query.order_by(SocialCategory.sort_order.asc(), SocialCategory.id.asc()).all()
+
+    def category_posts_count(self, *, category_id: int) -> int:
+        return self.db.query(SocialPost).filter(SocialPost.category_id == category_id).count()
+
     def add_post(self, row: SocialPost) -> SocialPost:
         self.db.add(row)
         self.db.flush()

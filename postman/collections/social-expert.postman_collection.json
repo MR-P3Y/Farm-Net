@@ -2,7 +2,7 @@
   "info": {
     "name": "Farm Net - Social Expert Answers",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman coverage for social post detail expert_answers, public/expert answer APIs, admin expert moderation, and notification visibility checks."
+    "description": "Postman coverage for Social categories, posts, expert answers, Admin moderation, and notification visibility checks."
   },
   "variable": [
     {
@@ -36,9 +36,37 @@
     {
       "key": "post_owner_user_id",
       "value": "1"
+    },
+    {
+      "key": "social_category_id",
+      "value": "1"
     }
   ],
   "item": [
+    {
+      "name": "Public - List Social Categories",
+      "request": {"method": "GET", "url": "{{base_url}}/social/categories"}
+    },
+    {
+      "name": "Admin - List Social Categories",
+      "request": {"method": "GET", "url": "{{base_url}}/admin/social/categories", "header": [{"key": "Authorization", "value": "Bearer {{admin_access_token}}"}]}
+    },
+    {
+      "name": "Admin - Create Social Category",
+      "request": {
+        "method": "POST", "url": "{{base_url}}/admin/social/categories",
+        "header": [{"key": "Authorization", "value": "Bearer {{admin_access_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"code\": \"postman_topic\",\n  \"title\": \"موضوع Postman\",\n  \"sort_order\": 700,\n  \"is_active\": true\n}"}
+      }
+    },
+    {
+      "name": "Admin - Update Social Category",
+      "request": {
+        "method": "PATCH", "url": "{{base_url}}/admin/social/categories/{{social_category_id}}",
+        "header": [{"key": "Authorization", "value": "Bearer {{admin_access_token}}"}, {"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"sort_order\": 710,\n  \"is_active\": true\n}"}
+      }
+    },
     {
       "name": "Public - List Social Posts",
       "request": {

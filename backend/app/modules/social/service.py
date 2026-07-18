@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.expert.service import ExpertAnswerService
@@ -36,6 +37,8 @@ from app.modules.social.schemas import (
     SocialBookmarkOut,
     SocialBookmarkPostOut,
     SocialCategoryOut,
+    SocialCategoryCreateIn,
+    SocialCategoryUpdateIn,
     SocialCommentCreateIn,
     SocialCommentOut,
     SocialPostCreateIn,
@@ -110,12 +113,6 @@ class SocialService:
                     is_active=True,
                 )
                 self.repo.add_category(row)
-            else:
-                row.title = item["title"]
-                row.description = item["description"]
-                row.sort_order = item["sort_order"]
-                row.is_active = True
-
             rows.append(row)
 
         self.repo.commit()
@@ -123,11 +120,46 @@ class SocialService:
         for row in rows:
             self.repo.refresh(row)
 
-        return [SocialCategoryOut.model_validate(row) for row in rows]
+        return [self._category_out(row) for row in rows]
 
     def list_categories(self) -> list[SocialCategoryOut]:
         rows = self.repo.list_active_categories()
-        return [SocialCategoryOut.model_validate(row) for row in rows]
+        return [self._category_out(row) for row in rows]
+
+    def list_categories_admin(self, *, q: str | None = None) -> list[SocialCategoryOut]:
+        return [self._category_out(row) for row in self.repo.list_categories_admin(q=q)]
+
+    def create_category(self, payload: SocialCategoryCreateIn) -> SocialCategoryOut:
+        row = SocialCategory(**payload.model_dump())
+        self.repo.add_category(row)
+        self._commit_category(code=payload.code)
+        self.repo.refresh(row)
+        return self._category_out(row)
+
+    def update_category(self, *, category_id: int, payload: SocialCategoryUpdateIn) -> SocialCategoryOut:
+        row = self.repo.get_category_by_id(category_id=category_id)
+        if row is None:
+            raise ValidationAuthError(message="Social category not found")
+        changes = payload.model_dump(exclude_unset=True)
+        if changes.get("code", row.code) is None or changes.get("title", row.title) is None:
+            raise ValidationAuthError(message="Social category code and title are required")
+        for key, value in changes.items():
+            setattr(row, key, value)
+        self._commit_category(code=row.code)
+        self.repo.refresh(row)
+        return self._category_out(row)
+
+    def _commit_category(self, *, code: str) -> None:
+        try:
+            self.repo.commit()
+        except IntegrityError as exc:
+            self.db.rollback()
+            raise ValidationAuthError(message="Social category code already exists", details={"code": code}) from exc
+
+    def _category_out(self, row: SocialCategory) -> SocialCategoryOut:
+        data = SocialCategoryOut.model_validate(row).model_dump()
+        data["posts_count"] = self.repo.category_posts_count(category_id=row.id)
+        return SocialCategoryOut.model_validate(data)
 
     def create_post(
         self,

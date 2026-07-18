@@ -221,6 +221,10 @@ Step 12.3 hardened Services categories with cycle prevention, parent clearing,
 non-destructive idempotent seed behavior, domain usage counters, and matching
 Admin UI. Step 12.4 Social Category Management is next.
 
+Step 12.4 completed Social Category Management with category-specific
+permissions, Admin APIs/UI, post usage counts, and non-destructive seed behavior.
+Step 12.5 Consultant Specialty Usage + Admin Search Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

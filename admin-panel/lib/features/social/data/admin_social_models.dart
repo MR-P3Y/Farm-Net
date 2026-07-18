@@ -161,3 +161,32 @@ class AdminSocialReport {
     );
   }
 }
+
+class AdminSocialCategory {
+  const AdminSocialCategory({
+    required this.id,
+    required this.code,
+    required this.title,
+    required this.sortOrder,
+    required this.isActive,
+    required this.postsCount,
+    this.description,
+  });
+  final int id;
+  final String code;
+  final String title;
+  final String? description;
+  final int sortOrder;
+  final bool isActive;
+  final int postsCount;
+  factory AdminSocialCategory.fromJson(Map<String, dynamic> json) =>
+      AdminSocialCategory(
+        id: (json['id'] as num).toInt(),
+        code: json['code']?.toString() ?? '',
+        title: json['title']?.toString() ?? '',
+        description: json['description']?.toString(),
+        sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+        isActive: json['is_active'] == true,
+        postsCount: (json['posts_count'] as num?)?.toInt() ?? 0,
+      );
+}
