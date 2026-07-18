@@ -486,6 +486,18 @@ model fields exist:
   tests, and Web/Wasm build passed.
 - Evidence: `docs/products/phase-12-product-category-management.md`.
 
+### Step 12.2 Category Governance Alignment Audit
+
+- Verified Product, Services, Consultant, and Social taxonomy models, relations,
+  permissions, APIs, Admin clients, seeds, OpenAPI, and runtime reference data.
+- Kept domain tables independent and defined a shared governance/UX contract.
+- Identified Services cycle/parent-clear/seed/count gaps, Social's missing Admin
+  management, and Consultant usage-count/Admin-search gaps.
+- Confirmed runtime has no active Services, Consultant, or Social reference rows;
+  future hardening must include explicit idempotent seed readiness.
+- Defined Steps 12.3 through 12.8 without changing runtime behavior.
+- Evidence: `docs/categories/phase-12-category-governance-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:

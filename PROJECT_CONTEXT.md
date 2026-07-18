@@ -212,6 +212,11 @@ management on the existing domain model: public discovery, protected Admin
 create/update/list contracts, hierarchy validation, usage counters, and typed
 Admin UI. Other category domains remain independent by design.
 
+Step 12.2 completed the cross-domain governance audit. Services needs hierarchy,
+seed, and usage hardening; Social lacks Admin category management; Consultants
+needs usage counts and Admin search wiring. Domain tables remain independent.
+Step 12.3 Services Category Contract Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
