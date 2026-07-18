@@ -1,4 +1,5 @@
 from math import ceil
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
@@ -7,7 +8,12 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
-from app.modules.rentals.schemas import LessorProfileInput, RentalEquipmentInput
+from app.modules.rentals.schemas import (
+    LessorProfileInput,
+    RentalAvailabilityBlockIn,
+    RentalEquipmentInput,
+    RentalPricingRuleIn,
+)
 from app.modules.rentals.service import RentalService
 
 
@@ -67,6 +73,30 @@ def list_public_equipment(
 @router.get("/equipment/{equipment_id}")
 def get_public_equipment(equipment_id: int, request: Request, db: Session = Depends(get_db)):
     result = RentalService(db).get_public_equipment(equipment_id)
+    return success_response(
+        data=result.model_dump(mode="json"), message="OK", meta={"trace_id": request.state.trace_id}
+    )
+
+
+@router.get("/equipment/{equipment_id}/pricing")
+def get_public_pricing(equipment_id: int, request: Request, db: Session = Depends(get_db)):
+    items = RentalService(db).get_public_pricing(equipment_id)
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={"total": len(items), "trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/equipment/{equipment_id}/availability")
+def check_public_availability(
+    equipment_id: int,
+    starts_at: datetime,
+    ends_at: datetime,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    result = RentalService(db).check_public_availability(equipment_id, starts_at, ends_at)
     return success_response(
         data=result.model_dump(mode="json"), message="OK", meta={"trace_id": request.state.trace_id}
     )
@@ -138,6 +168,101 @@ def submit_my_equipment(
     return success_response(
         data=result.model_dump(mode="json"),
         message="Rental equipment submitted",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/me/equipment/{equipment_id}/pricing")
+def list_my_pricing(
+    equipment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.manage_pricing")),
+):
+    items = RentalService(db).list_my_pricing(user, equipment_id)
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={"total": len(items), "trace_id": request.state.trace_id},
+    )
+
+
+@router.put("/me/equipment/{equipment_id}/pricing")
+def replace_my_pricing(
+    equipment_id: int,
+    payload: list[RentalPricingRuleIn],
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.manage_pricing")),
+):
+    items = RentalService(db).replace_my_pricing(user, equipment_id, payload)
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="Rental pricing updated",
+        meta={"total": len(items), "trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/me/equipment/{equipment_id}/availability")
+def list_my_availability(
+    equipment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.manage_availability")),
+):
+    items = RentalService(db).list_my_availability(user, equipment_id)
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={"total": len(items), "trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/me/equipment/{equipment_id}/availability")
+def create_my_availability(
+    equipment_id: int,
+    payload: RentalAvailabilityBlockIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.manage_availability")),
+):
+    result = RentalService(db).create_my_availability(user, equipment_id, payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental availability block created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.put("/me/equipment/{equipment_id}/availability/{block_id}")
+def update_my_availability(
+    equipment_id: int,
+    block_id: int,
+    payload: RentalAvailabilityBlockIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.manage_availability")),
+):
+    result = RentalService(db).update_my_availability(user, equipment_id, block_id, payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental availability block updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.delete("/me/equipment/{equipment_id}/availability/{block_id}")
+def delete_my_availability(
+    equipment_id: int,
+    block_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.manage_availability")),
+):
+    RentalService(db).delete_my_availability(user, equipment_id, block_id)
+    return success_response(
+        data=None,
+        message="Rental availability block deleted",
         meta={"trace_id": request.state.trace_id},
     )
 

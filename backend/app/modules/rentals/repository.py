@@ -7,6 +7,9 @@ from app.modules.rentals.models import (
     RentalCategory,
     RentalEquipment,
     RentalEquipmentMedia,
+    RentalPricingRule,
+    RentalAvailabilityBlock,
+    RentalRequest,
 )
 
 
@@ -211,3 +214,57 @@ class RentalRepository:
             row.equipment_id = equipment.id
             self.db.add(row)
         self.db.flush()
+
+    def list_pricing_rules(
+        self, equipment_id: int, *, active_only: bool = False
+    ) -> list[RentalPricingRule]:
+        query = self.db.query(RentalPricingRule).filter(
+            RentalPricingRule.equipment_id == equipment_id
+        )
+        if active_only:
+            query = query.filter(RentalPricingRule.is_active.is_(True))
+        return query.order_by(
+            RentalPricingRule.unit, RentalPricingRule.operator_included, RentalPricingRule.id
+        ).all()
+
+    def replace_pricing_rules(self, equipment_id: int, rows: list[RentalPricingRule]) -> None:
+        self.db.query(RentalPricingRule).filter(
+            RentalPricingRule.equipment_id == equipment_id
+        ).delete(synchronize_session=False)
+        for row in rows:
+            row.equipment_id = equipment_id
+            self.db.add(row)
+        self.db.flush()
+
+    def list_availability_blocks(
+        self, equipment_id: int, *, starts_at=None, ends_at=None
+    ) -> list[RentalAvailabilityBlock]:
+        query = self.db.query(RentalAvailabilityBlock).filter(
+            RentalAvailabilityBlock.equipment_id == equipment_id
+        )
+        if starts_at is not None and ends_at is not None:
+            query = query.filter(
+                RentalAvailabilityBlock.starts_at < ends_at,
+                RentalAvailabilityBlock.ends_at > starts_at,
+            )
+        return query.order_by(RentalAvailabilityBlock.starts_at, RentalAvailabilityBlock.id).all()
+
+    def get_availability_block(self, block_id: int) -> RentalAvailabilityBlock | None:
+        return (
+            self.db.query(RentalAvailabilityBlock)
+            .filter(RentalAvailabilityBlock.id == block_id)
+            .one_or_none()
+        )
+
+    def has_booking_overlap(self, equipment_id: int, starts_at, ends_at) -> bool:
+        return (
+            self.db.query(RentalRequest.id)
+            .filter(
+                RentalRequest.equipment_id == equipment_id,
+                RentalRequest.status.in_(("accepted", "in_progress")),
+                RentalRequest.starts_at < ends_at,
+                RentalRequest.ends_at > starts_at,
+            )
+            .first()
+            is not None
+        )

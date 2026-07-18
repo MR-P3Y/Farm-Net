@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -195,3 +196,54 @@ class RentalEquipmentPublicOut(BaseModel):
     media: list[RentalEquipmentMediaOut]
     category: RentalCategoryOut | None
     lessor_display_name: str | None
+
+
+class RentalPricingRuleIn(BaseModel):
+    unit: str
+    operator_included: bool = False
+    price_amount: Decimal = Field(gt=0, max_digits=14, decimal_places=2)
+    minimum_units: Decimal = Field(default=Decimal("1"), gt=0, max_digits=10, decimal_places=2)
+    currency: str = Field(default="TOMAN", min_length=3, max_length=10)
+    is_active: bool = True
+
+    _normalize = field_validator("unit", "currency", mode="before")(_strip)
+
+
+class RentalPricingRuleOut(BaseModel):
+    id: int
+    equipment_id: int
+    unit: str
+    operator_included: bool
+    price_amount: Decimal
+    minimum_units: Decimal
+    currency: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class RentalAvailabilityBlockIn(BaseModel):
+    block_type: str
+    starts_at: datetime
+    ends_at: datetime
+    note: str | None = Field(default=None, max_length=2000)
+
+    _normalize = field_validator("block_type", "note", mode="before")(_strip)
+
+
+class RentalAvailabilityBlockOut(BaseModel):
+    id: int
+    equipment_id: int
+    block_type: str
+    starts_at: datetime
+    ends_at: datetime
+    note: str | None
+    created_at: datetime
+
+
+class RentalAvailabilityCheckOut(BaseModel):
+    equipment_id: int
+    starts_at: datetime
+    ends_at: datetime
+    is_available: bool
+    conflicting_blocks: list[RentalAvailabilityBlockOut] = Field(default_factory=list)

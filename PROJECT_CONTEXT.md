@@ -266,7 +266,12 @@ Listing + Media APIs is next.
 Step 16.4 added public and owner equipment listings, real Media ownership and
 visibility validation, operator/delivery/location contracts, submission, and
 status-specific Admin moderation. Public responses exclude exact address and
-moderation data. Step 16.5 Availability + Pricing Rules is next.
+moderation data.
+
+Step 16.5 added atomic multi-unit pricing, operator compatibility, owner
+availability blocks, public range checks, overlap prevention against blocks and
+accepted/in-progress bookings, and pricing/media approval readiness. Step 16.6
+Rental Request/Booking Workflow is next.
 
 ## Known Gaps
 

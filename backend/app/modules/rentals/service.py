@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
@@ -10,12 +10,20 @@ from app.modules.auth.models import AuthUser
 from app.modules.media.enums import MediaStatus, MediaVisibility
 from app.modules.profiles.enums import VerificationStatus, VerificationTargetRole
 from app.modules.profiles.models import VerificationRequest
-from app.modules.rentals.enums import LessorStatus, RentalEquipmentStatus, RentalOperatorMode
+from app.modules.rentals.enums import (
+    LessorStatus,
+    RentalAvailabilityBlockType,
+    RentalEquipmentStatus,
+    RentalOperatorMode,
+    RentalPricingUnit,
+)
 from app.modules.rentals.models import (
     LessorProfile,
     RentalCategory,
     RentalEquipment,
     RentalEquipmentMedia,
+    RentalAvailabilityBlock,
+    RentalPricingRule,
 )
 from app.modules.rentals.repository import RentalRepository
 from app.modules.rentals.schemas import (
@@ -28,6 +36,11 @@ from app.modules.rentals.schemas import (
     RentalEquipmentMediaOut,
     RentalEquipmentOut,
     RentalEquipmentPublicOut,
+    RentalAvailabilityBlockIn,
+    RentalAvailabilityBlockOut,
+    RentalAvailabilityCheckOut,
+    RentalPricingRuleIn,
+    RentalPricingRuleOut,
 )
 
 
@@ -311,6 +324,11 @@ class RentalService:
             and row.status != RentalEquipmentStatus.PENDING_REVIEW.value
         ):
             raise ValidationAuthError(message="Only pending rental equipment can be approved")
+        if status == RentalEquipmentStatus.APPROVED.value:
+            if not row.media:
+                raise ValidationAuthError(message="Rental equipment media is required for approval")
+            if not self.repo.list_pricing_rules(row.id, active_only=True):
+                raise ValidationAuthError(message="Active rental pricing is required for approval")
         if (
             status in {RentalEquipmentStatus.REJECTED.value, RentalEquipmentStatus.SUSPENDED.value}
             and not admin_note
@@ -324,6 +342,131 @@ class RentalService:
         self.db.commit()
         self.db.refresh(row)
         return self._equipment_out(self.repo.get_equipment(row.id))
+
+    def get_public_pricing(self, equipment_id: int) -> list[RentalPricingRuleOut]:
+        self.get_public_equipment(equipment_id)
+        return [
+            self._pricing_out(row)
+            for row in self.repo.list_pricing_rules(equipment_id, active_only=True)
+        ]
+
+    def replace_my_pricing(
+        self, user: AuthUser, equipment_id: int, payloads: list[RentalPricingRuleIn]
+    ) -> list[RentalPricingRuleOut]:
+        profile = self._approved_lessor(user)
+        equipment = self._owned_equipment(profile.id, equipment_id)
+        if equipment.status in {
+            RentalEquipmentStatus.SUSPENDED.value,
+            RentalEquipmentStatus.ARCHIVED.value,
+        }:
+            raise ValidationAuthError(
+                message="Rental pricing cannot be changed in current equipment status"
+            )
+        if not payloads:
+            raise ValidationAuthError(message="At least one rental pricing rule is required")
+        keys = [(item.unit, item.operator_included) for item in payloads]
+        if len(keys) != len(set(keys)):
+            raise ValidationAuthError(message="Duplicate rental pricing unit/operator rule")
+        self.repo.replace_pricing_rules(
+            equipment.id, [self._pricing_row(item, equipment.operator_mode) for item in payloads]
+        )
+        self.db.commit()
+        return [self._pricing_out(row) for row in self.repo.list_pricing_rules(equipment.id)]
+
+    def list_my_pricing(self, user: AuthUser, equipment_id: int) -> list[RentalPricingRuleOut]:
+        profile = self._approved_lessor(user)
+        equipment = self._owned_equipment(profile.id, equipment_id)
+        return [self._pricing_out(row) for row in self.repo.list_pricing_rules(equipment.id)]
+
+    def check_public_availability(
+        self, equipment_id: int, starts_at: datetime, ends_at: datetime
+    ) -> RentalAvailabilityCheckOut:
+        self.get_public_equipment(equipment_id)
+        starts_at, ends_at = self._valid_range(starts_at, ends_at)
+        blocks = self.repo.list_availability_blocks(
+            equipment_id, starts_at=starts_at, ends_at=ends_at
+        )
+        booking_overlap = self.repo.has_booking_overlap(equipment_id, starts_at, ends_at)
+        return RentalAvailabilityCheckOut(
+            equipment_id=equipment_id,
+            starts_at=starts_at,
+            ends_at=ends_at,
+            is_available=not blocks and not booking_overlap,
+            conflicting_blocks=[self._block_out(row, include_note=False) for row in blocks],
+        )
+
+    def list_my_availability(
+        self, user: AuthUser, equipment_id: int
+    ) -> list[RentalAvailabilityBlockOut]:
+        profile = self._approved_lessor(user)
+        equipment = self._owned_equipment(profile.id, equipment_id)
+        return [self._block_out(row) for row in self.repo.list_availability_blocks(equipment.id)]
+
+    def create_my_availability(
+        self, user: AuthUser, equipment_id: int, payload: RentalAvailabilityBlockIn
+    ) -> RentalAvailabilityBlockOut:
+        profile = self._approved_lessor(user)
+        equipment = self._owned_equipment(profile.id, equipment_id)
+        starts_at, ends_at = self._valid_range(payload.starts_at, payload.ends_at)
+        self._validate_block_type(payload.block_type)
+        if self.repo.list_availability_blocks(
+            equipment.id, starts_at=starts_at, ends_at=ends_at
+        ) or self.repo.has_booking_overlap(equipment.id, starts_at, ends_at):
+            raise ValidationAuthError(
+                message="Rental availability range overlaps an existing block or booking"
+            )
+        row = RentalAvailabilityBlock(
+            equipment_id=equipment.id,
+            block_type=payload.block_type,
+            starts_at=starts_at,
+            ends_at=ends_at,
+            note=payload.note,
+            created_by=user.id,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return self._block_out(row)
+
+    def update_my_availability(
+        self, user: AuthUser, equipment_id: int, block_id: int, payload: RentalAvailabilityBlockIn
+    ) -> RentalAvailabilityBlockOut:
+        profile = self._approved_lessor(user)
+        equipment = self._owned_equipment(profile.id, equipment_id)
+        row = self.repo.get_availability_block(block_id)
+        if row is None or row.equipment_id != equipment.id:
+            raise ValidationAuthError(message="Rental availability block not found")
+        starts_at, ends_at = self._valid_range(payload.starts_at, payload.ends_at)
+        self._validate_block_type(payload.block_type)
+        conflicts = [
+            item
+            for item in self.repo.list_availability_blocks(
+                equipment.id, starts_at=starts_at, ends_at=ends_at
+            )
+            if item.id != row.id
+        ]
+        if conflicts or self.repo.has_booking_overlap(equipment.id, starts_at, ends_at):
+            raise ValidationAuthError(
+                message="Rental availability range overlaps an existing block or booking"
+            )
+        row.block_type, row.starts_at, row.ends_at, row.note = (
+            payload.block_type,
+            starts_at,
+            ends_at,
+            payload.note,
+        )
+        self.db.commit()
+        self.db.refresh(row)
+        return self._block_out(row)
+
+    def delete_my_availability(self, user: AuthUser, equipment_id: int, block_id: int) -> None:
+        profile = self._approved_lessor(user)
+        equipment = self._owned_equipment(profile.id, equipment_id)
+        row = self.repo.get_availability_block(block_id)
+        if row is None or row.equipment_id != equipment.id:
+            raise ValidationAuthError(message="Rental availability block not found")
+        self.db.delete(row)
+        self.db.commit()
 
     def _approved_lessor(self, user: AuthUser) -> LessorProfile:
         profile = self.repo.get_profile_by_user(user.id)
@@ -388,6 +531,73 @@ class RentalService:
         if rows and not any(row.is_primary for row in rows):
             rows[0].is_primary = True
         return rows
+
+    def _pricing_row(self, payload: RentalPricingRuleIn, operator_mode: str) -> RentalPricingRule:
+        if payload.unit not in {item.value for item in RentalPricingUnit}:
+            raise ValidationAuthError(
+                message="Invalid rental pricing unit", details={"unit": payload.unit}
+            )
+        if (
+            operator_mode == RentalOperatorMode.WITH_OPERATOR.value
+            and not payload.operator_included
+        ):
+            raise ValidationAuthError(message="Pricing must include operator for this equipment")
+        if operator_mode == RentalOperatorMode.WITHOUT_OPERATOR.value and payload.operator_included:
+            raise ValidationAuthError(message="Pricing cannot include operator for this equipment")
+        return RentalPricingRule(
+            unit=payload.unit,
+            operator_included=payload.operator_included,
+            price_amount=payload.price_amount,
+            minimum_units=payload.minimum_units,
+            currency=payload.currency.upper(),
+            is_active=payload.is_active,
+        )
+
+    def _pricing_out(self, row: RentalPricingRule) -> RentalPricingRuleOut:
+        fields = (
+            "id",
+            "equipment_id",
+            "unit",
+            "operator_included",
+            "price_amount",
+            "minimum_units",
+            "currency",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        return RentalPricingRuleOut(**{field: getattr(row, field) for field in fields})
+
+    def _block_out(
+        self, row: RentalAvailabilityBlock, *, include_note: bool = True
+    ) -> RentalAvailabilityBlockOut:
+        return RentalAvailabilityBlockOut(
+            id=row.id,
+            equipment_id=row.equipment_id,
+            block_type=row.block_type,
+            starts_at=row.starts_at,
+            ends_at=row.ends_at,
+            note=row.note if include_note else None,
+            created_at=row.created_at,
+        )
+
+    def _valid_range(self, starts_at: datetime, ends_at: datetime) -> tuple[datetime, datetime]:
+        starts_at = self._naive_utc(starts_at)
+        ends_at = self._naive_utc(ends_at)
+        if ends_at <= starts_at:
+            raise ValidationAuthError(message="Rental availability end must be after start")
+        return starts_at, ends_at
+
+    @staticmethod
+    def _naive_utc(value: datetime) -> datetime:
+        return value.astimezone(timezone.utc).replace(tzinfo=None) if value.tzinfo else value
+
+    @staticmethod
+    def _validate_block_type(value: str) -> None:
+        if value not in {item.value for item in RentalAvailabilityBlockType}:
+            raise ValidationAuthError(
+                message="Invalid rental availability block type", details={"block_type": value}
+            )
 
     def _validate_equipment_filters(self, filters: dict) -> None:
         mode = filters.get("operator_mode")

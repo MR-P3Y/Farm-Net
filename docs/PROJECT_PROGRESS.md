@@ -629,6 +629,18 @@ model fields exist:
 - Rental Postman coverage expanded to 17 valid requests.
 - Evidence: `docs/rentals/phase-16-equipment-media-apis.md`.
 
+### Step 16.5 Availability + Pricing Rules
+
+- Added atomic multi-unit pricing with positive/unique/operator-compatible
+  contracts and public active pricing output.
+- Added owner availability CRUD and public range checks with UTC normalization,
+  block/booking overlap prevention, and private-note protection.
+- Hardened Admin approval to require equipment media and active pricing.
+- Backend Ruff/compileall passed, 12 focused and all 71 tests passed; Runtime
+  exposed 19 Rental paths, remained at Alembic head, and health/401 passed.
+- Rental Postman coverage expanded to 25 valid requests.
+- Evidence: `docs/rentals/phase-16-pricing-availability.md`.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
 import pytest
 from sqlalchemy import CheckConstraint, UniqueConstraint
@@ -22,7 +24,12 @@ from app.modules.rentals.models import (
     RentalRequestStatusLog,
 )
 from app.modules.rentals.schemas import RentalCategoryCreateIn, RentalCategoryUpdateIn
-from app.modules.rentals.schemas import RentalEquipmentInput, RentalEquipmentMediaIn
+from app.modules.rentals.schemas import (
+    RentalAvailabilityBlockIn,
+    RentalEquipmentInput,
+    RentalEquipmentMediaIn,
+    RentalPricingRuleIn,
+)
 from app.modules.rentals.service import RentalService
 from app.modules.auth.exceptions import ValidationAuthError
 
@@ -161,3 +168,49 @@ def test_equipment_filter_rejects_unknown_operator_mode() -> None:
 
     with pytest.raises(ValidationAuthError):
         service._validate_equipment_filters({"operator_mode": "sometimes"})
+
+
+def test_pricing_rule_enforces_operator_compatibility() -> None:
+    service = RentalService.__new__(RentalService)
+    with_operator = RentalPricingRuleIn(
+        unit="day", operator_included=True, price_amount=Decimal("2500000")
+    )
+
+    row = service._pricing_row(with_operator, "with_operator")
+    assert row.operator_included is True
+
+    with pytest.raises(ValidationAuthError):
+        service._pricing_row(with_operator, "without_operator")
+
+
+def test_pricing_rule_rejects_unknown_unit() -> None:
+    service = RentalService.__new__(RentalService)
+    payload = RentalPricingRuleIn(unit="month", price_amount=Decimal("1"))
+
+    with pytest.raises(ValidationAuthError):
+        service._pricing_row(payload, "either")
+
+
+def test_availability_range_normalizes_aware_datetimes_and_rejects_reverse_range() -> None:
+    service = RentalService.__new__(RentalService)
+    start = datetime.now(UTC)
+    end = start + timedelta(days=1)
+
+    normalized_start, normalized_end = service._valid_range(start, end)
+    assert normalized_start.tzinfo is None
+    assert normalized_end.tzinfo is None
+
+    with pytest.raises(ValidationAuthError):
+        service._valid_range(end, start)
+
+
+def test_availability_contract_supports_only_explicit_block_types() -> None:
+    start = datetime.now(UTC)
+    payload = RentalAvailabilityBlockIn(
+        block_type="maintenance", starts_at=start, ends_at=start + timedelta(hours=2)
+    )
+    service = RentalService.__new__(RentalService)
+
+    service._validate_block_type(payload.block_type)
+    with pytest.raises(ValidationAuthError):
+        service._validate_block_type("booked_elsewhere")

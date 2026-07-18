@@ -46,3 +46,24 @@ primary item is accepted and the first item becomes primary when omitted.
 Public output excludes exact address, moderation notes, actor IDs, and internal
 lifecycle timestamps. Public discovery requires both approved equipment and an
 approved, non-deleted lessor profile.
+
+## Pricing and availability (Phase 16.5)
+
+| Method | Path | Access |
+|---|---|---|
+| GET | `/rentals/equipment/{equipment_id}/pricing` | Public active rules |
+| GET | `/rentals/equipment/{equipment_id}/availability` | Public range check |
+| GET/PUT | `/rentals/me/equipment/{equipment_id}/pricing` | Owning lessor |
+| GET/POST | `/rentals/me/equipment/{equipment_id}/availability` | Owning lessor |
+| PUT/DELETE | `/rentals/me/equipment/{equipment_id}/availability/{block_id}` | Owning lessor |
+
+Pricing units are `hour`, `day`, `week`, `hectare`, and `project`. Operator
+inclusion must match equipment operator mode. Replacing pricing is atomic,
+requires at least one rule, and rejects duplicate unit/operator pairs.
+
+Availability blocks are `unavailable`, `maintenance`, or `owner_reserved`.
+Ranges use overlap semantics `existing.start < requested.end` and
+`existing.end > requested.start`; adjacent ranges do not conflict. Blocks may
+not overlap another block or an accepted/in-progress booking. Public checks do
+not expose owner notes. Equipment approval now requires public media and at
+least one active pricing rule.
