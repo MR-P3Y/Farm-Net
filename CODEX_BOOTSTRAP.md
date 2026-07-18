@@ -95,7 +95,8 @@ Phase 12.3 Services Category Contract Hardening: completed
 Phase 12.4 Social Category Management: completed
 Phase 12.5 Consultant Specialty Usage + Admin Search Hardening: completed
 Phase 12.6 Unified Admin Taxonomy Navigation + UX Consistency: completed
-Next: Phase 12.7 Docs/Postman + Runtime Regression
+Phase 12.7 Docs/Postman + Runtime Regression: completed
+Next: Phase 12.8 Category Management Release Gate + Tag
 ```
 
 Services means agricultural operational services, not equipment rental.

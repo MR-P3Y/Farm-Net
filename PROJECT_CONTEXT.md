@@ -1,6 +1,6 @@
 # Farm-Net Project Context
 
-Last verified: 2026-07-18
+Last verified: 2026-07-19
 Repository path: `E:\Farm-Net`
 Primary development branch: `develop`
 
@@ -232,7 +232,14 @@ unapproved defaults were invented. Step 12.6 Unified Admin Taxonomy Navigation
 
 Step 12.6 added a permission-aware Admin taxonomy hub and unified navigation
 across Product, Services, Consultant, and Social management while preserving
-their independent contracts. Step 12.7 Docs/Postman + Runtime Regression is next.
+their independent contracts.
+
+Step 12.7 completed consolidated Category Management documentation, validated
+the four canonical domain Postman collections, and passed full Backend/Mobile/
+Admin runtime regression. Runtime reference rows are Product 24, Services 8,
+Social 6, and Consultant 0; Consultant defaults remain intentionally absent
+until an authoritative specialty taxonomy is approved. Step 12.8 Category
+Management Release Gate + Tag is next.
 
 ## Known Gaps
 

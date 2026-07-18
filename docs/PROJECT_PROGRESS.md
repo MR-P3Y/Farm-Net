@@ -1,6 +1,6 @@
 # Farm-Net Project Progress
 
-Last verified: 2026-07-17
+Last verified: 2026-07-19
 Branch at verification: `develop`
 Verified HEAD before Phase 9.2 commit: `f2b96be`
 
@@ -535,6 +535,25 @@ model fields exist:
 - Added a direct Consultant specialties route that opens the correct Admin tab.
 - Admin analyze, all 12 tests, and Web/Wasm build passed.
 - Evidence: `docs/categories/phase-12-admin-taxonomy-navigation.md`.
+
+### Step 12.7 Docs/Postman + Runtime Regression
+
+- Reconciled Product, Services, Social, and Consultant taxonomy documentation
+  while preserving their independent domain models and lifecycle rules.
+- Validated the four canonical Postman collections: Products 23 requests,
+  Services 30, Social + Expert 22, and Consultants 31.
+- Backend Ruff/compileall passed and all 59 tests passed with 16 existing UTC
+  deprecation warnings. Alembic remained at `b27e8d5f64c1` and auth seed
+  confirmed 12 roles and 221 permissions.
+- Product, Services, and Social seeds passed twice without duplication; runtime
+  public counts are 24, 8, and 6 respectively.
+- Consultant specialties remain at zero because no authoritative default
+  taxonomy is approved; no synthetic reference data was introduced.
+- Runtime OpenAPI exposed all 12 taxonomy paths and application/database/Redis
+  health returned `ok`.
+- Mobile passed analyze, 28 tests, and Web/Wasm build checks; Admin passed
+  analyze, 12 tests, and Web/Wasm build checks.
+- Evidence: `docs/categories/phase-12-runtime-regression.md`.
 
 ## Progress Update Rule
 
