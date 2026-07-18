@@ -1,3 +1,5 @@
+from math import ceil
+
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
@@ -5,11 +7,25 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
-from app.modules.rentals.schemas import LessorProfileInput
+from app.modules.rentals.schemas import LessorProfileInput, RentalEquipmentInput
 from app.modules.rentals.service import RentalService
 
 
 router = APIRouter(prefix="/rentals", tags=["Equipment Rental"])
+
+
+def _page(data, total: int, page: int, page_size: int, request: Request):
+    return success_response(
+        data=[item.model_dump(mode="json") for item in data],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
 
 
 @router.get("/categories")
@@ -21,6 +37,108 @@ def list_rental_categories(
         data=[item.model_dump(mode="json") for item in items],
         message="OK",
         meta={"total": len(items), "trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/equipment")
+def list_public_equipment(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    category_id: int | None = Query(default=None, ge=1),
+    province_id: int | None = Query(default=None, ge=1),
+    city_id: int | None = Query(default=None, ge=1),
+    operator_mode: str | None = Query(default=None),
+    q: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    items, total = RentalService(db).list_public_equipment(
+        category_id=category_id,
+        province_id=province_id,
+        city_id=city_id,
+        operator_mode=operator_mode,
+        q=q,
+        page=page,
+        page_size=page_size,
+    )
+    return _page(items, total, page, page_size, request)
+
+
+@router.get("/equipment/{equipment_id}")
+def get_public_equipment(equipment_id: int, request: Request, db: Session = Depends(get_db)):
+    result = RentalService(db).get_public_equipment(equipment_id)
+    return success_response(
+        data=result.model_dump(mode="json"), message="OK", meta={"trace_id": request.state.trace_id}
+    )
+
+
+@router.get("/me/equipment")
+def list_my_equipment(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    category_id: int | None = Query(default=None, ge=1),
+    operator_mode: str | None = Query(default=None),
+    q: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.read")),
+):
+    items, total = RentalService(db).list_my_equipment(
+        user,
+        status=status,
+        category_id=category_id,
+        operator_mode=operator_mode,
+        q=q,
+        page=page,
+        page_size=page_size,
+    )
+    return _page(items, total, page, page_size, request)
+
+
+@router.post("/me/equipment")
+def create_my_equipment(
+    payload: RentalEquipmentInput,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.create")),
+):
+    result = RentalService(db).create_my_equipment(user, payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental equipment created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.put("/me/equipment/{equipment_id}")
+def update_my_equipment(
+    equipment_id: int,
+    payload: RentalEquipmentInput,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.update")),
+):
+    result = RentalService(db).update_my_equipment(user, equipment_id, payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental equipment updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/me/equipment/{equipment_id}/submit")
+def submit_my_equipment(
+    equipment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_equipment.submit")),
+):
+    result = RentalService(db).submit_my_equipment(user, equipment_id)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental equipment submitted",
+        meta={"trace_id": request.state.trace_id},
     )
 
 

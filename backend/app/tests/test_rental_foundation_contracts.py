@@ -1,3 +1,7 @@
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+import pytest
 from sqlalchemy import CheckConstraint, UniqueConstraint
 
 from app.modules.auth.seed import BASE_PERMISSIONS
@@ -18,7 +22,9 @@ from app.modules.rentals.models import (
     RentalRequestStatusLog,
 )
 from app.modules.rentals.schemas import RentalCategoryCreateIn, RentalCategoryUpdateIn
+from app.modules.rentals.schemas import RentalEquipmentInput, RentalEquipmentMediaIn
 from app.modules.rentals.service import RentalService
+from app.modules.auth.exceptions import ValidationAuthError
 
 
 def test_rental_foundation_has_all_independent_tables() -> None:
@@ -114,3 +120,44 @@ def test_rental_default_taxonomy_has_stable_unique_codes() -> None:
     assert len(codes) == 8
     assert len(codes) == len(set(codes))
     assert {"tractors", "harvesters", "sprayers", "irrigation"} <= set(codes)
+
+
+def test_equipment_input_carries_operator_location_and_media_contracts() -> None:
+    payload = RentalEquipmentInput(
+        category_id=1,
+        title="تراکتور رومانی",
+        slug="romanian-tractor",
+        operator_mode="either",
+        province_id=1,
+        city_id=2,
+        media_items=[RentalEquipmentMediaIn(media_file_id=9)],
+    )
+
+    assert payload.operator_mode == "either"
+    assert payload.media_items[0].media_file_id == 9
+    assert payload.currency == "TOMAN"
+
+
+def test_equipment_media_requires_active_public_owner_file_and_assigns_primary() -> None:
+    service = RentalService.__new__(RentalService)
+    service.repo = Mock()
+    service.repo.get_media.return_value = SimpleNamespace(
+        owner_user_id=7,
+        status="active",
+        visibility="public",
+    )
+
+    rows = service._media_rows([RentalEquipmentMediaIn(media_file_id=3)], owner_user_id=7)
+
+    assert rows[0].is_primary is True
+
+    service.repo.get_media.return_value.owner_user_id = 8
+    with pytest.raises(ValidationAuthError):
+        service._media_rows([RentalEquipmentMediaIn(media_file_id=3)], owner_user_id=7)
+
+
+def test_equipment_filter_rejects_unknown_operator_mode() -> None:
+    service = RentalService.__new__(RentalService)
+
+    with pytest.raises(ValidationAuthError):
+        service._validate_equipment_filters({"operator_mode": "sometimes"})

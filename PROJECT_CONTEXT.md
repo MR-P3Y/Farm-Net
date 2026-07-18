@@ -263,6 +263,11 @@ taxonomy, owner lessor profile create/edit/submit, and Admin moderation. Lessor
 approval requires an approved role Verification Request. Step 16.4 Equipment
 Listing + Media APIs is next.
 
+Step 16.4 added public and owner equipment listings, real Media ownership and
+visibility validation, operator/delivery/location contracts, submission, and
+status-specific Admin moderation. Public responses exclude exact address and
+moderation data. Step 16.5 Availability + Pricing Rules is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

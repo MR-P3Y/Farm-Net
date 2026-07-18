@@ -85,3 +85,113 @@ class LessorProfileOut(BaseModel):
     approved_by: int | None
     created_at: datetime
     updated_at: datetime
+
+
+class RentalEquipmentMediaIn(BaseModel):
+    media_file_id: int = Field(ge=1)
+    sort_order: int = Field(default=0, ge=0)
+    is_primary: bool = False
+    alt_text: str | None = Field(default=None, max_length=255)
+
+    _normalize = field_validator("alt_text", mode="before")(_strip)
+
+
+class RentalEquipmentMediaOut(BaseModel):
+    id: int
+    media_file_id: int
+    file_key: str | None = None
+    public_url: str | None = None
+    sort_order: int
+    is_primary: bool
+    alt_text: str | None
+
+
+class RentalEquipmentInput(BaseModel):
+    category_id: int | None = Field(default=None, ge=1)
+    title: str = Field(min_length=2, max_length=220)
+    slug: str = Field(min_length=3, max_length=180)
+    description: str | None = Field(default=None, max_length=8000)
+    manufacturer: str | None = Field(default=None, max_length=120)
+    model_name: str | None = Field(default=None, max_length=120)
+    production_year: int | None = Field(default=None, ge=1950, le=2200)
+    operator_mode: str = "without_operator"
+    province_id: int | None = Field(default=None, ge=1)
+    city_id: int | None = Field(default=None, ge=1)
+    address_text: str | None = Field(default=None, max_length=2000)
+    delivery_available: bool = False
+    delivery_terms: str | None = Field(default=None, max_length=3000)
+    security_deposit_amount: float | None = Field(default=None, ge=0)
+    currency: str = Field(default="TOMAN", min_length=3, max_length=10)
+    is_active: bool = True
+    media_items: list[RentalEquipmentMediaIn] = Field(default_factory=list, max_length=20)
+
+    _normalize = field_validator(
+        "title",
+        "slug",
+        "description",
+        "manufacturer",
+        "model_name",
+        "address_text",
+        "delivery_terms",
+        mode="before",
+    )(_strip)
+
+
+class RentalEquipmentStatusIn(BaseModel):
+    status: str
+    admin_note: str | None = Field(default=None, max_length=2000)
+
+    _normalize = field_validator("status", "admin_note", mode="before")(_strip)
+
+
+class RentalEquipmentOut(BaseModel):
+    id: int
+    lessor_profile_id: int
+    category_id: int | None
+    title: str
+    slug: str
+    description: str | None
+    manufacturer: str | None
+    model_name: str | None
+    production_year: int | None
+    operator_mode: str
+    status: str
+    province_id: int | None
+    city_id: int | None
+    address_text: str | None
+    delivery_available: bool
+    delivery_terms: str | None
+    security_deposit_amount: float | None
+    currency: str
+    is_active: bool
+    media: list[RentalEquipmentMediaOut] = Field(default_factory=list)
+    category: RentalCategoryOut | None = None
+    lessor_display_name: str | None = None
+    admin_note: str | None = None
+    submitted_at: datetime | None
+    approved_at: datetime | None
+    approved_by: int | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class RentalEquipmentPublicOut(BaseModel):
+    id: int
+    lessor_profile_id: int
+    category_id: int | None
+    title: str
+    slug: str
+    description: str | None
+    manufacturer: str | None
+    model_name: str | None
+    production_year: int | None
+    operator_mode: str
+    province_id: int | None
+    city_id: int | None
+    delivery_available: bool
+    delivery_terms: str | None
+    security_deposit_amount: float | None
+    currency: str
+    media: list[RentalEquipmentMediaOut]
+    category: RentalCategoryOut | None
+    lessor_display_name: str | None

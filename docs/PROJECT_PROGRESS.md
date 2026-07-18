@@ -616,6 +616,19 @@ model fields exist:
 - Added API documentation and a valid nine-request Rental Postman collection.
 - Evidence: `docs/rentals/phase-16-categories-lessor-profiles.md`.
 
+### Step 16.4 Equipment Listing + Media APIs
+
+- Added public approved discovery/detail and owner create/update/list/submit.
+- Added equipment identity, operator, delivery, deposit, geo, and lifecycle
+  contracts independent from Product and Services.
+- Reused real public owner Media with active/ownership checks and deterministic
+  primary-image behavior; public responses hide exact address/Admin data.
+- Added typed Admin listing and status-specific moderation permissions.
+- Backend Ruff/compileall passed, 8 focused and all 67 tests passed; runtime
+  exposed 14 Rental paths and health/401/public-list smoke passed.
+- Rental Postman coverage expanded to 17 valid requests.
+- Evidence: `docs/rentals/phase-16-equipment-media-apis.md`.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -5,17 +5,87 @@ from sqlalchemy.orm import Session
 
 from app.core.responses import success_response
 from app.db.session import get_db
-from app.modules.auth.dependencies import require_permission
+from app.modules.auth.dependencies import get_current_active_user, require_permission
+from app.modules.auth.exceptions import PermissionDeniedError
 from app.modules.auth.models import AuthUser
+from app.modules.auth.repository import AuthRepository
 from app.modules.rentals.schemas import (
     RentalCategoryCreateIn,
     RentalCategoryUpdateIn,
     LessorProfileStatusIn,
+    RentalEquipmentStatusIn,
 )
 from app.modules.rentals.service import RentalService
 
 
 router = APIRouter(prefix="/admin/rentals", tags=["Admin Equipment Rental"])
+
+
+def _equipment_permission(status: str) -> str:
+    return {"rejected": "rental_equipment.reject", "suspended": "rental_equipment.suspend"}.get(
+        status, "rental_equipment.approve"
+    )
+
+
+@router.get("/equipment")
+def list_equipment(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    lessor_profile_id: int | None = Query(default=None, ge=1),
+    category_id: int | None = Query(default=None, ge=1),
+    province_id: int | None = Query(default=None, ge=1),
+    city_id: int | None = Query(default=None, ge=1),
+    operator_mode: str | None = Query(default=None),
+    q: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("rental_equipment.admin_read")),
+):
+    items, total = RentalService(db).list_admin_equipment(
+        status=status,
+        lessor_profile_id=lessor_profile_id,
+        category_id=category_id,
+        province_id=province_id,
+        city_id=city_id,
+        operator_mode=operator_mode,
+        q=q,
+        page=page,
+        page_size=page_size,
+    )
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.patch("/equipment/{equipment_id}/status")
+def moderate_equipment(
+    equipment_id: int,
+    payload: RentalEquipmentStatusIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(get_current_active_user),
+):
+    if _equipment_permission(payload.status) not in set(
+        AuthRepository(db).get_user_permission_codes(user.id)
+    ):
+        raise PermissionDeniedError()
+    result = RentalService(db).moderate_equipment(
+        equipment_id, status=payload.status, admin_note=payload.admin_note, admin_user=user
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental equipment status updated",
+        meta={"trace_id": request.state.trace_id},
+    )
 
 
 @router.get("/categories")

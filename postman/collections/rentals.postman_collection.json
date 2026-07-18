@@ -7,7 +7,9 @@
     {"key": "base_url", "value": "http://localhost:8000/api/v1"},
     {"key": "access_token", "value": ""},
     {"key": "rental_category_id", "value": "1"},
-    {"key": "lessor_profile_id", "value": "1"}
+    {"key": "lessor_profile_id", "value": "1"},
+    {"key": "rental_equipment_id", "value": "1"},
+    {"key": "media_file_id", "value": "1"}
   ],
   "item": [
     {"name": "Public - List rental categories", "request": {"method": "GET", "url": "{{base_url}}/rentals/categories"}},
@@ -18,6 +20,14 @@
     {"name": "Admin - Create rental category", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"code\": \"other_equipment\",\n  \"title\": \"سایر تجهیزات\",\n  \"sort_order\": 900\n}"}, "url": "{{base_url}}/admin/rentals/categories"}},
     {"name": "Admin - Update rental category", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"is_active\": true\n}"}, "url": "{{base_url}}/admin/rentals/categories/{{rental_category_id}}"}},
     {"name": "Admin - List lessor profiles", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/admin/rentals/lessor-profiles"}},
-    {"name": "Admin - Moderate lessor profile", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"status\": \"approved\",\n  \"admin_note\": null\n}"}, "url": "{{base_url}}/admin/rentals/lessor-profiles/{{lessor_profile_id}}/status"}}
+    {"name": "Admin - Moderate lessor profile", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"status\": \"approved\",\n  \"admin_note\": null\n}"}, "url": "{{base_url}}/admin/rentals/lessor-profiles/{{lessor_profile_id}}/status"}},
+    {"name": "Public - List rental equipment", "request": {"method": "GET", "url": "{{base_url}}/rentals/equipment"}},
+    {"name": "Public - Rental equipment detail", "request": {"method": "GET", "url": "{{base_url}}/rentals/equipment/{{rental_equipment_id}}"}},
+    {"name": "Lessor - List my equipment", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/rentals/me/equipment"}},
+    {"name": "Lessor - Create equipment", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"category_id\": {{rental_category_id}},\n  \"title\": \"تراکتور اجاره‌ای\",\n  \"slug\": \"rental-tractor\",\n  \"description\": \"تجهیز آماده اجاره\",\n  \"operator_mode\": \"either\",\n  \"province_id\": 1,\n  \"city_id\": 1,\n  \"address_text\": \"محل تحویل\",\n  \"media_items\": [{\"media_file_id\": {{media_file_id}}, \"is_primary\": true}]\n}"}, "url": "{{base_url}}/rentals/me/equipment"}},
+    {"name": "Lessor - Update equipment", "request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"category_id\": {{rental_category_id}},\n  \"title\": \"تراکتور اجاره‌ای\",\n  \"slug\": \"rental-tractor\",\n  \"description\": \"تجهیز آماده اجاره\",\n  \"operator_mode\": \"either\",\n  \"province_id\": 1,\n  \"city_id\": 1,\n  \"address_text\": \"محل تحویل\",\n  \"media_items\": [{\"media_file_id\": {{media_file_id}}, \"is_primary\": true}]\n}"}, "url": "{{base_url}}/rentals/me/equipment/{{rental_equipment_id}}"}},
+    {"name": "Lessor - Submit equipment", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/rentals/me/equipment/{{rental_equipment_id}}/submit"}},
+    {"name": "Admin - List rental equipment", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/admin/rentals/equipment"}},
+    {"name": "Admin - Moderate rental equipment", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"status\": \"approved\",\n  \"admin_note\": null\n}"}, "url": "{{base_url}}/admin/rentals/equipment/{{rental_equipment_id}}/status"}}
   ]
 }

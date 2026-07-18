@@ -27,3 +27,22 @@ display name, phone, province, city, and address. Approval is allowed only from
 Category codes are stable lowercase identifiers. Parent clearing is explicit,
 self-parenting and hierarchy cycles are rejected, and seeds create only missing
 rows without overwriting Admin-owned values.
+
+## Equipment listings and media (Phase 16.4)
+
+| Method | Path | Access |
+|---|---|---|
+| GET | `/rentals/equipment` | Public approved listings |
+| GET | `/rentals/equipment/{equipment_id}` | Public approved detail |
+| GET | `/rentals/me/equipment` | Owner listing |
+| POST | `/rentals/me/equipment` | Approved lessor |
+| PUT | `/rentals/me/equipment/{equipment_id}` | Owning approved lessor |
+| POST | `/rentals/me/equipment/{equipment_id}/submit` | Owning approved lessor |
+| GET | `/admin/rentals/equipment` | `rental_equipment.admin_read` |
+| PATCH | `/admin/rentals/equipment/{equipment_id}/status` | Status-specific moderation permission |
+
+Owner media must be active, public, and owned by the same user. At most one
+primary item is accepted and the first item becomes primary when omitted.
+Public output excludes exact address, moderation notes, actor IDs, and internal
+lifecycle timestamps. Public discovery requires both approved equipment and an
+approved, non-deleted lessor profile.
