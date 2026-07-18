@@ -249,7 +249,14 @@ equipment store/product classifications, and equipment-ownership verification.
 Rental will be an independent domain with lessor profiles, moderated equipment,
 availability/pricing, date-bound bookings, status logs, notifications, Mobile,
 and Admin surfaces. Existing order-only finance contracts are not silently
-reused. Step 16.2 Rental DB + Permission Foundation is next.
+reused.
+
+Step 16.2 added eight independent Rental tables at Alembic head
+`104ae669cc1a`, explicit lifecycle/pricing/operator enums, range/amount and
+exact-once log constraints, and 24 requester/lessor/Admin permissions. A known
+four-index Alembic baseline drift in pre-existing Consultant/Services tables
+was not mixed into the Rental migration. Step 16.3 Categories + Lessor Profile
+APIs is next.
 
 ## Known Gaps
 

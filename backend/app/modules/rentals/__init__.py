@@ -1,0 +1,1 @@
+"""Agricultural equipment rental domain."""

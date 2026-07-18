@@ -587,6 +587,22 @@ model fields exist:
 - Defined Steps 16.2 through 16.12 and the final release gate.
 - Evidence: `docs/rentals/phase-16-real-state-audit.md`.
 
+### Step 16.2 Rental DB + Permission Foundation
+
+- Added eight independent Rental tables for categories, lessors, equipment,
+  media, pricing, availability, requests, and exact-once status logs.
+- Added date-range, positive amount/unit, stable identity, commercial snapshot,
+  ownership, and overlap-query database contracts.
+- Expanded Rental authorization to 24 requester/lessor/Admin permissions and
+  assigned default roles through the idempotent Auth seed.
+- Alembic upgraded MySQL to `104ae669cc1a`; all eight tables were inspected and
+  application/database/Redis health returned `ok`.
+- Backend Ruff/compileall passed, 3 focused tests passed, and the full suite
+  passed 62 tests with 16 existing UTC deprecation warnings.
+- Preserved four unrelated legacy Consultant/Services indexes detected by
+  `alembic check`; cleanup remains an explicit pre-release compatibility task.
+- Evidence: `docs/rentals/phase-16-db-permission-foundation.md`.
+
 ## Progress Update Rule
 
 After every completed step:
