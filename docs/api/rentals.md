@@ -91,3 +91,16 @@ unit, rental amount, deposit, total, and currency. No payment is claimed.
 
 Each transition writes a unique deterministic status-log event. Requester and
 lessor contracts omit `admin_note`; only the Admin detail contract exposes it.
+
+## Notifications and concurrency (Phase 16.7)
+
+Request creation notifies the assigned lessor. Accepted, rejected,
+`in_progress`, completed, and cancelled transitions notify the opposite booking
+party; Admin actions notify both parties while suppressing the acting user.
+Events use deterministic `rental_request:{id}:...` keys, unique recipients, and
+the shared Notification exact-once constraints.
+
+Acceptance, pricing replacement, and availability mutations serialize through
+the same equipment row lock. Acceptance revalidates active pricing, minimum
+units, operator compatibility, availability blocks, and accepted/in-progress
+overlaps before writing immutable commercial snapshots.

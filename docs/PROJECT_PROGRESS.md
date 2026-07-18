@@ -654,6 +654,23 @@ model fields exist:
 - Rental Postman coverage expanded to 35 valid requests.
 - Evidence: `docs/rentals/phase-16-request-booking-workflow.md`.
 
+### Step 16.7 Notifications + Privacy/Concurrency Hardening
+
+- Added Rental notification events for request creation, acceptance, rejection,
+  start, completion, and cancellation through the Phase 11 delivery foundation.
+- Added deterministic event keys, recipient deduplication, self-notification
+  prevention, role-correct action URLs, and atomic notification creation with
+  the booking transaction.
+- Serialized pricing and availability writes against booking acceptance through
+  the equipment row lock; acceptance revalidates minimum units and operator mode.
+- Preserved requester/lessor/Admin ownership and Admin-note privacy contracts;
+  no public API or schema migration was added.
+- Backend Ruff/compileall passed, focused Rental + Notification tests passed 41,
+  and all 79 Backend tests passed with 16 existing UTC warnings. Runtime stayed
+  at 29 Rental paths and Alembic head; app/database/Redis health returned `ok`.
+- Rental Postman remained 35 valid requests because no route was added.
+- Evidence: `docs/rentals/phase-16-notifications-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:

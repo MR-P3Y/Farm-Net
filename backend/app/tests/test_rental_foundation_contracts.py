@@ -34,6 +34,7 @@ from app.modules.rentals.schemas import (
 )
 from app.modules.rentals.service import RentalService
 from app.modules.auth.exceptions import ValidationAuthError
+from app.modules.notifications.enums import NotificationEventType
 
 
 def test_rental_foundation_has_all_independent_tables() -> None:
@@ -232,6 +233,8 @@ def test_accept_request_locks_and_snapshots_price_deposit_and_total() -> None:
         equipment_id=5,
         is_active=True,
         price_amount=Decimal("2000000"),
+        minimum_units=Decimal("1"),
+        operator_included=False,
         currency="TOMAN",
     )
     service.repo.list_availability_blocks.return_value = []
@@ -243,6 +246,7 @@ def test_accept_request_locks_and_snapshots_price_deposit_and_total() -> None:
         starts_at=datetime(2026, 8, 1),
         ends_at=datetime(2026, 8, 3),
         requested_units=Decimal("2"),
+        operator_requested=False,
     )
 
     service._accept_request(row)
@@ -284,3 +288,113 @@ def test_requester_detail_contract_has_no_admin_note() -> None:
 
     assert "admin_note" not in fields
     assert "admin_note" in admin_fields
+
+
+def _notification_request(**overrides):
+    values = {
+        "id": 21,
+        "equipment_id": 5,
+        "lessor_profile_id": 3,
+        "requester_user_id": 10,
+        "equipment": SimpleNamespace(title="تراکتور رومانی"),
+        "lessor_profile": SimpleNamespace(user_id=20),
+    }
+    values.update(overrides)
+    return SimpleNamespace(**values)
+
+
+def test_rental_notification_event_types_cover_request_lifecycle() -> None:
+    assert {
+        NotificationEventType.RENTAL_REQUEST_CREATED.value,
+        NotificationEventType.RENTAL_REQUEST_ACCEPTED.value,
+        NotificationEventType.RENTAL_REQUEST_REJECTED.value,
+        NotificationEventType.RENTAL_REQUEST_IN_PROGRESS.value,
+        NotificationEventType.RENTAL_REQUEST_COMPLETED.value,
+        NotificationEventType.RENTAL_REQUEST_CANCELLED.value,
+    } == {
+        "rental_request.created",
+        "rental_request.accepted",
+        "rental_request.rejected",
+        "rental_request.in_progress",
+        "rental_request.completed",
+        "rental_request.cancelled",
+    }
+
+
+def test_rental_request_created_notification_has_exact_once_contract(monkeypatch) -> None:
+    service = RentalService.__new__(RentalService)
+    service.db = Mock()
+    notification_service = Mock()
+    monkeypatch.setattr(
+        "app.modules.rentals.service.NotificationService", Mock(return_value=notification_service)
+    )
+
+    service._notify_request_created(_notification_request(), actor_user_id=10)
+
+    call = notification_service.create_event_and_notify_user.call_args.kwargs
+    assert call["event_type"] == NotificationEventType.RENTAL_REQUEST_CREATED.value
+    assert call["event_key"] == "rental_request:21:created"
+    assert call["recipient_user_id"] == 20
+    assert call["actor_user_id"] == 10
+    assert call["commit"] is False
+
+
+def test_rental_transition_notification_deduplicates_and_prevents_self(monkeypatch) -> None:
+    service = RentalService.__new__(RentalService)
+    service.db = Mock()
+    notification_service = Mock()
+    monkeypatch.setattr(
+        "app.modules.rentals.service.NotificationService", Mock(return_value=notification_service)
+    )
+
+    service._notify_request_transition(
+        _notification_request(),
+        old_status="pending",
+        new_status="accepted",
+        actor_user_id=20,
+        recipient_user_ids=[10, 10, 20],
+        lessor_action=True,
+    )
+
+    call = notification_service.create_event_and_notify_many.call_args.kwargs
+    assert call["event_key"] == "rental_request:21:pending:accepted"
+    assert call["recipient_user_ids"] == [10]
+    assert call["event_type"] == NotificationEventType.RENTAL_REQUEST_ACCEPTED.value
+
+
+def test_accept_request_revalidates_changed_minimum_and_operator() -> None:
+    service = RentalService.__new__(RentalService)
+    service.repo = Mock()
+    service.repo.lock_equipment.return_value = SimpleNamespace(
+        id=5,
+        status="approved",
+        is_active=True,
+        security_deposit_amount=Decimal("0"),
+    )
+    pricing = SimpleNamespace(
+        id=8,
+        equipment_id=5,
+        is_active=True,
+        price_amount=Decimal("2000000"),
+        minimum_units=Decimal("3"),
+        operator_included=False,
+        currency="TOMAN",
+    )
+    service.repo.get_pricing_rule.return_value = pricing
+    row = SimpleNamespace(
+        id=11,
+        equipment_id=5,
+        pricing_rule_id=8,
+        starts_at=datetime(2026, 8, 1),
+        ends_at=datetime(2026, 8, 3),
+        requested_units=Decimal("2"),
+        operator_requested=False,
+    )
+
+    with pytest.raises(ValidationAuthError, match="minimum"):
+        service._accept_request(row)
+
+    row.requested_units = Decimal("3")
+    pricing.operator_included = True
+    with pytest.raises(ValidationAuthError, match="operator"):
+        service._accept_request(row)

@@ -103,7 +103,8 @@ Phase 16.3 Categories + Lessor Profile APIs: completed
 Phase 16.4 Equipment Listing + Media APIs: completed
 Phase 16.5 Availability + Pricing Rules: completed
 Phase 16.6 Rental Request/Booking Workflow: completed
-Next: Phase 16.7 Notifications + Privacy/Concurrency Hardening
+Phase 16.7 Notifications + Privacy/Concurrency Hardening: completed
+Next: Phase 16.8 Mobile Equipment Discovery + Detail
 ```
 
 Services means agricultural operational services, not equipment rental.

@@ -279,6 +279,12 @@ controlled cancellation/transitions, role privacy, and deterministic status
 logs. No payment movement is claimed. Step 16.7 Notifications +
 Privacy/Concurrency Hardening is next.
 
+Step 16.7 added exact-once Rental request notifications for creation and every
+terminal/workflow transition, with recipient deduplication and self-notification
+prevention. Pricing and availability writes now share the equipment row lock
+used by acceptance, while acceptance revalidates minimum units and operator
+compatibility. Step 16.8 Mobile Equipment Discovery + Detail is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

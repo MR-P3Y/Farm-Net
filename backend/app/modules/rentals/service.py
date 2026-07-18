@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.media.enums import MediaStatus, MediaVisibility
+from app.modules.notifications.enums import NotificationEventType, NotificationPriority
+from app.modules.notifications.service import NotificationService
 from app.modules.profiles.enums import VerificationStatus, VerificationTargetRole
 from app.modules.profiles.models import VerificationRequest
 from app.modules.rentals.enums import (
@@ -375,6 +377,7 @@ class RentalService:
     ) -> list[RentalPricingRuleOut]:
         profile = self._approved_lessor(user)
         equipment = self._owned_equipment(profile.id, equipment_id)
+        equipment = self.repo.lock_equipment(equipment.id)
         if equipment.status in {
             RentalEquipmentStatus.SUSPENDED.value,
             RentalEquipmentStatus.ARCHIVED.value,
@@ -427,6 +430,7 @@ class RentalService:
     ) -> RentalAvailabilityBlockOut:
         profile = self._approved_lessor(user)
         equipment = self._owned_equipment(profile.id, equipment_id)
+        equipment = self.repo.lock_equipment(equipment.id)
         starts_at, ends_at = self._valid_range(payload.starts_at, payload.ends_at)
         self._validate_block_type(payload.block_type)
         if self.repo.list_availability_blocks(
@@ -453,6 +457,7 @@ class RentalService:
     ) -> RentalAvailabilityBlockOut:
         profile = self._approved_lessor(user)
         equipment = self._owned_equipment(profile.id, equipment_id)
+        equipment = self.repo.lock_equipment(equipment.id)
         row = self.repo.get_availability_block(block_id)
         if row is None or row.equipment_id != equipment.id:
             raise ValidationAuthError(message="Rental availability block not found")
@@ -482,6 +487,7 @@ class RentalService:
     def delete_my_availability(self, user: AuthUser, equipment_id: int, block_id: int) -> None:
         profile = self._approved_lessor(user)
         equipment = self._owned_equipment(profile.id, equipment_id)
+        equipment = self.repo.lock_equipment(equipment.id)
         row = self.repo.get_availability_block(block_id)
         if row is None or row.equipment_id != equipment.id:
             raise ValidationAuthError(message="Rental availability block not found")
@@ -603,6 +609,7 @@ class RentalService:
                 event_key=f"rental_request:{row.id}:created",
             )
         )
+        self._notify_request_created(row, actor_user_id=user.id)
         self.db.commit()
         return self._request_detail(self.repo.get_request(row.id))
 
@@ -632,8 +639,17 @@ class RentalService:
                 details={"status": row.status},
             )
         row.cancel_reason = payload.reason
+        old_status = row.status
         self._apply_request_status(
             row, RentalRequestStatus.CANCELLED.value, user.id, payload.reason
+        )
+        self._notify_request_transition(
+            row,
+            old_status=old_status,
+            new_status=RentalRequestStatus.CANCELLED.value,
+            actor_user_id=user.id,
+            recipient_user_ids=[row.lessor_profile.user_id],
+            lessor_action=False,
         )
         self.db.commit()
         return self._request_detail(self.repo.get_request(row.id))
@@ -666,9 +682,18 @@ class RentalService:
                 details={"from_status": row.status, "to_status": payload.status},
             )
         row.lessor_note = payload.note
+        old_status = row.status
         if payload.status == RentalRequestStatus.ACCEPTED.value:
             self._accept_request(row)
         self._apply_request_status(row, payload.status, user.id, payload.note)
+        self._notify_request_transition(
+            row,
+            old_status=old_status,
+            new_status=payload.status,
+            actor_user_id=user.id,
+            recipient_user_ids=[row.requester_user_id],
+            lessor_action=True,
+        )
         self.db.commit()
         return self._request_detail(self.repo.get_request(row.id))
 
@@ -695,11 +720,28 @@ class RentalService:
                 details={"from_status": row.status, "to_status": payload.status},
             )
         row.admin_note = payload.note
+        old_status = row.status
         if payload.status == RentalRequestStatus.ACCEPTED.value:
             self._accept_request(row)
         if payload.status == RentalRequestStatus.CANCELLED.value:
             row.cancel_reason = payload.note
         self._apply_request_status(row, payload.status, admin_user.id, payload.note)
+        self._notify_request_transition(
+            row,
+            old_status=old_status,
+            new_status=payload.status,
+            actor_user_id=admin_user.id,
+            recipient_user_ids=[row.requester_user_id],
+            lessor_action=True,
+        )
+        self._notify_request_transition(
+            row,
+            old_status=old_status,
+            new_status=payload.status,
+            actor_user_id=admin_user.id,
+            recipient_user_ids=[row.lessor_profile.user_id],
+            lessor_action=False,
+        )
         self.db.commit()
         return self._request_admin_detail(self.repo.get_request(row.id))
 
@@ -714,6 +756,10 @@ class RentalService:
             raise ValidationAuthError(message="Rental equipment is no longer available")
         if pricing is None or pricing.equipment_id != equipment.id or not pricing.is_active:
             raise ValidationAuthError(message="Rental pricing is no longer active")
+        if row.requested_units < pricing.minimum_units:
+            raise ValidationAuthError(message="Rental pricing minimum has changed")
+        if row.operator_requested != pricing.operator_included:
+            raise ValidationAuthError(message="Rental pricing operator mode has changed")
         if self.repo.list_availability_blocks(
             equipment.id, starts_at=row.starts_at, ends_at=row.ends_at
         ) or self.repo.conflicting_booking(
@@ -756,6 +802,79 @@ class RentalService:
             raise ValidationAuthError(
                 message="Invalid rental request status", details={"status": status}
             )
+
+    @staticmethod
+    def _request_notification_payload(
+        row: RentalRequest, *, old_status: str | None, new_status: str
+    ) -> dict:
+        return {
+            "request_id": row.id,
+            "equipment_id": row.equipment_id,
+            "lessor_profile_id": row.lessor_profile_id,
+            "requester_user_id": row.requester_user_id,
+            "old_status": old_status,
+            "new_status": new_status,
+        }
+
+    def _notify_request_created(self, row: RentalRequest, *, actor_user_id: int) -> None:
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=NotificationEventType.RENTAL_REQUEST_CREATED.value,
+            event_key=f"rental_request:{row.id}:created",
+            recipient_user_id=row.lessor_profile.user_id,
+            title="درخواست اجاره جدید",
+            body=f"یک درخواست جدید برای اجاره «{row.equipment.title}» ثبت شد.",
+            actor_user_id=actor_user_id,
+            source_type="rental_request",
+            source_id=str(row.id),
+            payload_json=self._request_notification_payload(
+                row, old_status=None, new_status=RentalRequestStatus.PENDING.value
+            ),
+            action_url=f"/rentals/requests/assigned/{row.id}",
+            priority=NotificationPriority.NORMAL.value,
+            commit=False,
+        )
+
+    def _notify_request_transition(
+        self,
+        row: RentalRequest,
+        *,
+        old_status: str,
+        new_status: str,
+        actor_user_id: int,
+        recipient_user_ids: list[int],
+        lessor_action: bool,
+    ) -> None:
+        event_by_status = {
+            RentalRequestStatus.ACCEPTED.value: NotificationEventType.RENTAL_REQUEST_ACCEPTED,
+            RentalRequestStatus.REJECTED.value: NotificationEventType.RENTAL_REQUEST_REJECTED,
+            RentalRequestStatus.IN_PROGRESS.value: NotificationEventType.RENTAL_REQUEST_IN_PROGRESS,
+            RentalRequestStatus.COMPLETED.value: NotificationEventType.RENTAL_REQUEST_COMPLETED,
+            RentalRequestStatus.CANCELLED.value: NotificationEventType.RENTAL_REQUEST_CANCELLED,
+        }
+        event_type = event_by_status.get(new_status)
+        recipients = sorted({user_id for user_id in recipient_user_ids if user_id != actor_user_id})
+        if event_type is None or not recipients:
+            return
+        NotificationService(self.db).create_event_and_notify_many(
+            event_type=event_type.value,
+            event_key=f"rental_request:{row.id}:{old_status}:{new_status}",
+            recipient_user_ids=recipients,
+            title="وضعیت درخواست اجاره تغییر کرد",
+            body=f"درخواست اجاره «{row.equipment.title}» به وضعیت {new_status} تغییر کرد.",
+            actor_user_id=actor_user_id,
+            source_type="rental_request",
+            source_id=str(row.id),
+            payload_json=self._request_notification_payload(
+                row, old_status=old_status, new_status=new_status
+            ),
+            action_url=(
+                f"/rentals/requests/{row.id}"
+                if lessor_action
+                else f"/rentals/requests/assigned/{row.id}"
+            ),
+            priority=NotificationPriority.NORMAL.value,
+            commit=False,
+        )
 
     def _request_list(self, row: RentalRequest) -> RentalRequestListOut:
         fields = (

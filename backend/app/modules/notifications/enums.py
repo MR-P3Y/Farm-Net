@@ -56,6 +56,13 @@ class NotificationEventType(str, Enum):
     SERVICE_REQUEST_COMPLETED = "service_request.completed"
     SERVICE_REQUEST_CANCELLED = "service_request.cancelled"
 
+    RENTAL_REQUEST_CREATED = "rental_request.created"
+    RENTAL_REQUEST_ACCEPTED = "rental_request.accepted"
+    RENTAL_REQUEST_REJECTED = "rental_request.rejected"
+    RENTAL_REQUEST_IN_PROGRESS = "rental_request.in_progress"
+    RENTAL_REQUEST_COMPLETED = "rental_request.completed"
+    RENTAL_REQUEST_CANCELLED = "rental_request.cancelled"
+
     SYSTEM_MESSAGE = "system.message"
 
 
