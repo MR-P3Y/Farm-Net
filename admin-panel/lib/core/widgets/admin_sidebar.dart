@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../localization/admin_localizations.dart';
+import '../auth/admin_auth_state.dart';
 
-class AdminSidebar extends StatelessWidget {
+const adminTaxonomyPermissions = [
+  'product_categories.admin_read',
+  'service_categories.admin_read',
+  'consult_specialties.read',
+  'social_categories.admin_read',
+];
+
+class AdminSidebar extends ConsumerWidget {
   const AdminSidebar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AdminLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
+    final canManageTaxonomies = ref
+        .watch(adminAuthStateProvider)
+        .hasAnyPermission(adminTaxonomyPermissions);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -53,6 +65,13 @@ class AdminSidebar extends StatelessWidget {
                   compact: isCompact,
                   onTap: () => context.go('/products'),
                 ),
+                if (canManageTaxonomies)
+                  _SidebarItem(
+                    icon: Icons.category_outlined,
+                    label: 'مدیریت دسته‌بندی‌ها',
+                    compact: isCompact,
+                    onTap: () => context.go('/taxonomies'),
+                  ),
                 _SidebarItem(
                   icon: Icons.receipt_long_outlined,
                   label: 'خدمات کشاورزی',

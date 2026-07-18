@@ -230,6 +230,10 @@ Backend search into Admin UI. Runtime has no specialty reference rows and no
 unapproved defaults were invented. Step 12.6 Unified Admin Taxonomy Navigation
 + UX Consistency is next.
 
+Step 12.6 added a permission-aware Admin taxonomy hub and unified navigation
+across Product, Services, Consultant, and Social management while preserving
+their independent contracts. Step 12.7 Docs/Postman + Runtime Regression is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

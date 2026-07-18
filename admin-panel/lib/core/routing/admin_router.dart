@@ -16,6 +16,7 @@ import '../../features/services/presentation/admin_services_page.dart';
 import '../../features/social/presentation/admin_social_page.dart';
 import '../../features/social/presentation/admin_social_categories_page.dart';
 import '../../features/stores/presentation/admin_stores_page.dart';
+import '../../features/taxonomies/presentation/admin_taxonomies_page.dart';
 import '../../features/verifications/presentation/admin_verifications_page.dart';
 import '../../features/weather/presentation/admin_weather_page.dart';
 import '../auth/admin_permission_guard.dart';
@@ -34,6 +35,11 @@ final GoRouter adminRouter = GoRouter(
         return AdminAuthGate(child: AdminAppShell(child: child));
       },
       routes: [
+        GoRoute(
+          path: '/taxonomies',
+          name: 'admin-taxonomies',
+          builder: (context, state) => const AdminTaxonomiesPage(),
+        ),
         GoRoute(
           path: '/finance',
           name: 'admin-finance',
@@ -130,6 +136,15 @@ final GoRouter adminRouter = GoRouter(
               child: AdminConsultantsPage(),
             );
           },
+        ),
+        GoRoute(
+          path: '/consultant-specialties',
+          name: 'admin-consultant-specialties',
+          builder:
+              (context, state) => const AdminPermissionGuard(
+                permission: 'consult_specialties.read',
+                child: AdminConsultantsPage(initialTab: 1),
+              ),
         ),
         GoRoute(
           path: '/media',

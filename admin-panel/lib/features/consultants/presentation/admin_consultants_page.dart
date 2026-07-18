@@ -10,7 +10,9 @@ import '../state/admin_consultant_controller.dart';
 import '../state/admin_consultant_state.dart';
 
 class AdminConsultantsPage extends ConsumerStatefulWidget {
-  const AdminConsultantsPage({super.key});
+  const AdminConsultantsPage({super.key, this.initialTab = 0});
+
+  final int initialTab;
 
   @override
   ConsumerState<AdminConsultantsPage> createState() =>
@@ -80,6 +82,7 @@ class _AdminConsultantsPageState extends ConsumerState<AdminConsultantsPage> {
                         ? const AdminLoadingView()
                         : DefaultTabController(
                           length: 3,
+                          initialIndex: widget.initialTab,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [

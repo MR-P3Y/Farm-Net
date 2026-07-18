@@ -527,6 +527,15 @@ model fields exist:
   has been approved; no synthetic business data was introduced.
 - Evidence: `docs/categories/phase-12-consultant-specialty-hardening.md`.
 
+### Step 12.6 Unified Admin Taxonomy Navigation + UX Consistency
+
+- Added a central, permission-aware taxonomy hub and Admin sidebar entry.
+- Linked Product, Services, Consultant, and Social management without merging
+  their independent models or lifecycle rules.
+- Added a direct Consultant specialties route that opens the correct Admin tab.
+- Admin analyze, all 12 tests, and Web/Wasm build passed.
+- Evidence: `docs/categories/phase-12-admin-taxonomy-navigation.md`.
+
 ## Progress Update Rule
 
 After every completed step:
