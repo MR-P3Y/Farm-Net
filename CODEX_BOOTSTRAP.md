@@ -88,7 +88,8 @@ Phase 11.7 Push Notification Foundation: completed (b27e8d5f64c1)
 Phase 11.8 Mobile Notification Center Hardening: completed
 Phase 11.9 Admin Notification Operations: completed
 Phase 11.10 Docs/Postman + Runtime Regression: completed
-Next: Phase 11.11 Notifications Release Gate + Tag
+Phase 11.11 Notifications Release Gate + Tag: completed (v0.19.0-notifications-delivery-foundation)
+Next roadmap phase: not selected
 ```
 
 Services means agricultural operational services, not equipment rental.

@@ -203,6 +203,10 @@ coverage, and full Backend/Mobile/Admin runtime regression. Phase 11
 implementation through documentation is complete; the release gate/tag is the
 next explicit step. Live external delivery remains configuration/vendor work.
 
+Step 11.11 passed the independent release gate. Phase 11 is released as
+`v0.19.0-notifications-delivery-foundation`; live provider enablement and Mobile
+vendor Push SDK/token acquisition remain explicit deployment/future work.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -256,5 +260,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.18.0-orders-finance-foundation
+v0.19.0-notifications-delivery-foundation
 ```

@@ -460,6 +460,19 @@ model fields exist:
   analyze, 7 tests, Web build, and Wasm dry run.
 - Evidence: `docs/notifications/phase-11-runtime-regression.md`.
 
+### Step 11.11 Notifications Release Gate + Tag
+
+- Reverified the complete Phase 11 commit chain on clean, pushed `develop`.
+- Backend Ruff/compileall passed; all 49 tests passed with 16 existing UTC
+  deprecation warnings. Alembic remained at `b27e8d5f64c1` and seed passed.
+- Email, SMS, and Push disabled-mode workers safely claimed/sent zero messages;
+  application, database, and Redis health remained `ok`.
+- Runtime OpenAPI exposes 14 Notifications paths and the valid Postman
+  collection contains 20 requests.
+- Mobile passed analyze, 28 tests, and Web/Wasm build checks; Admin passed
+  analyze, 7 tests, and Web/Wasm build checks.
+- Release tag: `v0.19.0-notifications-delivery-foundation`.
+
 ## Progress Update Rule
 
 After every completed step:
