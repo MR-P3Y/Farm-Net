@@ -35,6 +35,31 @@ class ProductRepository:
             .one_or_none()
         )
 
+    def get_category_for_admin(self, *, category_id: int) -> ProductCategory | None:
+        return self.db.query(ProductCategory).filter(ProductCategory.id == category_id).one_or_none()
+
+    def get_category_by_slug(self, *, slug: str) -> ProductCategory | None:
+        return self.db.query(ProductCategory).filter(ProductCategory.slug == slug).one_or_none()
+
+    def list_categories(self, *, active_only: bool, q: str | None = None) -> list[ProductCategory]:
+        query = self.db.query(ProductCategory)
+        if active_only:
+            query = query.filter(ProductCategory.is_active.is_(True))
+        if q:
+            query = query.filter(ProductCategory.name.ilike(f"%{q}%"))
+        return query.order_by(ProductCategory.parent_id.asc(), ProductCategory.sort_order.asc(), ProductCategory.name.asc()).all()
+
+    def category_counts(self, *, category_id: int) -> tuple[int, int]:
+        children = self.db.query(ProductCategory).filter(ProductCategory.parent_id == category_id).count()
+        products = self.db.query(StoreProduct).filter(StoreProduct.category_id == category_id, StoreProduct.deleted_at.is_(None)).count()
+        return children, products
+
+    def create_category(self, **values) -> ProductCategory:
+        row = ProductCategory(**values)
+        self.db.add(row)
+        self.db.flush()
+        return row
+
     def get_product_by_id(self, *, product_id: int) -> StoreProduct | None:
         return (
             self.db.query(StoreProduct)

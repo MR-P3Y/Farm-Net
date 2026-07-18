@@ -199,15 +199,22 @@ Seeded category tree includes:
 نهاده‌ها
 ```
 
-Categories are currently seeded by backend script.
+Categories remain idempotently seeded, and are now also manageable through
+permission-protected Admin APIs and the Admin Panel.
+The seed only creates missing defaults; reruns do not reactivate, rename,
+reorder, or re-parent categories already managed by an administrator.
 
-Manual category management from Admin Panel is not part of Phase 8.
-
-Future step:
-
-```text
-Admin Category Management Foundation
+```http
+GET   /api/v1/public/product-categories
+GET   /api/v1/admin/products/categories
+POST  /api/v1/admin/products/categories
+PATCH /api/v1/admin/products/categories/{category_id}
 ```
+
+The contract supports parent/child hierarchy, stable lowercase slug, search,
+sort order, active/inactive state, and product/child usage counters. Updates
+reject self-parenting and hierarchy cycles. Categories are deactivated instead
+of destructively deleted, so existing product relations remain safe.
 
 ---
 
@@ -732,7 +739,6 @@ Build, routes, and API smoke are the source of truth for this phase.
 No real file upload yet
 No cart/order/payment yet
 No commission calculation yet
-No manual category management UI yet
 No advanced inventory management yet
 No product reviews/comments yet
 No discount/coupon support yet

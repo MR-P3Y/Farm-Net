@@ -52,6 +52,42 @@ class AdminProductApi {
         .toList();
   }
 
+  Future<List<AdminProductCategory>> listCategories({String? q}) async {
+    await _setStoredToken();
+    final uri = Uri(
+      path: '/admin/products/categories',
+      queryParameters: q == null || q.trim().isEmpty ? null : {'q': q.trim()},
+    );
+    final json = await _get(uri.toString());
+    return (json['data'] as List? ?? const [])
+        .map((item) => AdminProductCategory.fromJson((item as Map).cast()))
+        .toList();
+  }
+
+  Future<AdminProductCategory> saveCategory({
+    int? id,
+    required Map<String, dynamic> data,
+  }) async {
+    await _setStoredToken();
+    try {
+      final response =
+          id == null
+              ? await _client.dio.post<Map<String, dynamic>>(
+                '/admin/products/categories',
+                data: data,
+              )
+              : await _client.dio.patch<Map<String, dynamic>>(
+                '/admin/products/categories/$id',
+                data: data,
+              );
+      return AdminProductCategory.fromJson(
+        ((response.data ?? {})['data'] as Map).cast(),
+      );
+    } on DioException catch (error) {
+      throw AdminProductApiException(_mapDioError(error));
+    }
+  }
+
   Future<AdminProduct> getProductDetail(int productId) async {
     await _setStoredToken();
 

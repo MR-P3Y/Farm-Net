@@ -473,6 +473,19 @@ model fields exist:
   analyze, 7 tests, and Web/Wasm build checks.
 - Release tag: `v0.19.0-notifications-delivery-foundation`.
 
+## Phase 12 — Category Management
+
+### Step 12.1 Product Category Management
+
+- Preserved the existing product category tree and added safe manual management.
+- Added public discovery plus permission-protected Admin list/create/update APIs.
+- Added hierarchy cycle prevention, stable slug validation, usage counters,
+  search, ordering, and non-destructive activation controls.
+- Added typed Admin UI and complete four-request Postman coverage.
+- Backend Ruff/compileall passed and all 51 tests passed; Admin analyze, all 8
+  tests, and Web/Wasm build passed.
+- Evidence: `docs/products/phase-12-product-category-management.md`.
+
 ## Progress Update Rule
 
 After every completed step:

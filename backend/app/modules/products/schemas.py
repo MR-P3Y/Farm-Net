@@ -3,6 +3,54 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator
 
 
+class ProductCategoryCreateIn(BaseModel):
+    parent_id: int | None = Field(default=None, ge=1)
+    name: str = Field(min_length=2, max_length=180)
+    slug: str = Field(min_length=2, max_length=140, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    description: str | None = Field(default=None, max_length=5000)
+    sort_order: int = Field(default=0, ge=0)
+    is_active: bool = True
+
+    @field_validator("name", "slug", "description", mode="before")
+    @classmethod
+    def normalize_category_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class ProductCategoryUpdateIn(BaseModel):
+    parent_id: int | None = Field(default=None, ge=1)
+    name: str | None = Field(default=None, min_length=2, max_length=180)
+    slug: str | None = Field(default=None, min_length=2, max_length=140, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    description: str | None = Field(default=None, max_length=5000)
+    sort_order: int | None = Field(default=None, ge=0)
+    is_active: bool | None = None
+
+    @field_validator("name", "slug", "description", mode="before")
+    @classmethod
+    def normalize_category_strings(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value
+
+
+class ProductCategoryOut(BaseModel):
+    id: int
+    parent_id: int | None = None
+    name: str
+    slug: str
+    description: str | None = None
+    sort_order: int
+    is_active: bool
+    children_count: int = 0
+    products_count: int = 0
+    created_at: str
+    updated_at: str
+
+
 class ProductCreateIn(BaseModel):
     category_id: int | None = Field(default=None, ge=1)
 

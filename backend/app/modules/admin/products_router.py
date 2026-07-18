@@ -11,6 +11,8 @@ from app.modules.auth.dependencies import get_current_active_user, require_permi
 from app.modules.auth.exceptions import PermissionDeniedError
 from app.modules.auth.models import AuthUser
 from app.modules.auth.repository import AuthRepository
+from app.modules.products.category_service import ProductCategoryService
+from app.modules.products.schemas import ProductCategoryCreateIn, ProductCategoryUpdateIn
 
 
 router = APIRouter(
@@ -27,6 +29,43 @@ def _permission_for_status(status: str) -> str:
         return "products.restore"
 
     return "products.admin_read"
+
+
+@router.get("/categories")
+def list_product_categories(
+    request: Request,
+    active_only: bool = Query(default=False),
+    q: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("product_categories.admin_read")),
+):
+    items = ProductCategoryService(db).list_categories(
+        active_only=active_only, q=q.strip() if q else None
+    )
+    return success_response(data=[item.model_dump() for item in items], message="OK", meta={"trace_id": request.state.trace_id})
+
+
+@router.post("/categories")
+def create_product_category(
+    payload: ProductCategoryCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("product_categories.create")),
+):
+    item = ProductCategoryService(db).create(payload)
+    return success_response(data=item.model_dump(), message="Product category created", meta={"trace_id": request.state.trace_id})
+
+
+@router.patch("/categories/{category_id}")
+def update_product_category(
+    category_id: int,
+    payload: ProductCategoryUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("product_categories.update")),
+):
+    item = ProductCategoryService(db).update(category_id=category_id, payload=payload)
+    return success_response(data=item.model_dump(), message="Product category updated", meta={"trace_id": request.state.trace_id})
 
 
 @router.get("")

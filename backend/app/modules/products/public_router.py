@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.products.models import ProductImage, StoreProduct
 from app.modules.products.repository import ProductRepository
+from app.modules.products.category_service import ProductCategoryService
 from app.modules.products.schemas import PublicProductImageOut, PublicProductOut
 from app.modules.stores.enums import StoreType
 
@@ -15,6 +16,12 @@ from app.modules.stores.enums import StoreType
 router = APIRouter(
     tags=["Public Products"],
 )
+
+
+@router.get("/public/product-categories")
+def list_public_product_categories(request: Request, db: Session = Depends(get_db)):
+    items = ProductCategoryService(db).list_categories(active_only=True)
+    return success_response(data=[item.model_dump() for item in items], message="OK", meta={"trace_id": request.state.trace_id})
 
 
 @router.get("/public/products")

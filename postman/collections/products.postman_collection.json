@@ -2,7 +2,7 @@
   "info": {
     "name": "Farm Net - Product Catalog Foundation",
     "_postman_id": "3e9239a2-0e0f-4b2f-9b8f-product-foundation",
-    "description": "Manual tests for Farm Net Phase 8 Product / Catalog Foundation.",
+    "description": "Manual regression tests for Product Catalog and Product Category Management.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -44,6 +44,41 @@
     }
   ],
   "item": [
+    {
+      "name": "Public Product Categories - List",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/public/product-categories"
+      }
+    },
+    {
+      "name": "Admin Product Categories - List",
+      "request": {
+        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{admin_access_token}}", "type": "string"}]},
+        "method": "GET",
+        "url": "{{base_url}}/admin/products/categories"
+      }
+    },
+    {
+      "name": "Admin Product Categories - Create",
+      "request": {
+        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{admin_access_token}}", "type": "string"}]},
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": "{{base_url}}/admin/products/categories",
+        "body": {"mode": "raw", "raw": "{\n  \"parent_id\": null,\n  \"name\": \"دسته آزمایشی\",\n  \"slug\": \"test-category\",\n  \"sort_order\": 100,\n  \"is_active\": true\n}"}
+      }
+    },
+    {
+      "name": "Admin Product Categories - Update",
+      "request": {
+        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{admin_access_token}}", "type": "string"}]},
+        "method": "PATCH",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": "{{base_url}}/admin/products/categories/{{category_id}}",
+        "body": {"mode": "raw", "raw": "{\n  \"sort_order\": 110,\n  \"is_active\": true\n}"}
+      }
+    },
     {
       "name": "Auth - Admin Login",
       "request": {

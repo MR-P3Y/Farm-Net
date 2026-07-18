@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/admin_responsive.dart';
 import '../../../core/widgets/admin_data_table.dart';
@@ -73,6 +74,12 @@ class _AdminProductsPageState extends ConsumerState<AdminProductsPage> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: () => context.go('/product-categories'),
+                    icon: const Icon(Icons.category_outlined),
+                    label: const Text('دسته‌بندی‌ها'),
+                  ),
+                  const SizedBox(width: 8),
                   IconButton(
                     tooltip: 'Refresh',
                     onPressed: _reload,

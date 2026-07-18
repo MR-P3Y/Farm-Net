@@ -139,27 +139,6 @@ def _upsert_category(
         db.flush()
         return category, True, False
 
-    changed = False
-
-    if category.parent_id != parent_id:
-        category.parent_id = parent_id
-        changed = True
-
-    if category.name != item.name:
-        category.name = item.name
-        changed = True
-
-    if category.description != item.description:
-        category.description = item.description
-        changed = True
-
-    if category.sort_order != item.sort_order:
-        category.sort_order = item.sort_order
-        changed = True
-
-    if category.is_active is not True:
-        category.is_active = True
-        changed = True
-
-    db.flush()
-    return category, False, changed
+    # Once created, categories are Admin-owned. Re-running the bootstrap seed
+    # must not reactivate, rename, reorder, or re-parent managed records.
+    return category, False, False

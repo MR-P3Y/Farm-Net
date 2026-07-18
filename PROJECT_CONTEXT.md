@@ -207,6 +207,11 @@ Step 11.11 passed the independent release gate. Phase 11 is released as
 `v0.19.0-notifications-delivery-foundation`; live provider enablement and Mobile
 vendor Push SDK/token acquisition remain explicit deployment/future work.
 
+Phase 12 Category Management is active. Step 12.1 adds safe Product Category
+management on the existing domain model: public discovery, protected Admin
+create/update/list contracts, hierarchy validation, usage counters, and typed
+Admin UI. Other category domains remain independent by design.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

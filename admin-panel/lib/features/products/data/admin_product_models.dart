@@ -213,3 +213,40 @@ class AdminProduct {
     return 0;
   }
 }
+
+class AdminProductCategory {
+  const AdminProductCategory({
+    required this.id,
+    required this.name,
+    required this.slug,
+    required this.sortOrder,
+    required this.isActive,
+    required this.childrenCount,
+    required this.productsCount,
+    this.parentId,
+    this.description,
+  });
+
+  final int id;
+  final int? parentId;
+  final String name;
+  final String slug;
+  final String? description;
+  final int sortOrder;
+  final bool isActive;
+  final int childrenCount;
+  final int productsCount;
+
+  factory AdminProductCategory.fromJson(Map<String, dynamic> json) =>
+      AdminProductCategory(
+        id: (json['id'] as num).toInt(),
+        parentId: (json['parent_id'] as num?)?.toInt(),
+        name: json['name']?.toString() ?? '',
+        slug: json['slug']?.toString() ?? '',
+        description: json['description']?.toString(),
+        sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+        isActive: json['is_active'] == true,
+        childrenCount: (json['children_count'] as num?)?.toInt() ?? 0,
+        productsCount: (json['products_count'] as num?)?.toInt() ?? 0,
+      );
+}

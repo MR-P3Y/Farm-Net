@@ -11,6 +11,7 @@ import '../../features/notifications/presentation/admin_notifications_page.dart'
 import '../../features/notifications/presentation/admin_delivery_operations_page.dart';
 import '../../features/orders/presentation/admin_orders_page.dart';
 import '../../features/products/presentation/admin_products_page.dart';
+import '../../features/products/presentation/admin_product_categories_page.dart';
 import '../../features/services/presentation/admin_services_page.dart';
 import '../../features/social/presentation/admin_social_page.dart';
 import '../../features/stores/presentation/admin_stores_page.dart';
@@ -80,6 +81,15 @@ final GoRouter adminRouter = GoRouter(
               child: AdminProductsPage(),
             );
           },
+        ),
+        GoRoute(
+          path: '/product-categories',
+          name: 'admin-product-categories',
+          builder:
+              (context, state) => const AdminPermissionGuard(
+                permission: 'product_categories.admin_read',
+                child: AdminProductCategoriesPage(),
+              ),
         ),
         GoRoute(
           path: '/services',
