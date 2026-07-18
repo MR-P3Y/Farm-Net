@@ -17,10 +17,15 @@ sms
 email
 ```
 
-Reserved destination integrations:
+Device-backed opt-in channel:
 
 ```text
 push
+```
+
+Reserved destination integration:
+
+```text
 telegram
 ```
 
@@ -157,8 +162,9 @@ PUT /api/v1/notifications/preferences
 
 Use `*` for a global channel preference or a real notification event type for
 an override. Event-specific settings take precedence. Email and SMS route only
-to verified AuthUser destinations. Push and Telegram settings can be stored but
-do not route until their destination registries exist.
+to verified AuthUser destinations. Push routes only when the user owns an active
+registered device. Telegram can be stored as a preference but does not route
+because no destination registry or provider exists.
 
 System messages remain mandatory in-app messages and bypass user routing.
 
@@ -563,7 +569,10 @@ super_admin: all 5
 * System messages require explicit permission.
 * Broadcast/mass messaging is intentionally not enabled in this foundation.
 * Email/SMS preferences create pending delivery work only for verified contact
-  details; real providers are not connected yet.
+  details; Push also requires an active owner-scoped device.
+* SMTP and provider-neutral HTTPS JSON adapters exist but are disabled unless
+  complete runtime configuration is supplied. No production provider is
+  configured or claimed by this foundation.
 * Admin retry only schedules work; it never calls a provider synchronously.
 
 ## Email Worker

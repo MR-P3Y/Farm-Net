@@ -87,7 +87,8 @@ Phase 11.6 SMS Provider Foundation: completed
 Phase 11.7 Push Notification Foundation: completed (b27e8d5f64c1)
 Phase 11.8 Mobile Notification Center Hardening: completed
 Phase 11.9 Admin Notification Operations: completed
-Next: Phase 11.10 Docs/Postman + Runtime Regression
+Phase 11.10 Docs/Postman + Runtime Regression: completed
+Next: Phase 11.11 Notifications Release Gate + Tag
 ```
 
 Services means agricultural operational services, not equipment rental.

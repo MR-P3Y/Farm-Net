@@ -8,18 +8,23 @@ Implemented in:
 Phase 11 - Notifications / Events / Messaging Foundation
 ```
 
-Current channel:
+Default channel:
 
 ```text
 in_app
 ```
 
-Future channels:
+Implemented opt-in delivery foundations:
 
 ```text
 sms
 email
 push
+```
+
+Future channel:
+
+```text
 telegram
 ```
 

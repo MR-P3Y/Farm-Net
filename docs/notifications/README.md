@@ -37,10 +37,14 @@ notification_preferences
 notification_delivery_attempts
 ```
 
-## Current Channel
+## Channel State
 
 ```text
-in_app
+in_app: default and active
+email: opt-in, verified destination, fail-closed SMTP adapter
+sms: opt-in, verified destination, fail-closed HTTPS JSON adapter
+push: opt-in, active device required, fail-closed HTTPS JSON adapter
+telegram: reserved; no destination/provider integration
 ```
 
 ## User APIs
@@ -68,9 +72,10 @@ POST  /api/v1/admin/notifications/deliveries/{id}/retry
 
 ## Notes
 
-SMS, email, push, and Telegram channels are not yet connected to real providers.
-
-They are reserved for future delivery integration.
+Email, SMS, and Push have provider-neutral delivery foundations, queue workers,
+and safe disabled-mode behavior. Production provider credentials/configuration
+are intentionally absent, so this phase does not claim live external delivery.
+Telegram remains reserved for future work.
 
 Step 11.2 hardening is documented in
 `docs/notifications/phase-11-delivery-contracts.md`. It adds durable delivery
@@ -97,6 +102,10 @@ documented in `docs/notifications/phase-11-mobile-hardening.md`.
 Step 11.9 typed Admin delivery operations and retry controls are documented in
 `docs/notifications/phase-11-admin-operations.md`.
 
+Step 11.10 consolidated docs, Postman, and runtime regression are documented in
+`docs/notifications/phase-11-runtime-regression.md`.
+
 The verified current-state analysis and hardening boundary are recorded in
-`docs/notifications/phase-11-real-state-audit.md`. In particular, pending rows
-for external channels do not mean that delivery or retry is implemented.
+`docs/notifications/phase-11-real-state-audit.md`. That file captures the
+pre-hardening state at Step 11.1; later step documents are authoritative for
+the delivery queue and provider foundations added afterward.

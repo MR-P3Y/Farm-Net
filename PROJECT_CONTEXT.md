@@ -1,6 +1,6 @@
 # Farm-Net Project Context
 
-Last verified: 2026-07-16
+Last verified: 2026-07-18
 Repository path: `E:\Farm-Net`
 Primary development branch: `develop`
 
@@ -198,6 +198,11 @@ pagination, detail/error inspection, attempt timeline, permission guarding, and
 controlled retry matching Backend eligibility rules. Step 11.10 consolidated
 Docs/Postman + Runtime Regression is next.
 
+Step 11.10 completed consolidated documentation, 14-path/20-request Postman
+coverage, and full Backend/Mobile/Admin runtime regression. Phase 11
+implementation through documentation is complete; the release gate/tag is the
+next explicit step. Live external delivery remains configuration/vendor work.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -251,5 +256,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.17.0-services-foundation
+v0.18.0-orders-finance-foundation
 ```

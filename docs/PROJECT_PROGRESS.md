@@ -446,6 +446,20 @@ model fields exist:
 - No Backend API behavior, Mobile behavior, schema, or provider was changed.
 - Evidence: `docs/notifications/phase-11-admin-operations.md`.
 
+### Step 11.10 Docs/Postman + Runtime Regression
+
+- Reconciled API/event/foundation documentation with the implemented Email,
+  SMS, Push, device, queue, retry, and Admin operations contracts.
+- Validated the canonical collection: 20 requests cover all 14 runtime
+  Notifications paths, including preferences, devices, and delivery operations.
+- Backend focused lint/compile and 21 notification tests passed; the full suite
+  passed 49 tests with 16 existing UTC deprecation warnings.
+- Alembic, permission seed, disabled-mode workers, OpenAPI, and app/database/
+  Redis health passed without using any live provider credential.
+- Mobile passed analyze, 28 tests, Web build, and Wasm dry run; Admin passed
+  analyze, 7 tests, Web build, and Wasm dry run.
+- Evidence: `docs/notifications/phase-11-runtime-regression.md`.
+
 ## Progress Update Rule
 
 After every completed step:

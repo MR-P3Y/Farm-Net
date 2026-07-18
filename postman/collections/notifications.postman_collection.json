@@ -2,7 +2,7 @@
   "info": {
     "name": "Farm Net - Notifications Foundation",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "User and admin notification APIs for in-app notifications."
+    "description": "Notification foundation regression collection: user inbox, preferences, Push devices, Admin operations, delivery queue/history, and controlled retry. External Email/SMS/Push transports remain fail-closed until explicitly configured."
   },
   "variable": [
     {
