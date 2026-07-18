@@ -571,6 +571,22 @@ model fields exist:
   analyze, 12 tests, and Web/Wasm build checks.
 - Release tag: `v0.20.0-category-management-foundation`.
 
+## Phase 16 — Equipment Rental
+
+### Step 16.1 Real-State Audit + Contract Boundary
+
+- Confirmed that Rental has no module, tables, migrations, APIs, Mobile/Admin
+  feature, tests, documentation, or Postman collection yet.
+- Identified only the existing `lessor` role, four moderation permission
+  placeholders, equipment classifications, and ownership verification type.
+- Separated rentable equipment from Product sale inventory and Services work.
+- Defined lessor/listing moderation, availability/pricing, date-bound booking,
+  overlap protection, role privacy, status-log, and notification boundaries.
+- Kept order-only invoices/payments outside the foundation until explicit
+  Rental finance contracts are implemented; no payment behavior is overstated.
+- Defined Steps 16.2 through 16.12 and the final release gate.
+- Evidence: `docs/rentals/phase-16-real-state-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:

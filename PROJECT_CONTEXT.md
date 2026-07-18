@@ -243,6 +243,14 @@ Management Release Gate passed independently. Phase 12 is released as
 `v0.20.0-category-management-foundation`; the Consultant default taxonomy
 remains an explicit future business-data decision.
 
+Phase 16 Equipment Rental is active. Step 16.1 confirmed that no Rental module
+exists beyond the `lessor` role, four moderation permission placeholders,
+equipment store/product classifications, and equipment-ownership verification.
+Rental will be an independent domain with lessor profiles, moderated equipment,
+availability/pricing, date-bound bookings, status logs, notifications, Mobile,
+and Admin surfaces. Existing order-only finance contracts are not silently
+reused. Step 16.2 Rental DB + Permission Foundation is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
