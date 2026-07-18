@@ -153,11 +153,6 @@ class ServicesService:
                     is_active=True,
                 )
                 self.repo.add_category(row)
-            else:
-                row.title = item["title"]
-                row.description = item["description"]
-                row.sort_order = item["sort_order"]
-                row.is_active = True
             rows.append(row)
 
         self.repo.commit()
@@ -165,7 +160,7 @@ class ServicesService:
         for row in rows:
             self.repo.refresh(row)
 
-        return [ServiceCategoryOut.model_validate(row) for row in rows]
+        return [self._category_out(row) for row in rows]
 
     def list_categories(
         self,
@@ -174,7 +169,7 @@ class ServicesService:
         q: str | None = None,
     ) -> list[ServiceCategoryOut]:
         return [
-            ServiceCategoryOut.model_validate(row)
+            self._category_out(row)
             for row in self.repo.list_categories(active_only=active_only, q=q)
         ]
 
@@ -473,7 +468,7 @@ class ServicesService:
 
     def create_category(self, payload: ServiceCategoryCreateIn) -> ServiceCategoryOut:
         code = self._normalize_code(payload.code)
-        self._validate_parent_category(payload.parent_id)
+        self._validate_parent_category(payload.parent_id, category_id=None)
 
         row = ServiceCategory(
             parent_id=payload.parent_id,
@@ -495,7 +490,7 @@ class ServicesService:
             ) from exc
 
         self.repo.refresh(row)
-        return ServiceCategoryOut.model_validate(row)
+        return self._category_out(row)
 
     def update_category(
         self,
@@ -511,10 +506,8 @@ class ServicesService:
                 details={"category_id": category_id},
             )
 
-        if payload.parent_id is not None:
-            if payload.parent_id == row.id:
-                raise ValidationAuthError(message="Service category cannot be its own parent")
-            self._validate_parent_category(payload.parent_id)
+        if "parent_id" in payload.model_fields_set:
+            self._validate_parent_category(payload.parent_id, category_id=row.id)
             row.parent_id = payload.parent_id
         if payload.code is not None:
             row.code = self._normalize_code(payload.code)
@@ -537,7 +530,7 @@ class ServicesService:
             ) from exc
 
         self.repo.refresh(row)
-        return ServiceCategoryOut.model_validate(row)
+        return self._category_out(row)
 
     def get_my_provider_profile(self, user: AuthUser) -> ServiceProviderProfileOut | None:
         profile = self.repo.get_profile_by_user_id(user.id)
@@ -1719,16 +1712,31 @@ class ServicesService:
         name = " ".join([part for part in parts if part])
         return name or None
 
-    def _validate_parent_category(self, parent_id: int | None) -> None:
+    def _validate_parent_category(
+        self, parent_id: int | None, *, category_id: int | None
+    ) -> None:
         if parent_id is None:
             return
+        cursor = self.repo.get_category_by_id(parent_id)
+        if cursor is None:
+            raise ValidationAuthError(message="Parent service category not found", details={"parent_id": parent_id})
+        visited: set[int] = set()
+        while cursor is not None and cursor.id not in visited:
+            if cursor.id == category_id:
+                raise ValidationAuthError(message="Service category hierarchy cycle is not allowed")
+            visited.add(cursor.id)
+            cursor = self.repo.get_category_by_id(cursor.parent_id) if cursor.parent_id else None
 
-        parent = self.repo.get_category_by_id(parent_id)
-        if parent is None:
-            raise ValidationAuthError(
-                message="Parent service category not found",
-                details={"parent_id": parent_id},
-            )
+    def _category_out(self, row: ServiceCategory) -> ServiceCategoryOut:
+        children, providers, offers, requests = self.repo.category_usage_counts(row.id)
+        data = ServiceCategoryOut.model_validate(row).model_dump()
+        data.update(
+            children_count=children,
+            provider_links_count=providers,
+            offers_count=offers,
+            requests_count=requests,
+        )
+        return ServiceCategoryOut.model_validate(data)
 
     def _validate_category_ids(
         self,

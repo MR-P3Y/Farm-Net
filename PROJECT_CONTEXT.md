@@ -217,6 +217,10 @@ seed, and usage hardening; Social lacks Admin category management; Consultants
 needs usage counts and Admin search wiring. Domain tables remain independent.
 Step 12.3 Services Category Contract Hardening is next.
 
+Step 12.3 hardened Services categories with cycle prevention, parent clearing,
+non-destructive idempotent seed behavior, domain usage counters, and matching
+Admin UI. Step 12.4 Social Category Management is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

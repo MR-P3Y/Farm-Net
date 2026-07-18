@@ -2,6 +2,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:farm_net_admin/features/services/data/admin_service_models.dart';
 
 void main() {
+  test('service category parses domain usage counters', () {
+    final category = AdminServiceCategory.fromJson({
+      'id': 1,
+      'code': 'harvesting',
+      'title': 'برداشت',
+      'sort_order': 100,
+      'is_active': true,
+      'children_count': 2,
+      'provider_links_count': 3,
+      'offers_count': 4,
+      'requests_count': 5,
+    });
+    expect(category.childrenCount, 2);
+    expect(category.providerLinksCount, 3);
+    expect(category.offersCount, 4);
+    expect(category.requestsCount, 5);
+  });
+
   test('request detail parses exact typed status logs', () {
     final request = AdminServiceRequest.fromJson({
       'id': 17,

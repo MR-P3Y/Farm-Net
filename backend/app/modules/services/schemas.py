@@ -49,6 +49,10 @@ class ServiceCategoryOut(BaseModel):
     description: str | None = None
     sort_order: int
     is_active: bool
+    children_count: int = 0
+    provider_links_count: int = 0
+    offers_count: int = 0
+    requests_count: int = 0
     created_at: datetime
     updated_at: datetime
 

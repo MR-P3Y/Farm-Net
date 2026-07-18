@@ -121,7 +121,7 @@ class _Categories extends ConsumerWidget {
                               child: ListTile(
                                 title: Text(x.title),
                                 subtitle: Text(
-                                  '${x.code} • ترتیب ${x.sortOrder}',
+                                  '${x.code} • ترتیب ${x.sortOrder} • ارائه‌دهنده ${x.providerLinksCount} • خدمت ${x.offersCount} • درخواست ${x.requestsCount} • فرزند ${x.childrenCount}',
                                 ),
                                 leading: Icon(
                                   x.isActive
@@ -374,6 +374,8 @@ Future<void> _categoryDialog(
       desc = TextEditingController(text: x?.description),
       sort = TextEditingController(text: '${x?.sortOrder ?? 100}');
   bool active = x?.isActive ?? true;
+  int? parentId = x?.parentId;
+  final categories = r.read(adminServiceControllerProvider).categories;
   await showDialog<void>(
     context: c,
     builder:
@@ -393,6 +395,27 @@ Future<void> _categoryDialog(
                       TextField(
                         controller: title,
                         decoration: const InputDecoration(labelText: 'عنوان'),
+                      ),
+                      DropdownButtonFormField<int?>(
+                        initialValue: parentId,
+                        decoration: const InputDecoration(
+                          labelText: 'دسته والد',
+                        ),
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('بدون والد'),
+                          ),
+                          ...categories
+                              .where((item) => item.id != x?.id)
+                              .map(
+                                (item) => DropdownMenuItem<int?>(
+                                  value: item.id,
+                                  child: Text(item.title),
+                                ),
+                              ),
+                        ],
+                        onChanged: (value) => set(() => parentId = value),
                       ),
                       TextField(
                         controller: desc,
@@ -427,6 +450,7 @@ Future<void> _categoryDialog(
                           .saveCategory(x?.id, {
                             'code': code.text.trim(),
                             'title': title.text.trim(),
+                            'parent_id': parentId,
                             'description':
                                 desc.text.trim().isEmpty
                                     ? null

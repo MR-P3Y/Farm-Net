@@ -145,7 +145,7 @@
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated service category\",\n  \"is_active\": true\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"parent_id\": null,\n  \"title\": \"Updated service category\",\n  \"is_active\": true\n}" },
             "url": "{{base_url}}/admin/services/categories/{{category_id}}"
           }
         },

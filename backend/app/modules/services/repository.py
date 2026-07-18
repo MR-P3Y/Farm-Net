@@ -70,6 +70,13 @@ class ServicesRepository:
             .all()
         )
 
+    def category_usage_counts(self, category_id: int) -> tuple[int, int, int, int]:
+        children = self.db.query(ServiceCategory).filter(ServiceCategory.parent_id == category_id).count()
+        provider_links = self.db.query(ServiceProviderCategory).filter(ServiceProviderCategory.category_id == category_id).count()
+        offers = self.db.query(ServiceOffer).filter(ServiceOffer.category_id == category_id, ServiceOffer.deleted_at.is_(None)).count()
+        requests = self.db.query(ServiceRequest).filter(ServiceRequest.category_id == category_id).count()
+        return children, provider_links, offers, requests
+
     def add_profile(self, row: ServiceProviderProfile) -> ServiceProviderProfile:
         self.db.add(row)
         self.db.flush()

@@ -498,6 +498,16 @@ model fields exist:
 - Defined Steps 12.3 through 12.8 without changing runtime behavior.
 - Evidence: `docs/categories/phase-12-category-governance-audit.md`.
 
+### Step 12.3 Services Category Contract Hardening
+
+- Added full hierarchy cycle prevention and explicit parent clearing.
+- Made default seeding non-destructive and added a repeatable Services seed CLI.
+- Added typed child/provider/offer/request usage counters to Admin contracts/UI.
+- Backend Ruff/compileall and 55 tests passed; Admin analyze, 9 tests, and
+  Web/Wasm build passed. Runtime seed produced 8 active categories twice and
+  app/database/Redis health remained `ok`.
+- Evidence: `docs/categories/phase-12-services-category-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:

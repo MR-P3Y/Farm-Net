@@ -30,6 +30,11 @@ All paths use the `/api/v1` prefix and the standard
 | Provider | `PATCH /services/requests/{request_id}/status` | Controlled assigned transition |
 | Admin | `GET/POST /admin/services/categories` | List or create categories |
 | Admin | `PATCH /admin/services/categories/{category_id}` | Update category |
+
+Category management preserves Admin-owned seed rows, rejects direct and
+indirect hierarchy cycles, and accepts `parent_id: null` to move a category to
+the root. Admin responses expose direct-child, provider-link, offer, and request
+usage counters. Deactivation remains the non-destructive lifecycle.
 | Admin | `GET /admin/services/provider-profiles[/{profile_id}]` | List or inspect providers |
 | Admin | `PATCH /admin/services/provider-profiles/{profile_id}/status` | Moderate provider |
 | Admin | `GET /admin/services/offers[/{offer_id}]` | List or inspect offers |

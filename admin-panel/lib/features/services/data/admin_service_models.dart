@@ -35,6 +35,10 @@ class AdminServiceCategory {
     required this.title,
     required this.sortOrder,
     required this.isActive,
+    required this.childrenCount,
+    required this.providerLinksCount,
+    required this.offersCount,
+    required this.requestsCount,
     this.parentId,
     this.description,
   });
@@ -45,6 +49,10 @@ class AdminServiceCategory {
   final String? description;
   final int sortOrder;
   final bool isActive;
+  final int childrenCount;
+  final int providerLinksCount;
+  final int offersCount;
+  final int requestsCount;
   factory AdminServiceCategory.fromJson(Map<String, dynamic> j) =>
       AdminServiceCategory(
         id: _id(j['id']),
@@ -54,6 +62,10 @@ class AdminServiceCategory {
         description: j['description']?.toString(),
         sortOrder: _id(j['sort_order']),
         isActive: j['is_active'] == true,
+        childrenCount: _id(j['children_count']),
+        providerLinksCount: _id(j['provider_links_count']),
+        offersCount: _id(j['offers_count']),
+        requestsCount: _id(j['requests_count']),
       );
 }
 
