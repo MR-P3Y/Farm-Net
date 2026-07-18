@@ -67,3 +67,27 @@ Ranges use overlap semantics `existing.start < requested.end` and
 not overlap another block or an accepted/in-progress booking. Public checks do
 not expose owner notes. Equipment approval now requires public media and at
 least one active pricing rule.
+
+## Rental requests and booking workflow (Phase 16.6)
+
+| Method | Path | Access |
+|---|---|---|
+| POST | `/rentals/requests` | `rental_requests.create` |
+| GET | `/rentals/requests/me` | Requester owner |
+| GET | `/rentals/requests/me/{request_id}` | Requester owner |
+| POST | `/rentals/requests/me/{request_id}/cancel` | Requester owner |
+| GET | `/rentals/requests/assigned` | Approved assigned lessor |
+| GET | `/rentals/requests/assigned/{request_id}` | Approved assigned lessor |
+| PATCH | `/rentals/requests/assigned/{request_id}/status` | Approved assigned lessor |
+| GET | `/admin/rentals/requests` | `rental_requests.admin_read` |
+| GET | `/admin/rentals/requests/{request_id}` | `rental_requests.admin_read` |
+| PATCH | `/admin/rentals/requests/{request_id}/status` | `rental_requests.admin_manage` |
+
+Requests begin at `pending`. Lessors may accept/reject, start an accepted
+booking, and complete an in-progress booking. Requesters may cancel only
+`pending` or `accepted`. Acceptance locks the equipment row, rechecks active
+pricing, blocks, and accepted/in-progress overlap, then snapshots price per
+unit, rental amount, deposit, total, and currency. No payment is claimed.
+
+Each transition writes a unique deterministic status-log event. Requester and
+lessor contracts omit `admin_note`; only the Admin detail contract exposes it.

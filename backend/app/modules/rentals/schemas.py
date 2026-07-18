@@ -247,3 +247,75 @@ class RentalAvailabilityCheckOut(BaseModel):
     ends_at: datetime
     is_available: bool
     conflicting_blocks: list[RentalAvailabilityBlockOut] = Field(default_factory=list)
+
+
+class RentalRequestCreateIn(BaseModel):
+    equipment_id: int = Field(ge=1)
+    pricing_rule_id: int = Field(ge=1)
+    starts_at: datetime
+    ends_at: datetime
+    requested_units: Decimal = Field(gt=0, max_digits=10, decimal_places=2)
+    operator_requested: bool = False
+    delivery_address: str | None = Field(default=None, max_length=2000)
+    requester_note: str | None = Field(default=None, max_length=3000)
+
+    _normalize = field_validator("delivery_address", "requester_note", mode="before")(_strip)
+
+
+class RentalRequestCancelIn(BaseModel):
+    reason: str = Field(min_length=2, max_length=2000)
+
+    _normalize = field_validator("reason", mode="before")(_strip)
+
+
+class RentalRequestStatusIn(BaseModel):
+    status: str
+    note: str | None = Field(default=None, max_length=2000)
+
+    _normalize = field_validator("status", "note", mode="before")(_strip)
+
+
+class RentalRequestStatusLogOut(BaseModel):
+    id: int
+    changed_by: int | None
+    from_status: str | None
+    to_status: str
+    note: str | None
+    created_at: datetime
+
+
+class RentalRequestListOut(BaseModel):
+    id: int
+    requester_user_id: int
+    lessor_profile_id: int
+    equipment_id: int
+    pricing_rule_id: int
+    equipment_title: str
+    lessor_display_name: str | None
+    starts_at: datetime
+    ends_at: datetime
+    requested_units: Decimal
+    operator_requested: bool
+    status: str
+    price_per_unit_snapshot: Decimal | None
+    rental_amount_snapshot: Decimal | None
+    deposit_amount_snapshot: Decimal | None
+    total_amount_snapshot: Decimal | None
+    currency: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class RentalRequestDetailOut(RentalRequestListOut):
+    delivery_address: str | None
+    requester_note: str | None
+    lessor_note: str | None
+    cancel_reason: str | None
+    accepted_at: datetime | None
+    completed_at: datetime | None
+    cancelled_at: datetime | None
+    status_logs: list[RentalRequestStatusLogOut] = Field(default_factory=list)
+
+
+class RentalRequestAdminDetailOut(RentalRequestDetailOut):
+    admin_note: str | None

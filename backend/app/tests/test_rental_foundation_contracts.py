@@ -29,6 +29,8 @@ from app.modules.rentals.schemas import (
     RentalEquipmentInput,
     RentalEquipmentMediaIn,
     RentalPricingRuleIn,
+    RentalRequestAdminDetailOut,
+    RentalRequestDetailOut,
 )
 from app.modules.rentals.service import RentalService
 from app.modules.auth.exceptions import ValidationAuthError
@@ -214,3 +216,71 @@ def test_availability_contract_supports_only_explicit_block_types() -> None:
     service._validate_block_type(payload.block_type)
     with pytest.raises(ValidationAuthError):
         service._validate_block_type("booked_elsewhere")
+
+
+def test_accept_request_locks_and_snapshots_price_deposit_and_total() -> None:
+    service = RentalService.__new__(RentalService)
+    service.repo = Mock()
+    service.repo.lock_equipment.return_value = SimpleNamespace(
+        id=5,
+        status="approved",
+        is_active=True,
+        security_deposit_amount=Decimal("500000"),
+    )
+    service.repo.get_pricing_rule.return_value = SimpleNamespace(
+        id=8,
+        equipment_id=5,
+        is_active=True,
+        price_amount=Decimal("2000000"),
+        currency="TOMAN",
+    )
+    service.repo.list_availability_blocks.return_value = []
+    service.repo.conflicting_booking.return_value = None
+    row = SimpleNamespace(
+        id=11,
+        equipment_id=5,
+        pricing_rule_id=8,
+        starts_at=datetime(2026, 8, 1),
+        ends_at=datetime(2026, 8, 3),
+        requested_units=Decimal("2"),
+    )
+
+    service._accept_request(row)
+
+    assert row.price_per_unit_snapshot == Decimal("2000000")
+    assert row.rental_amount_snapshot == Decimal("4000000")
+    assert row.deposit_amount_snapshot == Decimal("500000")
+    assert row.total_amount_snapshot == Decimal("4500000")
+
+
+def test_request_status_change_creates_deterministic_exact_once_event_key() -> None:
+    service = RentalService.__new__(RentalService)
+    service.db = Mock()
+    row = SimpleNamespace(
+        id=14,
+        status="pending",
+        accepted_at=None,
+        completed_at=None,
+        cancelled_at=None,
+    )
+
+    service._apply_request_status(row, "accepted", actor_id=7, note="accepted")
+
+    log = service.db.add.call_args.args[0]
+    assert row.status == "accepted"
+    assert row.accepted_at is not None
+    assert log.event_key == "rental_request:14:status:pending:accepted"
+
+
+def test_request_transition_matrices_are_role_specific() -> None:
+    assert RentalService.LESSOR_REQUEST_TRANSITIONS["pending"] == {"accepted", "rejected"}
+    assert "cancelled" not in RentalService.LESSOR_REQUEST_TRANSITIONS["accepted"]
+    assert "cancelled" in RentalService.ADMIN_REQUEST_TRANSITIONS["accepted"]
+
+
+def test_requester_detail_contract_has_no_admin_note() -> None:
+    fields = RentalRequestDetailOut.model_fields
+    admin_fields = RentalRequestAdminDetailOut.model_fields
+
+    assert "admin_note" not in fields
+    assert "admin_note" in admin_fields

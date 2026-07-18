@@ -641,6 +641,19 @@ model fields exist:
 - Rental Postman coverage expanded to 25 valid requests.
 - Evidence: `docs/rentals/phase-16-pricing-availability.md`.
 
+### Step 16.6 Rental Request/Booking Workflow
+
+- Added requester, assigned-lessor, and Admin request list/detail/workflow APIs.
+- Added self-rental, pricing/operator/minimum, availability, ownership, and
+  transition validation plus requester cancellation boundaries.
+- Acceptance uses equipment row locks, overlap revalidation, and immutable
+  unit/rental/deposit/total/currency snapshots without claiming payment.
+- Added deterministic exact-once status-log keys and Admin-note privacy.
+- Backend Ruff/compileall passed, 16 focused and all 75 tests passed; Runtime
+  exposed 29 Rental paths, remained at Alembic head, and health/401 passed.
+- Rental Postman coverage expanded to 35 valid requests.
+- Evidence: `docs/rentals/phase-16-request-booking-workflow.md`.
+
 ## Progress Update Rule
 
 After every completed step:

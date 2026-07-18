@@ -13,6 +13,9 @@ from app.modules.rentals.schemas import (
     RentalAvailabilityBlockIn,
     RentalEquipmentInput,
     RentalPricingRuleIn,
+    RentalRequestCancelIn,
+    RentalRequestCreateIn,
+    RentalRequestStatusIn,
 )
 from app.modules.rentals.service import RentalService
 
@@ -263,6 +266,111 @@ def delete_my_availability(
     return success_response(
         data=None,
         message="Rental availability block deleted",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/requests")
+def create_rental_request(
+    payload: RentalRequestCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_requests.create")),
+):
+    result = RentalService(db).create_request(user, payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental request created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/requests/me")
+def list_my_rental_requests(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    equipment_id: int | None = Query(default=None, ge=1),
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_requests.read_own")),
+):
+    items, total = RentalService(db).list_my_requests(
+        user, status=status, equipment_id=equipment_id, page=page, page_size=page_size
+    )
+    return _page(items, total, page, page_size, request)
+
+
+@router.get("/requests/me/{request_id}")
+def get_my_rental_request(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_requests.read_own")),
+):
+    result = RentalService(db).get_my_request(user, request_id)
+    return success_response(
+        data=result.model_dump(mode="json"), message="OK", meta={"trace_id": request.state.trace_id}
+    )
+
+
+@router.post("/requests/me/{request_id}/cancel")
+def cancel_my_rental_request(
+    request_id: int,
+    payload: RentalRequestCancelIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_requests.manage_own")),
+):
+    result = RentalService(db).cancel_my_request(user, request_id, payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental request cancelled",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/requests/assigned")
+def list_assigned_rental_requests(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    equipment_id: int | None = Query(default=None, ge=1),
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_requests.manage_assigned")),
+):
+    items, total = RentalService(db).list_assigned_requests(
+        user, status=status, equipment_id=equipment_id, page=page, page_size=page_size
+    )
+    return _page(items, total, page, page_size, request)
+
+
+@router.get("/requests/assigned/{request_id}")
+def get_assigned_rental_request(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_requests.manage_assigned")),
+):
+    result = RentalService(db).get_assigned_request(user, request_id)
+    return success_response(
+        data=result.model_dump(mode="json"), message="OK", meta={"trace_id": request.state.trace_id}
+    )
+
+
+@router.patch("/requests/assigned/{request_id}/status")
+def update_assigned_rental_request(
+    request_id: int,
+    payload: RentalRequestStatusIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_requests.manage_assigned")),
+):
+    result = RentalService(db).update_assigned_request(user, request_id, payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental request status updated",
         meta={"trace_id": request.state.trace_id},
     )
 

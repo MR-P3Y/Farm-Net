@@ -102,7 +102,8 @@ Phase 16.2 Rental DB + Permission Foundation: completed (104ae669cc1a)
 Phase 16.3 Categories + Lessor Profile APIs: completed
 Phase 16.4 Equipment Listing + Media APIs: completed
 Phase 16.5 Availability + Pricing Rules: completed
-Next: Phase 16.6 Rental Request/Booking Workflow
+Phase 16.6 Rental Request/Booking Workflow: completed
+Next: Phase 16.7 Notifications + Privacy/Concurrency Hardening
 ```
 
 Services means agricultural operational services, not equipment rental.

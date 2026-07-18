@@ -273,6 +273,12 @@ availability blocks, public range checks, overlap prevention against blocks and
 accepted/in-progress bookings, and pricing/media approval readiness. Step 16.6
 Rental Request/Booking Workflow is next.
 
+Step 16.6 added requester, assigned-lessor, and Admin booking workflows with
+row-lock acceptance, overlap revalidation, immutable commercial snapshots,
+controlled cancellation/transitions, role privacy, and deterministic status
+logs. No payment movement is claimed. Step 16.7 Notifications +
+Privacy/Concurrency Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

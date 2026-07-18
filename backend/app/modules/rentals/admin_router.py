@@ -14,11 +14,74 @@ from app.modules.rentals.schemas import (
     RentalCategoryUpdateIn,
     LessorProfileStatusIn,
     RentalEquipmentStatusIn,
+    RentalRequestStatusIn,
 )
 from app.modules.rentals.service import RentalService
 
 
 router = APIRouter(prefix="/admin/rentals", tags=["Admin Equipment Rental"])
+
+
+@router.get("/requests")
+def list_requests(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    status: str | None = Query(default=None),
+    requester_user_id: int | None = Query(default=None, ge=1),
+    lessor_profile_id: int | None = Query(default=None, ge=1),
+    equipment_id: int | None = Query(default=None, ge=1),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("rental_requests.admin_read")),
+):
+    items, total = RentalService(db).list_admin_requests(
+        status=status,
+        requester_user_id=requester_user_id,
+        lessor_profile_id=lessor_profile_id,
+        equipment_id=equipment_id,
+        page=page,
+        page_size=page_size,
+    )
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.get("/requests/{request_id}")
+def get_request(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("rental_requests.admin_read")),
+):
+    result = RentalService(db).get_admin_request(request_id)
+    return success_response(
+        data=result.model_dump(mode="json"), message="OK", meta={"trace_id": request.state.trace_id}
+    )
+
+
+@router.patch("/requests/{request_id}/status")
+def update_request(
+    request_id: int,
+    payload: RentalRequestStatusIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("rental_requests.admin_manage")),
+):
+    result = RentalService(db).update_admin_request(user, request_id, payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Rental request status updated",
+        meta={"trace_id": request.state.trace_id},
+    )
 
 
 def _equipment_permission(status: str) -> str:

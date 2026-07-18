@@ -10,7 +10,9 @@
     {"key": "lessor_profile_id", "value": "1"},
     {"key": "rental_equipment_id", "value": "1"},
     {"key": "media_file_id", "value": "1"},
-    {"key": "availability_block_id", "value": "1"}
+    {"key": "availability_block_id", "value": "1"},
+    {"key": "rental_request_id", "value": "1"},
+    {"key": "pricing_rule_id", "value": "1"}
   ],
   "item": [
     {"name": "Public - List rental categories", "request": {"method": "GET", "url": "{{base_url}}/rentals/categories"}},
@@ -37,6 +39,16 @@
     {"name": "Lessor - List availability blocks", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/rentals/me/equipment/{{rental_equipment_id}}/availability"}},
     {"name": "Lessor - Create availability block", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"block_type\": \"maintenance\",\n  \"starts_at\": \"2026-08-05T08:00:00Z\",\n  \"ends_at\": \"2026-08-06T08:00:00Z\",\n  \"note\": \"سرویس دوره‌ای\"\n}"}, "url": "{{base_url}}/rentals/me/equipment/{{rental_equipment_id}}/availability"}},
     {"name": "Lessor - Update availability block", "request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"block_type\": \"owner_reserved\",\n  \"starts_at\": \"2026-08-05T08:00:00Z\",\n  \"ends_at\": \"2026-08-06T08:00:00Z\"\n}"}, "url": "{{base_url}}/rentals/me/equipment/{{rental_equipment_id}}/availability/{{availability_block_id}}"}},
-    {"name": "Lessor - Delete availability block", "request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/rentals/me/equipment/{{rental_equipment_id}}/availability/{{availability_block_id}}"}}
+    {"name": "Lessor - Delete availability block", "request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/rentals/me/equipment/{{rental_equipment_id}}/availability/{{availability_block_id}}"}},
+    {"name": "Renter - Create rental request", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"equipment_id\": {{rental_equipment_id}},\n  \"pricing_rule_id\": {{pricing_rule_id}},\n  \"starts_at\": \"2026-08-10T08:00:00Z\",\n  \"ends_at\": \"2026-08-12T08:00:00Z\",\n  \"requested_units\": 2,\n  \"operator_requested\": false,\n  \"delivery_address\": \"نشانی تحویل\"\n}"}, "url": "{{base_url}}/rentals/requests"}},
+    {"name": "Renter - List my requests", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/rentals/requests/me"}},
+    {"name": "Renter - My request detail", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/rentals/requests/me/{{rental_request_id}}"}},
+    {"name": "Renter - Cancel request", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"reason\": \"تغییر برنامه\"\n}"}, "url": "{{base_url}}/rentals/requests/me/{{rental_request_id}}/cancel"}},
+    {"name": "Lessor - Assigned requests", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/rentals/requests/assigned"}},
+    {"name": "Lessor - Assigned request detail", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/rentals/requests/assigned/{{rental_request_id}}"}},
+    {"name": "Lessor - Update request status", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"status\": \"accepted\",\n  \"note\": \"تأیید شد\"\n}"}, "url": "{{base_url}}/rentals/requests/assigned/{{rental_request_id}}/status"}},
+    {"name": "Admin - List rental requests", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/admin/rentals/requests"}},
+    {"name": "Admin - Rental request detail", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}], "url": "{{base_url}}/admin/rentals/requests/{{rental_request_id}}"}},
+    {"name": "Admin - Update rental request status", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"status\": \"cancelled\",\n  \"note\": \"لغو توسط مدیریت\"\n}"}, "url": "{{base_url}}/admin/rentals/requests/{{rental_request_id}}/status"}}
   ]
 }

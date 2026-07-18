@@ -268,3 +268,69 @@ class RentalRepository:
             .first()
             is not None
         )
+
+    def get_pricing_rule(self, pricing_rule_id: int) -> RentalPricingRule | None:
+        return (
+            self.db.query(RentalPricingRule)
+            .filter(RentalPricingRule.id == pricing_rule_id)
+            .one_or_none()
+        )
+
+    def get_request(self, request_id: int, *, lock: bool = False) -> RentalRequest | None:
+        query = self.db.query(RentalRequest).filter(RentalRequest.id == request_id)
+        if lock:
+            query = query.with_for_update()
+        return query.one_or_none()
+
+    def lock_equipment(self, equipment_id: int) -> RentalEquipment | None:
+        return (
+            self.db.query(RentalEquipment)
+            .filter(RentalEquipment.id == equipment_id)
+            .with_for_update()
+            .one_or_none()
+        )
+
+    def list_requests(
+        self,
+        *,
+        requester_user_id: int | None = None,
+        lessor_profile_id: int | None = None,
+        equipment_id: int | None = None,
+        status: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[RentalRequest], int]:
+        query = self.db.query(RentalRequest).options(
+            joinedload(RentalRequest.status_logs),
+            joinedload(RentalRequest.equipment),
+            joinedload(RentalRequest.lessor_profile),
+        )
+        if requester_user_id:
+            query = query.filter(RentalRequest.requester_user_id == requester_user_id)
+        if lessor_profile_id:
+            query = query.filter(RentalRequest.lessor_profile_id == lessor_profile_id)
+        if equipment_id:
+            query = query.filter(RentalRequest.equipment_id == equipment_id)
+        if status:
+            query = query.filter(RentalRequest.status == status)
+        total = query.count()
+        rows = (
+            query.order_by(RentalRequest.created_at.desc(), RentalRequest.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+        return rows, total
+
+    def conflicting_booking(
+        self, equipment_id: int, starts_at, ends_at, *, exclude_request_id: int | None = None
+    ) -> RentalRequest | None:
+        query = self.db.query(RentalRequest).filter(
+            RentalRequest.equipment_id == equipment_id,
+            RentalRequest.status.in_(("accepted", "in_progress")),
+            RentalRequest.starts_at < ends_at,
+            RentalRequest.ends_at > starts_at,
+        )
+        if exclude_request_id:
+            query = query.filter(RentalRequest.id != exclude_request_id)
+        return query.with_for_update().first()

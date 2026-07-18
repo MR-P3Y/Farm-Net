@@ -16,6 +16,7 @@ from app.modules.rentals.enums import (
     RentalEquipmentStatus,
     RentalOperatorMode,
     RentalPricingUnit,
+    RentalRequestStatus,
 )
 from app.modules.rentals.models import (
     LessorProfile,
@@ -24,6 +25,8 @@ from app.modules.rentals.models import (
     RentalEquipmentMedia,
     RentalAvailabilityBlock,
     RentalPricingRule,
+    RentalRequest,
+    RentalRequestStatusLog,
 )
 from app.modules.rentals.repository import RentalRepository
 from app.modules.rentals.schemas import (
@@ -41,10 +44,27 @@ from app.modules.rentals.schemas import (
     RentalAvailabilityCheckOut,
     RentalPricingRuleIn,
     RentalPricingRuleOut,
+    RentalRequestAdminDetailOut,
+    RentalRequestCancelIn,
+    RentalRequestCreateIn,
+    RentalRequestDetailOut,
+    RentalRequestListOut,
+    RentalRequestStatusLogOut,
+    RentalRequestStatusIn,
 )
 
 
 class RentalService:
+    LESSOR_REQUEST_TRANSITIONS = {
+        "pending": {"accepted", "rejected"},
+        "accepted": {"in_progress"},
+        "in_progress": {"completed"},
+    }
+    ADMIN_REQUEST_TRANSITIONS = {
+        "pending": {"accepted", "rejected", "cancelled"},
+        "accepted": {"in_progress", "cancelled"},
+        "in_progress": {"completed", "cancelled"},
+    }
     DEFAULT_CATEGORIES = (
         ("tractors", "تراکتور و ماشین‌های کشاورزی"),
         ("harvesters", "کمباین و تجهیزات برداشت"),
@@ -141,7 +161,7 @@ class RentalService:
                 message="Lessor profile is incomplete", details={"missing_fields": missing}
             )
         row.status = LessorStatus.PENDING_REVIEW.value
-        row.submitted_at = datetime.utcnow()
+        row.submitted_at = self._now()
         row.admin_note = None
         self.db.commit()
         self.db.refresh(row)
@@ -194,7 +214,7 @@ class RentalService:
         row.status = status
         row.admin_note = admin_note
         if status == LessorStatus.APPROVED.value:
-            row.approved_at = datetime.utcnow()
+            row.approved_at = self._now()
             row.approved_by = admin_user.id
         self.db.commit()
         self.db.refresh(row)
@@ -290,7 +310,7 @@ class RentalService:
                 message="Rental equipment is incomplete", details={"missing_fields": missing}
             )
         row.status = RentalEquipmentStatus.PENDING_REVIEW.value
-        row.submitted_at = datetime.utcnow()
+        row.submitted_at = self._now()
         row.admin_note = None
         self.db.commit()
         self.db.refresh(row)
@@ -337,7 +357,7 @@ class RentalService:
         row.status = status
         row.admin_note = admin_note
         if status == RentalEquipmentStatus.APPROVED.value:
-            row.approved_at = datetime.utcnow()
+            row.approved_at = self._now()
             row.approved_by = admin_user.id
         self.db.commit()
         self.db.refresh(row)
@@ -532,6 +552,269 @@ class RentalService:
             rows[0].is_primary = True
         return rows
 
+    def create_request(
+        self, user: AuthUser, payload: RentalRequestCreateIn
+    ) -> RentalRequestDetailOut:
+        equipment = self.repo.get_public_equipment(payload.equipment_id)
+        if equipment is None:
+            raise ValidationAuthError(message="Rental equipment not found")
+        if equipment.lessor_profile.user_id == user.id:
+            raise ValidationAuthError(message="Lessor cannot rent own equipment")
+        pricing = self.repo.get_pricing_rule(payload.pricing_rule_id)
+        if pricing is None or pricing.equipment_id != equipment.id or not pricing.is_active:
+            raise ValidationAuthError(message="Active rental pricing rule not found")
+        starts_at, ends_at = self._valid_range(payload.starts_at, payload.ends_at)
+        if payload.requested_units < pricing.minimum_units:
+            raise ValidationAuthError(
+                message="Requested units are below pricing minimum",
+                details={"minimum_units": str(pricing.minimum_units)},
+            )
+        if payload.operator_requested != pricing.operator_included:
+            raise ValidationAuthError(message="Requested operator mode does not match pricing rule")
+        if self.repo.list_availability_blocks(
+            equipment.id, starts_at=starts_at, ends_at=ends_at
+        ) or self.repo.has_booking_overlap(equipment.id, starts_at, ends_at):
+            raise ValidationAuthError(
+                message="Rental equipment is not available for requested range"
+            )
+        row = RentalRequest(
+            requester_user_id=user.id,
+            lessor_profile_id=equipment.lessor_profile_id,
+            equipment_id=equipment.id,
+            pricing_rule_id=pricing.id,
+            starts_at=starts_at,
+            ends_at=ends_at,
+            requested_units=payload.requested_units,
+            operator_requested=payload.operator_requested,
+            status=RentalRequestStatus.PENDING.value,
+            currency=pricing.currency,
+            delivery_address=payload.delivery_address,
+            requester_note=payload.requester_note,
+        )
+        self.db.add(row)
+        self.db.flush()
+        self.db.add(
+            RentalRequestStatusLog(
+                request_id=row.id,
+                changed_by=user.id,
+                from_status=None,
+                to_status=row.status,
+                note=None,
+                event_key=f"rental_request:{row.id}:created",
+            )
+        )
+        self.db.commit()
+        return self._request_detail(self.repo.get_request(row.id))
+
+    def list_my_requests(self, user: AuthUser, **filters) -> tuple[list[RentalRequestListOut], int]:
+        self._validate_request_status_filter(filters.get("status"))
+        rows, total = self.repo.list_requests(requester_user_id=user.id, **filters)
+        return [self._request_list(row) for row in rows], total
+
+    def get_my_request(self, user: AuthUser, request_id: int) -> RentalRequestDetailOut:
+        row = self.repo.get_request(request_id)
+        if row is None or row.requester_user_id != user.id:
+            raise ValidationAuthError(message="Rental request not found")
+        return self._request_detail(row)
+
+    def cancel_my_request(
+        self, user: AuthUser, request_id: int, payload: RentalRequestCancelIn
+    ) -> RentalRequestDetailOut:
+        row = self.repo.get_request(request_id, lock=True)
+        if row is None or row.requester_user_id != user.id:
+            raise ValidationAuthError(message="Rental request not found")
+        if row.status not in {
+            RentalRequestStatus.PENDING.value,
+            RentalRequestStatus.ACCEPTED.value,
+        }:
+            raise ValidationAuthError(
+                message="Rental request cannot be cancelled in current status",
+                details={"status": row.status},
+            )
+        row.cancel_reason = payload.reason
+        self._apply_request_status(
+            row, RentalRequestStatus.CANCELLED.value, user.id, payload.reason
+        )
+        self.db.commit()
+        return self._request_detail(self.repo.get_request(row.id))
+
+    def list_assigned_requests(
+        self, user: AuthUser, **filters
+    ) -> tuple[list[RentalRequestListOut], int]:
+        profile = self._approved_lessor(user)
+        self._validate_request_status_filter(filters.get("status"))
+        rows, total = self.repo.list_requests(lessor_profile_id=profile.id, **filters)
+        return [self._request_list(row) for row in rows], total
+
+    def get_assigned_request(self, user: AuthUser, request_id: int) -> RentalRequestDetailOut:
+        profile = self._approved_lessor(user)
+        row = self.repo.get_request(request_id)
+        if row is None or row.lessor_profile_id != profile.id:
+            raise ValidationAuthError(message="Rental request not found")
+        return self._request_detail(row)
+
+    def update_assigned_request(
+        self, user: AuthUser, request_id: int, payload: RentalRequestStatusIn
+    ) -> RentalRequestDetailOut:
+        profile = self._approved_lessor(user)
+        row = self.repo.get_request(request_id, lock=True)
+        if row is None or row.lessor_profile_id != profile.id:
+            raise ValidationAuthError(message="Rental request not found")
+        if payload.status not in self.LESSOR_REQUEST_TRANSITIONS.get(row.status, set()):
+            raise ValidationAuthError(
+                message="Invalid lessor rental request transition",
+                details={"from_status": row.status, "to_status": payload.status},
+            )
+        row.lessor_note = payload.note
+        if payload.status == RentalRequestStatus.ACCEPTED.value:
+            self._accept_request(row)
+        self._apply_request_status(row, payload.status, user.id, payload.note)
+        self.db.commit()
+        return self._request_detail(self.repo.get_request(row.id))
+
+    def list_admin_requests(self, **filters) -> tuple[list[RentalRequestListOut], int]:
+        self._validate_request_status_filter(filters.get("status"))
+        rows, total = self.repo.list_requests(**filters)
+        return [self._request_list(row) for row in rows], total
+
+    def get_admin_request(self, request_id: int) -> RentalRequestAdminDetailOut:
+        row = self.repo.get_request(request_id)
+        if row is None:
+            raise ValidationAuthError(message="Rental request not found")
+        return self._request_admin_detail(row)
+
+    def update_admin_request(
+        self, admin_user: AuthUser, request_id: int, payload: RentalRequestStatusIn
+    ) -> RentalRequestAdminDetailOut:
+        row = self.repo.get_request(request_id, lock=True)
+        if row is None:
+            raise ValidationAuthError(message="Rental request not found")
+        if payload.status not in self.ADMIN_REQUEST_TRANSITIONS.get(row.status, set()):
+            raise ValidationAuthError(
+                message="Invalid Admin rental request transition",
+                details={"from_status": row.status, "to_status": payload.status},
+            )
+        row.admin_note = payload.note
+        if payload.status == RentalRequestStatus.ACCEPTED.value:
+            self._accept_request(row)
+        if payload.status == RentalRequestStatus.CANCELLED.value:
+            row.cancel_reason = payload.note
+        self._apply_request_status(row, payload.status, admin_user.id, payload.note)
+        self.db.commit()
+        return self._request_admin_detail(self.repo.get_request(row.id))
+
+    def _accept_request(self, row: RentalRequest) -> None:
+        equipment = self.repo.lock_equipment(row.equipment_id)
+        pricing = self.repo.get_pricing_rule(row.pricing_rule_id)
+        if (
+            equipment is None
+            or equipment.status != RentalEquipmentStatus.APPROVED.value
+            or not equipment.is_active
+        ):
+            raise ValidationAuthError(message="Rental equipment is no longer available")
+        if pricing is None or pricing.equipment_id != equipment.id or not pricing.is_active:
+            raise ValidationAuthError(message="Rental pricing is no longer active")
+        if self.repo.list_availability_blocks(
+            equipment.id, starts_at=row.starts_at, ends_at=row.ends_at
+        ) or self.repo.conflicting_booking(
+            equipment.id, row.starts_at, row.ends_at, exclude_request_id=row.id
+        ):
+            raise ValidationAuthError(message="Rental equipment has a conflicting block or booking")
+        rental_amount = pricing.price_amount * row.requested_units
+        deposit = equipment.security_deposit_amount or Decimal("0")
+        row.price_per_unit_snapshot = pricing.price_amount
+        row.rental_amount_snapshot = rental_amount
+        row.deposit_amount_snapshot = deposit
+        row.total_amount_snapshot = rental_amount + deposit
+        row.currency = pricing.currency
+
+    def _apply_request_status(
+        self, row: RentalRequest, to_status: str, actor_id: int, note: str | None
+    ) -> None:
+        from_status = row.status
+        row.status = to_status
+        now = self._now()
+        if to_status == RentalRequestStatus.ACCEPTED.value:
+            row.accepted_at = now
+        elif to_status == RentalRequestStatus.COMPLETED.value:
+            row.completed_at = now
+        elif to_status == RentalRequestStatus.CANCELLED.value:
+            row.cancelled_at = now
+        self.db.add(
+            RentalRequestStatusLog(
+                request_id=row.id,
+                changed_by=actor_id,
+                from_status=from_status,
+                to_status=to_status,
+                note=note,
+                event_key=f"rental_request:{row.id}:status:{from_status}:{to_status}",
+            )
+        )
+
+    def _validate_request_status_filter(self, status: str | None) -> None:
+        if status and status not in {item.value for item in RentalRequestStatus}:
+            raise ValidationAuthError(
+                message="Invalid rental request status", details={"status": status}
+            )
+
+    def _request_list(self, row: RentalRequest) -> RentalRequestListOut:
+        fields = (
+            "id",
+            "requester_user_id",
+            "lessor_profile_id",
+            "equipment_id",
+            "pricing_rule_id",
+            "starts_at",
+            "ends_at",
+            "requested_units",
+            "operator_requested",
+            "status",
+            "price_per_unit_snapshot",
+            "rental_amount_snapshot",
+            "deposit_amount_snapshot",
+            "total_amount_snapshot",
+            "currency",
+            "created_at",
+            "updated_at",
+        )
+        return RentalRequestListOut(
+            **{field: getattr(row, field) for field in fields},
+            equipment_title=row.equipment.title if row.equipment else "",
+            lessor_display_name=row.lessor_profile.display_name if row.lessor_profile else None,
+        )
+
+    def _request_detail(self, row: RentalRequest) -> RentalRequestDetailOut:
+        return RentalRequestDetailOut(
+            **self._request_list(row).model_dump(),
+            delivery_address=row.delivery_address,
+            requester_note=row.requester_note,
+            lessor_note=row.lessor_note,
+            cancel_reason=row.cancel_reason,
+            accepted_at=row.accepted_at,
+            completed_at=row.completed_at,
+            cancelled_at=row.cancelled_at,
+            status_logs=[
+                self._status_log_out(log)
+                for log in sorted(row.status_logs, key=lambda item: (item.created_at, item.id))
+            ],
+        )
+
+    def _request_admin_detail(self, row: RentalRequest) -> RentalRequestAdminDetailOut:
+        return RentalRequestAdminDetailOut(
+            **self._request_detail(row).model_dump(), admin_note=row.admin_note
+        )
+
+    @staticmethod
+    def _status_log_out(row: RentalRequestStatusLog) -> RentalRequestStatusLogOut:
+        return RentalRequestStatusLogOut(
+            id=row.id,
+            changed_by=row.changed_by,
+            from_status=row.from_status,
+            to_status=row.to_status,
+            note=row.note,
+            created_at=row.created_at,
+        )
+
     def _pricing_row(self, payload: RentalPricingRuleIn, operator_mode: str) -> RentalPricingRule:
         if payload.unit not in {item.value for item in RentalPricingUnit}:
             raise ValidationAuthError(
@@ -591,6 +874,10 @@ class RentalService:
     @staticmethod
     def _naive_utc(value: datetime) -> datetime:
         return value.astimezone(timezone.utc).replace(tzinfo=None) if value.tzinfo else value
+
+    @staticmethod
+    def _now() -> datetime:
+        return datetime.now(timezone.utc).replace(tzinfo=None)
 
     @staticmethod
     def _validate_block_type(value: str) -> None:
