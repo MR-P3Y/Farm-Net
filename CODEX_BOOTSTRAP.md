@@ -99,7 +99,8 @@ Phase 12.7 Docs/Postman + Runtime Regression: completed
 Phase 12.8 Category Management Release Gate + Tag: completed (v0.20.0-category-management-foundation)
 Phase 16.1 Equipment Rental Real-State Audit + Contract Boundary: completed
 Phase 16.2 Rental DB + Permission Foundation: completed (104ae669cc1a)
-Next: Phase 16.3 Categories + Lessor Profile APIs
+Phase 16.3 Categories + Lessor Profile APIs: completed
+Next: Phase 16.4 Equipment Listing + Media APIs
 ```
 
 Services means agricultural operational services, not equipment rental.

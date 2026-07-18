@@ -603,6 +603,19 @@ model fields exist:
   `alembic check`; cleanup remains an explicit pre-release compatibility task.
 - Evidence: `docs/rentals/phase-16-db-permission-foundation.md`.
 
+### Step 16.3 Categories + Lessor Profile APIs
+
+- Added public/Admin category governance, hierarchy safety, usage counts, and
+  a non-destructive eight-category seed.
+- Added owner lessor profile get/save/submit plus Admin filter, pagination, and
+  controlled moderation contracts.
+- Required approved lessor verification before profile approval and Admin notes
+  for rejection/suspension.
+- Backend Ruff/compileall passed, 5 focused and all 64 Backend tests passed;
+  runtime seed, 7 OpenAPI paths, 401 ownership guard, and health passed.
+- Added API documentation and a valid nine-request Rental Postman collection.
+- Evidence: `docs/rentals/phase-16-categories-lessor-profiles.md`.
+
 ## Progress Update Rule
 
 After every completed step:

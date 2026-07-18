@@ -17,6 +17,8 @@ from app.modules.rentals.models import (
     RentalRequest,
     RentalRequestStatusLog,
 )
+from app.modules.rentals.schemas import RentalCategoryCreateIn, RentalCategoryUpdateIn
+from app.modules.rentals.service import RentalService
 
 
 def test_rental_foundation_has_all_independent_tables() -> None:
@@ -95,3 +97,20 @@ def test_rental_enums_and_permissions_cover_owner_requester_and_admin() -> None:
         "rental_requests.manage_assigned",
         "rental_requests.admin_manage",
     } <= permission_codes
+
+
+def test_rental_category_contract_normalizes_code_and_supports_parent_clear() -> None:
+    created = RentalCategoryCreateIn(code=" tractors ", title=" تراکتور ")
+    cleared = RentalCategoryUpdateIn.model_validate({"parent_id": None})
+
+    assert created.code == "tractors"
+    assert created.title == "تراکتور"
+    assert cleared.model_dump(exclude_unset=True) == {"parent_id": None}
+
+
+def test_rental_default_taxonomy_has_stable_unique_codes() -> None:
+    codes = [code for code, _ in RentalService.DEFAULT_CATEGORIES]
+
+    assert len(codes) == 8
+    assert len(codes) == len(set(codes))
+    assert {"tractors", "harvesters", "sprayers", "irrigation"} <= set(codes)

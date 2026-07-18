@@ -258,6 +258,11 @@ four-index Alembic baseline drift in pre-existing Consultant/Services tables
 was not mixed into the Rental migration. Step 16.3 Categories + Lessor Profile
 APIs is next.
 
+Step 16.3 added governed Rental categories, an idempotent eight-row equipment
+taxonomy, owner lessor profile create/edit/submit, and Admin moderation. Lessor
+approval requires an approved role Verification Request. Step 16.4 Equipment
+Listing + Media APIs is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
