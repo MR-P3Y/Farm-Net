@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Farm-Net Equipment Rental",
-    "description": "Phase 16.7: 35 Rental API requests with notification, privacy, and concurrency behavior documented on the existing booking paths.",
+    "description": "Phase 16.12 complete Equipment Rental API collection: 35 requests covering all 29 public, requester, lessor, and Admin paths plus notification, privacy, and concurrency contracts.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

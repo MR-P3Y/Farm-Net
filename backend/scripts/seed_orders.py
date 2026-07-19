@@ -7,8 +7,8 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from app.db.session import SessionLocal
-from app.modules.orders.seed import seed_commission_settings
+from app.db.session import SessionLocal  # noqa: E402
+from app.modules.orders.seed import seed_commission_settings  # noqa: E402
 
 
 def main() -> None:

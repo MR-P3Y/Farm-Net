@@ -730,6 +730,22 @@ model fields exist:
 - Admin analyze passed, all 14 tests passed, and Web/Wasm build checks passed.
 - Evidence: `docs/rentals/phase-16-admin-panel.md`.
 
+### Step 16.12 Docs/Postman + Runtime Regression
+
+- Consolidated Backend, notification, Mobile requester/lessor, Admin, privacy,
+  concurrency, financial boundary, and operational verification documentation.
+- Validated 35 Postman requests, every raw JSON body, and exact coverage of all
+  29 unique Runtime Rental OpenAPI paths with no missing or extra path.
+- Backend Ruff/compileall passed and all 79 tests passed with 16 existing
+  `datetime.utcnow` warnings outside Rental. Three seed launchers received only
+  explicit E402 annotations for their intentional path bootstrap.
+- Alembic remained `104ae669cc1a (head)`; Auth seed ran twice identically with
+  12 roles and 241 permissions. Runtime confirmed 8 Rental tables, 24 Rental
+  permissions, and app/database/Redis health `ok`.
+- Mobile analyze/build passed with all 34 tests; Admin analyze/build passed with
+  all 14 tests. Both Web builds completed and Wasm dry runs passed.
+- Evidence: `docs/rentals/phase-16-docs-runtime-regression.md`.
+
 ## Progress Update Rule
 
 After every completed step:

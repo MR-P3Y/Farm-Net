@@ -146,3 +146,19 @@ category governance, lessor moderation, equipment moderation, and paginated
 request list/detail/status logs/status changes. Rejection and suspension forms
 require Admin notes, while Backend permissions and transition validation remain
 authoritative. Admin-only notes never enter public/requester contracts.
+
+## Complete contract inventory (Phase 16.12)
+
+```text
+Database tables: 8
+Rental permissions: 24
+Runtime OpenAPI paths: 29
+Postman requests: 35
+Postman unique paths: 29/29
+Postman raw JSON bodies: valid
+```
+
+The collection covers every public, requester, lessor, and Admin Rental path.
+Rental stores commercial snapshots but does not claim invoice issuance, payment
+capture, deposit release, commission, refund, settlement, damage, or penalty
+processing.

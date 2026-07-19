@@ -307,6 +307,12 @@ and exact status logs, controlled request transitions, permission guarding, and
 loading/empty/error handling. Step 16.12 Docs/Postman + Runtime Regression is
 next.
 
+Step 16.12 consolidated the complete Rental API/client documentation and proved
+the release candidate through full Backend, Runtime, Mobile, Admin, and Postman
+regression. Runtime exposes 29 Rental paths backed by 8 tables and 24 Rental
+permissions; the 35-request Postman collection covers every path exactly. Step
+16.13 Equipment Rental Release Gate + Tag is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
