@@ -21,6 +21,9 @@ import '../../features/products/presentation/store_products_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/rentals/presentation/rental_equipment_detail_screen.dart';
 import '../../features/rentals/presentation/rental_equipment_list_screen.dart';
+import '../../features/rentals/presentation/my_rental_requests_screen.dart';
+import '../../features/rentals/presentation/rental_request_create_screen.dart';
+import '../../features/rentals/presentation/rental_request_detail_screen.dart';
 import '../../features/social/presentation/social_create_post_screen.dart';
 import '../../features/social/presentation/social_feed_screen.dart';
 import '../../features/social/presentation/social_post_detail_screen.dart';
@@ -105,6 +108,29 @@ final GoRouter appRouter = GoRouter(
           (context, state) => RentalEquipmentDetailScreen(
             equipmentId:
                 int.tryParse(state.pathParameters['equipmentId'] ?? '') ?? 0,
+          ),
+    ),
+    GoRoute(
+      path: '/rentals/equipment/:equipmentId/request',
+      name: 'rental-request-create',
+      builder:
+          (context, state) => RentalRequestCreateScreen(
+            equipmentId:
+                int.tryParse(state.pathParameters['equipmentId'] ?? '') ?? 0,
+          ),
+    ),
+    GoRoute(
+      path: '/rentals/requests',
+      name: 'my-rental-requests',
+      builder: (context, state) => const MyRentalRequestsScreen(),
+    ),
+    GoRoute(
+      path: '/rentals/requests/:requestId',
+      name: 'rental-request-detail',
+      builder:
+          (context, state) => RentalRequestDetailScreen(
+            requestId:
+                int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
           ),
     ),
     GoRoute(

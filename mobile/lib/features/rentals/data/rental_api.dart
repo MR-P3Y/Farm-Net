@@ -64,6 +64,68 @@ class RentalApi {
     }
   }
 
+  Future<RentalAvailabilityCheck> availability(
+    int equipmentId,
+    DateTime startsAt,
+    DateTime endsAt,
+  ) async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/rentals/equipment/$equipmentId/availability',
+        queryParameters: {
+          'starts_at': startsAt.toUtc().toIso8601String(),
+          'ends_at': endsAt.toUtc().toIso8601String(),
+        },
+      );
+      return RentalAvailabilityCheck.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<RentalRequest> createRequest(RentalRequestInput input) => _request(
+    () => _client.dio.post<Map<String, dynamic>>(
+      '/rentals/requests',
+      data: input.toJson(),
+    ),
+  );
+  Future<List<RentalRequest>> myRequests({String? status}) async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/rentals/requests/me',
+        queryParameters: {if (status != null) 'status': status},
+      );
+      return _parseList(response.data?['data'], RentalRequest.fromJson);
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<RentalRequest> requestDetail(int id) => _request(
+    () => _client.dio.get<Map<String, dynamic>>('/rentals/requests/me/$id'),
+  );
+  Future<RentalRequest> cancelRequest(int id, String reason) => _request(
+    () => _client.dio.post<Map<String, dynamic>>(
+      '/rentals/requests/me/$id/cancel',
+      data: {'reason': reason},
+    ),
+  );
+
+  Future<RentalRequest> _request(
+    Future<Response<Map<String, dynamic>>> Function() call,
+  ) async {
+    try {
+      final response = await call();
+      return RentalRequest.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
   Future<List<T>> _getList<T>(
     String path,
     T Function(Map<String, dynamic>) parser,

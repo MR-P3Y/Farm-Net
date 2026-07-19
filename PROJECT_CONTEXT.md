@@ -291,6 +291,11 @@ loading/empty/error states, and Home navigation. Backend price-range filtering
 does not exist and was not simulated client-side. Step 16.9 Mobile Rental
 Request Flow is next.
 
+Step 16.9 added Mobile availability preflight, pricing/date/unit selection,
+typed request creation, requester list/detail, exact status timeline rendering,
+commercial snapshots, and status-bound cancellation with a required reason.
+Step 16.10 Mobile Lessor Management + Request Workbench is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

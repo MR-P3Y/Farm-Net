@@ -686,6 +686,21 @@ model fields exist:
 - Mobile analyze passed, all 30 tests passed, and Web/Wasm build checks passed.
 - Evidence: `docs/rentals/phase-16-mobile-discovery-detail.md`.
 
+### Step 16.9 Mobile Rental Request Flow
+
+- Added typed availability, request input/detail, snapshot, and status-log
+  models plus requester API/Repository/Riverpod operations.
+- Added pricing rule, requested-unit, start/end, delivery address, and requester
+  note input with operator mode derived from the selected Backend pricing rule.
+- Required a successful public availability preflight before submission while
+  preserving Backend acceptance-time overlap revalidation as authoritative.
+- Added requester list/detail, pull-to-refresh, role-safe timeline, commercial
+  snapshots, status labels, and cancellation only for pending/accepted requests
+  with a required reason.
+- Added request routes and Home navigation. Mobile analyze passed, all 32 tests
+  passed, and Web/Wasm build checks passed.
+- Evidence: `docs/rentals/phase-16-mobile-request-flow.md`.
+
 ## Progress Update Rule
 
 After every completed step:

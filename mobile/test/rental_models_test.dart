@@ -42,4 +42,52 @@ void main() {
     expect(price.operatorIncluded, isTrue);
     expect(rentalUnitLabel(price.unit), 'هکتار');
   });
+
+  test(
+    'rental request input preserves backend operator and range contract',
+    () {
+      final input =
+          RentalRequestInput(
+            equipmentId: 7,
+            pricingRuleId: 4,
+            startsAt: DateTime.utc(2026, 8, 1),
+            endsAt: DateTime.utc(2026, 8, 3),
+            requestedUnits: 2,
+            operatorRequested: true,
+            requesterNote: ' نیاز به راننده ',
+          ).toJson();
+      expect(input['equipment_id'], 7);
+      expect(input['pricing_rule_id'], 4);
+      expect(input['operator_requested'], isTrue);
+      expect(input['requester_note'], 'نیاز به راننده');
+    },
+  );
+
+  test('rental request parses snapshots timeline and cancel eligibility', () {
+    final request = RentalRequest.fromJson({
+      'id': 9,
+      'equipment_id': 7,
+      'pricing_rule_id': 4,
+      'equipment_title': 'تراکتور',
+      'starts_at': '2026-08-01T00:00:00',
+      'ends_at': '2026-08-03T00:00:00',
+      'requested_units': '2.00',
+      'operator_requested': false,
+      'status': 'accepted',
+      'currency': 'TOMAN',
+      'total_amount_snapshot': '4500000.00',
+      'status_logs': [
+        {
+          'id': 1,
+          'from_status': 'pending',
+          'to_status': 'accepted',
+          'created_at': '2026-07-20T10:00:00',
+        },
+      ],
+    });
+    expect(request.canCancel, isTrue);
+    expect(request.totalAmount, 4500000);
+    expect(request.statusLogs.single.toStatus, 'accepted');
+    expect(rentalRequestStatusLabel(request.status), 'پذیرفته‌شده');
+  });
 }

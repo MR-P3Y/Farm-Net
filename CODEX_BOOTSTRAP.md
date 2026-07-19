@@ -105,7 +105,8 @@ Phase 16.5 Availability + Pricing Rules: completed
 Phase 16.6 Rental Request/Booking Workflow: completed
 Phase 16.7 Notifications + Privacy/Concurrency Hardening: completed
 Phase 16.8 Mobile Equipment Discovery + Detail: completed
-Next: Phase 16.9 Mobile Rental Request Flow
+Phase 16.9 Mobile Rental Request Flow: completed
+Next: Phase 16.10 Mobile Lessor Management + Request Workbench
 ```
 
 Services means agricultural operational services, not equipment rental.

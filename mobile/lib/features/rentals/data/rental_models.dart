@@ -147,6 +147,146 @@ class RentalEquipmentDetail {
   final List<RentalPricingRule> pricing;
 }
 
+class RentalAvailabilityCheck {
+  const RentalAvailabilityCheck({required this.isAvailable});
+  final bool isAvailable;
+  factory RentalAvailabilityCheck.fromJson(Map<String, dynamic> json) =>
+      RentalAvailabilityCheck(isAvailable: json['is_available'] == true);
+}
+
+class RentalRequestInput {
+  const RentalRequestInput({
+    required this.equipmentId,
+    required this.pricingRuleId,
+    required this.startsAt,
+    required this.endsAt,
+    required this.requestedUnits,
+    required this.operatorRequested,
+    this.deliveryAddress,
+    this.requesterNote,
+  });
+  final int equipmentId;
+  final int pricingRuleId;
+  final DateTime startsAt;
+  final DateTime endsAt;
+  final double requestedUnits;
+  final bool operatorRequested;
+  final String? deliveryAddress;
+  final String? requesterNote;
+  Map<String, dynamic> toJson() => {
+    'equipment_id': equipmentId,
+    'pricing_rule_id': pricingRuleId,
+    'starts_at': startsAt.toUtc().toIso8601String(),
+    'ends_at': endsAt.toUtc().toIso8601String(),
+    'requested_units': requestedUnits,
+    'operator_requested': operatorRequested,
+    if (deliveryAddress?.trim().isNotEmpty ?? false)
+      'delivery_address': deliveryAddress!.trim(),
+    if (requesterNote?.trim().isNotEmpty ?? false)
+      'requester_note': requesterNote!.trim(),
+  };
+}
+
+class RentalRequestStatusLog {
+  const RentalRequestStatusLog({
+    required this.id,
+    required this.toStatus,
+    required this.createdAt,
+    this.fromStatus,
+    this.note,
+  });
+  final int id;
+  final String? fromStatus;
+  final String toStatus;
+  final DateTime createdAt;
+  final String? note;
+  factory RentalRequestStatusLog.fromJson(Map<String, dynamic> json) =>
+      RentalRequestStatusLog(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        fromStatus: json['from_status']?.toString(),
+        toStatus: json['to_status']?.toString() ?? '',
+        createdAt:
+            DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+            DateTime(1970),
+        note: json['note']?.toString(),
+      );
+}
+
+class RentalRequest {
+  const RentalRequest({
+    required this.id,
+    required this.equipmentId,
+    required this.pricingRuleId,
+    required this.equipmentTitle,
+    required this.startsAt,
+    required this.endsAt,
+    required this.requestedUnits,
+    required this.operatorRequested,
+    required this.status,
+    required this.currency,
+    this.lessorDisplayName,
+    this.pricePerUnit,
+    this.rentalAmount,
+    this.depositAmount,
+    this.totalAmount,
+    this.deliveryAddress,
+    this.requesterNote,
+    this.lessorNote,
+    this.cancelReason,
+    this.statusLogs = const [],
+  });
+  final int id;
+  final int equipmentId;
+  final int pricingRuleId;
+  final String equipmentTitle;
+  final String? lessorDisplayName;
+  final DateTime startsAt;
+  final DateTime endsAt;
+  final double requestedUnits;
+  final bool operatorRequested;
+  final String status;
+  final double? pricePerUnit;
+  final double? rentalAmount;
+  final double? depositAmount;
+  final double? totalAmount;
+  final String currency;
+  final String? deliveryAddress;
+  final String? requesterNote;
+  final String? lessorNote;
+  final String? cancelReason;
+  final List<RentalRequestStatusLog> statusLogs;
+  bool get canCancel => status == 'pending' || status == 'accepted';
+  factory RentalRequest.fromJson(Map<String, dynamic> json) => RentalRequest(
+    id: (json['id'] as num?)?.toInt() ?? 0,
+    equipmentId: (json['equipment_id'] as num?)?.toInt() ?? 0,
+    pricingRuleId: (json['pricing_rule_id'] as num?)?.toInt() ?? 0,
+    equipmentTitle: json['equipment_title']?.toString() ?? '',
+    lessorDisplayName: json['lessor_display_name']?.toString(),
+    startsAt:
+        DateTime.tryParse(json['starts_at']?.toString() ?? '') ??
+        DateTime(1970),
+    endsAt:
+        DateTime.tryParse(json['ends_at']?.toString() ?? '') ?? DateTime(1970),
+    requestedUnits: _double(json['requested_units']) ?? 0,
+    operatorRequested: json['operator_requested'] == true,
+    status: json['status']?.toString() ?? 'pending',
+    pricePerUnit: _double(json['price_per_unit_snapshot']),
+    rentalAmount: _double(json['rental_amount_snapshot']),
+    depositAmount: _double(json['deposit_amount_snapshot']),
+    totalAmount: _double(json['total_amount_snapshot']),
+    currency: json['currency']?.toString() ?? 'TOMAN',
+    deliveryAddress: json['delivery_address']?.toString(),
+    requesterNote: json['requester_note']?.toString(),
+    lessorNote: json['lessor_note']?.toString(),
+    cancelReason: json['cancel_reason']?.toString(),
+    statusLogs:
+        (json['status_logs'] as List? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(RentalRequestStatusLog.fromJson)
+            .toList(),
+  );
+}
+
 double? _double(Object? value) =>
     value is num ? value.toDouble() : double.tryParse(value?.toString() ?? '');
 
@@ -165,5 +305,16 @@ String rentalUnitLabel(String value) =>
       'week': 'هفته',
       'hectare': 'هکتار',
       'project': 'پروژه',
+    }[value] ??
+    value;
+
+String rentalRequestStatusLabel(String value) =>
+    const {
+      'pending': 'در انتظار پاسخ',
+      'accepted': 'پذیرفته‌شده',
+      'rejected': 'ردشده',
+      'in_progress': 'در حال اجاره',
+      'completed': 'تکمیل‌شده',
+      'cancelled': 'لغوشده',
     }[value] ??
     value;

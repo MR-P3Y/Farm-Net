@@ -182,6 +182,14 @@ class HomeScreen extends ConsumerWidget {
                         label: const Text('اجاره تجهیزات کشاورزی'),
                       ),
                       SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/rentals/requests');
+                        },
+                        icon: const Icon(Icons.assignment_outlined),
+                        label: const Text('درخواست‌های اجاره من'),
+                      ),
+                      SizedBox(height: r.v(12)),
                       FilledButton.icon(
                         onPressed: () {
                           context.push('/consultants');

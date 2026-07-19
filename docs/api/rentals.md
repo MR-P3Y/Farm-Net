@@ -115,3 +115,15 @@ public media, lessor display name, delivery/deposit facts, and pricing rules.
 Backend currently exposes no price-range filter, so the Mobile client does not
 pretend to provide one. Availability date selection and request creation are
 reserved for the next Mobile request-flow step.
+
+## Mobile requester flow (Phase 16.9)
+
+The Mobile client checks public availability for the chosen date/time range,
+selects an active pricing rule, validates its minimum units, derives the exact
+operator flag from that rule, and submits the typed request contract. This
+preflight is advisory; Backend acceptance still performs the authoritative
+row-locked overlap and pricing revalidation.
+
+Authenticated requesters can list and inspect only their own requests, view
+status logs and accepted commercial snapshots, and cancel only `pending` or
+`accepted` requests with a non-empty reason.

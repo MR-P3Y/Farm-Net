@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_app_bar.dart';
@@ -127,9 +128,11 @@ class _Detail extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 12),
-        const Text(
-          'ثبت درخواست اجاره و انتخاب تاریخ در گام بعدی Mobile فعال می‌شود.',
-          textAlign: TextAlign.center,
+        FilledButton.icon(
+          onPressed:
+              () => context.push('/rentals/equipment/${item.id}/request'),
+          icon: const Icon(Icons.calendar_month_outlined),
+          label: const Text('درخواست اجاره'),
         ),
       ],
     );

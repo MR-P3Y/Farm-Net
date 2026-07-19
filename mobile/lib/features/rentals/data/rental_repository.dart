@@ -26,4 +26,16 @@ class RentalRepository {
     operatorMode: operatorMode,
   );
   Future<RentalEquipmentDetail> detail(int id) => _api.detail(id);
+  Future<RentalAvailabilityCheck> availability(
+    int id,
+    DateTime start,
+    DateTime end,
+  ) => _api.availability(id, start, end);
+  Future<RentalRequest> createRequest(RentalRequestInput input) =>
+      _api.createRequest(input);
+  Future<List<RentalRequest>> myRequests({String? status}) =>
+      _api.myRequests(status: status);
+  Future<RentalRequest> requestDetail(int id) => _api.requestDetail(id);
+  Future<RentalRequest> cancelRequest(int id, String reason) =>
+      _api.cancelRequest(id, reason);
 }

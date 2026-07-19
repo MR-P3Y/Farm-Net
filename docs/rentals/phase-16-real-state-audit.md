@@ -77,12 +77,17 @@ step.
 16.5 Availability + Pricing Rules
 16.6 Rental Request/Booking Workflow
 16.7 Notifications + Privacy/Concurrency Hardening
-16.8 Mobile Rental Discovery + Request Flow
-16.9 Mobile Lessor Management + Workbench
-16.10 Admin Panel Equipment Rental
-16.11 Docs/Postman + Runtime Regression
-16.12 Equipment Rental Release Gate + Tag
+16.8 Mobile Rental Discovery + Detail
+16.9 Mobile Rental Request Flow
+16.10 Mobile Lessor Management + Workbench
+16.11 Admin Panel Equipment Rental
+16.12 Docs/Postman + Runtime Regression
+16.13 Equipment Rental Release Gate + Tag
 ```
+
+The original combined Mobile discovery/request step was split after Backend
+implementation so each independently testable client workflow receives its own
+clean commit and verification gate; no scope was added or removed.
 
 ## Completion gate
 
