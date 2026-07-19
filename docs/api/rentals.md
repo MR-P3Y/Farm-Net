@@ -138,3 +138,11 @@ range overlap, and lifecycle validation remain authoritative.
 Approved lessors can filter assigned requests, inspect role-safe detail and the
 status timeline, and invoke only `pending -> accepted|rejected`, `accepted ->
 in_progress`, and `in_progress -> completed` actions.
+
+## Admin Panel (Phase 16.11)
+
+The Admin client consumes all `/admin/rentals` contracts through typed models:
+category governance, lessor moderation, equipment moderation, and paginated
+request list/detail/status logs/status changes. Rejection and suspension forms
+require Admin notes, while Backend permissions and transition validation remain
+authoritative. Admin-only notes never enter public/requester contracts.

@@ -715,6 +715,21 @@ model fields exist:
   all 34 tests passed, and Web/Wasm build checks passed.
 - Evidence: `docs/rentals/phase-16-mobile-lessor-workbench.md`.
 
+### Step 16.11 Admin Panel Equipment Rental
+
+- Added a typed four-tab Rental Admin surface for categories, lessor profiles,
+  equipment listings, and rental requests.
+- Added category create/edit, parent hierarchy, activation, ordering, usage
+  counters, and validation-aligned fields.
+- Added paginated lessor/equipment moderation with status-specific Admin notes
+  and Backend permission enforcement.
+- Added paginated request list, typed Admin-only detail, commercial snapshot,
+  cancel/Admin notes, exact status timeline, and controlled Admin transitions.
+- Added Permission Guard, sidebar/router navigation, loading/empty/error states,
+  pagination, and model tests without raw JSON rendering.
+- Admin analyze passed, all 14 tests passed, and Web/Wasm build checks passed.
+- Evidence: `docs/rentals/phase-16-admin-panel.md`.
+
 ## Progress Update Rule
 
 After every completed step:

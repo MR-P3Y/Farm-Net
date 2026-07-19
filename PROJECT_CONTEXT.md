@@ -301,6 +301,12 @@ and submission, atomic pricing and availability management, assigned request
 list/detail/timeline, and the exact lessor accept/reject/start/complete actions.
 Step 16.11 Admin Panel Equipment Rental is next.
 
+Step 16.11 added the typed Admin Rental panel with governed category hierarchy,
+lessor and equipment moderation, paginated request operations, Admin-only detail
+and exact status logs, controlled request transitions, permission guarding, and
+loading/empty/error handling. Step 16.12 Docs/Postman + Runtime Regression is
+next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -79,6 +79,12 @@ class AdminSidebar extends ConsumerWidget {
                   onTap: () => context.go('/services'),
                 ),
                 _SidebarItem(
+                  icon: Icons.agriculture_outlined,
+                  label: 'اجاره تجهیزات',
+                  compact: isCompact,
+                  onTap: () => context.go('/rentals'),
+                ),
+                _SidebarItem(
                   icon: Icons.receipt_long_outlined,
                   label: 'سفارش‌ها',
                   compact: isCompact,
