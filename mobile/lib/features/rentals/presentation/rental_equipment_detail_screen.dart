@@ -105,7 +105,7 @@ class _Detail extends StatelessWidget {
           _Info(
             label: 'ودیعه',
             value:
-                '${item.securityDepositAmount!.toStringAsFixed(0)} ${item.currency}',
+                '${item.securityDepositAmount!.toStringAsFixed(0)} ${item.currency == 'TOMAN' ? 'تومان' : item.currency}',
           ),
         const Divider(height: 32),
         Text('تعرفه‌های اجاره', style: Theme.of(context).textTheme.titleLarge),
@@ -120,7 +120,7 @@ class _Detail extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.payments_outlined),
               title: Text(
-                '${price.priceAmount.toStringAsFixed(0)} ${price.currency} / ${rentalUnitLabel(price.unit)}',
+                '${price.priceAmount.toStringAsFixed(0)} ${price.currency == 'TOMAN' ? 'تومان' : price.currency} / ${rentalUnitLabel(price.unit)}',
               ),
               subtitle: Text(
                 'حداقل ${price.minimumUnits} واحد${price.operatorIncluded ? '، همراه اپراتور' : ''}',

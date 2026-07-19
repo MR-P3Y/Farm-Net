@@ -326,6 +326,13 @@ real gateway, or cross-domain finance integration. The audit preserves Phase 9
 contracts, identifies the `TOMAN`/Consultation `IRR` mismatch as blocking, and
 defines Step 20.2 Canonical Money + Billable Source Contracts as next.
 
+Phase 20 Step 20.2 established Iranian toman as the only commercial currency:
+`TOMAN` in API/database and `تومان` in Persian UI, with the explicit legacy
+conversion `10 IRR = 1 TOMAN`. Typed billable-source/event contracts now cover
+orders, services, rentals, and consultations while preserving Phase 9 APIs.
+Service/consultation budgets remain non-billable and rental deposits remain
+separate from revenue. Step 20.3 Wallet Accounts + Double-Entry Ledger is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -175,7 +175,7 @@ class AdminConsultRequest {
       status: json['status']?.toString() ?? '',
       contactMethod: json['contact_method']?.toString() ?? '',
       budgetAmount: json['budget_amount']?.toString(),
-      currency: json['currency']?.toString() ?? 'IRR',
+      currency: json['currency']?.toString() ?? 'TOMAN',
       scheduledAt: json['scheduled_at']?.toString(),
       adminNote: json['admin_note']?.toString(),
       consultantNote: json['consultant_note']?.toString(),

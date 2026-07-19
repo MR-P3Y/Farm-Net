@@ -58,9 +58,10 @@ them. Permissions alone are not an implemented feature.
 
 ## Blocking Contract Decisions
 
-1. `TOMAN` is used by products, services, and rentals, while consultation uses
-   `IRR`. Financial posting must reject mixed units until one canonical storage
-   unit and an explicit conversion/display rule are approved.
+1. `TOMAN` is used by products, services, and rentals, while consultation used
+   `IRR`. Step 20.2 resolved this: canonical storage/API is Iranian toman with
+   code `TOMAN`, Persian display is `تومان`, and legacy conversion is
+   `10 IRR = 1 TOMAN`.
 2. A service or consultation budget cannot create an invoice. A separately
    accepted final-price snapshot is required first.
 3. Rental deposit principal must remain separate from rental revenue. Deposit

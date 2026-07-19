@@ -3,6 +3,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.common.money import toman_currency
+
 
 def _strip(value):
     if isinstance(value, str):
@@ -126,6 +128,8 @@ class RentalEquipmentInput(BaseModel):
     is_active: bool = True
     media_items: list[RentalEquipmentMediaIn] = Field(default_factory=list, max_length=20)
 
+    _currency = field_validator("currency", mode="before")(toman_currency)
+
     _normalize = field_validator(
         "title",
         "slug",
@@ -206,7 +210,8 @@ class RentalPricingRuleIn(BaseModel):
     currency: str = Field(default="TOMAN", min_length=3, max_length=10)
     is_active: bool = True
 
-    _normalize = field_validator("unit", "currency", mode="before")(_strip)
+    _normalize = field_validator("unit", mode="before")(_strip)
+    _currency = field_validator("currency", mode="before")(toman_currency)
 
 
 class RentalPricingRuleOut(BaseModel):

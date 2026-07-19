@@ -101,7 +101,7 @@ class _State extends ConsumerState<ServiceWorkbenchDetailScreen> {
                           if (q.budgetAmount != null)
                             _Info(
                               'بودجه',
-                              '${q.budgetAmount!.toStringAsFixed(0)} ${q.currency}',
+                              '${q.budgetAmount!.toStringAsFixed(0)} ${q.currency == 'TOMAN' ? 'تومان' : q.currency}',
                             ),
                           if ([
                             q.provinceName,

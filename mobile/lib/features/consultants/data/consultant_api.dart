@@ -149,7 +149,7 @@ class ConsultantApi {
           'title': title,
           'description': description,
           'contact_method': contactMethod,
-          'currency': 'IRR',
+          'currency': 'TOMAN',
         },
       );
 

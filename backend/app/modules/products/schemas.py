@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.common.money import toman_currency
+
 
 class ProductCategoryCreateIn(BaseModel):
     parent_id: int | None = Field(default=None, ge=1)
@@ -75,6 +77,8 @@ class ProductCreateIn(BaseModel):
     is_active: bool = True
     is_featured: bool = False
 
+    _currency = field_validator("currency", mode="before")(toman_currency)
+
     @field_validator(
         "name",
         "slug",
@@ -116,6 +120,8 @@ class ProductUpdateIn(BaseModel):
 
     is_active: bool | None = None
     is_featured: bool | None = None
+
+    _currency = field_validator("currency", mode="before")(toman_currency)
 
     @field_validator(
         "name",

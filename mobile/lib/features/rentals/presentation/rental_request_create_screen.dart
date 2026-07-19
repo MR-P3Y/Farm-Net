@@ -65,7 +65,7 @@ class _State extends ConsumerState<RentalRequestCreateScreen> {
                             (p) => DropdownMenuItem(
                               value: p.id,
                               child: Text(
-                                '${p.priceAmount.toStringAsFixed(0)} ${p.currency} / ${rentalUnitLabel(p.unit)}',
+                                '${p.priceAmount.toStringAsFixed(0)} ${p.currency == 'TOMAN' ? 'تومان' : p.currency} / ${rentalUnitLabel(p.unit)}',
                               ),
                             ),
                           )

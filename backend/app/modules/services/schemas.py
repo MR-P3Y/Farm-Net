@@ -6,6 +6,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.common.money import toman_currency
+
 
 class ServiceCategoryCreateIn(BaseModel):
     parent_id: int | None = Field(default=None, ge=1)
@@ -225,6 +227,8 @@ class ServiceOfferCreateIn(BaseModel):
     is_active: bool = True
     media_items: list[ServiceOfferMediaIn] = Field(default_factory=list, max_length=20)
 
+    _currency = field_validator("currency", mode="before")(toman_currency)
+
     @field_validator(
         "title",
         "slug",
@@ -268,6 +272,8 @@ class ServiceOfferUpdateIn(BaseModel):
     longitude: str | None = Field(default=None, max_length=40)
     is_active: bool | None = None
     media_items: list[ServiceOfferMediaIn] | None = Field(default=None, max_length=20)
+
+    _currency = field_validator("currency", mode="before")(toman_currency)
 
     @field_validator(
         "title",
@@ -416,6 +422,8 @@ class ServiceRequestCreateIn(BaseModel):
     longitude: str | None = Field(default=None, max_length=40)
 
     model_config = {"extra": "forbid"}
+
+    _currency = field_validator("currency", mode="before")(toman_currency)
 
     @field_validator(
         "title",

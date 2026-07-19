@@ -484,7 +484,7 @@ Future<void> _detail(BuildContext c, AdminRentalRequest x) => showDialog<void>(
             shrinkWrap: true,
             children: [
               Text(
-                '${x.equipmentTitle} • ${x.totalAmount?.toStringAsFixed(0) ?? '-'} ${x.currency}',
+                '${x.equipmentTitle} • ${x.totalAmount?.toStringAsFixed(0) ?? '-'} ${x.currency == 'TOMAN' ? 'تومان' : x.currency}',
               ),
               if ((x.adminNote ?? '').isNotEmpty)
                 Text('یادداشت ادمین: ${x.adminNote}'),

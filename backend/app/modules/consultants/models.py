@@ -212,7 +212,7 @@ class ConsultRequest(Base):
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="open", index=True)
 
     budget_amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
-    currency: Mapped[str] = mapped_column(String(10), nullable=False, default="IRR")
+    currency: Mapped[str] = mapped_column(String(10), nullable=False, default="TOMAN")
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     admin_note: Mapped[str | None] = mapped_column(Text, nullable=True)

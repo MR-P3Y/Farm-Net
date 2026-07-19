@@ -101,7 +101,7 @@ class _State extends ConsumerState<ServiceRequestDetailScreen> {
                           if (request.budgetAmount != null)
                             _Info(
                               'بودجه',
-                              '${request.budgetAmount!.toStringAsFixed(0)} ${request.currency}',
+                              '${request.budgetAmount!.toStringAsFixed(0)} ${request.currency == 'TOMAN' ? 'تومان' : request.currency}',
                             ),
                           if ((request.addressText ?? '').isNotEmpty)
                             _Info('نشانی', request.addressText!),

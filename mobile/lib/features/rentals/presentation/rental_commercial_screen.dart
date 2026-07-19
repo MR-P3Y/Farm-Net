@@ -88,7 +88,7 @@ class _State extends ConsumerState<RentalCommercialScreen> {
                     ..._prices.map(
                       (p) => ListTile(
                         title: Text(
-                          '${p.priceAmount.toStringAsFixed(0)} ${p.currency} / ${rentalUnitLabel(p.unit)}',
+                          '${p.priceAmount.toStringAsFixed(0)} ${p.currency == 'TOMAN' ? 'تومان' : p.currency} / ${rentalUnitLabel(p.unit)}',
                         ),
                         subtitle: Text(
                           'حداقل ${p.minimumUnits} • ${p.operatorIncluded ? 'با اپراتور' : 'بدون اپراتور'}',

@@ -131,5 +131,5 @@ class _State extends ConsumerState<MyOffersScreen> {
   String _price(dynamic o) =>
       o.priceAmount == null
           ? 'توافقی'
-          : '${o.priceAmount!.toStringAsFixed(0)} ${o.currency}';
+          : '${o.priceAmount!.toStringAsFixed(0)} ${o.currency == 'TOMAN' ? 'تومان' : o.currency}';
 }

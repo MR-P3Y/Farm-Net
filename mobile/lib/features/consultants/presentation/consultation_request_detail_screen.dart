@@ -207,7 +207,7 @@ class _RequestSummaryCard extends StatelessWidget {
       if (request.budgetAmount != null)
         (
           'بودجه',
-          '${toPersianDigits(request.budgetAmount!)} ${request.currency}',
+          '${toPersianDigits(request.budgetAmount!)} ${request.currency == 'TOMAN' ? 'تومان' : request.currency}',
         ),
     ];
 

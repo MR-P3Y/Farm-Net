@@ -5,6 +5,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.common.money import toman_currency
+
 
 class ConsultSpecialtyCreateIn(BaseModel):
     code: str = Field(min_length=2, max_length=100)
@@ -177,16 +179,18 @@ class ConsultRequestCreateIn(BaseModel):
     description: str = Field(min_length=10, max_length=8000)
     contact_method: str = Field(default="in_app", min_length=2, max_length=40)
     budget_amount: Decimal | None = Field(default=None, ge=0)
-    currency: str = Field(default="IRR", min_length=2, max_length=10)
+    currency: str = Field(default="TOMAN", min_length=2, max_length=10)
     scheduled_at: datetime | None = None
 
-    @field_validator("title", "description", "contact_method", "currency", mode="before")
+    @field_validator("title", "description", "contact_method", mode="before")
     @classmethod
     def normalize_strings(cls, value):
         if isinstance(value, str):
             value = value.strip()
             return value or None
         return value
+
+    _currency = field_validator("currency", mode="before")(toman_currency)
 
 
 class ConsultRequestStatusUpdateIn(BaseModel):

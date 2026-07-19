@@ -96,7 +96,7 @@ class _State extends ConsumerState<RentalRequestDetailScreen> {
                               if (row.totalAmount != null)
                                 _Info(
                                   'مبلغ کل',
-                                  '${row.totalAmount!.toStringAsFixed(0)} ${row.currency}',
+                                  '${row.totalAmount!.toStringAsFixed(0)} ${row.currency == 'TOMAN' ? 'تومان' : row.currency}',
                                 ),
                               if ((row.deliveryAddress ?? '').isNotEmpty)
                                 _Info('نشانی تحویل', row.deliveryAddress!),

@@ -670,7 +670,7 @@ class _RequestsTab extends ConsumerWidget {
                         Text(
                           request.budgetAmount == null
                               ? '-'
-                              : '${request.budgetAmount} ${request.currency}',
+                              : '${request.budgetAmount} ${request.currency == 'TOMAN' ? 'تومان' : request.currency}',
                         ),
                       ),
                       DataCell(
@@ -876,7 +876,10 @@ class _RequestDetailContent extends StatelessWidget {
       if (request.scheduledAt != null)
         ('زمان پیشنهادی', _compactDate(request.scheduledAt!)),
       if (request.budgetAmount != null)
-        ('بودجه', '${request.budgetAmount} ${request.currency}'),
+        (
+          'بودجه',
+          '${request.budgetAmount} ${request.currency == 'TOMAN' ? 'تومان' : request.currency}',
+        ),
     ];
 
     final notes = [

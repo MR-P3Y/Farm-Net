@@ -786,6 +786,24 @@ model fields exist:
   compatibility and treats the ledger—not a mutable balance—as accounting truth.
 - Evidence: `docs/finance/phase-20-real-state-audit.md`.
 
+### Step 20.2 Canonical Money + Billable Source Contracts
+
+- Standardized every new commercial input on Iranian toman: API/database code
+  `TOMAN`, Persian UI label `تومان`, and legacy ratio `10 IRR = 1 TOMAN`.
+- Added typed billable-source and financial-event contracts for product orders,
+  service requests, rental requests, and consultation requests without posting
+  money or changing existing Phase 9 endpoints.
+- Added a migration that converts legacy consultation `IRR` budgets and codes
+  atomically; the Runtime consultation table was empty at migration time.
+- Rejected non-`TOMAN` product, service, rental, and consultation commercial
+  inputs and changed Mobile/Admin consultation fallbacks to `TOMAN`.
+- Defined that service/consultation budgets are not billable final prices and
+  rental deposit principal is not provider revenue.
+- Ruff/compileall passed; 53 focused and all 84 Backend tests passed. Alembic is
+  `4c9a2f20b102 (head)` and app/database/Redis health is `ok`.
+- Mobile analyze and all 34 tests passed; Admin analyze and all 14 tests passed.
+- Evidence: `docs/finance/phase-20-money-billable-contracts.md`.
+
 ## Progress Update Rule
 
 After every completed step:
