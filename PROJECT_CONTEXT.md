@@ -333,6 +333,13 @@ orders, services, rentals, and consultations while preserving Phase 9 APIs.
 Service/consultation budgets remain non-billable and rental deposits remain
 separate from revenue. Step 20.3 Wallet Accounts + Double-Entry Ledger is next.
 
+Phase 20 Step 20.3 added the `TOMAN`-only Wallet Account and immutable
+double-entry Ledger database/permission foundation at Alembic head
+`c7e8a1f20303`. It stores no mutable balance and posts no money yet. Database
+constraints protect positive/equal journal totals, idempotency, source identity,
+reversal uniqueness, and accounting history. Step 20.4 Order Finance Ledger
+Bridge + Reconciliation is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

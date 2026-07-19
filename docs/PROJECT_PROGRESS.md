@@ -804,6 +804,27 @@ model fields exist:
 - Mobile analyze and all 34 tests passed; Admin analyze and all 14 tests passed.
 - Evidence: `docs/finance/phase-20-money-billable-contracts.md`.
 
+### Step 20.3 Wallet Accounts + Double-Entry Ledger DB/Permissions
+
+- Added Wallet Account, immutable Ledger Transaction, and ordered Ledger Entry
+  models plus migration `c7e8a1f20303`.
+- Enforced `TOMAN`, positive amounts, equal journal debit/credit totals, unique
+  idempotency/journal/reversal references, protected foreign keys, and ORM
+  update/delete guards for posted accounting records.
+- Added explicit provider pending/available/reserved, customer funds, platform,
+  deposit liability, refund clearing, and payout clearing account purposes.
+- Added five Wallet/Ledger permissions and explicit own-wallet access for user,
+  seller, service provider, lessor, and consultant roles. Internal posting is
+  not granted to ordinary or Finance Admin roles.
+- Ruff/compileall and 24 focused tests passed; all 88 Backend tests passed with
+  16 existing UTC warnings. Alembic reached `c7e8a1f20303 (head)`.
+- Auth seed ran twice identically with 12 roles and 246 permissions. Runtime
+  confirmed all three tables, all five permissions, and app/database/Redis
+  health `ok`.
+- Alembic metadata check found no Finance drift; it still reports four existing
+  Consultant/Services unique-index naming differences outside this step.
+- Evidence: `docs/finance/phase-20-wallet-ledger-foundation.md`.
+
 ## Progress Update Rule
 
 After every completed step:

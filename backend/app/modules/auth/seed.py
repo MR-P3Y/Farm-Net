@@ -167,6 +167,11 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("finance.refunds.create", "Create refunds", "finance", "Create refunds"),
     PermissionSeed("finance.settlements.read", "Read settlements", "finance", "View settlements"),
     PermissionSeed("finance.settlements.manage", "Manage settlements", "finance", "Manage settlements"),
+    PermissionSeed("wallet.read_own", "Read own wallet", "finance", "View own wallet accounts and entries"),
+    PermissionSeed("finance.wallets.read", "Read wallets", "finance", "View wallet accounts"),
+    PermissionSeed("finance.ledger.read", "Read ledger", "finance", "View ledger journals and entries"),
+    PermissionSeed("finance.ledger.post_internal", "Post ledger", "finance", "Post internal balanced ledger journals"),
+    PermissionSeed("finance.ledger.reconcile", "Reconcile ledger", "finance", "Run and review ledger reconciliation"),
 
     PermissionSeed("shops.read", "Read shops", "store", "View shops"),
     PermissionSeed("shops.read_detail", "Read shop detail", "store", "View shop details"),
@@ -562,6 +567,7 @@ def assign_default_permissions(
 ) -> None:
     role_permissions: dict[str, list[str]] = {
         "user": [
+            "wallet.read_own",
             "profiles.update",
             "geo.read",
             "notifications.read",
@@ -644,6 +650,7 @@ def assign_default_permissions(
             "media.admin_read",
         ],
         "shop_owner": [
+            "wallet.read_own",
             "notifications.read",
             "notifications.manage",
             "consultants.read",
@@ -692,6 +699,7 @@ def assign_default_permissions(
             "orders.seller_update",
         ],
         "service_provider": [
+            "wallet.read_own",
             "notifications.read",
             "notifications.manage",
             "services.read",
@@ -733,6 +741,7 @@ def assign_default_permissions(
             "payments.create",
         ],
         "lessor": [
+            "wallet.read_own",
             "notifications.read",
             "notifications.manage",
             "rental_categories.read",
@@ -766,6 +775,7 @@ def assign_default_permissions(
             "expert_answer.read",
         ],
         "consultant": [
+            "wallet.read_own",
             "notifications.read",
             "notifications.manage",
             "consult_requests.manage_assigned",
@@ -811,6 +821,11 @@ def assign_default_permissions(
             "finance.transactions.read",
             "finance.payments.read",
             "finance.refunds.create",
+            "finance.wallets.read",
+            "finance.ledger.read",
+            "finance.ledger.reconcile",
+            "finance.settlements.read",
+            "finance.settlements.manage",
             "billing.subscriptions.read",
             "commission.read",
         ],
@@ -905,6 +920,9 @@ def assign_default_permissions(
             "finance.transactions.read",
             "finance.payments.read",
             "finance.refunds.create",
+            "finance.wallets.read",
+            "finance.ledger.read",
+            "finance.ledger.reconcile",
             "notifications.read",
             "notifications.manage",
             "notifications.admin_read",

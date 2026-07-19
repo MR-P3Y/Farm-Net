@@ -1451,3 +1451,13 @@ statusهای بدون enum
 ```text
 دیتابیس خوب یعنی قابل فهم، قابل migration، قابل تست، قابل گزارش‌گیری، قابل backup و قابل توسعه.
 ```
+# Phase 20 Double-Entry Ledger Addendum
+
+The accounting source of truth uses `finance_wallet_accounts`,
+`finance_ledger_transactions`, and `finance_ledger_entries`. Wallet accounts do
+not store a directly editable balance. Posted journals and entries are
+immutable; corrections use new reversal or adjustment journals. Every journal
+uses `TOMAN`, a unique idempotency key, a unique journal number, a trace ID, an
+immutable source reference, positive debit/credit totals, and equal total debit
+and credit. Foreign keys use `RESTRICT` so accounting history cannot be removed
+with a business record.

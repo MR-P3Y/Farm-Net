@@ -1309,3 +1309,11 @@ roleهای بدون مستندات
 ```text
 هر کاربر فقط باید به همان چیزی دسترسی داشته باشد که نقش، permission، ownership و وضعیت تأییدش اجازه می‌دهد.
 ```
+# Phase 20 Finance Permission Addendum
+
+`wallet.read_own` is granted explicitly to user, shop owner, service provider,
+lessor, and consultant roles. Finance operations separate
+`finance.wallets.read`, `finance.ledger.read`, `finance.ledger.reconcile`, and
+`finance.ledger.post_internal`. Internal posting is not assigned to ordinary or
+Finance Admin roles; Super Admin receives it through the existing all-permission
+rule until a dedicated machine identity is implemented.
