@@ -104,7 +104,8 @@ Phase 16.4 Equipment Listing + Media APIs: completed
 Phase 16.5 Availability + Pricing Rules: completed
 Phase 16.6 Rental Request/Booking Workflow: completed
 Phase 16.7 Notifications + Privacy/Concurrency Hardening: completed
-Next: Phase 16.8 Mobile Equipment Discovery + Detail
+Phase 16.8 Mobile Equipment Discovery + Detail: completed
+Next: Phase 16.9 Mobile Rental Request Flow
 ```
 
 Services means agricultural operational services, not equipment rental.

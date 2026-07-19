@@ -19,6 +19,8 @@ import '../../features/products/presentation/public_product_detail_screen.dart';
 import '../../features/products/presentation/public_products_screen.dart';
 import '../../features/products/presentation/store_products_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/rentals/presentation/rental_equipment_detail_screen.dart';
+import '../../features/rentals/presentation/rental_equipment_list_screen.dart';
 import '../../features/social/presentation/social_create_post_screen.dart';
 import '../../features/social/presentation/social_feed_screen.dart';
 import '../../features/social/presentation/social_post_detail_screen.dart';
@@ -90,6 +92,20 @@ final GoRouter appRouter = GoRouter(
       path: '/services',
       name: 'services',
       builder: (context, state) => const ServiceListScreen(),
+    ),
+    GoRoute(
+      path: '/rentals',
+      name: 'rental-equipment',
+      builder: (context, state) => const RentalEquipmentListScreen(),
+    ),
+    GoRoute(
+      path: '/rentals/equipment/:equipmentId',
+      name: 'rental-equipment-detail',
+      builder:
+          (context, state) => RentalEquipmentDetailScreen(
+            equipmentId:
+                int.tryParse(state.pathParameters['equipmentId'] ?? '') ?? 0,
+          ),
     ),
     GoRoute(
       path: '/services/workbench',

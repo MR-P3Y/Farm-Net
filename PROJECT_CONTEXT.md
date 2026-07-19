@@ -285,6 +285,12 @@ prevention. Pricing and availability writes now share the equipment row lock
 used by acceptance, while acceptance revalidates minimum units and operator
 compatibility. Step 16.8 Mobile Equipment Discovery + Detail is next.
 
+Step 16.8 added typed Mobile Rental discovery/detail, category/geo/operator
+filters, search, media gallery, active pricing display, lessor summary, shared
+loading/empty/error states, and Home navigation. Backend price-range filtering
+does not exist and was not simulated client-side. Step 16.9 Mobile Rental
+Request Flow is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

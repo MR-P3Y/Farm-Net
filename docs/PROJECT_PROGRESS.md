@@ -671,6 +671,21 @@ model fields exist:
 - Rental Postman remained 35 valid requests because no route was added.
 - Evidence: `docs/rentals/phase-16-notifications-hardening.md`.
 
+### Step 16.8 Mobile Equipment Discovery + Detail
+
+- Added typed Rental category, equipment, media, and pricing models plus
+  API/Repository/Riverpod discovery state.
+- Added public equipment search and backend-supported category, province/city,
+  and operator-mode filters with clear/refresh behavior.
+- Added equipment detail with media gallery, lessor identity, commercial and
+  delivery facts, deposit, and active pricing rules.
+- Added loading, empty, error/retry states, typed model tests, GoRouter paths,
+  and a Home entry for equipment rental.
+- Did not claim price-range filtering because Backend has no such filter. Rental
+  request creation remains Step 16.9 and is clearly identified in the detail UI.
+- Mobile analyze passed, all 30 tests passed, and Web/Wasm build checks passed.
+- Evidence: `docs/rentals/phase-16-mobile-discovery-detail.md`.
+
 ## Progress Update Rule
 
 After every completed step:

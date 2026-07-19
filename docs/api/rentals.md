@@ -104,3 +104,14 @@ Acceptance, pricing replacement, and availability mutations serialize through
 the same equipment row lock. Acceptance revalidates active pricing, minimum
 units, operator compatibility, availability blocks, and accepted/in-progress
 overlaps before writing immutable commercial snapshots.
+
+## Mobile discovery and detail (Phase 16.8)
+
+The Mobile client consumes public categories, equipment list/detail, and active
+pricing through typed models. Search plus category, province/city, and operator
+mode filters map directly to Backend query parameters. Equipment detail renders
+public media, lessor display name, delivery/deposit facts, and pricing rules.
+
+Backend currently exposes no price-range filter, so the Mobile client does not
+pretend to provide one. Availability date selection and request creation are
+reserved for the next Mobile request-flow step.
