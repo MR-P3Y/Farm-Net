@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
+from app.modules.finance.service import OrderLedgerBridge
 from app.modules.orders.enums import (
     CartStatus,
     InvoiceStatus,
@@ -1465,6 +1466,12 @@ class RefundService:
         transaction = self.repo.create_refund_transaction(
             refund=row, provider_reference=payload.provider_reference
         )
+        OrderLedgerBridge(self.db).post_refund(
+            invoice=invoice,
+            transaction=transaction,
+            actor_user_id=user.id,
+            trace_id=(audit_context or {}).get("trace_id") or f"refund:{row.id}",
+        )
         row.transaction_id = transaction.id
         invoice.status = InvoiceStatus.REFUNDED.value
         invoice.refunded_at = now
@@ -1614,8 +1621,14 @@ class PaymentService:
         order.paid_at = now
         invoice.status = InvoiceStatus.PAID.value
         invoice.paid_at = now
-        self.repo.create_payment_transaction(
+        financial_transaction = self.repo.create_payment_transaction(
             invoice=invoice, attempt=attempt, provider_reference=reference
+        )
+        OrderLedgerBridge(self.db).post_payment(
+            invoice=invoice,
+            transaction=financial_transaction,
+            actor_user_id=user.id,
+            trace_id=f"payment-attempt:{attempt.id}",
         )
         self.repo.consume_order_reservations(order_id=order.id, now=now)
         self.repo.create_order_status_history(
@@ -1763,10 +1776,16 @@ class PaymentService:
             attempt.verified_at = now
             invoice.status = InvoiceStatus.PAID.value
             invoice.paid_at = now
-            self.repo.create_payment_transaction(
+            financial_transaction = self.repo.create_payment_transaction(
                 invoice=invoice,
                 attempt=attempt,
                 provider_reference=payment.provider_reference,
+            )
+            OrderLedgerBridge(self.db).post_payment(
+                invoice=invoice,
+                transaction=financial_transaction,
+                actor_user_id=user.id,
+                trace_id=f"legacy-payment:{payment.id}",
             )
         self.repo.consume_order_reservations(order_id=order.id, now=now)
 

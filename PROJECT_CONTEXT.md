@@ -340,6 +340,13 @@ constraints protect positive/equal journal totals, idempotency, source identity,
 reversal uniqueness, and accounting history. Step 20.4 Order Finance Ledger
 Bridge + Reconciliation is next.
 
+Phase 20 Step 20.4 atomically bridges successful product-order payments and
+refunds into exact-once balanced journals linked directly to the existing
+financial transaction. A permission-protected, read-only reconciliation API
+reports missing or unbalanced bridges. Provider funds remain pending; no
+balance release or settlement occurs. Step 20.5 Universal Invoice + Commission
+Foundation is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

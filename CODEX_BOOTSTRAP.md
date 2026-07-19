@@ -113,7 +113,8 @@ Phase 16.13 Equipment Rental Release Gate + Tag: completed (v0.21.0-equipment-re
 Phase 20.1 Wallet/Settlement/Accounting Real-State Audit + Contract Boundary: completed
 Phase 20.2 Canonical Money + Billable Source Contracts: completed (4c9a2f20b102)
 Phase 20.3 Wallet Accounts + Double-Entry Ledger DB/Permissions: completed (c7e8a1f20303)
-Next: Phase 20.4 Order Finance Ledger Bridge + Reconciliation
+Phase 20.4 Order Finance Ledger Bridge + Reconciliation: completed (d9a4b2f20404)
+Next: Phase 20.5 Universal Invoice + Commission Foundation
 ```
 
 Services means agricultural operational services, not equipment rental.

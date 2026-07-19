@@ -825,6 +825,25 @@ model fields exist:
   Consultant/Services unique-index naming differences outside this step.
 - Evidence: `docs/finance/phase-20-wallet-ledger-foundation.md`.
 
+### Step 20.4 Order Finance Ledger Bridge + Reconciliation
+
+- Bridged successful Phase 9 payment Verify, legacy Mock Pay, and Mock Refund
+  completion into balanced ledger journals inside their existing DB commit.
+- Posted platform cash against provider pending payable and platform revenue;
+  Refund journals exactly reverse the payment economics. Zero-value lines are
+  omitted while all stored entries remain positive.
+- Added a unique direct link from each journal to its legacy
+  `finance_transactions` row for exact-once posting and reconciliation.
+- Added a typed, read-only Admin reconciliation endpoint protected by
+  `finance.ledger.reconcile`; it reports missing bridges and header/entry
+  imbalances but never repairs data.
+- Ruff/compileall, 21 focused, and all 90 Backend tests passed. Alembic reached
+  `d9a4b2f20404 (head)`; OpenAPI/401 and app/database/Redis health passed.
+- Added and JSON-validated the Admin Ledger Reconciliation Postman request.
+- Runtime reconciliation was clean with zero existing successful financial
+  transactions; therefore no existing real-row posting smoke was available.
+- Evidence: `docs/finance/phase-20-order-ledger-bridge.md`.
+
 ## Progress Update Rule
 
 After every completed step:

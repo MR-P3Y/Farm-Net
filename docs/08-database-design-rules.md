@@ -1461,3 +1461,8 @@ uses `TOMAN`, a unique idempotency key, a unique journal number, a trace ID, an
 immutable source reference, positive debit/credit totals, and equal total debit
 and credit. Foreign keys use `RESTRICT` so accounting history cannot be removed
 with a business record.
+
+Order payment/refund journals link one-to-one to the existing successful
+`finance_transactions` row through a unique, `RESTRICT`-protected
+`legacy_transaction_id`. This is the exact-once reconciliation boundary between
+the Phase 9 operational finance records and the Phase 20 accounting ledger.

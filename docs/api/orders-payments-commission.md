@@ -99,10 +99,13 @@ GET /api/v1/admin/finance/payment-attempts
 GET /api/v1/admin/finance/transactions
 GET /api/v1/admin/finance/refunds
 GET /api/v1/admin/finance/audit-logs
+GET /api/v1/admin/finance/reconciliation
 ```
 
 All list responses are typed and paginated. Each endpoint enforces its finance
 permission; audit entries expose traceability metadata without gateway secrets.
+Reconciliation requires `finance.ledger.reconcile` and reports missing or
+unbalanced order ledger bridges without mutating accounting data.
 
 ## Mobile payment contract
 

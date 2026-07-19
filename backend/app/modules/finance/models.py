@@ -63,6 +63,12 @@ class LedgerTransaction(Base):
     source_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     source_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     idempotency_key: Mapped[str] = mapped_column(String(180), unique=True, nullable=False)
+    legacy_transaction_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("finance_transactions.id", ondelete="RESTRICT"),
+        unique=True,
+        index=True,
+    )
     status: Mapped[str] = mapped_column(
         String(20), default=LedgerStatus.POSTED.value, nullable=False, index=True
     )

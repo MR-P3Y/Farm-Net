@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
 from app.modules.orders.finance_service import AdminFinanceService
+from app.modules.finance.service import LedgerReconciliationService
 
 router = APIRouter(prefix="/admin/finance", tags=["Admin Finance"])
 
@@ -53,3 +54,15 @@ def refunds(request: Request, page: int = Query(1, ge=1), page_size: int = Query
 @router.get("/audit-logs")
 def audits(request: Request, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100), db: Session = Depends(get_db), _: AuthUser = Depends(require_permission("finance.transactions.read"))):
     return _list("audit_logs", request, page, page_size, db)
+
+
+@router.get("/reconciliation")
+def reconciliation(
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("finance.ledger.reconcile")),
+):
+    result = LedgerReconciliationService(db).run()
+    data = result.model_dump(mode="json")
+    data["is_clean"] = result.is_clean
+    return success_response(data=data, message="OK", meta={"trace_id": request.state.trace_id})

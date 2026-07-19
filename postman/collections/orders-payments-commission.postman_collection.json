@@ -345,6 +345,7 @@
     {"name":"Admin Finance - Payment Attempts","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/payment-attempts?page=1&page_size=20"}},
     {"name":"Admin Finance - Transactions","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/transactions?page=1&page_size=20"}},
     {"name":"Admin Finance - Refunds","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/refunds?page=1&page_size=20"}},
-    {"name":"Admin Finance - Audit Logs","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/audit-logs?page=1&page_size=20"}}
+    {"name":"Admin Finance - Audit Logs","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/audit-logs?page=1&page_size=20"}},
+    {"name":"Admin Finance - Ledger Reconciliation","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/reconciliation"}}
   ]
 }

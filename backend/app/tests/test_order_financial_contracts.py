@@ -250,6 +250,10 @@ def test_mock_payment_consumes_reservation_and_creates_transaction(monkeypatch) 
         "app.modules.orders.service._notify_payment_status_changed", lambda **_: None
     )
     monkeypatch.setattr("app.modules.orders.service._notify_order_status_changed", lambda **_: None)
+    ledger_bridge = MagicMock()
+    monkeypatch.setattr(
+        "app.modules.orders.service.OrderLedgerBridge", lambda _db: ledger_bridge
+    )
 
     service.mock_pay(user=SimpleNamespace(id=2), payment_id=4)
 
@@ -257,6 +261,7 @@ def test_mock_payment_consumes_reservation_and_creates_transaction(monkeypatch) 
     assert invoice.status == "paid"
     service.repo.consume_order_reservations.assert_called_once_with(order_id=9, now=payment.paid_at)
     service.repo.create_payment_transaction.assert_called_once()
+    ledger_bridge.post_payment.assert_called_once()
 
 
 def test_mock_payment_rejects_expired_inventory_reservation() -> None:
