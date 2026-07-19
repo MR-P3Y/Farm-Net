@@ -768,6 +768,24 @@ model fields exist:
   commission, settlement, refund, deposit capture/release, damage, and penalty.
 - Evidence: `docs/rentals/phase-16-release-gate.md`.
 
+## Phase 20 — Wallet, Settlement, and Accounting
+
+### Step 20.1 Real-State Audit + Contract Boundary
+
+- Audited the real order finance models, migrations, services, routes,
+  permissions, tests, and documentation without changing runtime behavior.
+- Confirmed Phase 9 already has order-specific invoices, commission snapshots,
+  idempotent Mock payment/verify, transactions, full Mock refunds, inventory
+  reservations, Admin audit, and typed Admin reads.
+- Confirmed there is no wallet, double-entry ledger, balance buckets,
+  settlement/payout implementation, real gateway, or finance integration for
+  Services, Rental, and Consultation.
+- Identified the blocking `TOMAN` versus Consultation `IRR` inconsistency and
+  distinguished service/consultation budgets from final payable prices.
+- Defined an incremental 20.2–20.15 delivery plan that preserves Phase 9 API
+  compatibility and treats the ledger—not a mutable balance—as accounting truth.
+- Evidence: `docs/finance/phase-20-real-state-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:

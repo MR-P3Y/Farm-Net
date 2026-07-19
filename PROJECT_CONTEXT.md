@@ -319,6 +319,13 @@ released as `v0.21.0-equipment-rental-foundation`. This foundation deliberately
 does not claim payment, invoice, commission, settlement, refund, deposit
 capture/release, damage, or penalty processing.
 
+Phase 20 Step 20.1 audited the real financial state. Phase 9 contains a strong
+order-specific Mock payment/invoice/commission/refund foundation, but the
+project has no wallet, double-entry ledger, balance release, settlement/payout,
+real gateway, or cross-domain finance integration. The audit preserves Phase 9
+contracts, identifies the `TOMAN`/Consultation `IRR` mismatch as blocking, and
+defines Step 20.2 Canonical Money + Billable Source Contracts as next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

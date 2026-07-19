@@ -110,7 +110,8 @@ Phase 16.10 Mobile Lessor Management + Request Workbench: completed
 Phase 16.11 Admin Panel Equipment Rental: completed
 Phase 16.12 Docs/Postman + Runtime Regression: completed
 Phase 16.13 Equipment Rental Release Gate + Tag: completed (v0.21.0-equipment-rental-foundation)
-Next: define the next authorized phase
+Phase 20.1 Wallet/Settlement/Accounting Real-State Audit + Contract Boundary: completed
+Next: Phase 20.2 Canonical Money + Billable Source Contracts
 ```
 
 Services means agricultural operational services, not equipment rental.
