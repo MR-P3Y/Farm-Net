@@ -24,6 +24,13 @@ import '../../features/rentals/presentation/rental_equipment_list_screen.dart';
 import '../../features/rentals/presentation/my_rental_requests_screen.dart';
 import '../../features/rentals/presentation/rental_request_create_screen.dart';
 import '../../features/rentals/presentation/rental_request_detail_screen.dart';
+import '../../features/rentals/presentation/my_lessor_profile_screen.dart';
+import '../../features/rentals/presentation/my_rental_equipment_screen.dart';
+import '../../features/rentals/presentation/rental_equipment_edit_screen.dart';
+import '../../features/rentals/presentation/rental_commercial_screen.dart';
+import '../../features/rentals/presentation/rental_workbench_screen.dart';
+import '../../features/rentals/presentation/rental_workbench_detail_screen.dart';
+import '../../features/rentals/data/rental_models.dart';
 import '../../features/social/presentation/social_create_post_screen.dart';
 import '../../features/social/presentation/social_feed_screen.dart';
 import '../../features/social/presentation/social_post_detail_screen.dart';
@@ -129,6 +136,45 @@ final GoRouter appRouter = GoRouter(
       name: 'rental-request-detail',
       builder:
           (context, state) => RentalRequestDetailScreen(
+            requestId:
+                int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+          ),
+    ),
+    GoRoute(
+      path: '/rentals/me/lessor-profile',
+      builder: (context, state) => const MyLessorProfileScreen(),
+    ),
+    GoRoute(
+      path: '/rentals/me/equipment',
+      builder: (context, state) => const MyRentalEquipmentScreen(),
+    ),
+    GoRoute(
+      path: '/rentals/me/equipment/new',
+      builder: (context, state) => const RentalEquipmentEditScreen(),
+    ),
+    GoRoute(
+      path: '/rentals/me/equipment/:equipmentId/edit',
+      builder:
+          (context, state) => RentalEquipmentEditScreen(
+            equipment: state.extra as RentalEquipmentOwner?,
+          ),
+    ),
+    GoRoute(
+      path: '/rentals/me/equipment/:equipmentId/commercial',
+      builder:
+          (context, state) => RentalCommercialScreen(
+            equipmentId:
+                int.tryParse(state.pathParameters['equipmentId'] ?? '') ?? 0,
+          ),
+    ),
+    GoRoute(
+      path: '/rentals/workbench',
+      builder: (context, state) => const RentalWorkbenchScreen(),
+    ),
+    GoRoute(
+      path: '/rentals/workbench/requests/:requestId',
+      builder:
+          (context, state) => RentalWorkbenchDetailScreen(
             requestId:
                 int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
           ),

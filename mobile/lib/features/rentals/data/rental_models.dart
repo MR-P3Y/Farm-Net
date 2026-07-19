@@ -18,17 +18,20 @@ class RentalCategory {
 class RentalMedia {
   const RentalMedia({
     required this.id,
+    this.mediaFileId,
     this.publicUrl,
     this.altText,
     this.isPrimary = false,
   });
   final int id;
+  final int? mediaFileId;
   final String? publicUrl;
   final String? altText;
   final bool isPrimary;
 
   factory RentalMedia.fromJson(Map<String, dynamic> json) => RentalMedia(
     id: (json['id'] as num?)?.toInt() ?? 0,
+    mediaFileId: (json['media_file_id'] as num?)?.toInt(),
     publicUrl: json['public_url']?.toString(),
     altText: json['alt_text']?.toString(),
     isPrimary: json['is_primary'] == true,
@@ -139,6 +142,14 @@ class RentalPricingRule {
         minimumUnits: _double(json['minimum_units']) ?? 1,
         currency: json['currency']?.toString() ?? 'TOMAN',
       );
+  Map<String, dynamic> toInputJson() => {
+    'unit': unit,
+    'operator_included': operatorIncluded,
+    'price_amount': priceAmount,
+    'minimum_units': minimumUnits,
+    'currency': currency,
+    'is_active': true,
+  };
 }
 
 class RentalEquipmentDetail {
@@ -256,6 +267,12 @@ class RentalRequest {
   final String? cancelReason;
   final List<RentalRequestStatusLog> statusLogs;
   bool get canCancel => status == 'pending' || status == 'accepted';
+  List<String> get lessorNextStatuses => switch (status) {
+    'pending' => const ['accepted', 'rejected'],
+    'accepted' => const ['in_progress'],
+    'in_progress' => const ['completed'],
+    _ => const [],
+  };
   factory RentalRequest.fromJson(Map<String, dynamic> json) => RentalRequest(
     id: (json['id'] as num?)?.toInt() ?? 0,
     equipmentId: (json['equipment_id'] as num?)?.toInt() ?? 0,
@@ -285,6 +302,233 @@ class RentalRequest {
             .map(RentalRequestStatusLog.fromJson)
             .toList(),
   );
+}
+
+class LessorProfile {
+  const LessorProfile({
+    required this.id,
+    required this.status,
+    this.displayName,
+    this.bio,
+    this.phone,
+    this.provinceId,
+    this.cityId,
+    this.addressText,
+    this.avatarMediaFileId,
+    this.adminNote,
+    this.equipmentCount = 0,
+  });
+  final int id;
+  final String status;
+  final String? displayName;
+  final String? bio;
+  final String? phone;
+  final int? provinceId;
+  final int? cityId;
+  final String? addressText;
+  final int? avatarMediaFileId;
+  final String? adminNote;
+  final int equipmentCount;
+  bool get canEdit => status == 'draft' || status == 'rejected';
+  bool get canSubmit => canEdit;
+  factory LessorProfile.fromJson(Map<String, dynamic> json) => LessorProfile(
+    id: (json['id'] as num?)?.toInt() ?? 0,
+    status: json['status']?.toString() ?? 'draft',
+    displayName: json['display_name']?.toString(),
+    bio: json['bio']?.toString(),
+    phone: json['phone']?.toString(),
+    provinceId: (json['province_id'] as num?)?.toInt(),
+    cityId: (json['city_id'] as num?)?.toInt(),
+    addressText: json['address_text']?.toString(),
+    avatarMediaFileId: (json['avatar_media_file_id'] as num?)?.toInt(),
+    adminNote: json['admin_note']?.toString(),
+    equipmentCount: (json['equipment_count'] as num?)?.toInt() ?? 0,
+  );
+}
+
+class LessorProfileInput {
+  const LessorProfileInput({
+    this.displayName,
+    this.bio,
+    this.phone,
+    this.provinceId,
+    this.cityId,
+    this.addressText,
+    this.avatarMediaFileId,
+  });
+  final String? displayName;
+  final String? bio;
+  final String? phone;
+  final int? provinceId;
+  final int? cityId;
+  final String? addressText;
+  final int? avatarMediaFileId;
+  Map<String, dynamic> toJson() => {
+    'display_name': displayName,
+    'bio': bio,
+    'phone': phone,
+    'province_id': provinceId,
+    'city_id': cityId,
+    'address_text': addressText,
+    'avatar_media_file_id': avatarMediaFileId,
+  };
+}
+
+class RentalEquipmentOwner extends RentalEquipment {
+  const RentalEquipmentOwner({
+    required super.id,
+    required super.lessorProfileId,
+    required super.title,
+    required super.operatorMode,
+    required super.currency,
+    required this.slug,
+    required this.status,
+    super.categoryId,
+    super.description,
+    super.manufacturer,
+    super.modelName,
+    super.productionYear,
+    super.provinceId,
+    super.cityId,
+    super.deliveryAvailable,
+    super.deliveryTerms,
+    super.securityDepositAmount,
+    super.lessorDisplayName,
+    super.category,
+    super.media,
+    this.addressText,
+    this.adminNote,
+  });
+  final String slug;
+  final String status;
+  final String? addressText;
+  final String? adminNote;
+  bool get canEdit => status == 'draft' || status == 'rejected';
+  bool get canSubmit => canEdit;
+  factory RentalEquipmentOwner.fromJson(Map<String, dynamic> json) {
+    final base = RentalEquipment.fromJson(json);
+    return RentalEquipmentOwner(
+      id: base.id,
+      lessorProfileId: base.lessorProfileId,
+      title: base.title,
+      operatorMode: base.operatorMode,
+      currency: base.currency,
+      slug: json['slug']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'draft',
+      categoryId: base.categoryId,
+      description: base.description,
+      manufacturer: base.manufacturer,
+      modelName: base.modelName,
+      productionYear: base.productionYear,
+      provinceId: base.provinceId,
+      cityId: base.cityId,
+      deliveryAvailable: base.deliveryAvailable,
+      deliveryTerms: base.deliveryTerms,
+      securityDepositAmount: base.securityDepositAmount,
+      lessorDisplayName: base.lessorDisplayName,
+      category: base.category,
+      media: base.media,
+      addressText: json['address_text']?.toString(),
+      adminNote: json['admin_note']?.toString(),
+    );
+  }
+}
+
+class RentalEquipmentInput {
+  const RentalEquipmentInput({
+    required this.title,
+    required this.slug,
+    required this.operatorMode,
+    required this.mediaFileIds,
+    this.categoryId,
+    this.description,
+    this.manufacturer,
+    this.modelName,
+    this.productionYear,
+    this.provinceId,
+    this.cityId,
+    this.addressText,
+    this.deliveryAvailable = false,
+    this.deliveryTerms,
+    this.securityDepositAmount,
+  });
+  final String title;
+  final String slug;
+  final String operatorMode;
+  final List<int> mediaFileIds;
+  final int? categoryId;
+  final String? description;
+  final String? manufacturer;
+  final String? modelName;
+  final int? productionYear;
+  final int? provinceId;
+  final int? cityId;
+  final String? addressText;
+  final bool deliveryAvailable;
+  final String? deliveryTerms;
+  final double? securityDepositAmount;
+  Map<String, dynamic> toJson() => {
+    'category_id': categoryId,
+    'title': title,
+    'slug': slug,
+    'description': description,
+    'manufacturer': manufacturer,
+    'model_name': modelName,
+    'production_year': productionYear,
+    'operator_mode': operatorMode,
+    'province_id': provinceId,
+    'city_id': cityId,
+    'address_text': addressText,
+    'delivery_available': deliveryAvailable,
+    'delivery_terms': deliveryTerms,
+    'security_deposit_amount': securityDepositAmount,
+    'currency': 'TOMAN',
+    'is_active': true,
+    'media_items':
+        mediaFileIds
+            .asMap()
+            .entries
+            .map(
+              (e) => {
+                'media_file_id': e.value,
+                'sort_order': e.key,
+                'is_primary': e.key == 0,
+              },
+            )
+            .toList(),
+  };
+}
+
+class RentalAvailabilityBlock {
+  const RentalAvailabilityBlock({
+    required this.id,
+    required this.equipmentId,
+    required this.blockType,
+    required this.startsAt,
+    required this.endsAt,
+    this.note,
+  });
+  final int id;
+  final int equipmentId;
+  final String blockType;
+  final DateTime startsAt;
+  final DateTime endsAt;
+  final String? note;
+  factory RentalAvailabilityBlock.fromJson(Map<String, dynamic> json) =>
+      RentalAvailabilityBlock(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        equipmentId: (json['equipment_id'] as num?)?.toInt() ?? 0,
+        blockType: json['block_type']?.toString() ?? '',
+        startsAt: DateTime.parse(json['starts_at'].toString()),
+        endsAt: DateTime.parse(json['ends_at'].toString()),
+        note: json['note']?.toString(),
+      );
+  Map<String, dynamic> toJson() => {
+    'block_type': blockType,
+    'starts_at': startsAt.toUtc().toIso8601String(),
+    'ends_at': endsAt.toUtc().toIso8601String(),
+    'note': note,
+  };
 }
 
 double? _double(Object? value) =>

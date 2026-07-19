@@ -127,3 +127,14 @@ row-locked overlap and pricing revalidation.
 Authenticated requesters can list and inspect only their own requests, view
 status logs and accepted commercial snapshots, and cancel only `pending` or
 `accepted` requests with a non-empty reason.
+
+## Mobile lessor management and workbench (Phase 16.10)
+
+The Mobile client exposes owner profile save/submit, equipment create/edit/
+submit with public owner Media, atomic pricing replacement, and availability
+block create/update/delete. Backend approval, ownership, operator compatibility,
+range overlap, and lifecycle validation remain authoritative.
+
+Approved lessors can filter assigned requests, inspect role-safe detail and the
+status timeline, and invoke only `pending -> accepted|rejected`, `accepted ->
+in_progress`, and `in_progress -> completed` actions.

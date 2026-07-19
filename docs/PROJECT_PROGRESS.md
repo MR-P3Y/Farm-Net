@@ -701,6 +701,20 @@ model fields exist:
   passed, and Web/Wasm build checks passed.
 - Evidence: `docs/rentals/phase-16-mobile-request-flow.md`.
 
+### Step 16.10 Mobile Lessor Management + Request Workbench
+
+- Added lessor profile create/edit/submit rendering with moderation status and
+  Admin-note handling plus public Media avatar integration.
+- Added owner equipment list, typed create/edit/submit, category/operator/geo,
+  delivery/deposit, and public owner Media integration.
+- Added atomic pricing rule management and availability block create/edit/delete
+  against the existing Backend ownership, overlap, and lifecycle contracts.
+- Added assigned request list/filter/detail, status timeline, refresh, and only
+  the Backend-authorized accept/reject/start/complete actions.
+- Added role navigation from Home and GoRouter coverage. Mobile analyze passed,
+  all 34 tests passed, and Web/Wasm build checks passed.
+- Evidence: `docs/rentals/phase-16-mobile-lessor-workbench.md`.
+
 ## Progress Update Rule
 
 After every completed step:

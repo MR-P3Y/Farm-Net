@@ -38,4 +38,37 @@ class RentalRepository {
   Future<RentalRequest> requestDetail(int id) => _api.requestDetail(id);
   Future<RentalRequest> cancelRequest(int id, String reason) =>
       _api.cancelRequest(id, reason);
+  Future<LessorProfile?> myProfile() => _api.myProfile();
+  Future<LessorProfile> saveProfile(LessorProfileInput input) =>
+      _api.saveProfile(input);
+  Future<LessorProfile> submitProfile() => _api.submitProfile();
+  Future<List<RentalEquipmentOwner>> myEquipment() => _api.myEquipment();
+  Future<RentalEquipmentOwner> saveEquipment(
+    RentalEquipmentInput input, {
+    int? id,
+  }) => _api.saveEquipment(input, id: id);
+  Future<RentalEquipmentOwner> submitEquipment(int id) =>
+      _api.submitEquipment(id);
+  Future<List<RentalPricingRule>> ownerPricing(int id) => _api.ownerPricing(id);
+  Future<List<RentalPricingRule>> replacePricing(
+    int id,
+    List<RentalPricingRule> rows,
+  ) => _api.replacePricing(id, rows);
+  Future<List<RentalAvailabilityBlock>> ownerAvailability(int id) =>
+      _api.ownerAvailability(id);
+  Future<RentalAvailabilityBlock> createAvailability(
+    int id,
+    RentalAvailabilityBlock row,
+  ) => _api.createAvailability(id, row);
+  Future<RentalAvailabilityBlock> updateAvailability(
+    int id,
+    RentalAvailabilityBlock row,
+  ) => _api.updateAvailability(id, row);
+  Future<void> deleteAvailability(int equipmentId, int blockId) =>
+      _api.deleteAvailability(equipmentId, blockId);
+  Future<List<RentalRequest>> assignedRequests({String? status}) =>
+      _api.assignedRequests(status: status);
+  Future<RentalRequest> assignedDetail(int id) => _api.assignedDetail(id);
+  Future<RentalRequest> updateAssigned(int id, String status, {String? note}) =>
+      _api.updateAssigned(id, status, note: note);
 }

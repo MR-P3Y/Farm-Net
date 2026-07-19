@@ -190,6 +190,30 @@ class HomeScreen extends ConsumerWidget {
                         label: const Text('درخواست‌های اجاره من'),
                       ),
                       SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/rentals/me/lessor-profile');
+                        },
+                        icon: const Icon(Icons.badge_outlined),
+                        label: const Text('پروفایل موجر من'),
+                      ),
+                      SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/rentals/me/equipment');
+                        },
+                        icon: const Icon(Icons.agriculture_outlined),
+                        label: const Text('تجهیزات اجاره‌ای من'),
+                      ),
+                      SizedBox(height: r.v(12)),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          context.push('/rentals/workbench');
+                        },
+                        icon: const Icon(Icons.work_outline),
+                        label: const Text('میزکار موجر'),
+                      ),
+                      SizedBox(height: r.v(12)),
                       FilledButton.icon(
                         onPressed: () {
                           context.push('/consultants');

@@ -90,4 +90,48 @@ void main() {
     expect(request.statusLogs.single.toStatus, 'accepted');
     expect(rentalRequestStatusLabel(request.status), 'پذیرفته‌شده');
   });
+
+  test('lessor profile and owner equipment expose real lifecycle helpers', () {
+    final profile = LessorProfile.fromJson({
+      'id': 3,
+      'status': 'rejected',
+      'equipment_count': 2,
+      'admin_note': 'اصلاح نشانی',
+    });
+    final equipment = RentalEquipmentOwner.fromJson({
+      'id': 7,
+      'lessor_profile_id': 3,
+      'title': 'تراکتور',
+      'slug': 'tractor',
+      'operator_mode': 'without_operator',
+      'currency': 'TOMAN',
+      'status': 'draft',
+      'media': [
+        {'id': 11, 'media_file_id': 44, 'is_primary': true},
+      ],
+    });
+    expect(profile.canEdit, isTrue);
+    expect(profile.adminNote, 'اصلاح نشانی');
+    expect(equipment.canSubmit, isTrue);
+    expect(equipment.media.single.mediaFileId, 44);
+  });
+
+  test('lessor workbench exposes only backend transition matrix', () {
+    RentalRequest request(String status) => RentalRequest.fromJson({
+      'id': 9,
+      'equipment_id': 7,
+      'pricing_rule_id': 4,
+      'equipment_title': 'تراکتور',
+      'starts_at': '2026-08-01T00:00:00',
+      'ends_at': '2026-08-03T00:00:00',
+      'requested_units': 2,
+      'operator_requested': false,
+      'status': status,
+      'currency': 'TOMAN',
+    });
+    expect(request('pending').lessorNextStatuses, ['accepted', 'rejected']);
+    expect(request('accepted').lessorNextStatuses, ['in_progress']);
+    expect(request('in_progress').lessorNextStatuses, ['completed']);
+    expect(request('completed').lessorNextStatuses, isEmpty);
+  });
 }

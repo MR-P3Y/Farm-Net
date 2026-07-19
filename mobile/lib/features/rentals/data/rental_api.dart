@@ -113,6 +113,199 @@ class RentalApi {
     ),
   );
 
+  Future<LessorProfile?> myProfile() async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/rentals/me/lessor-profile',
+      );
+      final data = response.data?['data'];
+      return data is Map<String, dynamic> ? LessorProfile.fromJson(data) : null;
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<LessorProfile> saveProfile(LessorProfileInput input) async {
+    try {
+      final response = await _client.dio.put<Map<String, dynamic>>(
+        '/rentals/me/lessor-profile',
+        data: input.toJson(),
+      );
+      return LessorProfile.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<LessorProfile> submitProfile() async {
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/rentals/me/lessor-profile/submit',
+      );
+      return LessorProfile.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<List<RentalEquipmentOwner>> myEquipment() async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/rentals/me/equipment',
+      );
+      return _parseList(response.data?['data'], RentalEquipmentOwner.fromJson);
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<RentalEquipmentOwner> saveEquipment(
+    RentalEquipmentInput input, {
+    int? id,
+  }) async {
+    try {
+      final response =
+          id == null
+              ? await _client.dio.post<Map<String, dynamic>>(
+                '/rentals/me/equipment',
+                data: input.toJson(),
+              )
+              : await _client.dio.put<Map<String, dynamic>>(
+                '/rentals/me/equipment/$id',
+                data: input.toJson(),
+              );
+      return RentalEquipmentOwner.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<RentalEquipmentOwner> submitEquipment(int id) async {
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/rentals/me/equipment/$id/submit',
+      );
+      return RentalEquipmentOwner.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<List<RentalPricingRule>> ownerPricing(int id) async => _ownerList(
+    '/rentals/me/equipment/$id/pricing',
+    RentalPricingRule.fromJson,
+  );
+  Future<List<RentalPricingRule>> replacePricing(
+    int id,
+    List<RentalPricingRule> rows,
+  ) async {
+    try {
+      final response = await _client.dio.put<Map<String, dynamic>>(
+        '/rentals/me/equipment/$id/pricing',
+        data: rows.map((e) => e.toInputJson()).toList(),
+      );
+      return _parseList(response.data?['data'], RentalPricingRule.fromJson);
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<List<RentalAvailabilityBlock>> ownerAvailability(int id) async =>
+      _ownerList(
+        '/rentals/me/equipment/$id/availability',
+        RentalAvailabilityBlock.fromJson,
+      );
+  Future<RentalAvailabilityBlock> createAvailability(
+    int id,
+    RentalAvailabilityBlock row,
+  ) async {
+    try {
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/rentals/me/equipment/$id/availability',
+        data: row.toJson(),
+      );
+      return RentalAvailabilityBlock.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<RentalAvailabilityBlock> updateAvailability(
+    int equipmentId,
+    RentalAvailabilityBlock row,
+  ) async {
+    try {
+      final response = await _client.dio.put<Map<String, dynamic>>(
+        '/rentals/me/equipment/$equipmentId/availability/${row.id}',
+        data: row.toJson(),
+      );
+      return RentalAvailabilityBlock.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<void> deleteAvailability(int equipmentId, int blockId) async {
+    try {
+      await _client.dio.delete(
+        '/rentals/me/equipment/$equipmentId/availability/$blockId',
+      );
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<List<RentalRequest>> assignedRequests({String? status}) async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/rentals/requests/assigned',
+        queryParameters: {if (status != null) 'status': status},
+      );
+      return _parseList(response.data?['data'], RentalRequest.fromJson);
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
+  Future<RentalRequest> assignedDetail(int id) => _request(
+    () =>
+        _client.dio.get<Map<String, dynamic>>('/rentals/requests/assigned/$id'),
+  );
+  Future<RentalRequest> updateAssigned(int id, String status, {String? note}) =>
+      _request(
+        () => _client.dio.patch<Map<String, dynamic>>(
+          '/rentals/requests/assigned/$id/status',
+          data: {
+            'status': status,
+            if (note?.trim().isNotEmpty ?? false) 'note': note!.trim(),
+          },
+        ),
+      );
+
+  Future<List<T>> _ownerList<T>(
+    String path,
+    T Function(Map<String, dynamic>) parser,
+  ) async {
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(path);
+      return _parseList(response.data?['data'], parser);
+    } on DioException catch (error) {
+      throw RentalApiException(_mapError(error));
+    }
+  }
+
   Future<RentalRequest> _request(
     Future<Response<Map<String, dynamic>>> Function() call,
   ) async {

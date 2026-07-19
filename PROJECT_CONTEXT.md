@@ -296,6 +296,11 @@ typed request creation, requester list/detail, exact status timeline rendering,
 commercial snapshots, and status-bound cancellation with a required reason.
 Step 16.10 Mobile Lessor Management + Request Workbench is next.
 
+Step 16.10 added Mobile lessor profile lifecycle, owner equipment/media editing
+and submission, atomic pricing and availability management, assigned request
+list/detail/timeline, and the exact lessor accept/reject/start/complete actions.
+Step 16.11 Admin Panel Equipment Rental is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
