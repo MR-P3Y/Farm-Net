@@ -109,7 +109,8 @@ Phase 16.9 Mobile Rental Request Flow: completed
 Phase 16.10 Mobile Lessor Management + Request Workbench: completed
 Phase 16.11 Admin Panel Equipment Rental: completed
 Phase 16.12 Docs/Postman + Runtime Regression: completed
-Next: Phase 16.13 Equipment Rental Release Gate + Tag
+Phase 16.13 Equipment Rental Release Gate + Tag: completed (v0.21.0-equipment-rental-foundation)
+Next: define the next authorized phase
 ```
 
 Services means agricultural operational services, not equipment rental.

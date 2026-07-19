@@ -313,6 +313,12 @@ regression. Runtime exposes 29 Rental paths backed by 8 tables and 24 Rental
 permissions; the 35-request Postman collection covers every path exactly. Step
 16.13 Equipment Rental Release Gate + Tag is next.
 
+Step 16.13 passed the final Equipment Rental release gate across Backend,
+Runtime, Mobile, Admin, Postman, and Git safety checks. Phase 16 is complete and
+released as `v0.21.0-equipment-rental-foundation`. This foundation deliberately
+does not claim payment, invoice, commission, settlement, refund, deposit
+capture/release, damage, or penalty processing.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -366,5 +372,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.20.0-category-management-foundation
+v0.21.0-equipment-rental-foundation
 ```

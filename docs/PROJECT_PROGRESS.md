@@ -746,6 +746,28 @@ model fields exist:
   all 14 tests. Both Web builds completed and Wasm dry runs passed.
 - Evidence: `docs/rentals/phase-16-docs-runtime-regression.md`.
 
+### Step 16.13 Equipment Rental Release Gate + Tag
+
+- Re-ran the complete release gate without adding features or changing Backend,
+  Mobile, or Admin behavior.
+- Backend Ruff and compileall passed; all 79 tests passed with 16 existing
+  non-Rental `datetime.utcnow` warnings. Alembic remained at
+  `104ae669cc1a (head)` and the idempotent Auth seed remained at 12 roles and
+  241 permissions.
+- Runtime confirmed app/database/Redis health `ok`, 8 Rental tables, 24 Rental
+  permissions, and 29 Rental OpenAPI paths.
+- Mobile analyze passed, all 34 tests passed, and Web/Wasm build checks passed.
+- Admin analyze passed, all 14 tests passed, Web build passed, and Flutter's
+  integrated Wasm compatibility dry run passed. The installed Flutter version
+  does not accept a separate `flutter build web --wasm --dry-run` option.
+- The valid 35-request Postman collection covers all 29 Runtime Rental paths
+  exactly, with no missing or extra path.
+- Git was clean, `develop` matched `origin/develop`, and the annotated release
+  tag is `v0.21.0-equipment-rental-foundation`.
+- Financial operations remain outside this foundation: payment, invoice,
+  commission, settlement, refund, deposit capture/release, damage, and penalty.
+- Evidence: `docs/rentals/phase-16-release-gate.md`.
+
 ## Progress Update Rule
 
 After every completed step:
