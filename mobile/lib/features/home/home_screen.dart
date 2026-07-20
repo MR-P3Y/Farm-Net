@@ -48,6 +48,12 @@ class HomeScreen extends ConsumerWidget {
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: r.v(24)),
+                      FilledButton.icon(
+                        onPressed: () => context.push('/search'),
+                        icon: const Icon(Icons.manage_search),
+                        label: const Text('جستجو در همه بخش‌ها'),
+                      ),
+                      SizedBox(height: r.v(12)),
                       const FarmPriceText(amountToman: 250000),
                       SizedBox(height: r.v(12)),
                       Text(

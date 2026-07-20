@@ -35,6 +35,7 @@ import '../../features/rentals/data/rental_models.dart';
 import '../../features/social/presentation/social_create_post_screen.dart';
 import '../../features/social/presentation/social_feed_screen.dart';
 import '../../features/social/presentation/social_post_detail_screen.dart';
+import '../../features/search/presentation/unified_search_screen.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/service_list_screen.dart';
 import '../../features/services/presentation/my_service_requests_screen.dart';
@@ -65,6 +66,11 @@ final GoRouter appRouter = GoRouter(
       path: '/home',
       name: 'home',
       builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      path: '/search',
+      name: 'unified-search',
+      builder: (context, state) => const UnifiedSearchScreen(),
     ),
     GoRoute(
       path: '/finance',

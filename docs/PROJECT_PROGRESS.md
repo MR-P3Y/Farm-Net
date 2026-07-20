@@ -1225,6 +1225,21 @@ model fields exist:
   increased from 253 to 254 paths, and the Search Postman collection parsed.
 - Evidence: `docs/search/phase-18-unified-search-api.md`.
 
+### Step 18.9 Mobile Unified Discovery Hub
+
+- Added a typed Mobile Search model/API/Repository/Controller stack consuming
+  only `POST /search`; no parallel client-side multi-domain querying exists.
+- Added `/search` with one input, six selectable result-type chips, all shared
+  safe sort choices, grouped totals/cards, `TOMAN` price and rating rendering.
+- Cards use only validated Backend internal routes to open Product, Store,
+  Service, Rental, Consultant, and Social detail screens.
+- Added initial guidance, loading progress, no-results, API/network error, and
+  retry states plus a prominent Home navigation entry.
+- Added model tests for grouped response, decimal strings, optional fields, and
+  safe fallbacks. Mobile analyze passed with no issues, all 40 tests passed, and
+  Web/Wasm build completed successfully.
+- Evidence: `docs/search/phase-18-mobile-unified-discovery.md`.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -480,6 +480,14 @@ privacy boundary are retained. Rankings are not globally merged across unlike
 domains, and no query history or analytics is stored. Step 18.9 Mobile Unified
 Discovery Hub is next.
 
+Phase 18 Step 18.9 adds the Mobile `/search` Unified Discovery Hub and a primary
+Home entry. One typed API/Repository/Controller flow queries any non-empty
+selection of the six domains, renders grouped totals and typed cards, supports
+the shared safe sorts, displays canonical `TOMAN` prices, and navigates only via
+Backend-provided internal routes. Initial/loading/empty/error/retry states and
+safe model parsing are covered. Step 18.10 Performance, Privacy, and Abuse
+Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
