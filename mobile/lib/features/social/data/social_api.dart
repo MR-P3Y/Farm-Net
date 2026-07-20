@@ -38,6 +38,9 @@ class SocialApi {
     int? categoryId,
     String? postType,
     String? query,
+    int? provinceId,
+    int? cityId,
+    String? sort,
   }) async {
     final params = <String, String>{'page': '1', 'page_size': '30'};
 
@@ -48,6 +51,9 @@ class SocialApi {
     if (query != null && query.trim().isNotEmpty) {
       params['q'] = query.trim();
     }
+    if (provinceId != null) params['province_id'] = provinceId.toString();
+    if (cityId != null) params['city_id'] = cityId.toString();
+    if (sort?.isNotEmpty ?? false) params['sort'] = sort!;
 
     final uri = Uri(path: '/social/posts', queryParameters: params);
     final json = await _get(uri.toString());

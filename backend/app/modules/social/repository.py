@@ -5,7 +5,10 @@ from datetime import datetime
 from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 
+from app.common.search import normalize_search_text
+from app.common.search_sql import search_match_expression, search_relevance_expression
 from app.modules.media.models import MediaFile
+from app.modules.social.enums import SocialDiscoverySort
 from app.modules.social.models import (
     SocialBookmark,
     SocialCategory,
@@ -214,12 +217,18 @@ class SocialRepository:
         category_id: int | None = None,
         post_type: str | None = None,
         q: str | None = None,
+        province_id: int | None = None,
+        city_id: int | None = None,
+        sort: SocialDiscoverySort | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[SocialPost], int]:
-        query = self.db.query(SocialPost).filter(
+        query = self.db.query(SocialPost).outerjoin(
+            SocialCategory, SocialPost.category_id == SocialCategory.id
+        ).filter(
             SocialPost.status == "published",
             SocialPost.visibility == "public",
+            SocialPost.deleted_at.is_(None),
         )
 
         if category_id is not None:
@@ -228,19 +237,48 @@ class SocialRepository:
         if post_type is not None:
             query = query.filter(SocialPost.post_type == post_type)
 
-        if q:
-            like = f"%{q}%"
+        if province_id is not None:
+            query = query.filter(SocialPost.province_id == province_id)
+
+        if city_id is not None:
+            query = query.filter(SocialPost.city_id == city_id)
+
+        normalized_q = normalize_search_text(q) if q else None
+        if normalized_q:
             query = query.filter(
-                or_(
-                    SocialPost.title.like(like),
-                    SocialPost.body.like(like),
+                search_match_expression(
+                    normalized_q,
+                    SocialPost.title,
+                    SocialPost.body,
+                    SocialPost.province_name,
+                    SocialPost.city_name,
+                    SocialPost.village_name,
+                    SocialCategory.code,
+                    SocialCategory.title,
+                    SocialCategory.description,
                 )
             )
 
         total = query.count()
 
+        if sort == SocialDiscoverySort.RELEVANCE and normalized_q:
+            ordering = (
+                search_relevance_expression(
+                    normalized_q,
+                    SocialPost.title,
+                    SocialPost.body,
+                    SocialPost.province_name,
+                    SocialPost.city_name,
+                    SocialPost.village_name,
+                    SocialCategory.title,
+                ).desc(),
+                SocialPost.published_at.desc(),
+                SocialPost.id.desc(),
+            )
+        else:
+            ordering = (SocialPost.published_at.desc(), SocialPost.id.desc())
         rows = (
-            query.order_by(SocialPost.published_at.desc(), SocialPost.id.desc())
+            query.order_by(*ordering)
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()

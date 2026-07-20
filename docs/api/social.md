@@ -103,11 +103,16 @@ overwrite categories already managed by an administrator.
 GET /api/v1/social/posts?page=1&page_size=20
 GET /api/v1/social/posts?category_id=1
 GET /api/v1/social/posts?post_type=question
+GET /api/v1/social/posts?q=%D8%A2%D9%81%D8%AA&province_id=1&city_id=1&sort=relevance
 ```
 
 Public endpoint.
 
-Returns published posts only.
+Returns only published, public, non-deleted posts. Discovery supports category,
+post type, province/city, shared Persian-normalized text, pagination, and
+allow-listed `sort=relevance|newest`. Search covers title, body, geo names, and
+category code/title/description. The historical newest ordering remains the
+default when no explicit search sort is supplied.
 
 Response note:
 

@@ -11,6 +11,7 @@ from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType
 from app.modules.notifications.service import NotificationService
 from app.modules.social.enums import (
+    SocialDiscoverySort,
     SocialCommentStatus,
     SocialModerationActionType,
     SocialModerationTargetType,
@@ -229,6 +230,14 @@ class SocialService:
         if filters.post_type is not None:
             self._validate_post_type(filters.post_type)
 
+        if filters.sort is not None and filters.sort not in {
+            item.value for item in SocialDiscoverySort
+        }:
+            raise ValidationAuthError(
+                message="Invalid social discovery sort",
+                details={"sort": filters.sort},
+            )
+
         if filters.category_id is not None:
             category = self.repo.get_category_by_id(category_id=filters.category_id)
 
@@ -242,6 +251,9 @@ class SocialService:
             category_id=filters.category_id,
             post_type=filters.post_type,
             q=filters.q,
+            province_id=filters.province_id,
+            city_id=filters.city_id,
+            sort=SocialDiscoverySort(filters.sort) if filters.sort else None,
             page=page,
             page_size=page_size,
         )

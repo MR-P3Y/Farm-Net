@@ -1187,6 +1187,25 @@ model fields exist:
   Consultant list parameters, and the 35-request Postman collection parsed.
 - Evidence: `docs/search/phase-18-consultant-discovery.md`.
 
+### Step 18.7 Social Discovery Hardening
+
+- Added the Social Post provider for the central `UnifiedSearchEngine` with a
+  typed Mobile detail route, geo context, body summary, and relevance.
+- Applied shared Persian/Arabic normalization to title, body, geo names, and
+  category code/title/description.
+- Added category, post-type, province/city filters and allow-listed `relevance`
+  and `newest` sorting while preserving the historical newest default.
+- Enforced published, public, non-deleted visibility; members-only, draft,
+  hidden, rejected, and deleted posts cannot enter public discovery.
+- Mobile Social API/Repository now carries geo and sort parameters without
+  client-side simulation; docs and Postman were updated.
+- Ruff/compileall and all 158 Backend tests passed with 17 existing UTC
+  deprecation warnings. Mobile analyze, all 38 tests, and Web/Wasm build passed.
+- Rebuilt Runtime normalized-query/type/geo/relevance smoke returned HTTP 200;
+  health reported app/database/Redis `ok`, OpenAPI remained 253 paths with all
+  eight Social list parameters, and the 22-request Postman collection parsed.
+- Evidence: `docs/search/phase-18-social-discovery.md`.
+
 ## Progress Update Rule
 
 After every completed step:

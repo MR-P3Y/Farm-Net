@@ -22,6 +22,11 @@ class SocialPostVisibility(str, Enum):
     MEMBERS = "members"
 
 
+class SocialDiscoverySort(str, Enum):
+    RELEVANCE = "relevance"
+    NEWEST = "newest"
+
+
 class SocialCommentStatus(str, Enum):
     PUBLISHED = "published"
     HIDDEN = "hidden"

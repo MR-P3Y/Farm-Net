@@ -18,8 +18,18 @@ class SocialRepository {
     int? categoryId,
     String? postType,
     String? query,
+    int? provinceId,
+    int? cityId,
+    String? sort,
   }) {
-    return _api.posts(categoryId: categoryId, postType: postType, query: query);
+    return _api.posts(
+      categoryId: categoryId,
+      postType: postType,
+      query: query,
+      provinceId: provinceId,
+      cityId: cityId,
+      sort: sort,
+    );
   }
 
   Future<SocialPostModel> postDetail(int postId) => _api.postDetail(postId);

@@ -14,6 +14,7 @@ from app.modules.social.schemas import (
     SocialReactionCreateIn,
     SocialReportCreateIn,
 )
+from app.modules.social.enums import SocialDiscoverySort
 from app.modules.social.service import SocialService
 
 
@@ -49,6 +50,9 @@ def list_social_posts(
     category_id: int | None = Query(default=None, ge=1),
     post_type: str | None = Query(default=None),
     q: str | None = Query(default=None),
+    province_id: int | None = Query(default=None, ge=1),
+    city_id: int | None = Query(default=None, ge=1),
+    sort: SocialDiscoverySort | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
     service = SocialService(db)
@@ -58,6 +62,9 @@ def list_social_posts(
             category_id=category_id,
             post_type=post_type,
             q=q,
+            province_id=province_id,
+            city_id=city_id,
+            sort=sort.value if sort else None,
             page=page,
             page_size=page_size,
         )

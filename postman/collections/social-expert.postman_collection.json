@@ -71,7 +71,7 @@
       "name": "Public - List Social Posts",
       "request": {
         "method": "GET",
-        "url": "{{base_url}}/social/posts?page=1&page_size=20"
+        "url": "{{base_url}}/social/posts?page=1&page_size=20&category_id={{social_category_id}}&post_type=guide&province_id=1&city_id=1&q=%D8%A2%D9%81%D8%AA&sort=relevance"
       }
     },
     {

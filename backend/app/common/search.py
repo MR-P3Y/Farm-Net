@@ -99,6 +99,10 @@ class UnifiedSearchFilters(BaseModel):
     service_category_id: int | None = Field(default=None, ge=1)
     rental_category_id: int | None = Field(default=None, ge=1)
     consultant_specialty_id: int | None = Field(default=None, ge=1)
+    social_post_type: str | None = Field(
+        default=None,
+        pattern="^(question|experience|problem|guide|general)$",
+    )
     social_category_id: int | None = Field(default=None, ge=1)
     service_pricing_type: str | None = Field(
         default=None,

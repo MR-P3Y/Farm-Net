@@ -131,7 +131,8 @@ Phase 18.3 Product + Store Discovery Hardening: completed
 Phase 18.4 Services Discovery Hardening: completed
 Phase 18.5 Equipment Rental Discovery Hardening: completed
 Phase 18.6 Consultant Discovery Hardening: completed
-Next: Phase 18.7 Social Discovery Hardening
+Phase 18.7 Social Discovery Hardening: completed
+Next: Phase 18.8 Unified Cross-Domain Search API
 ```
 
 Services means agricultural operational services, not equipment rental.

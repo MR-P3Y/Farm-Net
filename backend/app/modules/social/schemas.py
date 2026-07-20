@@ -132,6 +132,9 @@ class SocialPostListFilter(BaseModel):
     category_id: int | None = None
     post_type: str | None = None
     q: str | None = None
+    province_id: int | None = None
+    city_id: int | None = None
+    sort: str | None = None
     page: int = 1
     page_size: int = 20
 

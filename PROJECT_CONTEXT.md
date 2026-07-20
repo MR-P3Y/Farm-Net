@@ -466,6 +466,12 @@ allow-listed relevance/newest/rating sorting. Public search results preserve the
 existing privacy contract and never expose contact or moderation fields. Step
 18.7 Social Discovery Hardening is next.
 
+Phase 18 Step 18.7 connects published public Social posts to the central engine.
+Public discovery now shares Persian normalization across title, body, geo names,
+and category metadata; supports category/type/geo filters and allow-listed
+relevance/newest sorting. Members-only, hidden, rejected, deleted, and draft
+content cannot enter results. Step 18.8 Unified Cross-Domain Search API is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
