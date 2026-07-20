@@ -977,6 +977,24 @@ model fields exist:
   public Callback; Postman JSON parses with 44 requests.
 - Evidence: `docs/finance/phase-20-zarinpal-gateway-callback.md`.
 
+### Step 20.11 Financial Notifications + Privacy/Audit Hardening
+
+- Added explicit Refund requested/completed, Settlement requested/approved/
+  rejected/simulated, and Wallet adjusted event types.
+- Notifications target only the affected buyer/provider and use the existing
+  preference, delivery-log, retry and duplicate-prevention contracts.
+- A recursive privacy guard rejects gateway/card secrets, Authority,
+  idempotency keys, provider references, raw Callback/Verify payloads, reasons,
+  and Admin notes from Payment/Finance event payloads.
+- Settlement decisions and simulated clearing now create exact-once Admin Audit
+  records. Refund completion Audit no longer copies provider reference.
+- Added focused privacy/ownership tests and a Postman preference example.
+- Ruff and compileall passed; 45 focused and all 128 Backend tests passed with
+  17 existing UTC warnings. Alembic remains `fdcb2ab80c12 (head)` because no
+  schema change was required. Runtime app/database/Redis health passed;
+  OpenAPI remains 249 paths. Notification Postman JSON parses with 21 requests.
+- Evidence: `docs/finance/phase-20-financial-notifications-privacy-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:

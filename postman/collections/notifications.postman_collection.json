@@ -2,7 +2,7 @@
   "info": {
     "name": "Farm Net - Notifications Foundation",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Notification foundation regression collection: user inbox, preferences, Push devices, Admin operations, delivery queue/history, and controlled retry. External Email/SMS/Push transports remain fail-closed until explicitly configured."
+    "description": "Notification foundation regression collection: user inbox, preferences, privacy-safe financial events, Push devices, Admin operations, delivery queue/history, and controlled retry. External transports remain fail-closed until explicitly configured."
   },
   "variable": [
     {
@@ -303,6 +303,19 @@
           }
         ],
         "url": "{{base_url}}/admin/notifications/deliveries/{{delivery_log_id}}/retry"
+      }
+    },
+    {
+      "name": "Preferences - Enable Settlement Notifications",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": "{{base_url}}/notifications/preferences",
+        "body": {"mode": "raw", "raw": "{\n  \"event_type\": \"finance.settlement_approved\",\n  \"channel\": \"in_app\",\n  \"is_enabled\": true\n}"},
+        "description": "Uses the owner-controlled routing contract; financial payloads exclude gateway, card and administrative secrets."
       }
     },
     {

@@ -703,6 +703,13 @@ redirect URL, and stores Authority. The public callback is
 with Zarinpal before applying paid state. Provider codes 100 and 101 are both
 successful/idempotent Verify results. Farm-Net `TOMAN` maps explicitly to
 Zarinpal `IRT`; Merchant ID is never returned or stored in payment records.
+
+Financial lifecycle events use the existing Notification preference/routing
+contract. Refund targets the invoice buyer; Settlement and Wallet Adjustment
+target only the wallet owner. Event payloads centrally reject gateway/card
+secrets, Authority, idempotency keys, provider references, Callback/Verify
+payloads, reasons and Admin notes. Admin Settlement decisions and simulated
+clearing are separately audited with actor and trace metadata.
 Phase 20.8 exposes Ledger-derived own pending/available/reserved balances and an
 idempotent settlement workflow. Only a paid Product Order reaching `delivered`
 releases provider pending revenue to available. Settlement requests reserve

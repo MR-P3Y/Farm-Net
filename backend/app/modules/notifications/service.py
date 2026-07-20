@@ -49,6 +49,7 @@ class NotificationService:
         commit: bool = True,
     ) -> NotificationEventOut:
         self._validate_event_type(payload.event_type)
+        self._validate_financial_payload(payload.event_type, payload.payload_json)
 
         event_key = payload.event_key or self._generate_event_key(
             event_type=payload.event_type,
@@ -678,6 +679,41 @@ class NotificationService:
             raise ValidationAuthError(
                 message="Invalid notification event type",
                 details={"allowed": sorted(allowed)},
+            )
+
+    def _validate_financial_payload(
+        self, event_type: str, payload_json: dict[str, Any] | None
+    ) -> None:
+        if not (
+            event_type.startswith("finance.")
+            or event_type.startswith("payment.")
+        ):
+            return
+        forbidden = {
+            "merchant_id", "authority", "card_pan", "card_hash", "token",
+            "secret", "idempotency_key", "provider_reference",
+            "provider_payment_id", "callback_payload", "verify_payload",
+            "admin_note", "reason",
+        }
+
+        def keys(value: Any) -> set[str]:
+            if isinstance(value, dict):
+                result = {str(key).lower() for key in value}
+                for child in value.values():
+                    result.update(keys(child))
+                return result
+            if isinstance(value, list):
+                result: set[str] = set()
+                for child in value:
+                    result.update(keys(child))
+                return result
+            return set()
+
+        exposed = sorted(forbidden & keys(payload_json or {}))
+        if exposed:
+            raise ValidationAuthError(
+                message="Sensitive financial data is not allowed in notifications",
+                details={"error_code": "FINANCIAL_NOTIFICATION_PRIVACY", "fields": exposed},
             )
 
     def _validate_channel(self, channel: str) -> None:

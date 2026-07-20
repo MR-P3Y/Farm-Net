@@ -24,6 +24,8 @@ from app.modules.finance.models import (
 from app.modules.finance.schemas import SettlementOut, WalletBalanceOut
 from app.modules.orders.enums import OrderStatus, PaymentStatus
 from app.modules.orders.models import Order
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.service import NotificationService
 
 
 class SettlementContractError(ValueError):
@@ -404,6 +406,12 @@ class SettlementService:
         )
         self.db.add(row)
         self.db.flush()
+        self._notify(
+            row=row, event_type=NotificationEventType.SETTLEMENT_REQUESTED.value,
+            title="Settlement requested",
+            body="Your settlement request was recorded and its balance reserved.",
+            actor_user_id=user_id,
+        )
         return row
 
     def decide(
@@ -429,6 +437,19 @@ class SettlementService:
             )
             row.decision_journal_id = journal.id
             row.status = SettlementStatus.REJECTED.value
+        self._notify(
+            row=row,
+            event_type=(
+                NotificationEventType.SETTLEMENT_APPROVED.value
+                if approve else NotificationEventType.SETTLEMENT_REJECTED.value
+            ),
+            title="Settlement approved" if approve else "Settlement rejected",
+            body=(
+                "Your settlement request was approved."
+                if approve else "Your settlement request was rejected and balance returned."
+            ),
+            actor_user_id=admin_user_id,
+        )
         return row
 
     def simulate_payout(
@@ -445,7 +466,31 @@ class SettlementService:
         row.decision_journal_id = journal.id
         row.status = SettlementStatus.SIMULATED_COMPLETED.value
         row.simulated_completed_at = datetime.utcnow()
+        self._notify(
+            row=row, event_type=NotificationEventType.SETTLEMENT_SIMULATED.value,
+            title="Settlement simulation completed",
+            body="Your settlement moved to simulated clearing; no bank transfer occurred.",
+            actor_user_id=admin_user_id,
+        )
         return row
+
+    def _notify(
+        self, *, row: SettlementRequest, event_type: str, title: str,
+        body: str, actor_user_id: int,
+    ) -> None:
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=event_type,
+            recipient_user_id=row.requester_user_id,
+            title=title, body=body, actor_user_id=actor_user_id,
+            source_type="settlement_request", source_id=str(row.id),
+            payload_json={
+                "settlement_id": row.id, "status": row.status, "currency": row.currency,
+            },
+            action_url="/finance/settlements",
+            priority="high",
+            allow_self_notification=True,
+            commit=False,
+        )
 
     def _get(self, settlement_id: int) -> SettlementRequest:
         row = (

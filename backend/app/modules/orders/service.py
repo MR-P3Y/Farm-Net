@@ -1454,6 +1454,21 @@ class RefundService:
             **(audit_context or {}),
         )
         invoice.status = InvoiceStatus.REFUND_PENDING.value
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=NotificationEventType.REFUND_REQUESTED.value,
+            recipient_user_id=invoice.buyer_user_id,
+            title="Refund requested",
+            body=f"Refund for order #{invoice.order_id} is under review.",
+            actor_user_id=user.id,
+            source_type="finance_refund",
+            source_id=str(row.id),
+            payload_json={
+                "refund_id": row.id, "order_id": invoice.order_id,
+                "status": row.status, "currency": row.currency,
+            },
+            action_url=f"/orders/{invoice.order_id}",
+            priority="high", commit=False,
+        )
         self.repo.commit()
         self.repo.refresh(row)
         return self._out(row)
@@ -1485,7 +1500,7 @@ class RefundService:
             admin_user_id=user.id, action="FINANCE_REFUND_COMPLETED",
             target_type="finance_refund", target_id=str(row.id),
             old_value=json.dumps({"status": RefundStatus.REQUESTED.value}),
-            new_value=json.dumps({"status": row.status, "provider_reference": row.provider_reference}),
+            new_value=json.dumps({"status": row.status}),
             **(audit_context or {}),
         )
         transaction = self.repo.create_refund_transaction(
@@ -1515,6 +1530,21 @@ class RefundService:
         _notify_order_status_changed(
             db=self.db, order=order, old_status=old_status,
             new_status=OrderStatus.REFUNDED.value, actor_user_id=user.id,
+        )
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=NotificationEventType.REFUND_COMPLETED.value,
+            recipient_user_id=invoice.buyer_user_id,
+            title="Refund completed",
+            body=f"Refund for order #{invoice.order_id} was completed.",
+            actor_user_id=user.id,
+            source_type="finance_refund",
+            source_id=str(row.id),
+            payload_json={
+                "refund_id": row.id, "order_id": invoice.order_id,
+                "status": row.status, "currency": row.currency,
+            },
+            action_url=f"/orders/{invoice.order_id}",
+            priority="high", commit=False,
         )
         self.repo.commit()
         self.repo.refresh(row)

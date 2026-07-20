@@ -120,7 +120,8 @@ Phase 20.7 Rental Revenue + Deposit Accounting Boundaries: completed (ecba19a70b
 Phase 20.8 Balance Release + Settlement/Payout Workflow: completed (fdcb2ab80c12)
 Phase 20.9 Refund, Reversal, Adjustment + Concurrency Hardening: completed
 Phase 20.10 Real Payment Gateway Adapter + Callback Verification: completed (disabled by default; credentialed sandbox smoke pending)
-Next: Phase 20.11 Financial Notifications + Privacy/Audit Hardening
+Phase 20.11 Financial Notifications + Privacy/Audit Hardening: completed
+Next: Phase 20.12 Mobile Wallet, Invoices, and Provider Settlements
 ```
 
 Services means agricultural operational services, not equipment rental.

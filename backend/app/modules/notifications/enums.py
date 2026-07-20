@@ -9,6 +9,13 @@ class NotificationEventType(str, Enum):
     PAYMENT_SUCCEEDED = "payment.succeeded"
     PAYMENT_FAILED = "payment.failed"
     PAYMENT_RECEIPT_UPLOADED = "payment.receipt_uploaded"
+    REFUND_REQUESTED = "finance.refund_requested"
+    REFUND_COMPLETED = "finance.refund_completed"
+    SETTLEMENT_REQUESTED = "finance.settlement_requested"
+    SETTLEMENT_APPROVED = "finance.settlement_approved"
+    SETTLEMENT_REJECTED = "finance.settlement_rejected"
+    SETTLEMENT_SIMULATED = "finance.settlement_simulated"
+    WALLET_ADJUSTED = "finance.wallet_adjusted"
 
     VERIFICATION_SUBMITTED = "verification.submitted"
     VERIFICATION_APPROVED = "verification.approved"

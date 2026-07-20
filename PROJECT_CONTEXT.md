@@ -391,6 +391,13 @@ and treats Callback `OK` solely as a signal for server-to-server Verify. Codes
 is never returned or persisted. No credential exists in the repository, so no
 real or sandbox money movement has been claimed. Step 20.11 is next.
 
+Phase 20 Step 20.11 adds owner-only lifecycle notifications for Refund,
+Settlement and Wallet Adjustment. A central privacy guard rejects sensitive
+keys in Payment/Finance notification payloads. Settlement decisions and
+simulated clearing gain exact-once Admin Audit records; Refund audit no longer
+copies provider references. Step 20.12 Mobile Wallet, Invoices, and Provider
+Settlements is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
