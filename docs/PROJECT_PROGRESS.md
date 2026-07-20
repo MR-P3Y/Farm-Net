@@ -1089,6 +1089,25 @@ model fields exist:
   external search engine is not introduced without measured need.
 - Evidence: `docs/search/phase-18-real-state-audit.md`.
 
+### Step 18.2 Shared Search Contracts + Persian Query Normalization
+
+- Added one central `UnifiedSearchEngine` that orchestrates registered typed
+  domain providers and returns grouped cross-domain results in requested order.
+- Added the shared provider protocol and strict typed contracts for query,
+  selected result types, pagination, sorting, geo/category/price filters,
+  grouped results, public navigation routes, rating, and relevance score.
+- Added deterministic normalization for Arabic/Persian Yeh and Kaf variants,
+  Heh variants, diacritics, tatweel, joiners, whitespace, case, and Persian/
+  Arabic digits.
+- Shared price filters and result money pairs are canonical `TOMAN`; invalid
+  ranges, duplicate result types, unknown fields, unsafe external routes, and
+  incomplete price/currency pairs fail closed.
+- No migration, permission, public endpoint, Postman request, or existing
+  domain behavior changed. Domain providers will connect incrementally.
+- Ruff/compileall, all 11 shared-search tests, and all 140 Backend tests passed
+  with 17 existing UTC deprecation warnings.
+- Evidence: `docs/search/phase-18-shared-contracts.md`.
+
 ## Progress Update Rule
 
 After every completed step:

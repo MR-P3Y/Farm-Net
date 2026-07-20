@@ -431,6 +431,12 @@ Persian normalization, relevance model, explicit client-selectable sorting,
 cross-domain result endpoint, or shared discovery screen. Step 18.2 Shared
 Search Contracts + Persian Query Normalization is next.
 
+Phase 18 Step 18.2 added the central `UnifiedSearchEngine`, provider protocol,
+typed query/filter/group/result contracts, `TOMAN`-only shared price range, safe
+internal result routes, and deterministic Persian/Arabic text and digit
+normalization. No public route or existing domain behavior changes in this
+foundation step. Step 18.3 Product Discovery Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
