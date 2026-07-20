@@ -13,6 +13,7 @@ from app.modules.finance.models import (
     _protect_settlement_delete,
     _protect_settlement_update,
 )
+from app.modules.finance.schemas import OwnInvoiceOut
 from app.modules.finance.settlement_service import LedgerMovementService
 
 
@@ -45,6 +46,15 @@ def test_wallet_and_settlement_routes_are_registered() -> None:
         "/api/v1/admin/finance/settlements/{settlement_id}/simulate-payout"
     ]
     assert "post" in paths["/api/v1/admin/finance/adjustments"]
+    assert "get" in paths["/api/v1/finance/invoices/me"]
+    assert "get" in paths["/api/v1/finance/invoices/me/{invoice_id}"]
+
+
+def test_own_invoice_contract_hides_provider_economics() -> None:
+    fields = set(OwnInvoiceOut.model_fields)
+    assert {"total_amount", "status", "source_type", "currency"} <= fields
+    assert "provider_amount" not in fields
+    assert "platform_amount" not in fields
 
 
 def test_release_moves_provider_pending_to_available_without_new_money() -> None:

@@ -398,6 +398,13 @@ simulated clearing gain exact-once Admin Audit records; Refund audit no longer
 copies provider references. Step 20.12 Mobile Wallet, Invoices, and Provider
 Settlements is next.
 
+Phase 20 Step 20.12 adds a Mobile «My Finance Center» with Ledger-derived
+pending/available/reserved wallet balances, provider Settlement request/history,
+and payer-owned invoices in canonical Iranian toman. Two new payer-owned invoice
+APIs exclude platform/provider economics. Buyer-only roles retain invoice access
+when provider wallet permissions are absent. Step 20.13 Admin Accounting,
+Settlement, and Reconciliation is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

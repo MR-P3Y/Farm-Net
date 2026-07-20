@@ -710,6 +710,12 @@ target only the wallet owner. Event payloads centrally reject gateway/card
 secrets, Authority, idempotency keys, provider references, Callback/Verify
 payloads, reasons and Admin notes. Admin Settlement decisions and simulated
 clearing are separately audited with actor and trace metadata.
+
+Mobile Finance uses `GET /api/v1/finance/invoices/me` and
+`GET /api/v1/finance/invoices/me/{invoice_id}` for payer-owned invoices. These
+contracts expose totals and lifecycle state but intentionally omit platform and
+provider shares. Wallet and Settlement APIs retain their provider permissions;
+all displayed and submitted amounts use Iranian toman.
 Phase 20.8 exposes Ledger-derived own pending/available/reserved balances and an
 idempotent settlement workflow. Only a paid Product Order reaching `delivered`
 releases provider pending revenue to available. Settlement requests reserve

@@ -71,6 +71,22 @@ class WalletBalanceOut(BaseModel):
     reserved_amount: Decimal
 
 
+class OwnInvoiceOut(BaseModel):
+    id: int
+    invoice_number: str
+    source_type: str
+    source_id: int
+    status: str
+    currency: str
+    subtotal_amount: Decimal
+    discount_amount: Decimal
+    surcharge_amount: Decimal
+    total_amount: Decimal
+    issued_at: datetime
+    paid_at: datetime | None
+    refunded_at: datetime | None
+
+
 class SettlementCreateIn(BaseModel):
     amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     currency: str = Field(default="TOMAN", min_length=5, max_length=10)

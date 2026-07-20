@@ -995,6 +995,22 @@ model fields exist:
   OpenAPI remains 249 paths. Notification Postman JSON parses with 21 requests.
 - Evidence: `docs/finance/phase-20-financial-notifications-privacy-audit.md`.
 
+### Step 20.12 Mobile Wallet, Invoices, and Provider Settlements
+
+- Added typed Mobile Finance models/API/Repository/Riverpod state for Wallet,
+  payer invoices, Settlement history, and idempotent Settlement creation.
+- Added a responsive «مرکز مالی من» screen with canonical Iranian toman
+  formatting, pending/available/reserved cards, invoice and Settlement empty/
+  loading/error states, pull-to-refresh, validation, and Home navigation.
+- Buyer-only roles can still view invoices when provider Wallet/Settlement
+  permissions are absent. Provider actions remain permission-controlled.
+- Added `GET /api/v1/finance/invoices/me` and detail, scoped strictly to the
+  authenticated payer. Their typed contract excludes platform/provider shares.
+- Mobile analyze passed; all 38 Flutter tests and Web build passed. Backend
+  Ruff/compileall passed; all 129 tests passed with 17 existing UTC warnings.
+  Runtime app/database/Redis health passed; OpenAPI has 251 paths.
+- Evidence: `docs/finance/phase-20-mobile-finance-center.md`.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -9,6 +9,7 @@ import '../../features/consultants/presentation/consultation_request_detail_scre
 import '../../features/consultants/presentation/my_consultant_profile_screen.dart';
 import '../../features/consultants/presentation/my_consultation_requests_screen.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/finance/presentation/finance_center_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/notifications/presentation/notification_preferences_screen.dart';
 import '../../features/orders/presentation/cart_screen.dart';
@@ -64,6 +65,11 @@ final GoRouter appRouter = GoRouter(
       path: '/home',
       name: 'home',
       builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      path: '/finance',
+      name: 'finance-center',
+      builder: (context, state) => const FinanceCenterScreen(),
     ),
     GoRoute(
       path: '/notifications',

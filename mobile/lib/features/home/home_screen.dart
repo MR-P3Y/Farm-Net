@@ -63,6 +63,12 @@ class HomeScreen extends ConsumerWidget {
                       ],
                       SizedBox(height: r.v(24)),
                       FilledButton.icon(
+                        onPressed: () => context.push('/finance'),
+                        icon: const Icon(Icons.account_balance_wallet_outlined),
+                        label: const Text('مرکز مالی من'),
+                      ),
+                      SizedBox(height: r.v(12)),
+                      FilledButton.icon(
                         onPressed: () {
                           context.push('/profile');
                         },
