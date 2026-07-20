@@ -18,12 +18,18 @@ class ServiceRepository {
     int? provinceId,
     int? cityId,
     String? pricingType,
+    num? minPrice,
+    num? maxPrice,
+    String? sort,
   }) => _api.offers(
     query: query,
     categoryId: categoryId,
     provinceId: provinceId,
     cityId: cityId,
     pricingType: pricingType,
+    minPrice: minPrice,
+    maxPrice: maxPrice,
+    sort: sort,
   );
   Future<ServiceOffer> detail(int id) => _api.detail(id);
   Future<ServiceRequest> createRequest(ServiceRequestInput input) =>

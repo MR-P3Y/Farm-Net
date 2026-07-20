@@ -98,9 +98,12 @@ old/new status only; contact, address, coordinates, and notes are excluded.
 
 The Step 17.6 mobile feature consumes `GET /services/categories`,
 `GET /services/offers`, and `GET /services/offers/{id}`. The list supports `q`,
-`category_id`, `province_id`, `city_id`, and `pricing_type`. A price-range UI is
-not exposed because the current backend list contract has no minimum/maximum
-price parameters.
+`category_id`, `province_id`, `city_id`, `pricing_type`, `min_price`,
+`max_price`, and allow-listed `sort` (`relevance`, `newest`, `price_asc`,
+`price_desc`, `rating`). Price range is canonical `TOMAN`; negotiable offers
+without a price are excluded by a price range and remain last in price sorting.
+Category selection includes active descendants. Search uses the shared Persian
+normalizer across offer, provider, category, service-area, and geo names.
 
 ## Mobile requester flow
 

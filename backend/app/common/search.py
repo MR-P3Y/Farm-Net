@@ -99,6 +99,10 @@ class UnifiedSearchFilters(BaseModel):
     rental_category_id: int | None = Field(default=None, ge=1)
     consultant_specialty_id: int | None = Field(default=None, ge=1)
     social_category_id: int | None = Field(default=None, ge=1)
+    service_pricing_type: str | None = Field(
+        default=None,
+        pattern="^(fixed|hourly|daily|hectare|project|negotiable)$",
+    )
     min_price: Decimal | None = Field(default=None, ge=0, max_digits=18, decimal_places=2)
     max_price: Decimal | None = Field(default=None, ge=0, max_digits=18, decimal_places=2)
     currency: CurrencyCode = CurrencyCode.TOMAN

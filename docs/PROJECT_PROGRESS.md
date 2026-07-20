@@ -1129,6 +1129,25 @@ model fields exist:
   contained no matching public rows. No migration or seed change was required.
 - Evidence: `docs/search/phase-18-product-store-discovery.md`.
 
+### Step 18.4 Services Discovery Hardening
+
+- Added the Service Offer provider for the central engine with typed Service
+  result routes, provider rating, geo, optional `TOMAN` price, and relevance.
+- Public search now uses shared Persian/Arabic normalization across Offer,
+  Provider, Category, service-area, and geo fields.
+- Added active descendant category scope, `TOMAN` min/max price, and allow-listed
+  relevance/newest/price/rating sorts. Null negotiable prices remain last for
+  price sorting and are excluded when a price range is selected.
+- Preserved approved/active/non-deleted Offer and approved/non-deleted Provider
+  boundaries, response shape, pagination, and historical default sort.
+- Mobile Service API/Repository carries the new price/sort parameters for the
+  later unified Discovery UI. Docs and Postman were updated.
+- Ruff/compileall and all 149 Backend tests passed with 17 existing UTC
+  deprecation warnings. Mobile analyze and all 38 tests passed.
+- Runtime normalized-query/price/rating smoke returned HTTP 200 with a valid
+  empty page; app/database/Redis health and 253-path OpenAPI passed.
+- Evidence: `docs/search/phase-18-services-discovery.md`.
+
 ## Progress Update Rule
 
 After every completed step:

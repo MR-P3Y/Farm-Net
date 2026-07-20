@@ -27,6 +27,14 @@ class ServicePricingType(StrEnum):
     NEGOTIABLE = "negotiable"
 
 
+class ServiceDiscoverySort(StrEnum):
+    RELEVANCE = "relevance"
+    NEWEST = "newest"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"
+    RATING = "rating"
+
+
 class ServiceRequestStatus(StrEnum):
     OPEN = "open"
     ACCEPTED = "accepted"

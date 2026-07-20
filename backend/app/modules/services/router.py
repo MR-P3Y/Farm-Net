@@ -1,4 +1,5 @@
 from math import ceil
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
+from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.services.schemas import (
     ServiceOfferCreateIn,
@@ -21,6 +23,7 @@ from app.modules.services.schemas import (
     ServiceRequestStatusUpdateIn,
 )
 from app.modules.services.service import ServicesService
+from app.modules.services.enums import ServiceDiscoverySort
 from app.modules.finance.schemas import FinalPriceDecisionIn, FinalPriceProposalIn
 
 
@@ -57,8 +60,13 @@ def list_public_service_offers(
     province_id: int | None = Query(default=None, ge=1),
     city_id: int | None = Query(default=None, ge=1),
     q: str | None = Query(default=None),
+    min_price: Decimal | None = Query(default=None, ge=0),
+    max_price: Decimal | None = Query(default=None, ge=0),
+    sort: ServiceDiscoverySort | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
+    if min_price is not None and max_price is not None and min_price > max_price:
+        raise ValidationAuthError(message="min_price must be less than or equal to max_price")
     service = ServicesService(db)
     items, total = service.list_public_offers(
         category_id=category_id,
@@ -67,6 +75,9 @@ def list_public_service_offers(
         province_id=province_id,
         city_id=city_id,
         q=q,
+        min_price=min_price,
+        max_price=max_price,
+        sort=sort,
         page=page,
         page_size=page_size,
     )

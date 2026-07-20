@@ -35,6 +35,9 @@ class ServiceApi {
     int? provinceId,
     int? cityId,
     String? pricingType,
+    num? minPrice,
+    num? maxPrice,
+    String? sort,
   }) async {
     final params = <String, dynamic>{};
     if (query?.trim().isNotEmpty ?? false) params['q'] = query!.trim();
@@ -42,6 +45,9 @@ class ServiceApi {
     if (provinceId != null) params['province_id'] = provinceId;
     if (cityId != null) params['city_id'] = cityId;
     if (pricingType?.isNotEmpty ?? false) params['pricing_type'] = pricingType;
+    if (minPrice != null) params['min_price'] = minPrice;
+    if (maxPrice != null) params['max_price'] = maxPrice;
+    if (sort?.isNotEmpty ?? false) params['sort'] = sort;
     try {
       final response = await _client.dio.get<Map<String, dynamic>>(
         '/services/offers',

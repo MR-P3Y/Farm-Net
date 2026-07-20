@@ -19,7 +19,7 @@
       "name": "Public discovery",
       "item": [
         { "name": "List categories", "request": { "method": "GET", "header": [], "url": "{{base_url}}/services/categories?q=" } },
-        { "name": "List approved offers", "request": { "method": "GET", "header": [], "url": "{{base_url}}/services/offers?page=1&page_size=20&category_id={{category_id}}" } },
+        { "name": "List approved offers", "request": { "method": "GET", "header": [], "url": "{{base_url}}/services/offers?page=1&page_size=20&category_id={{category_id}}&q=%D9%83%D8%B4%D8%A7%D9%88%D8%B1%D8%B2%D9%8A&min_price=0&max_price=999999999&sort=relevance" } },
         { "name": "Offer public detail", "request": { "method": "GET", "header": [], "url": "{{base_url}}/services/offers/{{offer_id}}" } }
       ]
     },

@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-from sqlalchemy import or_, text
+from decimal import Decimal
+
+from sqlalchemy import case, or_, text
 from sqlalchemy.orm import Session, joinedload
+
+from app.common.money import CurrencyCode
+from app.common.search import normalize_search_text
+from app.common.search_sql import search_match_expression, search_relevance_expression
 
 from app.modules.auth.models import AuthUser
 from app.modules.media.models import MediaFile
 from app.modules.profiles.models import UserProfile
+from app.modules.services.enums import ServiceDiscoverySort
 from app.modules.services.models import (
     ServiceCategory,
     ServiceOffer,
@@ -253,12 +260,16 @@ class ServicesRepository:
         q: str | None = None,
         province_id: int | None = None,
         city_id: int | None = None,
+        min_price: Decimal | None = None,
+        max_price: Decimal | None = None,
+        sort: ServiceDiscoverySort | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[ServiceOffer], int]:
         query = (
             self.db.query(ServiceOffer)
             .join(ServiceProviderProfile)
+            .outerjoin(ServiceCategory, ServiceOffer.category_id == ServiceCategory.id)
             .options(
                 joinedload(ServiceOffer.category),
                 joinedload(ServiceOffer.media),
@@ -276,7 +287,7 @@ class ServicesRepository:
         )
 
         if category_id is not None:
-            query = query.filter(ServiceOffer.category_id == category_id)
+            query = query.filter(ServiceOffer.category_id.in_(self._category_scope(category_id)))
 
         if provider_profile_id is not None:
             query = query.filter(ServiceOffer.provider_profile_id == provider_profile_id)
@@ -290,34 +301,104 @@ class ServicesRepository:
         if city_id is not None:
             query = query.filter(ServiceOffer.city_id == city_id)
 
-        if q:
-            like = f"%{q.strip()}%"
+        normalized_q = normalize_search_text(q) if q else None
+        if normalized_q:
             query = query.filter(
-                or_(
-                    ServiceOffer.title.ilike(like),
-                    ServiceOffer.slug.ilike(like),
-                    ServiceOffer.short_description.ilike(like),
-                    ServiceOffer.description.ilike(like),
-                    ServiceOffer.service_area.ilike(like),
-                    ServiceOffer.province_name.ilike(like),
-                    ServiceOffer.city_name.ilike(like),
+                search_match_expression(
+                    normalized_q,
+                    ServiceOffer.title,
+                    ServiceOffer.slug,
+                    ServiceOffer.short_description,
+                    ServiceOffer.description,
+                    ServiceOffer.service_area,
+                    ServiceOffer.province_name,
+                    ServiceOffer.city_name,
+                    ServiceProviderProfile.display_name,
+                    ServiceProviderProfile.title,
+                    ServiceCategory.title,
                 )
+            )
+
+        if min_price is not None:
+            query = query.filter(
+                ServiceOffer.currency == CurrencyCode.TOMAN.value,
+                ServiceOffer.price_amount >= min_price,
+            )
+
+        if max_price is not None:
+            query = query.filter(
+                ServiceOffer.currency == CurrencyCode.TOMAN.value,
+                ServiceOffer.price_amount <= max_price,
             )
 
         total = query.count()
 
-        rows = (
-            query.order_by(
+        null_price = case((ServiceOffer.price_amount.is_(None), 1), else_=0)
+        if sort == ServiceDiscoverySort.PRICE_ASC:
+            ordering = (null_price.asc(), ServiceOffer.price_amount.asc(), ServiceOffer.id.desc())
+        elif sort == ServiceDiscoverySort.PRICE_DESC:
+            ordering = (null_price.asc(), ServiceOffer.price_amount.desc(), ServiceOffer.id.desc())
+        elif sort == ServiceDiscoverySort.RATING:
+            ordering = (
+                ServiceProviderProfile.rating_average.desc(),
+                ServiceProviderProfile.reviews_count.desc(),
+                ServiceOffer.id.desc(),
+            )
+        elif sort == ServiceDiscoverySort.NEWEST:
+            ordering = (ServiceOffer.created_at.desc(), ServiceOffer.id.desc())
+        elif sort == ServiceDiscoverySort.RELEVANCE and normalized_q:
+            ordering = (
+                search_relevance_expression(
+                    normalized_q,
+                    ServiceOffer.title,
+                    ServiceOffer.slug,
+                    ServiceOffer.short_description,
+                    ServiceOffer.description,
+                    ServiceOffer.service_area,
+                    ServiceProviderProfile.display_name,
+                    ServiceProviderProfile.title,
+                    ServiceCategory.title,
+                ).desc(),
                 ServiceOffer.is_featured.desc(),
                 ServiceOffer.created_at.desc(),
                 ServiceOffer.id.desc(),
             )
+        else:
+            ordering = (
+                ServiceOffer.is_featured.desc(),
+                ServiceOffer.created_at.desc(),
+                ServiceOffer.id.desc(),
+            )
+
+        rows = (
+            query.order_by(*ordering)
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()
         )
 
         return rows, total
+
+    def _category_scope(self, category_id: int) -> set[int]:
+        rows = self.db.query(ServiceCategory.id, ServiceCategory.parent_id).filter(
+            ServiceCategory.is_active.is_(True)
+        ).all()
+        children: dict[int, list[int]] = {}
+        known_ids = set()
+        for row_id, parent_id in rows:
+            known_ids.add(row_id)
+            if parent_id is not None:
+                children.setdefault(parent_id, []).append(row_id)
+        if category_id not in known_ids:
+            return {category_id}
+        scope = {category_id}
+        pending = [category_id]
+        while pending:
+            for child_id in children.get(pending.pop(), []):
+                if child_id not in scope:
+                    scope.add(child_id)
+                    pending.append(child_id)
+        return scope
 
     def list_provider_offers(
         self,

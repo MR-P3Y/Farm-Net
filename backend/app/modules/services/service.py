@@ -18,6 +18,7 @@ from app.modules.notifications.enums import NotificationEventType, NotificationP
 from app.modules.notifications.service import NotificationService
 from app.modules.services.enums import (
     ServiceContactMethod,
+    ServiceDiscoverySort,
     ServiceOfferStatus,
     ServicePricingType,
     ServiceProviderStatus,
@@ -254,6 +255,9 @@ class ServicesService:
         q: str | None,
         province_id: int | None,
         city_id: int | None,
+        min_price: Decimal | None,
+        max_price: Decimal | None,
+        sort: ServiceDiscoverySort | None,
         page: int,
         page_size: int,
     ) -> tuple[list[ServiceOfferPublicOut], int]:
@@ -273,6 +277,9 @@ class ServicesService:
             q=q,
             province_id=province_id,
             city_id=city_id,
+            min_price=min_price,
+            max_price=max_price,
+            sort=sort,
             page=page,
             page_size=page_size,
         )

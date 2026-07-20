@@ -444,6 +444,13 @@ relevance boundary. Products add descendant-aware categories, canonical
 relevance/newest sorting. Existing visibility and default ordering remain
 compatible. Step 18.4 Services Discovery Hardening is next.
 
+Phase 18 Step 18.4 connects approved Service Offers to the central engine with
+shared Persian normalization, provider/category/geo matching, active descendant
+categories, `TOMAN` price range, and allow-listed relevance/newest/price/rating
+sorting. Negotiable offers never receive invented prices. Existing public
+privacy and default ordering remain compatible. Step 18.5 Equipment Rental
+Discovery Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
