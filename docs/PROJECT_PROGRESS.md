@@ -910,6 +910,27 @@ model fields exist:
   its description now records the Phase 20.7 boundary.
 - Evidence: `docs/finance/phase-20-rental-revenue-deposit-boundary.md`.
 
+### Step 20.8 Balance Release + Settlement/Payout Workflow
+
+- Paid Product Orders now release provider share exactly once on `delivered`,
+  moving liability from pending to available through a balanced Ledger Journal.
+- Added Ledger-derived own Wallet balances for pending/available/reserved; no
+  mutable balance cache or cross-domain unfunded revenue is represented.
+- Added idempotent own Settlement requests that atomically reserve available
+  balance, plus Admin approve/reject and explicitly simulated payout clearing.
+- Rejection returns reserved to available. Simulated completion moves reserved
+  to payout clearing and never claims an external bank transfer.
+- Added immutable Settlement request history, positive `TOMAN` and status DB
+  constraints, six ownership/permission-protected APIs, two provider
+  permissions, and six Postman requests.
+- Ruff/compileall, 26 focused, and all 110 Backend tests passed with 16 existing
+  UTC warnings. Alembic reached `fdcb2ab80c12 (head)`; Auth seed twice produced
+  12 roles/248 permissions; Runtime health and OpenAPI passed.
+- Runtime had zero settlements/release journals, so no real-row movement smoke
+  was possible. Step 20.9 owns refund/reversal/adjustment concurrency after
+  release or reservation.
+- Evidence: `docs/finance/phase-20-balance-release-settlement.md`.
+
 ## Progress Update Rule
 
 After every completed step:

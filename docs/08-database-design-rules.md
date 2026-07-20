@@ -1487,3 +1487,11 @@ and refundable deposit principal must use separate columns and their exact sum
 must equal the funding total. Deposit principal cannot be classified as
 provider revenue or commission base. Operational completion cannot imply that
 money was captured or a deposit was released.
+
+## Release and settlement
+
+Available and reserved provider balances must be derived from immutable Ledger
+entries. Release moves an existing provider payable from pending to available;
+settlement reservation moves available to reserved. Rejection reverses that
+reservation. A simulated payout may move reserved to payout clearing but must
+never be labelled as an external bank payment.

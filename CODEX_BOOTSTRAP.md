@@ -117,7 +117,8 @@ Phase 20.4 Order Finance Ledger Bridge + Reconciliation: completed (d9a4b2f20404
 Phase 20.5 Universal Invoice + Commission Foundation: completed (f7a6d4b20606)
 Phase 20.6 Services/Consultation Final-Price Contracts: completed (b9c8d6e40808)
 Phase 20.7 Rental Revenue + Deposit Accounting Boundaries: completed (ecba19a70b11)
-Next: Phase 20.8 Balance Release + Settlement/Payout Workflow
+Phase 20.8 Balance Release + Settlement/Payout Workflow: completed (fdcb2ab80c12)
+Next: Phase 20.9 Refund, Reversal, Adjustment + Concurrency Hardening
 ```
 
 Services means agricultural operational services, not equipment rental.

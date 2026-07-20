@@ -25,7 +25,57 @@ from app.modules.finance.enums import (
     CommissionPolicyStatus,
     FinalPriceProposalStatus,
     RentalFinancialTermsStatus,
+    SettlementStatus,
 )
+
+
+class SettlementRequest(Base):
+    __tablename__ = "finance_settlement_requests"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    requester_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(180), nullable=False, unique=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(30), default=SettlementStatus.REQUESTED.value, nullable=False, index=True
+    )
+    reserve_journal_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("finance_ledger_transactions.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
+    )
+    decision_journal_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("finance_ledger_transactions.id", ondelete="RESTRICT"),
+        unique=True,
+    )
+    note: Mapped[str | None] = mapped_column(String(500))
+    admin_note: Mapped[str | None] = mapped_column(String(1000))
+    decided_by_user_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="SET NULL"), index=True
+    )
+    requested_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime)
+    simulated_completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_settlement_amount_positive"),
+        CheckConstraint("currency = 'TOMAN'", name="ck_settlement_currency_toman"),
+        CheckConstraint(
+            "status IN ('requested', 'approved', 'rejected', 'simulated_completed')",
+            name="ck_settlement_status",
+        ),
+        Index("ix_settlement_requester_status", "requester_user_id", "status"),
+        Index("ix_settlement_status_requested", "status", "requested_at"),
+    )
 
 
 class RentalFinancialTerms(Base):
@@ -76,8 +126,7 @@ class RentalFinancialTerms(Base):
         ),
         CheckConstraint("currency = 'TOMAN'", name="ck_rental_terms_currency_toman"),
         CheckConstraint(
-            "status IN ('unfunded', 'cancelled_unfunded', "
-            "'operationally_completed_unfunded')",
+            "status IN ('unfunded', 'cancelled_unfunded', 'operationally_completed_unfunded')",
             name="ck_rental_terms_status",
         ),
         Index("ix_rental_terms_payer_status", "payer_user_id", "status"),
@@ -459,6 +508,24 @@ def _protect_rental_terms_delete(_mapper, _connection, _target) -> None:
     raise RuntimeError("Rental financial terms cannot be deleted")
 
 
+def _protect_settlement_update(_mapper, _connection, target) -> None:
+    immutable = (
+        "requester_user_id",
+        "idempotency_key",
+        "amount",
+        "currency",
+        "reserve_journal_id",
+        "requested_at",
+    )
+    state = inspect(target)
+    if any(getattr(state.attrs, name).history.has_changes() for name in immutable):
+        raise RuntimeError("Settlement request financial identity is immutable")
+
+
+def _protect_settlement_delete(_mapper, _connection, _target) -> None:
+    raise RuntimeError("Settlement request history cannot be deleted")
+
+
 for _model in (LedgerTransaction, LedgerEntry, BillingInvoiceItem, BillingCommissionSnapshot):
     event.listen(_model, "before_update", _reject_posted_ledger_mutation)
     event.listen(_model, "before_delete", _reject_posted_ledger_mutation)
@@ -467,3 +534,5 @@ event.listen(FinalPriceProposal, "before_update", _protect_final_price_update)
 event.listen(FinalPriceProposal, "before_delete", _protect_final_price_delete)
 event.listen(RentalFinancialTerms, "before_update", _protect_rental_terms_update)
 event.listen(RentalFinancialTerms, "before_delete", _protect_rental_terms_delete)
+event.listen(SettlementRequest, "before_update", _protect_settlement_update)
+event.listen(SettlementRequest, "before_delete", _protect_settlement_delete)

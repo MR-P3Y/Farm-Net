@@ -61,3 +61,10 @@ class RentalFinancialTermsStatus(StrEnum):
     UNFUNDED = "unfunded"
     CANCELLED_UNFUNDED = "cancelled_unfunded"
     OPERATIONALLY_COMPLETED_UNFUNDED = "operationally_completed_unfunded"
+
+
+class SettlementStatus(StrEnum):
+    REQUESTED = "requested"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    SIMULATED_COMPLETED = "simulated_completed"

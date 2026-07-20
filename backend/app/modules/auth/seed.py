@@ -168,6 +168,8 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("finance.settlements.read", "Read settlements", "finance", "View settlements"),
     PermissionSeed("finance.settlements.manage", "Manage settlements", "finance", "Manage settlements"),
     PermissionSeed("wallet.read_own", "Read own wallet", "finance", "View own wallet accounts and entries"),
+    PermissionSeed("settlements.read_own", "Read own settlements", "finance", "View own settlement requests"),
+    PermissionSeed("settlements.create_own", "Create own settlements", "finance", "Request settlement from available balance"),
     PermissionSeed("finance.wallets.read", "Read wallets", "finance", "View wallet accounts"),
     PermissionSeed("finance.ledger.read", "Read ledger", "finance", "View ledger journals and entries"),
     PermissionSeed("finance.ledger.post_internal", "Post ledger", "finance", "Post internal balanced ledger journals"),
@@ -651,6 +653,8 @@ def assign_default_permissions(
         ],
         "shop_owner": [
             "wallet.read_own",
+            "settlements.read_own",
+            "settlements.create_own",
             "notifications.read",
             "notifications.manage",
             "consultants.read",
@@ -700,6 +704,8 @@ def assign_default_permissions(
         ],
         "service_provider": [
             "wallet.read_own",
+            "settlements.read_own",
+            "settlements.create_own",
             "notifications.read",
             "notifications.manage",
             "services.read",
@@ -742,6 +748,8 @@ def assign_default_permissions(
         ],
         "lessor": [
             "wallet.read_own",
+            "settlements.read_own",
+            "settlements.create_own",
             "notifications.read",
             "notifications.manage",
             "rental_categories.read",
@@ -776,6 +784,8 @@ def assign_default_permissions(
         ],
         "consultant": [
             "wallet.read_own",
+            "settlements.read_own",
+            "settlements.create_own",
             "notifications.read",
             "notifications.manage",
             "consult_requests.manage_assigned",

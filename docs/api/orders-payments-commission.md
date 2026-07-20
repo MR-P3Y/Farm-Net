@@ -693,7 +693,13 @@ Build, route, and API smoke are the primary verification for this foundation pha
 
 ```text
 No real payment gateway yet
-No wallet/settlement yet
+Phase 20.8 exposes Ledger-derived own pending/available/reserved balances and an
+idempotent settlement workflow. Only a paid Product Order reaching `delivered`
+releases provider pending revenue to available. Settlement requests reserve
+available balance; Admin may approve/reject and explicitly simulate transfer to
+payout clearing. `simulated_completed` is not a bank payment. Services,
+Consultations, and Rentals cannot release balance until they have real payment
+journals.
 No stock reservation yet
 No shipment provider integration yet
 No invoice generation yet

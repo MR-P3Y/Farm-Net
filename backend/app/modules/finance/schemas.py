@@ -62,3 +62,40 @@ class LedgerReconciliationOut(BaseModel):
             or self.unbalanced_journal_ids
             or self.entry_mismatch_journal_ids
         )
+
+
+class WalletBalanceOut(BaseModel):
+    currency: str
+    pending_amount: Decimal
+    available_amount: Decimal
+    reserved_amount: Decimal
+
+
+class SettlementCreateIn(BaseModel):
+    amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    currency: str = Field(default="TOMAN", min_length=5, max_length=10)
+    idempotency_key: str = Field(min_length=8, max_length=180)
+    note: str | None = Field(default=None, max_length=500)
+
+    model_config = {"extra": "forbid"}
+    _currency = field_validator("currency", mode="before")(toman_currency)
+
+
+class SettlementDecisionIn(BaseModel):
+    decision: str = Field(pattern="^(approve|reject)$")
+    admin_note: str | None = Field(default=None, max_length=1000)
+
+    model_config = {"extra": "forbid"}
+
+
+class SettlementOut(BaseModel):
+    id: int
+    requester_user_id: int
+    amount: Decimal
+    currency: str
+    status: str
+    note: str | None
+    admin_note: str | None
+    requested_at: datetime
+    decided_at: datetime | None
+    simulated_completed_at: datetime | None

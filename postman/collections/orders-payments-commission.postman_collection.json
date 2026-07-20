@@ -2,7 +2,7 @@
   "info": {
     "name": "Farm Net - Orders Payments Commission Foundation",
     "_postman_id": "48d02b90-9f11-4bb8-9bfb-orders-payments-commission",
-    "description": "Manual tests for Farm Net Phase 9 Orders / Payments / Commission Foundation.",
+    "description": "Phase 9 Orders/Payments plus Phase 20 Ledger release, own wallet, and simulated settlement clearing contracts. Simulated payout is not a bank transfer.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -15,7 +15,8 @@
     { "key": "payment_id", "value": "1" },
     { "key": "invoice_id", "value": "1" },
     { "key": "payment_attempt_id", "value": "1" },
-    { "key": "refund_id", "value": "1" }
+    { "key": "refund_id", "value": "1" },
+    { "key": "settlement_id", "value": "1" }
   ],
   "item": [
     {
@@ -346,6 +347,12 @@
     {"name":"Admin Finance - Transactions","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/transactions?page=1&page_size=20"}},
     {"name":"Admin Finance - Refunds","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/refunds?page=1&page_size=20"}},
     {"name":"Admin Finance - Audit Logs","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/audit-logs?page=1&page_size=20"}},
-    {"name":"Admin Finance - Ledger Reconciliation","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/reconciliation"}}
+    {"name":"Admin Finance - Ledger Reconciliation","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/reconciliation"}},
+    {"name":"Wallet - Own Balances","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/finance/wallet/me"}},
+    {"name":"Settlement - Own List","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/finance/settlements/me?page=1&page_size=20"}},
+    {"name":"Settlement - Request Idempotent","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{access_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/finance/settlements","body":{"mode":"raw","raw":"{\n  \"amount\": 100000,\n  \"currency\": \"TOMAN\",\n  \"idempotency_key\": \"postman-settlement-0001\",\n  \"note\": \"Test settlement request\"\n}"}}},
+    {"name":"Admin Settlement - List","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/settlements?page=1&page_size=20"}},
+    {"name":"Admin Settlement - Approve","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/admin/finance/settlements/{{settlement_id}}/decision","body":{"mode":"raw","raw":"{\n  \"decision\": \"approve\",\n  \"admin_note\": \"Approved for simulated clearing\"\n}"}}},
+    {"name":"Admin Settlement - Simulate Payout","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"POST","url":"{{base_url}}/admin/finance/settlements/{{settlement_id}}/simulate-payout","description":"Moves reserved liability to payout clearing only. It does not execute or claim a bank transfer."}}
   ]
 }

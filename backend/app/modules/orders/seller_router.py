@@ -96,6 +96,7 @@ def update_seller_order_status(
         user=current_user,
         order_id=order_id,
         payload=payload,
+        trace_id=request.state.trace_id,
     )
 
     return success_response(

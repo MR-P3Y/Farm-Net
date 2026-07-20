@@ -12,6 +12,7 @@ from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.finance.service import OrderLedgerBridge
 from app.modules.finance.billing_service import UniversalBillingService
+from app.modules.finance.settlement_service import LedgerMovementService, SettlementContractError
 from app.modules.orders.enums import (
     CartStatus,
     InvoiceStatus,
@@ -874,6 +875,7 @@ class SellerOrderService:
         user: AuthUser,
         order_id: int,
         payload: SellerOrderStatusUpdateIn,
+        trace_id: str | None = None,
     ) -> OrderOut:
         order = self.repo.get_seller_order_by_id(
             seller_user_id=user.id,
@@ -913,6 +915,14 @@ class SellerOrderService:
 
         if payload.status == OrderStatus.DELIVERED.value:
             order.delivered_at = now
+            try:
+                LedgerMovementService(self.db).release_delivered_order(
+                    order=order,
+                    actor_user_id=user.id,
+                    trace_id=trace_id or f"order-delivery:{order.id}",
+                )
+            except SettlementContractError as exc:
+                raise ValidationAuthError(message=str(exc)) from exc
 
         self.repo.create_order_status_history(
             order_id=order.id,

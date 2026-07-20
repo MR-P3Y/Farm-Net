@@ -368,6 +368,13 @@ unfunded: no Invoice, payment capture, deposit custody/release, commission,
 damage, penalty, refund, or ledger posting is claimed. Step 20.8 Balance Release
 + Settlement/Payout Workflow is next.
 
+Phase 20 Step 20.8 releases paid Product Order provider revenue from pending to
+available exactly once at delivery and adds Ledger-derived own balances plus an
+idempotent Settlement reserve/approve/reject/simulated-clearing workflow at
+Alembic head `fdcb2ab80c12`. Simulated payout is not an external bank transfer.
+Unfunded domains cannot release revenue. Step 20.9 Refund, Reversal, Adjustment
++ Concurrency Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
