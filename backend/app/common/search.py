@@ -164,6 +164,12 @@ class UnifiedSearchQuery(BaseModel):
             raise ValueError("Search result types must be unique")
         return value
 
+    @model_validator(mode="after")
+    def enforce_response_budget(self):
+        if self.page_size * len(self.types) > 120:
+            raise ValueError("Search response budget cannot exceed 120 grouped items")
+        return self
+
 
 class UnifiedSearchResult(BaseModel):
     type: SearchResultType

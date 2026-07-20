@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
 from app.common.search import UnifiedSearchEngine, UnifiedSearchQuery
@@ -32,8 +32,11 @@ def build_search_engine(db: Session) -> UnifiedSearchEngine:
 def unified_search(
     payload: UnifiedSearchQuery,
     request: Request,
+    response: Response,
     db: Session = Depends(get_db),
 ):
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
     result = build_search_engine(db).search(payload)
     return success_response(
         data=result.model_dump(mode="json"),

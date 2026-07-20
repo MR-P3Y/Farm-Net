@@ -47,6 +47,8 @@ def test_unified_search_api_normalizes_query_and_preserves_type_order(monkeypatc
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-robots-tag"] == "noindex, nofollow"
     data = response.json()["data"]
     assert data["query"] == "خدمات کشاورزی"
     assert [group["type"] for group in data["groups"]] == ["service", "product"]
@@ -62,6 +64,12 @@ def test_unified_search_api_rejects_invalid_contract_before_provider_call() -> N
         },
     )
     assert response.status_code == 422
+
+    over_budget = TestClient(app).post(
+        "/api/v1/search",
+        json={"q": "کود", "types": ["product", "store", "service"], "page_size": 50},
+    )
+    assert over_budget.status_code == 422
 
 
 def test_unified_search_api_openapi_contract_and_provider_registration() -> None:

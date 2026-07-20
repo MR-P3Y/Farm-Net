@@ -1240,6 +1240,25 @@ model fields exist:
   Web/Wasm build completed successfully.
 - Evidence: `docs/search/phase-18-mobile-unified-discovery.md`.
 
+### Step 18.10 Performance, Privacy, and Abuse Hardening
+
+- Added a maximum 120-item grouped response budget while retaining per-domain
+  pagination up to 50 when fewer result types are selected.
+- Added a Search-specific default 30 requests/60 seconds/client limiter inside
+  the existing global limiter, with deterministic 429 and `Retry-After`.
+- Bounded in-memory limiter client keys to 10,000 and changed proxy handling so
+  `X-Forwarded-For` is trusted only from explicitly allow-listed immediate IPs.
+- Added `Cache-Control: no-store` and `X-Robots-Tag: noindex, nofollow`; no query
+  history, analytics, personalization, migration, or query-content logging added.
+- Documented the multi-instance distributed-limiter boundary and scan-based text
+  matching. Existing public/status/geo/price indexes remain; no unmeasured
+  FULLTEXT index or external engine was introduced against sparse Runtime data.
+- Ruff/compileall and all 164 Backend tests passed with 18 known warnings.
+- Rebuilt Runtime health reported app/database/Redis `ok`; requests 1–30 returned
+  200, request 31 returned 429 with `Retry-After: 60`, allowed responses carried
+  both privacy headers, and OpenAPI remained 254 paths.
+- Evidence: `docs/search/phase-18-performance-privacy-abuse.md`.
+
 ## Progress Update Rule
 
 After every completed step:

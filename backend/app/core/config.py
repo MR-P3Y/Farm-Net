@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = True
     rate_limit_requests: int = 120
     rate_limit_window_seconds: int = 60
+    rate_limit_max_keys: int = 10000
+    search_rate_limit_requests: int = 30
+    search_rate_limit_window_seconds: int = 60
+    trusted_proxy_hosts: str = ""
 
     log_level: str = "INFO"
 
@@ -76,6 +80,10 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def trusted_proxy_host_set(self) -> set[str]:
+        return {host.strip() for host in self.trusted_proxy_hosts.split(",") if host.strip()}
 
 
 @lru_cache

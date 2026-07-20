@@ -51,3 +51,20 @@ relevance/default ordering. Money filters and results are `TOMAN` only.
 Every provider retains its existing public visibility and privacy rules. Result
 routes are internal Mobile routes, and private contact, ownership, moderation,
 request, and accounting fields are excluded.
+
+## Performance, privacy, and abuse boundary
+
+- A request may return at most 120 grouped items (`page_size × selected types`).
+- Search has a dedicated default limit of 30 requests per 60 seconds per client,
+  inside the broader API limit. A rejected request returns `429`, code
+  `RATE_LIMITED`, and `Retry-After`.
+- Search responses set `Cache-Control: no-store` and
+  `X-Robots-Tag: noindex, nofollow`.
+- Query text is not persisted, analyzed, personalized, or explicitly logged.
+- `X-Forwarded-For` is ignored unless the immediate proxy IP is explicitly in
+  `TRUSTED_PROXY_HOSTS`; never expose a trusted-proxy Backend directly.
+- The in-process limiter has a bounded client-key set. Multi-instance production
+  deployment still requires an edge or shared distributed rate limiter.
+- Existing public/status/geo/price indexes are retained. Shared normalized
+  substring matching is scan-based; no FULLTEXT/external engine is claimed
+  without representative production volume and measured query plans.

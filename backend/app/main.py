@@ -62,6 +62,10 @@ def create_app() -> FastAPI:
             enabled=settings.rate_limit_enabled,
             max_requests=settings.rate_limit_requests,
             window_seconds=settings.rate_limit_window_seconds,
+            search_max_requests=settings.search_rate_limit_requests,
+            search_window_seconds=settings.search_rate_limit_window_seconds,
+            max_keys=settings.rate_limit_max_keys,
+            trusted_proxy_hosts=settings.trusted_proxy_host_set,
         )
     )
 

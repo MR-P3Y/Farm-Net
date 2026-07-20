@@ -188,6 +188,15 @@ provider-neutral Push batch dispatcher at Alembic head `b27e8d5f64c1`. No live
 Push credential/message was used. Step 11.8 Mobile Notification Center
 Hardening is next.
 
+Phase 18 Step 18.10 bounds Unified Search to 120 grouped items and a dedicated
+default 30 requests/60 seconds/client inside the global limiter. Rate-limit key
+memory is capped, untrusted `X-Forwarded-For` is ignored, trusted proxies require
+an explicit allow-list, and 429 responses include `Retry-After`. Search responses
+are `no-store`/`noindex`; query history, analytics, and explicit query logging
+remain absent. Existing domain indexes are sufficient for current sparse data;
+FULLTEXT/external search remains evidence-driven. Step 18.11 Docs/Postman +
+Runtime Search Regression is next.
+
 Step 11.8 completed Mobile Notification Center hardening: typed preferences and
 device contracts, channel settings UI, resilient updates, and expanded action
 routing. Real vendor token acquisition remains explicitly blocked on SDK/vendor
