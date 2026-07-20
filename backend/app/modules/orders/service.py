@@ -4,6 +4,7 @@ from decimal import Decimal
 import hashlib
 import json
 from uuid import uuid4
+from types import SimpleNamespace
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -31,6 +32,7 @@ from app.modules.orders.models import (
     Payment,
 )
 from app.modules.orders.repository import OrderRepository
+from app.modules.orders.payment_gateway import PaymentGatewayError, ZarinpalGateway
 from app.modules.orders.schemas import (
     AdminOrderStatusUpdateIn,
     CartItemAddIn,
@@ -1554,7 +1556,7 @@ class PaymentService:
                 )
             return self._attempt_out(existing)
 
-        if payload.provider != "mock":
+        if payload.provider not in {"mock", "zarinpal"}:
             raise ValidationAuthError(
                 message="Payment provider is not enabled",
                 details={"error_code": "PAYMENT_PROVIDER_UNAVAILABLE", "provider": payload.provider},
@@ -1581,7 +1583,25 @@ class PaymentService:
             )
             attempt.provider = payload.provider
             attempt.status = PaymentAttemptStatus.REDIRECTED.value
-            attempt.redirect_url = f"farmnet://payments/mock/{attempt.id}"
+            if payload.provider == "mock":
+                attempt.redirect_url = f"farmnet://payments/mock/{attempt.id}"
+            else:
+                try:
+                    gateway_result = ZarinpalGateway().request_payment(
+                        amount=attempt.amount,
+                        invoice_id=invoice.id,
+                        description=f"Farm Net invoice {invoice.id}",
+                    )
+                except PaymentGatewayError as exc:
+                    raise ValidationAuthError(
+                        message=exc.message,
+                        details={"error_code": exc.code, "provider": "zarinpal"},
+                    ) from exc
+                attempt.provider_reference = gateway_result.authority
+                attempt.redirect_url = gateway_result.redirect_url
+                attempt.callback_payload = json.dumps({
+                    "request_code": gateway_result.raw_response.get("data", {}).get("code")
+                })
             self.repo.commit()
         except IntegrityError:
             self.repo.rollback()
@@ -1614,7 +1634,7 @@ class PaymentService:
                 message="Payment attempt has expired",
                 details={"error_code": "PAYMENT_ATTEMPT_EXPIRED"},
             )
-        if attempt.provider != "mock":
+        if attempt.provider not in {"mock", "zarinpal"}:
             raise ValidationAuthError(
                 message="Payment provider verification is not enabled",
                 details={"error_code": "PAYMENT_PROVIDER_UNAVAILABLE"},
@@ -1629,6 +1649,33 @@ class PaymentService:
         if payment is None or order is None or invoice is None:
             raise ValidationAuthError(message="Payment verification contract is incomplete")
         reference = payload.provider_payment_id
+        verification_note = "Payment verified by mock provider"
+        if attempt.provider == "zarinpal":
+            if not attempt.provider_reference or reference != attempt.provider_reference:
+                raise ValidationAuthError(
+                    message="Payment authority does not match the attempt",
+                    details={"error_code": "PAYMENT_AUTHORITY_MISMATCH"},
+                )
+            attempt.status = PaymentAttemptStatus.VERIFYING.value
+            try:
+                gateway_result = ZarinpalGateway().verify_payment(
+                    amount=attempt.amount, authority=attempt.provider_reference
+                )
+            except PaymentGatewayError as exc:
+                attempt.status = PaymentAttemptStatus.FAILED.value if exc.terminal else attempt.status
+                attempt.failure_code = exc.code
+                attempt.failure_message = exc.message
+                attempt.verify_payload = json.dumps({"error_code": exc.code})
+                self.repo.commit()
+                raise ValidationAuthError(
+                    message=exc.message,
+                    details={"error_code": exc.code, "provider": "zarinpal"},
+                ) from exc
+            reference = gateway_result.reference_id
+            attempt.verify_payload = json.dumps({
+                "code": gateway_result.code, "ref_id": gateway_result.reference_id
+            })
+            verification_note = "Payment verified server-to-server by Zarinpal"
         old_payment_status = payment.status
         old_order_status = order.status
         attempt.status = PaymentAttemptStatus.SUCCEEDED.value
@@ -1659,7 +1706,7 @@ class PaymentService:
             changed_by=user.id,
             from_status=OrderStatus.PENDING_PAYMENT.value,
             to_status=OrderStatus.PAID.value,
-            note="Payment verified by mock provider",
+            note=verification_note,
         )
         _notify_payment_status_changed(
             db=self.db,
@@ -1679,6 +1726,35 @@ class PaymentService:
         self.repo.commit()
         self.repo.refresh(attempt)
         return self._attempt_out(attempt)
+
+    def handle_zarinpal_callback(
+        self, *, authority: str, status: str
+    ) -> PaymentAttemptOut:
+        attempt = self.repo.get_payment_attempt_by_provider_reference_for_update(
+            provider="zarinpal", provider_reference=authority
+        )
+        if attempt is None:
+            raise ValidationAuthError(
+                message="Payment attempt not found",
+                details={"error_code": "PAYMENT_CALLBACK_UNKNOWN_AUTHORITY"},
+            )
+        if attempt.status == PaymentAttemptStatus.SUCCEEDED.value:
+            return self._attempt_out(attempt)
+        attempt.callback_payload = json.dumps({"authority": authority, "status": status})
+        if status != "OK":
+            attempt.status = PaymentAttemptStatus.CANCELLED.value
+            attempt.failure_code = "PAYMENT_CANCELLED_AT_GATEWAY"
+            attempt.failure_message = "Payment was cancelled or rejected at gateway"
+            self.repo.commit()
+            self.repo.refresh(attempt)
+            return self._attempt_out(attempt)
+        return self.verify(
+            user=SimpleNamespace(id=attempt.user_id),
+            payload=PaymentVerifyIn(
+                payment_attempt_id=attempt.id,
+                provider_payment_id=authority,
+            ),
+        )
 
     def _attempt_out(self, attempt) -> PaymentAttemptOut:
         return PaymentAttemptOut(

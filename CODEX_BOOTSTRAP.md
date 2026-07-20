@@ -119,7 +119,8 @@ Phase 20.6 Services/Consultation Final-Price Contracts: completed (b9c8d6e40808)
 Phase 20.7 Rental Revenue + Deposit Accounting Boundaries: completed (ecba19a70b11)
 Phase 20.8 Balance Release + Settlement/Payout Workflow: completed (fdcb2ab80c12)
 Phase 20.9 Refund, Reversal, Adjustment + Concurrency Hardening: completed
-Next: Phase 20.10 Real Payment Gateway Adapter + Callback Verification
+Phase 20.10 Real Payment Gateway Adapter + Callback Verification: completed (disabled by default; credentialed sandbox smoke pending)
+Next: Phase 20.11 Financial Notifications + Privacy/Audit Hardening
 ```
 
 Services means agricultural operational services, not equipment rental.

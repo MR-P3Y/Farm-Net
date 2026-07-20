@@ -505,6 +505,19 @@ class OrderRepository:
             .one_or_none()
         )
 
+    def get_payment_attempt_by_provider_reference_for_update(
+        self, *, provider: str, provider_reference: str
+    ) -> PaymentAttempt | None:
+        return (
+            self.db.query(PaymentAttempt)
+            .filter(
+                PaymentAttempt.provider == provider,
+                PaymentAttempt.provider_reference == provider_reference,
+            )
+            .with_for_update()
+            .one_or_none()
+        )
+
     def get_refund_by_key(self, *, idempotency_key: str) -> FinancialRefund | None:
         return self.db.query(FinancialRefund).filter(
             FinancialRefund.idempotency_key == idempotency_key
@@ -655,7 +668,7 @@ class OrderRepository:
             provider=attempt.provider,
             provider_reference=provider_reference,
             idempotency_key=f"payment-attempt:{attempt.id}:succeeded",
-            description="Mock payment transaction",
+            description=f"{attempt.provider} payment transaction",
         )
         self.db.add(row)
         self.db.flush()

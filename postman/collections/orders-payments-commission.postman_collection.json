@@ -2,7 +2,7 @@
   "info": {
     "name": "Farm Net - Orders Payments Commission Foundation",
     "_postman_id": "48d02b90-9f11-4bb8-9bfb-orders-payments-commission",
-    "description": "Phase 9 Orders/Payments plus Phase 20 Ledger release, own wallet, simulated settlement clearing, release reversal, and audited adjustment contracts. Simulated payout is not a bank transfer.",
+    "description": "Phase 9 Orders/Payments plus Phase 20 Ledger, settlement, adjustment, and disabled-by-default Zarinpal IRT adapter/callback contracts. Real gateway use requires explicit credentials and activation.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -16,7 +16,8 @@
     { "key": "invoice_id", "value": "1" },
     { "key": "payment_attempt_id", "value": "1" },
     { "key": "refund_id", "value": "1" },
-    { "key": "settlement_id", "value": "1" }
+    { "key": "settlement_id", "value": "1" },
+    { "key": "zarinpal_authority", "value": "S000000000000000000000000000000000001" }
   ],
   "item": [
     {
@@ -354,6 +355,8 @@
     {"name":"Admin Settlement - List","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/settlements?page=1&page_size=20"}},
     {"name":"Admin Settlement - Approve","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/admin/finance/settlements/{{settlement_id}}/decision","body":{"mode":"raw","raw":"{\n  \"decision\": \"approve\",\n  \"admin_note\": \"Approved for simulated clearing\"\n}"}}},
     {"name":"Admin Settlement - Simulate Payout","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"POST","url":"{{base_url}}/admin/finance/settlements/{{settlement_id}}/simulate-payout","description":"Moves reserved liability to payout clearing only. It does not execute or claim a bank transfer."}},
-    {"name":"Admin Finance - Provider Wallet Adjustment","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/admin/finance/adjustments","body":{"mode":"raw","raw":"{\n  \"provider_user_id\": 1,\n  \"amount\": 10000,\n  \"direction\": \"credit\",\n  \"currency\": \"TOMAN\",\n  \"idempotency_key\": \"postman-adjustment-0001\",\n  \"reason\": \"Approved accounting correction for provider wallet\"\n}"},"description":"Posts an idempotent, balanced, audited TOMAN adjustment. Debit adjustments cannot overdraw available balance."}}
+    {"name":"Admin Finance - Provider Wallet Adjustment","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/admin/finance/adjustments","body":{"mode":"raw","raw":"{\n  \"provider_user_id\": 1,\n  \"amount\": 10000,\n  \"direction\": \"credit\",\n  \"currency\": \"TOMAN\",\n  \"idempotency_key\": \"postman-adjustment-0001\",\n  \"reason\": \"Approved accounting correction for provider wallet\"\n}"},"description":"Posts an idempotent, balanced, audited TOMAN adjustment. Debit adjustments cannot overdraw available balance."}},
+    {"name":"Payments - Zarinpal Checkout","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{access_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/payments/checkout","body":{"mode":"raw","raw":"{\n  \"invoice_id\": {{invoice_id}},\n  \"provider\": \"zarinpal\",\n  \"idempotency_key\": \"postman-zarinpal-0001\"\n}"},"description":"Requires PAYMENT_GATEWAY_ENABLED=true and a valid Merchant ID. Sends amount as IRT (toman)."}},
+    {"name":"Payments - Zarinpal Callback OK","request":{"method":"GET","url":"{{base_url}}/payments/callback/zarinpal?Authority={{zarinpal_authority}}&Status=OK","description":"Public return endpoint. Status=OK is never trusted alone; backend performs server-to-server Verify before marking paid."}}
   ]
 }

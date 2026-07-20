@@ -953,6 +953,30 @@ model fields exist:
   248 paths including Adjustment. Postman JSON parses with 42 requests.
 - Evidence: `docs/finance/phase-20-refund-reversal-adjustment.md`.
 
+### Step 20.10 Real Payment Gateway Adapter + Callback Verification
+
+- Added a Zarinpal v4 Request/Verify adapter with fixed HTTPS provider hosts,
+  explicit sandbox selection, timeouts, structured provider failures, and
+  configuration validation. It is disabled by default.
+- Canonical project `TOMAN` amounts are sent as Zarinpal `IRT`; fractional or
+  non-positive amounts fail closed. Merchant ID remains environment-only.
+- Product Order Checkout now supports `provider=zarinpal`, persists Authority
+  and redirect URL, and retains the existing idempotency contract.
+- Added public `GET /api/v1/payments/callback/zarinpal`. Callback `Status=OK`
+  never marks an order paid by itself: Authority must match a locked attempt and
+  server-to-server Verify must return code 100 or exact-once code 101.
+- `NOK` records cancellation. Successful Verify uses the existing atomic
+  Payment/Order/Invoice, inventory, Ledger, history, and notification flow.
+- No Merchant ID is available in the repository or Runtime. Therefore the
+  credentialed Sandbox request/redirect/callback smoke is explicitly pending
+  and no external payment is claimed.
+- Ruff and compileall passed; all 119 Backend tests passed with 17 existing UTC
+  warnings. Alembic remains `fdcb2ab80c12 (head)` because no schema change was
+  needed. Runtime app/database/Redis health passed and confirmed Gateway
+  disabled, Merchant absent, Sandbox selected. OpenAPI has 249 paths with the
+  public Callback; Postman JSON parses with 44 requests.
+- Evidence: `docs/finance/phase-20-zarinpal-gateway-callback.md`.
+
 ## Progress Update Rule
 
 After every completed step:

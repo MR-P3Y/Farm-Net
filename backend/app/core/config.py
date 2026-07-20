@@ -60,6 +60,13 @@ class Settings(BaseSettings):
     push_api_key: str = ""
     push_timeout_seconds: int = 15
 
+    payment_gateway_enabled: bool = False
+    payment_gateway: str = "zarinpal"
+    payment_merchant_id: str = ""
+    payment_callback_base_url: str = ""
+    payment_zarinpal_sandbox: bool = True
+    payment_gateway_timeout_seconds: int = 15
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -383,11 +383,20 @@ so no provider wallet can become negative. Controlled `TOMAN` provider wallet
 Adjustments are balanced, idempotent, reason-required, permission-guarded and
 audited. Step 20.10 is next.
 
+Phase 20 Step 20.10 adds a disabled-by-default Zarinpal v4 adapter for Product
+Order payment attempts. It sends canonical `TOMAN` as provider currency `IRT`,
+stores Authority, redirects only to the fixed production/sandbox Zarinpal host,
+and treats Callback `OK` solely as a signal for server-to-server Verify. Codes
+100 and exact-once 101 are accepted. Merchant ID remains environment-only and
+is never returned or persisted. No credential exists in the repository, so no
+real or sandbox money movement has been claimed. Step 20.11 is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
   end-to-end browser/device automation is still required.
-- Real payment gateway integration is not implemented.
+- The Zarinpal adapter is implemented but disabled; credentialed sandbox and
+  production activation remain operational gaps.
 - SMS, email, and push providers are not connected for production delivery.
 - Contracts, subscriptions, promotion, equipment rental, reviews, wallet,
   settlement, AI/RAG, BI/data access, and production hardening remain future work.

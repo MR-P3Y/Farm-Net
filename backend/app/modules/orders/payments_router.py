@@ -17,6 +17,23 @@ router = APIRouter(
 )
 
 
+@router.get("/callback/zarinpal")
+def zarinpal_callback(
+    request: Request,
+    Authority: str = Query(min_length=10, max_length=255),
+    Status: str = Query(pattern="^(OK|NOK)$"),
+    db: Session = Depends(get_db),
+):
+    result = PaymentService(db).handle_zarinpal_callback(
+        authority=Authority, status=Status
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Payment callback processed",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
 @router.post("/checkout")
 def initiate_payment(
     payload: PaymentCheckoutIn,

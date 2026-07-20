@@ -692,7 +692,17 @@ Build, route, and API smoke are the primary verification for this foundation pha
 # Known Limitations
 
 ```text
-No real payment gateway yet
+No payment gateway is active by default
+Zarinpal v4 adapter exists but is disabled by default. Enable only with
+`PAYMENT_GATEWAY_ENABLED=true`, a 36-character `PAYMENT_MERCHANT_ID`, the
+explicit sandbox flag, and an HTTPS callback URL (localhost HTTP is accepted
+only in development). Checkout accepts `provider=zarinpal`, returns a provider
+redirect URL, and stores Authority. The public callback is
+`GET /api/v1/payments/callback/zarinpal?Authority=...&Status=OK|NOK`.
+`OK` is only a callback signal: Farm-Net verifies amount and Authority directly
+with Zarinpal before applying paid state. Provider codes 100 and 101 are both
+successful/idempotent Verify results. Farm-Net `TOMAN` maps explicitly to
+Zarinpal `IRT`; Merchant ID is never returned or stored in payment records.
 Phase 20.8 exposes Ledger-derived own pending/available/reserved balances and an
 idempotent settlement workflow. Only a paid Product Order reaching `delivered`
 releases provider pending revenue to available. Settlement requests reserve
