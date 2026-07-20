@@ -1,5 +1,6 @@
 from math import ceil
 from datetime import datetime
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
@@ -18,6 +19,7 @@ from app.modules.rentals.schemas import (
     RentalRequestStatusIn,
 )
 from app.modules.rentals.service import RentalService
+from app.modules.rentals.enums import RentalDiscoverySort
 
 
 router = APIRouter(prefix="/rentals", tags=["Equipment Rental"])
@@ -59,6 +61,11 @@ def list_public_equipment(
     city_id: int | None = Query(default=None, ge=1),
     operator_mode: str | None = Query(default=None),
     q: str | None = Query(default=None),
+    min_price: Decimal | None = Query(default=None, ge=0),
+    max_price: Decimal | None = Query(default=None, ge=0),
+    available_from: datetime | None = Query(default=None),
+    available_to: datetime | None = Query(default=None),
+    sort: RentalDiscoverySort | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
     items, total = RentalService(db).list_public_equipment(
@@ -67,6 +74,11 @@ def list_public_equipment(
         city_id=city_id,
         operator_mode=operator_mode,
         q=q,
+        min_price=min_price,
+        max_price=max_price,
+        available_from=available_from,
+        available_to=available_to,
+        sort=sort,
         page=page,
         page_size=page_size,
     )

@@ -451,6 +451,14 @@ sorting. Negotiable offers never receive invented prices. Existing public
 privacy and default ordering remain compatible. Step 18.5 Equipment Rental
 Discovery Hardening is next.
 
+Phase 18 Step 18.5 connects approved Rental Equipment to the central engine.
+Public discovery now shares Persian normalization across equipment, lessor,
+category, and equipment metadata; supports active descendant categories,
+canonical `TOMAN` price range, availability intervals, and allow-listed sorts.
+Availability excludes explicit blocks plus accepted/in-progress request overlap.
+Existing public privacy and default ordering remain compatible. Step 18.6
+Consultant Discovery Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

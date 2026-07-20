@@ -115,13 +115,15 @@ overlaps before writing immutable commercial snapshots.
 ## Mobile discovery and detail (Phase 16.8)
 
 The Mobile client consumes public categories, equipment list/detail, and active
-pricing through typed models. Search plus category, province/city, and operator
-mode filters map directly to Backend query parameters. Equipment detail renders
+pricing through typed models. Search plus category, province/city, operator
+mode, canonical `TOMAN` price range, availability interval, and safe sort
+parameters map directly to Backend query parameters. Equipment detail renders
 public media, lessor display name, delivery/deposit facts, and pricing rules.
 
-Backend currently exposes no price-range filter, so the Mobile client does not
-pretend to provide one. Availability date selection and request creation are
-reserved for the next Mobile request-flow step.
+Availability discovery excludes overlapping explicit blocks and accepted or
+in-progress requests. Both interval endpoints are required and the end must be
+after the start. Supported sorts are `relevance`, `newest`, `price_asc`, and
+`price_desc`; equipment without active pricing remains last for price sorts.
 
 ## Mobile requester flow (Phase 16.9)
 

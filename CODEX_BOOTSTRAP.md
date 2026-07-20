@@ -129,7 +129,8 @@ Phase 18.1 Search/Filters/Discovery Real-State Audit + Contract Boundary: comple
 Phase 18.2 Shared Search Contracts + Persian Query Normalization: completed
 Phase 18.3 Product + Store Discovery Hardening: completed
 Phase 18.4 Services Discovery Hardening: completed
-Next: Phase 18.5 Equipment Rental Discovery Hardening
+Phase 18.5 Equipment Rental Discovery Hardening: completed
+Next: Phase 18.6 Consultant Discovery Hardening
 ```
 
 Services means agricultural operational services, not equipment rental.

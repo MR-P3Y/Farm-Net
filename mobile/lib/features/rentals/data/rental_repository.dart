@@ -18,12 +18,22 @@ class RentalRepository {
     int? provinceId,
     int? cityId,
     String? operatorMode,
+    num? minPrice,
+    num? maxPrice,
+    DateTime? availableFrom,
+    DateTime? availableTo,
+    String? sort,
   }) => _api.equipment(
     query: query,
     categoryId: categoryId,
     provinceId: provinceId,
     cityId: cityId,
     operatorMode: operatorMode,
+    minPrice: minPrice,
+    maxPrice: maxPrice,
+    availableFrom: availableFrom,
+    availableTo: availableTo,
+    sort: sort,
   );
   Future<RentalEquipmentDetail> detail(int id) => _api.detail(id);
   Future<RentalAvailabilityCheck> availability(

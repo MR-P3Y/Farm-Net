@@ -1148,6 +1148,26 @@ model fields exist:
   empty page; app/database/Redis health and 253-path OpenAPI passed.
 - Evidence: `docs/search/phase-18-services-discovery.md`.
 
+### Step 18.5 Equipment Rental Discovery Hardening
+
+- Added the Rental Equipment provider for the central `UnifiedSearchEngine`
+  with typed routes, geo, minimum active `TOMAN` price, and relevance.
+- Applied shared Persian/Arabic normalization to equipment, lessor, category,
+  manufacturer, model, slug, and description fields.
+- Added active descendant-category scope, price range, and allow-listed
+  relevance/newest/price sorting while preserving historical default ordering.
+- Added availability-window filtering using the real overlap rules: explicit
+  availability blocks and accepted/in-progress requests exclude equipment.
+- Mobile Rental API/Repository now carries price, availability, and sort
+  parameters without simulating discovery client-side; docs/Postman were updated.
+- Ruff/compileall and all 153 Backend tests passed with 17 existing UTC
+  deprecation warnings. Mobile analyze, all 38 tests, and Web/Wasm build passed.
+- Runtime health reported app/database/Redis `ok`; the hardened public query
+  returned HTTP 200. Rebuilt Backend OpenAPI remains 253 paths and exposes all
+  new Rental discovery parameters.
+- The 35-request Rental Postman collection parses successfully.
+- Evidence: `docs/search/phase-18-rental-discovery.md`.
+
 ## Progress Update Rule
 
 After every completed step:

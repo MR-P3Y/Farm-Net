@@ -24,6 +24,11 @@ class RentalApi {
     int? provinceId,
     int? cityId,
     String? operatorMode,
+    num? minPrice,
+    num? maxPrice,
+    DateTime? availableFrom,
+    DateTime? availableTo,
+    String? sort,
   }) async {
     final params = <String, dynamic>{};
     if (query?.trim().isNotEmpty ?? false) params['q'] = query!.trim();
@@ -33,6 +38,15 @@ class RentalApi {
     if (operatorMode?.isNotEmpty ?? false) {
       params['operator_mode'] = operatorMode;
     }
+    if (minPrice != null) params['min_price'] = minPrice;
+    if (maxPrice != null) params['max_price'] = maxPrice;
+    if (availableFrom != null) {
+      params['available_from'] = availableFrom.toUtc().toIso8601String();
+    }
+    if (availableTo != null) {
+      params['available_to'] = availableTo.toUtc().toIso8601String();
+    }
+    if (sort?.isNotEmpty ?? false) params['sort'] = sort;
     try {
       final response = await _client.dio.get<Map<String, dynamic>>(
         '/rentals/equipment',

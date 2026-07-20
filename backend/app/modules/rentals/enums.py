@@ -32,6 +32,13 @@ class RentalPricingUnit(StrEnum):
     PROJECT = "project"
 
 
+class RentalDiscoverySort(StrEnum):
+    RELEVANCE = "relevance"
+    NEWEST = "newest"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"
+
+
 class RentalAvailabilityBlockType(StrEnum):
     UNAVAILABLE = "unavailable"
     MAINTENANCE = "maintenance"

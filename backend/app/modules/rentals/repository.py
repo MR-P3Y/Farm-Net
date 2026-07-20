@@ -1,7 +1,14 @@
-from sqlalchemy import or_
+from decimal import Decimal
+
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.common.money import CurrencyCode
+from app.common.search import normalize_search_text
+from app.common.search_sql import search_match_expression, search_relevance_expression
+
 from app.modules.media.models import MediaFile
+from app.modules.rentals.enums import RentalDiscoverySort
 from app.modules.rentals.models import (
     LessorProfile,
     RentalCategory,
@@ -154,6 +161,11 @@ class RentalRepository:
         city_id: int | None = None,
         operator_mode: str | None = None,
         q: str | None = None,
+        min_price: Decimal | None = None,
+        max_price: Decimal | None = None,
+        available_from=None,
+        available_to=None,
+        sort: RentalDiscoverySort | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[RentalEquipment], int]:
@@ -163,11 +175,13 @@ class RentalRepository:
                 joinedload(RentalEquipment.category),
                 joinedload(RentalEquipment.media),
                 joinedload(RentalEquipment.lessor_profile),
+                joinedload(RentalEquipment.pricing_rules),
             )
+            .outerjoin(RentalCategory, RentalEquipment.category_id == RentalCategory.id)
             .filter(RentalEquipment.deleted_at.is_(None))
         )
         if public:
-            query = query.join(LessorProfile).filter(
+            query = query.filter(
                 RentalEquipment.status == "approved",
                 RentalEquipment.is_active.is_(True),
                 LessorProfile.status == "approved",
@@ -178,31 +192,107 @@ class RentalRepository:
         if status:
             query = query.filter(RentalEquipment.status == status)
         if category_id:
-            query = query.filter(RentalEquipment.category_id == category_id)
+            query = query.filter(RentalEquipment.category_id.in_(self._category_scope(category_id)))
         if province_id:
             query = query.filter(RentalEquipment.province_id == province_id)
         if city_id:
             query = query.filter(RentalEquipment.city_id == city_id)
         if operator_mode:
             query = query.filter(RentalEquipment.operator_mode == operator_mode)
-        if q:
-            like = f"%{q.strip()}%"
+        normalized_q = normalize_search_text(q) if q else None
+        if normalized_q:
             query = query.filter(
-                or_(
-                    RentalEquipment.title.ilike(like),
-                    RentalEquipment.description.ilike(like),
-                    RentalEquipment.manufacturer.ilike(like),
-                    RentalEquipment.model_name.ilike(like),
+                search_match_expression(
+                    normalized_q,
+                    RentalEquipment.title,
+                    RentalEquipment.slug,
+                    RentalEquipment.description,
+                    RentalEquipment.manufacturer,
+                    RentalEquipment.model_name,
+                    LessorProfile.display_name,
+                    RentalCategory.title,
                 )
             )
+
+        minimum_price = (
+            select(func.min(RentalPricingRule.price_amount))
+            .where(
+                RentalPricingRule.equipment_id == RentalEquipment.id,
+                RentalPricingRule.is_active.is_(True),
+                RentalPricingRule.currency == CurrencyCode.TOMAN.value,
+            )
+            .correlate(RentalEquipment)
+            .scalar_subquery()
+        )
+        if min_price is not None:
+            query = query.filter(minimum_price >= min_price)
+        if max_price is not None:
+            query = query.filter(minimum_price <= max_price)
+
+        if available_from is not None and available_to is not None:
+            query = query.filter(
+                ~RentalEquipment.availability_blocks.any(
+                    (RentalAvailabilityBlock.starts_at < available_to)
+                    & (RentalAvailabilityBlock.ends_at > available_from)
+                ),
+                ~RentalEquipment.requests.any(
+                    RentalRequest.status.in_(("accepted", "in_progress"))
+                    & (RentalRequest.starts_at < available_to)
+                    & (RentalRequest.ends_at > available_from)
+                ),
+            )
         total = query.count()
+
+        null_price = case((minimum_price.is_(None), 1), else_=0)
+        if sort == RentalDiscoverySort.PRICE_ASC:
+            ordering = (null_price.asc(), minimum_price.asc(), RentalEquipment.id.desc())
+        elif sort == RentalDiscoverySort.PRICE_DESC:
+            ordering = (null_price.asc(), minimum_price.desc(), RentalEquipment.id.desc())
+        elif sort == RentalDiscoverySort.RELEVANCE and normalized_q:
+            ordering = (
+                search_relevance_expression(
+                    normalized_q,
+                    RentalEquipment.title,
+                    RentalEquipment.slug,
+                    RentalEquipment.description,
+                    RentalEquipment.manufacturer,
+                    RentalEquipment.model_name,
+                    LessorProfile.display_name,
+                    RentalCategory.title,
+                ).desc(),
+                RentalEquipment.created_at.desc(),
+                RentalEquipment.id.desc(),
+            )
+        else:
+            ordering = (RentalEquipment.created_at.desc(), RentalEquipment.id.desc())
         rows = (
-            query.order_by(RentalEquipment.created_at.desc(), RentalEquipment.id.desc())
+            query.order_by(*ordering)
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()
         )
         return rows, total
+
+    def _category_scope(self, category_id: int) -> set[int]:
+        rows = self.db.query(RentalCategory.id, RentalCategory.parent_id).filter(
+            RentalCategory.is_active.is_(True)
+        ).all()
+        children: dict[int, list[int]] = {}
+        known_ids = set()
+        for row_id, parent_id in rows:
+            known_ids.add(row_id)
+            if parent_id is not None:
+                children.setdefault(parent_id, []).append(row_id)
+        if category_id not in known_ids:
+            return {category_id}
+        scope = {category_id}
+        pending = [category_id]
+        while pending:
+            for child_id in children.get(pending.pop(), []):
+                if child_id not in scope:
+                    scope.add(child_id)
+                    pending.append(child_id)
+        return scope
 
     def replace_equipment_media(
         self, equipment: RentalEquipment, rows: list[RentalEquipmentMedia]

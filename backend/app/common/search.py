@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
@@ -103,6 +104,12 @@ class UnifiedSearchFilters(BaseModel):
         default=None,
         pattern="^(fixed|hourly|daily|hectare|project|negotiable)$",
     )
+    rental_operator_mode: str | None = Field(
+        default=None,
+        pattern="^(without_operator|with_operator|either)$",
+    )
+    rental_available_from: datetime | None = None
+    rental_available_to: datetime | None = None
     min_price: Decimal | None = Field(default=None, ge=0, max_digits=18, decimal_places=2)
     max_price: Decimal | None = Field(default=None, ge=0, max_digits=18, decimal_places=2)
     currency: CurrencyCode = CurrencyCode.TOMAN
@@ -116,6 +123,14 @@ class UnifiedSearchFilters(BaseModel):
         if self.min_price is not None and self.max_price is not None:
             if self.min_price > self.max_price:
                 raise ValueError("min_price must be less than or equal to max_price")
+        if (self.rental_available_from is None) != (self.rental_available_to is None):
+            raise ValueError("Rental availability range requires both start and end")
+        if (
+            self.rental_available_from is not None
+            and self.rental_available_to is not None
+            and self.rental_available_to <= self.rental_available_from
+        ):
+            raise ValueError("Rental availability end must be after start")
         return self
 
 

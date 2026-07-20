@@ -18,6 +18,7 @@ from app.modules.profiles.enums import VerificationStatus, VerificationTargetRol
 from app.modules.profiles.models import VerificationRequest
 from app.modules.rentals.enums import (
     LessorStatus,
+    RentalDiscoverySort,
     RentalAvailabilityBlockType,
     RentalEquipmentStatus,
     RentalOperatorMode,
@@ -1053,6 +1054,24 @@ class RentalService:
         if status and status not in {item.value for item in RentalEquipmentStatus}:
             raise ValidationAuthError(
                 message="Invalid rental equipment status", details={"status": status}
+            )
+        sort = filters.get("sort")
+        if sort and sort not in {item.value for item in RentalDiscoverySort}:
+            raise ValidationAuthError(
+                message="Invalid rental discovery sort", details={"sort": sort}
+            )
+        min_price, max_price = filters.get("min_price"), filters.get("max_price")
+        if min_price is not None and max_price is not None and min_price > max_price:
+            raise ValidationAuthError(message="min_price must be less than or equal to max_price")
+        available_from = filters.get("available_from")
+        available_to = filters.get("available_to")
+        if (available_from is None) != (available_to is None):
+            raise ValidationAuthError(
+                message="Rental availability range requires both start and end"
+            )
+        if available_from is not None and available_to is not None:
+            filters["available_from"], filters["available_to"] = self._valid_range(
+                available_from, available_to
             )
 
     def _equipment_out(self, row: RentalEquipment) -> RentalEquipmentOut:
