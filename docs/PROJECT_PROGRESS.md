@@ -1049,6 +1049,26 @@ model fields exist:
   simulated-clearing contract. No real-row money movement is claimed.
 - Evidence: `docs/finance/phase-20-runtime-regression.md`.
 
+### Step 20.15 Wallet/Settlement/Accounting Release Gate + Tag
+
+- Independent gate passed on clean `develop` synchronized with
+  `origin/develop`.
+- Backend Ruff/compileall passed and all 129 tests passed with 17 existing UTC
+  deprecation warnings. Alembic is `fdcb2ab80c12 (head)`; Auth seed remained
+  idempotent at 12 roles and 249 permissions.
+- Runtime app/database/Redis health passed after restarting the stale Backend
+  process so it loaded the release candidate. OpenAPI then exposed the expected
+  253 total and 27 financial paths.
+- Reconciliation mismatch arrays were empty. Runtime remains a zero-successful-
+  transaction environment, so no real money movement is claimed.
+- Mobile analyze, 38 tests, Web build and Wasm dry-run passed. Admin analyze,
+  17 tests, Web build and Wasm dry-run passed.
+- Postman passed with 48 requests and 18 variable-resolved raw JSON templates.
+- Release tag: `v0.22.0-wallet-settlement-accounting-foundation`.
+- Credentialed Zarinpal and real bank payout remain explicit operational/future
+  gaps; payout clearing in this foundation is simulated.
+- Evidence: `docs/finance/phase-20-release-gate.md`.
+
 ## Progress Update Rule
 
 After every completed step:

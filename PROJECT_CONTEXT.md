@@ -418,6 +418,11 @@ builds passed. The runtime contained no successful Payment or Refund rows, so
 reconciliation is clean but zero-data. Credentialed Zarinpal sandbox and real
 bank payout remain explicitly unverified. Step 20.15 Release Gate + Tag is next.
 
+Phase 20 Step 20.15 passed its independent release gate. The Wallet,
+Settlement, and Accounting foundation is released as
+`v0.22.0-wallet-settlement-accounting-foundation`. This release does not claim
+credentialed Zarinpal operation, production payment, or real bank payout.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -425,8 +430,8 @@ bank payout remain explicitly unverified. Step 20.15 Release Gate + Tag is next.
 - The Zarinpal adapter is implemented but disabled; credentialed sandbox and
   production activation remain operational gaps.
 - SMS, email, and push providers are not connected for production delivery.
-- Contracts, subscriptions, promotion, equipment rental, reviews, wallet,
-  settlement, AI/RAG, BI/data access, and production hardening remain future work.
+- Contracts, subscriptions, promotion, reviews, real payout integration,
+  AI/RAG, BI/data access, and production hardening remain future work.
 
 ## Development Environment
 
@@ -472,5 +477,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.21.0-equipment-rental-foundation
+v0.22.0-wallet-settlement-accounting-foundation
 ```
