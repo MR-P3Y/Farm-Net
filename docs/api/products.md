@@ -636,9 +636,17 @@ province_id
 county_id
 city_id
 store_type
+min_price
+max_price
+sort = relevance | newest | price_asc | price_desc
 page
 page_size
 ```
+
+Search text uses the shared Persian normalizer. A category includes its active
+descendants. Price filters apply only to canonical `TOMAN` products and reject
+an inverted range. Without an explicit sort, the historical featured/newest
+ordering is preserved.
 
 ---
 

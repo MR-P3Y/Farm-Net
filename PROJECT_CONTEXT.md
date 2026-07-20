@@ -437,6 +437,13 @@ internal result routes, and deterministic Persian/Arabic text and digit
 normalization. No public route or existing domain behavior changes in this
 foundation step. Step 18.3 Product Discovery Hardening is next.
 
+Phase 18 Step 18.3 connects Product and Store providers to the central engine.
+Their public search now uses the shared Persian normalizer and deterministic
+relevance boundary. Products add descendant-aware categories, canonical
+`TOMAN` price range, and allow-listed relevance/newest/price sorting; Stores add
+relevance/newest sorting. Existing visibility and default ordering remain
+compatible. Step 18.4 Services Discovery Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

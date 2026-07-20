@@ -20,6 +20,9 @@ class ProductRepository {
     int? countyId,
     int? cityId,
     String? storeType,
+    num? minPrice,
+    num? maxPrice,
+    String? sort,
   }) {
     return _api.listPublicProducts(
       q: q,
@@ -29,6 +32,9 @@ class ProductRepository {
       countyId: countyId,
       cityId: cityId,
       storeType: storeType,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      sort: sort,
     );
   }
 

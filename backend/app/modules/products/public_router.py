@@ -1,4 +1,5 @@
 from math import ceil
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.exceptions import ValidationAuthError
+from app.modules.products.enums import ProductDiscoverySort
 from app.modules.products.models import ProductImage, StoreProduct
 from app.modules.products.repository import ProductRepository
 from app.modules.products.category_service import ProductCategoryService
@@ -36,10 +38,15 @@ def list_public_products(
     county_id: int | None = Query(default=None, ge=1),
     city_id: int | None = Query(default=None, ge=1),
     store_type: str | None = Query(default=None),
+    min_price: Decimal | None = Query(default=None, ge=0),
+    max_price: Decimal | None = Query(default=None, ge=0),
+    sort: ProductDiscoverySort | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
     if store_type is not None:
         _validate_store_type(store_type)
+    if min_price is not None and max_price is not None and min_price > max_price:
+        raise ValidationAuthError(message="min_price must be less than or equal to max_price")
 
     repo = ProductRepository(db)
 
@@ -51,6 +58,9 @@ def list_public_products(
         county_id=county_id,
         city_id=city_id,
         store_type=store_type,
+        min_price=min_price,
+        max_price=max_price,
+        sort=sort,
         page=page,
         page_size=page_size,
     )

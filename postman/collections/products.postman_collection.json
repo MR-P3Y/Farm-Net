@@ -100,7 +100,7 @@
       "name": "Public Products - List",
       "request": {
         "method": "GET",
-        "url": "{{base_url}}/public/products"
+        "url": "{{base_url}}/public/products?q=%D9%83%D8%B4%D8%A7%D9%88%D8%B1%D8%B2%D9%8A&min_price=0&max_price=999999999&sort=relevance"
       }
     },
     {

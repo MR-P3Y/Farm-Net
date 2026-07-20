@@ -18,6 +18,7 @@ from app.common.search import (
 def test_persian_search_normalization_is_shared_and_deterministic() -> None:
     assert normalize_search_text("  كِشت\u200cيـار ۱۲۳  ") == "کشت یار 123"
     assert normalize_search_text("يكي") == "یکی"
+    assert normalize_search_text("آبی و مسئول") == "ابی و مسیول"
 
 
 def test_unified_query_normalizes_text_and_defaults_to_every_type() -> None:

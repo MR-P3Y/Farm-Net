@@ -20,3 +20,10 @@ class ProductUnit(StrEnum):
     TON = "ton"
     METER = "meter"
     OTHER = "other"
+
+
+class ProductDiscoverySort(StrEnum):
+    RELEVANCE = "relevance"
+    NEWEST = "newest"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"

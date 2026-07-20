@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session
 
+from app.common.search import normalize_search_text
+from app.common.search_sql import search_match_expression, search_relevance_expression
+
 from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
 from app.modules.media.models import MediaFile
 from app.modules.auth.models import AuthUser
@@ -10,6 +13,7 @@ from app.modules.geo.models import (
     GeoProvince,
     GeoVillage,
 )
+from app.modules.stores.enums import StoreDiscoverySort
 from app.modules.stores.models import Store, StoreMember, StoreStatusHistory
 
 
@@ -99,6 +103,7 @@ class StoreRepository:
         county_id: int | None = None,
         city_id: int | None = None,
         store_type: str | None = None,
+        sort: StoreDiscoverySort | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[Store], int]:
@@ -107,12 +112,10 @@ class StoreRepository:
             Store.deleted_at.is_(None),
         )
 
-        if q:
-            pattern = f"%{q}%"
+        normalized_q = normalize_search_text(q) if q else None
+        if normalized_q:
             query = query.filter(
-                (Store.name.like(pattern))
-                | (Store.slug.like(pattern))
-                | (Store.description.like(pattern))
+                search_match_expression(normalized_q, Store.name, Store.slug, Store.description)
             )
 
         if province_id:
@@ -129,8 +132,19 @@ class StoreRepository:
 
         total = query.count()
 
+        if sort == StoreDiscoverySort.RELEVANCE and normalized_q:
+            ordering = (
+                search_relevance_expression(
+                    normalized_q, Store.name, Store.slug, Store.description
+                ).desc(),
+                Store.created_at.desc(),
+                Store.id.desc(),
+            )
+        else:
+            ordering = (Store.created_at.desc(), Store.id.desc())
+
         items = (
-            query.order_by(Store.created_at.desc())
+            query.order_by(*ordering)
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()

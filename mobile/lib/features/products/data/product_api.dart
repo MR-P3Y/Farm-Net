@@ -31,6 +31,9 @@ class ProductApi {
     int? countyId,
     int? cityId,
     String? storeType,
+    num? minPrice,
+    num? maxPrice,
+    String? sort,
   }) async {
     final query = <String, String>{};
 
@@ -42,6 +45,11 @@ class ProductApi {
     if (cityId != null) query['city_id'] = cityId.toString();
     if (storeType != null && storeType.trim().isNotEmpty) {
       query['store_type'] = storeType.trim();
+    }
+    if (minPrice != null) query['min_price'] = minPrice.toString();
+    if (maxPrice != null) query['max_price'] = maxPrice.toString();
+    if (sort != null && sort.trim().isNotEmpty) {
+      query['sort'] = sort.trim();
     }
 
     final uri = Uri(

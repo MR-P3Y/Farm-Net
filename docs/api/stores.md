@@ -541,9 +541,13 @@ province_id
 county_id
 city_id
 store_type
+sort = relevance | newest
 page
 page_size
 ```
+
+Search text uses the shared Persian normalizer. Relevance is title-first and
+never weakens the approved/non-deleted public visibility boundary.
 
 Examples:
 

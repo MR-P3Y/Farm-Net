@@ -1,7 +1,14 @@
-from sqlalchemy.orm import Session
+from decimal import Decimal
+
+from sqlalchemy.orm import Session, joinedload
+
+from app.common.money import CurrencyCode
+from app.common.search import normalize_search_text
+from app.common.search_sql import search_match_expression, search_relevance_expression
 
 from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
 from app.modules.media.models import MediaFile
+from app.modules.products.enums import ProductDiscoverySort
 from app.modules.products.models import (
     ProductCategory,
     ProductImage,
@@ -220,12 +227,16 @@ class ProductRepository:
         county_id: int | None = None,
         city_id: int | None = None,
         store_type: str | None = None,
+        min_price: Decimal | None = None,
+        max_price: Decimal | None = None,
+        sort: ProductDiscoverySort | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[StoreProduct], int]:
         query = (
             self.db.query(StoreProduct)
             .join(Store, Store.id == StoreProduct.store_id)
+            .options(joinedload(StoreProduct.store))
             .filter(
                 StoreProduct.status == "published",
                 StoreProduct.deleted_at.is_(None),
@@ -235,20 +246,24 @@ class ProductRepository:
             )
         )
 
-        if q:
-            pattern = f"%{q}%"
+        normalized_q = normalize_search_text(q) if q else None
+        if normalized_q:
             query = query.filter(
-                (StoreProduct.name.like(pattern))
-                | (StoreProduct.slug.like(pattern))
-                | (StoreProduct.short_description.like(pattern))
-                | (StoreProduct.description.like(pattern))
+                search_match_expression(
+                    normalized_q,
+                    StoreProduct.name,
+                    StoreProduct.slug,
+                    StoreProduct.short_description,
+                    StoreProduct.description,
+                    Store.name,
+                )
             )
 
         if store_id:
             query = query.filter(StoreProduct.store_id == store_id)
 
         if category_id:
-            query = query.filter(StoreProduct.category_id == category_id)
+            query = query.filter(StoreProduct.category_id.in_(self._category_scope(category_id)))
 
         if province_id:
             query = query.filter(Store.province_id == province_id)
@@ -262,19 +277,76 @@ class ProductRepository:
         if store_type:
             query = query.filter(Store.store_type == store_type)
 
+        if min_price is not None:
+            query = query.filter(
+                StoreProduct.currency == CurrencyCode.TOMAN.value,
+                StoreProduct.price >= min_price,
+            )
+
+        if max_price is not None:
+            query = query.filter(
+                StoreProduct.currency == CurrencyCode.TOMAN.value,
+                StoreProduct.price <= max_price,
+            )
+
         total = query.count()
 
-        items = (
-            query.order_by(
+        if sort == ProductDiscoverySort.PRICE_ASC:
+            ordering = (StoreProduct.price.asc(), StoreProduct.id.desc())
+        elif sort == ProductDiscoverySort.PRICE_DESC:
+            ordering = (StoreProduct.price.desc(), StoreProduct.id.desc())
+        elif sort == ProductDiscoverySort.NEWEST:
+            ordering = (StoreProduct.created_at.desc(), StoreProduct.id.desc())
+        elif sort == ProductDiscoverySort.RELEVANCE and normalized_q:
+            ordering = (
+                search_relevance_expression(
+                    normalized_q,
+                    StoreProduct.name,
+                    StoreProduct.slug,
+                    StoreProduct.short_description,
+                    StoreProduct.description,
+                    Store.name,
+                ).desc(),
                 StoreProduct.is_featured.desc(),
                 StoreProduct.created_at.desc(),
+                StoreProduct.id.desc(),
             )
+        else:
+            ordering = (
+                StoreProduct.is_featured.desc(),
+                StoreProduct.created_at.desc(),
+                StoreProduct.id.desc(),
+            )
+
+        items = (
+            query.order_by(*ordering)
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()
         )
 
         return items, total
+
+    def _category_scope(self, category_id: int) -> set[int]:
+        rows = self.db.query(ProductCategory.id, ProductCategory.parent_id).filter(
+            ProductCategory.is_active.is_(True)
+        ).all()
+        children: dict[int, list[int]] = {}
+        known_ids = set()
+        for row_id, parent_id in rows:
+            known_ids.add(row_id)
+            if parent_id is not None:
+                children.setdefault(parent_id, []).append(row_id)
+        if category_id not in known_ids:
+            return {category_id}
+        scope = {category_id}
+        pending = [category_id]
+        while pending:
+            for child_id in children.get(pending.pop(), []):
+                if child_id not in scope:
+                    scope.add(child_id)
+                    pending.append(child_id)
+        return scope
 
     def get_public_product_by_id(self, *, product_id: int) -> StoreProduct | None:
         return (

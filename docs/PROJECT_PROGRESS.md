@@ -1108,6 +1108,27 @@ model fields exist:
   with 17 existing UTC deprecation warnings.
 - Evidence: `docs/search/phase-18-shared-contracts.md`.
 
+### Step 18.3 Product + Store Discovery Hardening
+
+- Added Product and Store providers for the central `UnifiedSearchEngine` with
+  typed public result routes, geo/money fields, and deterministic relevance.
+- Public Product and Store queries now use the same SQL-side Persian/Arabic
+  normalization contract as the shared query normalizer.
+- Product discovery adds `TOMAN` min/max price, allow-listed relevance/newest/
+  price sorting, Store-name matching, and active descendant category scope.
+- Store discovery adds allow-listed relevance/newest sorting. Existing approved/
+  published/active/non-deleted privacy boundaries and historical default sort
+  remain unchanged.
+- Mobile Product API/Repository now carry the new typed filter parameters for
+  later unified Discovery UI integration; no client-side fake filtering exists.
+- Product and Store Postman examples use normalized-query/relevance contracts;
+  API documentation records filters and compatibility behavior.
+- Ruff/compileall and all 145 Backend tests passed with 17 existing UTC
+  deprecation warnings. Mobile analyze and all 38 tests passed.
+- Runtime Product and Store normalized-query smoke returned HTTP 200; runtime
+  contained no matching public rows. No migration or seed change was required.
+- Evidence: `docs/search/phase-18-product-store-discovery.md`.
+
 ## Progress Update Rule
 
 After every completed step:

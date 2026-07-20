@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.exceptions import ValidationAuthError
-from app.modules.stores.enums import StoreType
+from app.modules.stores.enums import StoreDiscoverySort, StoreType
 from app.modules.stores.models import Store
 from app.modules.stores.repository import StoreRepository
 from app.modules.stores.schemas import PublicStoreOut
@@ -28,6 +28,7 @@ def list_public_stores(
     county_id: int | None = Query(default=None, ge=1),
     city_id: int | None = Query(default=None, ge=1),
     store_type: str | None = Query(default=None),
+    sort: StoreDiscoverySort | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
     if store_type is not None:
@@ -41,6 +42,7 @@ def list_public_stores(
         county_id=county_id,
         city_id=city_id,
         store_type=store_type,
+        sort=sort,
         page=page,
         page_size=page_size,
     )

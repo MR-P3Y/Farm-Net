@@ -127,7 +127,8 @@ Phase 20.14 Docs/Postman + Runtime Financial Regression: completed
 Phase 20.15 Wallet/Settlement/Accounting Release Gate + Tag: completed (v0.22.0-wallet-settlement-accounting-foundation)
 Phase 18.1 Search/Filters/Discovery Real-State Audit + Contract Boundary: completed
 Phase 18.2 Shared Search Contracts + Persian Query Normalization: completed
-Next: Phase 18.3 Product Discovery Hardening
+Phase 18.3 Product + Store Discovery Hardening: completed
+Next: Phase 18.4 Services Discovery Hardening
 ```
 
 Services means agricultural operational services, not equipment rental.

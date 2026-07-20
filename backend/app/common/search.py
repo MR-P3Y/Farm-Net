@@ -52,8 +52,26 @@ def normalize_search_text(value: str) -> str:
         character
         for character in unicodedata.normalize("NFKD", normalized)
         if unicodedata.category(character) != "Mn"
-    )
+    ).translate(_SEARCH_CHARACTER_MAP)
     return _WHITESPACE.sub(" ", normalized).strip().casefold()
+
+
+def search_relevance_score(query: str, title: str, *secondary_values: str | None) -> Decimal:
+    normalized_query = normalize_search_text(query)
+    normalized_title = normalize_search_text(title)
+    if normalized_title == normalized_query:
+        return Decimal("100")
+    if normalized_title.startswith(normalized_query):
+        return Decimal("80")
+    if normalized_query in normalized_title:
+        return Decimal("60")
+    if any(
+        normalized_query in normalize_search_text(value)
+        for value in secondary_values
+        if value
+    ):
+        return Decimal("30")
+    return Decimal("0")
 
 
 class SearchResultType(StrEnum):

@@ -20,6 +20,11 @@ class StoreType(StrEnum):
     OTHER = "other"
 
 
+class StoreDiscoverySort(StrEnum):
+    RELEVANCE = "relevance"
+    NEWEST = "newest"
+
+
 class StoreMemberRole(StrEnum):
     OWNER = "owner"
     MANAGER = "manager"
