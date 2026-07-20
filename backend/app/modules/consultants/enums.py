@@ -23,3 +23,9 @@ class ConsultContactMethod(StrEnum):
     PHONE = "phone"
     VIDEO = "video"
     VISIT = "visit"
+
+
+class ConsultantDiscoverySort(StrEnum):
+    RELEVANCE = "relevance"
+    NEWEST = "newest"
+    RATING = "rating"

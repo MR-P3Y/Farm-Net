@@ -46,7 +46,7 @@
       "name": "Public - List Consultants",
       "request": {
         "method": "GET",
-        "url": "{{base_url}}/consultants?page=1&page_size=20&specialty_id={{specialty_id}}"
+        "url": "{{base_url}}/consultants?page=1&page_size=20&specialty_id={{specialty_id}}&province_id=1&city_id=1&q=%DA%AF%D9%8A%D8%A7%D9%87&sort=rating"
       }
     },
     {

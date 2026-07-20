@@ -197,6 +197,14 @@ GET /api/v1/consultants/{id}
 
 These endpoints are public.
 
+Public consultant discovery supports `q`, `specialty_id`, `province_id`,
+`city_id`, pagination, and allow-listed `sort=relevance|newest|rating`. Search
+uses the shared Persian/Arabic normalizer across display name, title, bio,
+province/city names, and active specialty code/title/description. Historical
+default ordering remains featured, rating, review count, and newest. Only
+approved, non-deleted profiles are returned, and discovery never exposes phone,
+email, `admin_note`, or moderation fields.
+
 Public consultant profiles expose profile metadata currently supported by the backend:
 
 ```text

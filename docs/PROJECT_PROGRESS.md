@@ -1168,6 +1168,25 @@ model fields exist:
 - The 35-request Rental Postman collection parses successfully.
 - Evidence: `docs/search/phase-18-rental-discovery.md`.
 
+### Step 18.6 Consultant Discovery Hardening
+
+- Added the Consultant provider for the central `UnifiedSearchEngine` with a
+  typed public route, geo, rating, specialty summary, and relevance.
+- Applied shared Persian/Arabic normalization to display name, title, bio,
+  province/city names, and active specialty code/title/description.
+- Added allow-listed `relevance`, `newest`, and `rating` sorting while retaining
+  the historical featured/rating/review/newest default ordering.
+- Preserved approved/non-deleted visibility and the public privacy contract;
+  phone, email, admin notes, and moderation fields never enter search results.
+- Mobile Consultant API/Repository now carries geo and sort parameters without
+  client-side simulation; docs and Postman were updated.
+- Ruff/compileall and all 155 Backend tests passed with 17 existing UTC
+  deprecation warnings. Mobile analyze, all 38 tests, and Web/Wasm build passed.
+- Rebuilt Runtime normalized-query/geo/rating smoke returned HTTP 200; health
+  reported app/database/Redis `ok`, OpenAPI remained 253 paths with all seven
+  Consultant list parameters, and the 35-request Postman collection parsed.
+- Evidence: `docs/search/phase-18-consultant-discovery.md`.
+
 ## Progress Update Rule
 
 After every completed step:

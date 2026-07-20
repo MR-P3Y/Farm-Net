@@ -13,6 +13,7 @@ from app.modules.consultants.schemas import (
     ConsultRequestCreateIn,
     ConsultRequestStatusUpdateIn,
 )
+from app.modules.consultants.enums import ConsultantDiscoverySort
 from app.modules.consultants.service import ConsultantService
 from app.modules.finance.schemas import FinalPriceDecisionIn, FinalPriceProposalIn
 
@@ -48,6 +49,7 @@ def list_consultants(
     province_id: int | None = Query(default=None, ge=1),
     city_id: int | None = Query(default=None, ge=1),
     q: str | None = Query(default=None),
+    sort: ConsultantDiscoverySort | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
     service = ConsultantService(db)
@@ -56,6 +58,7 @@ def list_consultants(
         province_id=province_id,
         city_id=city_id,
         q=q,
+        sort=sort,
         page=page,
         page_size=page_size,
     )

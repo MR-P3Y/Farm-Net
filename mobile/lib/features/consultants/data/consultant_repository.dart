@@ -19,12 +19,18 @@ class ConsultantRepository {
   Future<List<ConsultantProfileModel>> list({
     int? specialtyId,
     String? query,
+    int? provinceId,
+    int? cityId,
+    String? sort,
     int page = 1,
     int pageSize = 20,
   }) {
     return _api.list(
       specialtyId: specialtyId,
       query: query,
+      provinceId: provinceId,
+      cityId: cityId,
+      sort: sort,
       page: page,
       pageSize: pageSize,
     );

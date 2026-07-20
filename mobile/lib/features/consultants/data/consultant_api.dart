@@ -39,6 +39,9 @@ class ConsultantApi {
   Future<List<ConsultantProfileModel>> list({
     int? specialtyId,
     String? query,
+    int? provinceId,
+    int? cityId,
+    String? sort,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -46,6 +49,9 @@ class ConsultantApi {
       final params = <String, dynamic>{'page': page, 'page_size': pageSize};
 
       if (specialtyId != null) params['specialty_id'] = specialtyId;
+      if (provinceId != null) params['province_id'] = provinceId;
+      if (cityId != null) params['city_id'] = cityId;
+      if (sort?.isNotEmpty ?? false) params['sort'] = sort;
       if (query != null && query.trim().isNotEmpty) {
         params['q'] = query.trim();
       }

@@ -15,6 +15,7 @@ from app.modules.finance.final_price_service import FinalPriceContractError, Fin
 from app.modules.finance.schemas import FinalPriceDecisionIn, FinalPriceProposalIn, FinalPriceProposalOut
 from app.modules.consultants.enums import (
     ConsultContactMethod,
+    ConsultantDiscoverySort,
     ConsultProfileStatus,
     ConsultRequestStatus,
 )
@@ -299,6 +300,7 @@ class ConsultantService:
         q: str | None,
         province_id: int | None,
         city_id: int | None,
+        sort: ConsultantDiscoverySort | None = None,
         page: int,
         page_size: int,
     ) -> tuple[list[ConsultProfilePublicOut], int]:
@@ -319,6 +321,7 @@ class ConsultantService:
             q=q,
             province_id=province_id,
             city_id=city_id,
+            sort=sort,
             page=page,
             page_size=page_size,
         )
