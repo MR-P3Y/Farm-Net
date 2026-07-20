@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 from app.modules.auth.exceptions import PermissionDeniedError, ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.auth.repository import AuthRepository
+from app.common.money import BillableSourceType
+from app.modules.finance.final_price_service import FinalPriceContractError, FinalPriceService
+from app.modules.finance.schemas import FinalPriceDecisionIn, FinalPriceProposalIn, FinalPriceProposalOut
 from app.modules.media.enums import MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType, NotificationPriority
 from app.modules.notifications.service import NotificationService
@@ -87,6 +90,75 @@ class ServicesService:
             ServiceRequestStatus.CANCELLED.value,
         },
     }
+
+    def propose_request_final_price(
+        self, *, request_id: int, user: AuthUser, payload: FinalPriceProposalIn
+    ) -> FinalPriceProposalOut:
+        profile = self._approved_request_provider(user)
+        row = self._get_request(request_id)
+        if row.provider_profile_id != profile.id:
+            raise PermissionDeniedError()
+        if row.status != ServiceRequestStatus.ACCEPTED.value:
+            raise ValidationAuthError(
+                message="Final price can only be proposed for an accepted service request",
+                details={"current_status": row.status},
+            )
+        try:
+            proposal = FinalPriceService(self.db).propose(
+                source_type=BillableSourceType.SERVICE_REQUEST.value,
+                source_id=row.id,
+                payer_user_id=row.requester_user_id,
+                provider_user_id=profile.user_id,
+                actor_user_id=user.id,
+                amount=payload.amount,
+                currency=payload.currency,
+                description=payload.description,
+            )
+        except FinalPriceContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
+        self.repo.commit()
+        return FinalPriceService(self.db).output(proposal)
+
+    def decide_request_final_price(
+        self, *, request_id: int, user: AuthUser, payload: FinalPriceDecisionIn
+    ) -> FinalPriceProposalOut:
+        row = self._get_request(request_id)
+        if row.requester_user_id != user.id:
+            raise PermissionDeniedError()
+        if row.status != ServiceRequestStatus.ACCEPTED.value:
+            raise ValidationAuthError(
+                message="Final price can only be decided for an accepted service request",
+                details={"current_status": row.status},
+            )
+        finance = FinalPriceService(self.db)
+        try:
+            proposal = finance.decide(
+                source_type=BillableSourceType.SERVICE_REQUEST.value,
+                source_id=row.id,
+                actor_user_id=user.id,
+                accept=payload.decision == "accept",
+                title=f"Service: {row.title}",
+            )
+        except FinalPriceContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
+        self.repo.commit()
+        return finance.output(proposal)
+
+    def get_request_final_price(
+        self, *, request_id: int, user: AuthUser, assigned: bool
+    ) -> FinalPriceProposalOut | None:
+        row = self._get_request(request_id)
+        if assigned:
+            profile = self._approved_request_provider(user)
+            if row.provider_profile_id != profile.id:
+                raise PermissionDeniedError()
+        elif row.requester_user_id != user.id:
+            raise PermissionDeniedError()
+        finance = FinalPriceService(self.db)
+        proposal = finance.current(
+            source_type=BillableSourceType.SERVICE_REQUEST.value, source_id=row.id
+        )
+        return finance.output(proposal) if proposal is not None else None
 
     def seed_default_categories(self) -> list[ServiceCategoryOut]:
         defaults = [
@@ -822,6 +894,13 @@ class ServicesService:
                 message="Service request cannot be cancelled in current status",
                 details={"current_status": row.status},
             )
+        try:
+            FinalPriceService(self.db).cancel_unpaid_invoice(
+                source_type=BillableSourceType.SERVICE_REQUEST.value,
+                source_id=row.id,
+            )
+        except FinalPriceContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
         old_status = row.status
         self._set_request_status(
             row,
@@ -891,6 +970,14 @@ class ServicesService:
         target = self._validate_request_status(payload.status)
         self._validate_request_transition(row.status, target, self.PROVIDER_REQUEST_TRANSITIONS)
         old_status = row.status
+        if target == ServiceRequestStatus.IN_PROGRESS.value:
+            try:
+                FinalPriceService(self.db).require_accepted(
+                    source_type=BillableSourceType.SERVICE_REQUEST.value,
+                    source_id=row.id,
+                )
+            except FinalPriceContractError as exc:
+                raise ValidationAuthError(message=str(exc)) from exc
         self._set_request_status(row, target, changed_by=user.id, note=payload.note)
         row.provider_note = payload.note
         self._notify_request_transition(
@@ -947,6 +1034,22 @@ class ServicesService:
         target = self._validate_request_status(payload.status)
         self._validate_request_transition(row.status, target, self.ADMIN_REQUEST_TRANSITIONS)
         old_status = row.status
+        if target == ServiceRequestStatus.IN_PROGRESS.value:
+            try:
+                FinalPriceService(self.db).require_accepted(
+                    source_type=BillableSourceType.SERVICE_REQUEST.value,
+                    source_id=row.id,
+                )
+            except FinalPriceContractError as exc:
+                raise ValidationAuthError(message=str(exc)) from exc
+        elif target == ServiceRequestStatus.CANCELLED.value:
+            try:
+                FinalPriceService(self.db).cancel_unpaid_invoice(
+                    source_type=BillableSourceType.SERVICE_REQUEST.value,
+                    source_id=row.id,
+                )
+            except FinalPriceContractError as exc:
+                raise ValidationAuthError(message=str(exc)) from exc
         self._set_request_status(row, target, changed_by=admin_user.id, note=payload.note)
         row.admin_note = payload.note
         if target == ServiceRequestStatus.CANCELLED.value:

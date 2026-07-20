@@ -102,6 +102,20 @@
             "body": { "mode": "raw", "raw": "{\n  \"reason\": \"No longer required\"\n}" },
             "url": "{{base_url}}/services/requests/{{service_request_id}}/cancel"
           }
+        },
+        {
+          "name": "Get own final price",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{requester_token}}" }], "url": "{{base_url}}/services/requests/{{service_request_id}}/final-price" }
+        },
+        {
+          "name": "Accept own final price",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{requester_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"decision\": \"accept\"\n}" },
+            "url": "{{base_url}}/services/requests/{{service_request_id}}/final-price",
+            "description": "Only the requester may accept or reject. Acceptance fails closed until an active default service_request commission policy exists."
+          }
         }
       ]
     },
@@ -124,6 +138,19 @@
             "body": { "mode": "raw", "raw": "{\n  \"status\": \"accepted\",\n  \"note\": \"Accepted by provider\"\n}" },
             "url": "{{base_url}}/services/requests/{{service_request_id}}/status"
           }
+        },
+        {
+          "name": "Propose assigned final price",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 1500000,\n  \"currency\": \"TOMAN\",\n  \"description\": \"Final agreed service scope\"\n}" },
+            "url": "{{base_url}}/services/requests/assigned/{{service_request_id}}/final-price"
+          }
+        },
+        {
+          "name": "Get assigned final price",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{provider_token}}" }], "url": "{{base_url}}/services/requests/assigned/{{service_request_id}}/final-price" }
         }
       ]
     },

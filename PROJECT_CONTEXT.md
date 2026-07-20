@@ -354,6 +354,13 @@ remain compatible. Service/Consultation budgets cannot invoice, and Rental is
 deferred for revenue/deposit separation. Step 20.6 Services/Consultation
 Final-Price Contracts is next.
 
+Phase 20 Step 20.6 added versioned, ownership-protected final-price agreements
+for Services and Consultations at Alembic head `b9c8d6e40808`. Budgets remain
+non-billable; requester acceptance alone creates the exact-once universal
+Invoice and immutable commission snapshot. Work cannot start without accepted
+price. Acceptance fails closed until an active default policy for that exact
+domain is configured. Step 20.7 Rental Revenue + Deposit Contracts is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

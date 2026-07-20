@@ -865,6 +865,29 @@ model fields exist:
   available. No API path was added and Postman remained unchanged.
 - Evidence: `docs/finance/phase-20-universal-billing-foundation.md`.
 
+### Step 20.6 Services/Consultation Final-Price Contracts
+
+- Added versioned final-price proposals with database-enforced single active
+  and accepted contracts, positive `TOMAN`, retained history, and immutable
+  accepted agreements.
+- Kept `budget_amount` non-billable. Providers/consultants propose only after
+  operational acceptance; only the owning requester accepts or rejects.
+- Requester acceptance creates an exact-once universal Invoice/item/commission
+  snapshot and fails closed unless the exact domain has an active default
+  Commission Policy. No rate was guessed or inherited across domains.
+- Blocked `in_progress` until price acceptance. Unpaid cancellation cancels the
+  pending Invoice; paid contracts require a future financial refund flow.
+- Added eight ownership-protected OpenAPI operations and matching Services/
+  Consultants Postman requests. Both collections parse successfully.
+- Ruff/compileall, 26 focused, and all 98 Backend tests passed with 16 existing
+  UTC warnings. Alembic reached `b9c8d6e40808 (head)`; app/database/Redis health
+  and Runtime constraints passed.
+- Alembic metadata check found no Step 20.6 drift and still reports only four
+  pre-existing Consultant/Services unique-index naming differences.
+- Runtime had zero proposals/domain invoices and no configured Service or
+  Consultation policy, so a real-row acceptance smoke was not possible.
+- Evidence: `docs/finance/phase-20-service-consultation-final-price.md`.
+
 ## Progress Update Rule
 
 After every completed step:

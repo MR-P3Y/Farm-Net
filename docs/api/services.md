@@ -1,8 +1,8 @@
 # Services API
 
 The Services module implements the operational-services marketplace request
-workflow. It does not cover payment, commission, invoices, chat, reviews,
-mobile UI, or admin-panel UI.
+workflow. Phase 20.6 adds final-price agreement and universal invoice creation;
+payment execution, settlement, chat, and reviews remain outside this contract.
 
 ## Request roles and privacy
 
@@ -28,8 +28,18 @@ All paths use the `/api/v1` prefix and the standard
 | Provider | `GET /services/requests/assigned` | Paginated assigned list |
 | Provider | `GET /services/requests/assigned/{request_id}` | Assigned operational detail |
 | Provider | `PATCH /services/requests/{request_id}/status` | Controlled assigned transition |
+| Provider | `POST/GET /services/requests/assigned/{request_id}/final-price` | Propose/read final price |
+| Requester | `GET/PATCH /services/requests/{request_id}/final-price` | Read and accept/reject final price |
 | Admin | `GET/POST /admin/services/categories` | List or create categories |
 | Admin | `PATCH /admin/services/categories/{category_id}` | Update category |
+
+## Final-price billing gate
+
+`budget_amount` is never billable. Final price requires an accepted operational
+request, an explicit provider proposal, and requester acceptance. Acceptance
+fails closed without an active default `service_request` commission policy and
+creates one exact-once universal Invoice. `in_progress` is blocked until this
+agreement exists. An unpaid cancellation cancels its pending Invoice.
 
 Category management preserves Admin-owned seed rows, rejects direct and
 indirect hierarchy cycles, and accepts `parent_id: null` to move a category to

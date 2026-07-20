@@ -199,6 +199,41 @@
       }
     },
     {
+      "name": "Requester - Get Consultation Final Price",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/consultants/requests/{{consult_request_id}}/final-price",
+        "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+      }
+    },
+    {
+      "name": "Requester - Accept Consultation Final Price",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/consultants/requests/{{consult_request_id}}/final-price",
+        "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"decision\": \"accept\"\n}" },
+        "description": "Acceptance fails closed until an active default consultation_request commission policy exists."
+      }
+    },
+    {
+      "name": "Consultant - Propose Final Price",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/consultants/requests/assigned/{{consult_request_id}}/final-price",
+        "header": [{ "key": "Authorization", "value": "Bearer {{consultant_user_access_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"amount\": 800000,\n  \"currency\": \"TOMAN\",\n  \"description\": \"Final agreed consultation scope\"\n}" }
+      }
+    },
+    {
+      "name": "Consultant - Get Assigned Final Price",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/consultants/requests/assigned/{{consult_request_id}}/final-price",
+        "header": [{ "key": "Authorization", "value": "Bearer {{consultant_user_access_token}}" }]
+      }
+    },
+    {
       "name": "Consultant - Assigned Request Detail",
       "request": {
         "method": "GET",

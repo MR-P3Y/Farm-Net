@@ -48,3 +48,10 @@ class BillingInvoiceStatus(StrEnum):
 class CommissionPolicyStatus(StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"
+
+
+class FinalPriceProposalStatus(StrEnum):
+    PROPOSED = "proposed"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    SUPERSEDED = "superseded"

@@ -245,6 +245,10 @@ GET  /api/v1/consultants/requests/assigned
 GET  /api/v1/consultants/requests/assigned/{request_id}
 PATCH /api/v1/consultants/requests/{request_id}/status
 PATCH /api/v1/consultants/requests/{request_id}/cancel
+POST  /api/v1/consultants/requests/assigned/{request_id}/final-price
+GET   /api/v1/consultants/requests/assigned/{request_id}/final-price
+GET   /api/v1/consultants/requests/{request_id}/final-price
+PATCH /api/v1/consultants/requests/{request_id}/final-price
 ```
 
 Permissions:
@@ -256,6 +260,9 @@ GET /requests/me: consult_requests.read_own
 GET /requests/{id}: consult_requests.read_own and requester ownership
 PATCH /requests/{id}/cancel: consult_requests.manage_own
 GET /requests/assigned, GET /requests/assigned/{id}, and PATCH /requests/{id}/status: consult_requests.manage_assigned
+POST/GET assigned final-price: consult_requests.manage_assigned plus assignment ownership
+GET own final-price: consult_requests.read_own plus requester ownership
+PATCH own final-price: consult_requests.manage_own plus requester ownership
 ```
 
 Assigned workbench rules:
@@ -282,6 +289,13 @@ open -> accepted | rejected
 accepted -> in_progress | cancelled
 in_progress -> completed | cancelled
 ```
+
+`budget_amount` is planning-only. After operational acceptance, the consultant
+may propose a versioned positive `TOMAN` final price. Only the requester may
+accept or reject it. Acceptance is exact-once, requires an active default
+`consultation_request` Commission Policy, and creates the universal Invoice and
+immutable snapshots. Starting work is blocked until acceptance. Unpaid
+cancellation cancels the payment-pending Invoice.
 
 ## Admin Consultant APIs
 

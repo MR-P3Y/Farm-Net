@@ -21,6 +21,7 @@ from app.modules.services.schemas import (
     ServiceRequestStatusUpdateIn,
 )
 from app.modules.services.service import ServicesService
+from app.modules.finance.schemas import FinalPriceDecisionIn, FinalPriceProposalIn
 
 
 router = APIRouter(
@@ -330,6 +331,76 @@ def update_assigned_service_request_status(
     return success_response(
         data=result.model_dump(mode="json"),
         message="Service request status updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/requests/assigned/{request_id}/final-price")
+def propose_assigned_service_request_final_price(
+    request_id: int,
+    payload: FinalPriceProposalIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage_assigned")),
+):
+    result = ServicesService(db).propose_request_final_price(
+        request_id=request_id, user=current_user, payload=payload
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Final price proposed",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/requests/assigned/{request_id}/final-price")
+def get_assigned_service_request_final_price(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage_assigned")),
+):
+    result = ServicesService(db).get_request_final_price(
+        request_id=request_id, user=current_user, assigned=True
+    )
+    return success_response(
+        data=result.model_dump(mode="json") if result else None,
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/requests/{request_id}/final-price")
+def get_own_service_request_final_price(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.read_own")),
+):
+    result = ServicesService(db).get_request_final_price(
+        request_id=request_id, user=current_user, assigned=False
+    )
+    return success_response(
+        data=result.model_dump(mode="json") if result else None,
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.patch("/requests/{request_id}/final-price")
+def decide_own_service_request_final_price(
+    request_id: int,
+    payload: FinalPriceDecisionIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage_own")),
+):
+    result = ServicesService(db).decide_request_final_price(
+        request_id=request_id, user=current_user, payload=payload
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Final price decision recorded",
         meta={"trace_id": request.state.trace_id},
     )
 

@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.auth.repository import AuthRepository
+from app.common.money import BillableSourceType
+from app.modules.finance.final_price_service import FinalPriceContractError, FinalPriceService
+from app.modules.finance.schemas import FinalPriceDecisionIn, FinalPriceProposalIn, FinalPriceProposalOut
 from app.modules.consultants.enums import (
     ConsultContactMethod,
     ConsultProfileStatus,
@@ -46,6 +49,79 @@ class ConsultantService:
         self.db = db
         self.repo = ConsultantRepository(db)
         self.auth_repo = AuthRepository(db)
+
+    def propose_request_final_price(
+        self, *, request_id: int, user: AuthUser, payload: FinalPriceProposalIn
+    ) -> FinalPriceProposalOut:
+        profile = self.repo.get_profile_by_user_id(user.id)
+        if profile is None or profile.status != ConsultProfileStatus.APPROVED.value:
+            raise ValidationAuthError(message="Approved consultant profile is required")
+        row = self.repo.get_request_by_id(request_id)
+        if row is None or row.consultant_profile_id != profile.id:
+            raise ValidationAuthError(message="Consult request not found")
+        if row.status != ConsultRequestStatus.ACCEPTED.value:
+            raise ValidationAuthError(
+                message="Final price can only be proposed for an accepted consult request",
+                details={"current_status": row.status},
+            )
+        try:
+            proposal = FinalPriceService(self.db).propose(
+                source_type=BillableSourceType.CONSULTATION_REQUEST.value,
+                source_id=row.id,
+                payer_user_id=row.requester_user_id,
+                provider_user_id=profile.user_id,
+                actor_user_id=user.id,
+                amount=payload.amount,
+                currency=payload.currency,
+                description=payload.description,
+            )
+        except FinalPriceContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
+        self.repo.commit()
+        return FinalPriceService(self.db).output(proposal)
+
+    def decide_request_final_price(
+        self, *, request_id: int, user: AuthUser, payload: FinalPriceDecisionIn
+    ) -> FinalPriceProposalOut:
+        row = self.repo.get_request_by_id(request_id)
+        if row is None or row.requester_user_id != user.id:
+            raise ValidationAuthError(message="Consult request not found")
+        if row.status != ConsultRequestStatus.ACCEPTED.value:
+            raise ValidationAuthError(
+                message="Final price can only be decided for an accepted consult request",
+                details={"current_status": row.status},
+            )
+        finance = FinalPriceService(self.db)
+        try:
+            proposal = finance.decide(
+                source_type=BillableSourceType.CONSULTATION_REQUEST.value,
+                source_id=row.id,
+                actor_user_id=user.id,
+                accept=payload.decision == "accept",
+                title=f"Consultation: {row.title}",
+            )
+        except FinalPriceContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
+        self.repo.commit()
+        return finance.output(proposal)
+
+    def get_request_final_price(
+        self, *, request_id: int, user: AuthUser, assigned: bool
+    ) -> FinalPriceProposalOut | None:
+        row = self.repo.get_request_by_id(request_id)
+        if row is None:
+            raise ValidationAuthError(message="Consult request not found")
+        if assigned:
+            profile = self.repo.get_profile_by_user_id(user.id)
+            if profile is None or row.consultant_profile_id != profile.id:
+                raise ValidationAuthError(message="Consult request not found")
+        elif row.requester_user_id != user.id:
+            raise ValidationAuthError(message="Consult request not found")
+        finance = FinalPriceService(self.db)
+        proposal = finance.current(
+            source_type=BillableSourceType.CONSULTATION_REQUEST.value, source_id=row.id
+        )
+        return finance.output(proposal) if proposal is not None else None
 
     def list_specialties(
         self,
@@ -534,6 +610,15 @@ class ConsultantService:
                 details={"from_status": row.status, "to_status": target_status},
             )
 
+        if target_status == ConsultRequestStatus.IN_PROGRESS.value:
+            try:
+                FinalPriceService(self.db).require_accepted(
+                    source_type=BillableSourceType.CONSULTATION_REQUEST.value,
+                    source_id=row.id,
+                )
+            except FinalPriceContractError as exc:
+                raise ValidationAuthError(message=str(exc)) from exc
+
         self._set_request_status(row, target_status, changed_by=user.id, note=payload.note)
         self.repo.commit()
         self.repo.refresh(row)
@@ -563,6 +648,14 @@ class ConsultantService:
                 message="Consult request cannot be cancelled in current status",
                 details={"current_status": row.status},
             )
+
+        try:
+            FinalPriceService(self.db).cancel_unpaid_invoice(
+                source_type=BillableSourceType.CONSULTATION_REQUEST.value,
+                source_id=row.id,
+            )
+        except FinalPriceContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
 
         self._set_request_status(
             row,
@@ -625,6 +718,22 @@ class ConsultantService:
             )
 
         target_status = self._validate_request_status(payload.status)
+        if target_status == ConsultRequestStatus.IN_PROGRESS.value:
+            try:
+                FinalPriceService(self.db).require_accepted(
+                    source_type=BillableSourceType.CONSULTATION_REQUEST.value,
+                    source_id=row.id,
+                )
+            except FinalPriceContractError as exc:
+                raise ValidationAuthError(message=str(exc)) from exc
+        elif target_status == ConsultRequestStatus.CANCELLED.value:
+            try:
+                FinalPriceService(self.db).cancel_unpaid_invoice(
+                    source_type=BillableSourceType.CONSULTATION_REQUEST.value,
+                    source_id=row.id,
+                )
+            except FinalPriceContractError as exc:
+                raise ValidationAuthError(message=str(exc)) from exc
         self._set_request_status(row, target_status, changed_by=admin_user.id, note=payload.note)
         row.admin_note = payload.note
 

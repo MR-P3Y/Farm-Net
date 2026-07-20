@@ -1472,3 +1472,10 @@ items, source-scoped commission policies, and immutable commission snapshots.
 `source_type + source_id` and legacy links are unique. `default_scope` is null
 for non-default policies and equals `source_type` for a default policy; its
 unique constraint permits at most one default policy per billing source.
+# Final-price agreements
+
+Service and Consultation budgets are never Invoice sources. The canonical
+agreement history is `finance_final_price_proposals`, keyed by billable source
+and version. Nullable unique active/accepted scopes enforce one current offer
+and one immutable acceptance per source. Only accepted positive `TOMAN` values
+may create universal billing snapshots.

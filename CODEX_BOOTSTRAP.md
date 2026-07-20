@@ -115,7 +115,8 @@ Phase 20.2 Canonical Money + Billable Source Contracts: completed (4c9a2f20b102)
 Phase 20.3 Wallet Accounts + Double-Entry Ledger DB/Permissions: completed (c7e8a1f20303)
 Phase 20.4 Order Finance Ledger Bridge + Reconciliation: completed (d9a4b2f20404)
 Phase 20.5 Universal Invoice + Commission Foundation: completed (f7a6d4b20606)
-Next: Phase 20.6 Services/Consultation Final-Price Contracts
+Phase 20.6 Services/Consultation Final-Price Contracts: completed (b9c8d6e40808)
+Next: Phase 20.7 Rental Revenue + Deposit Contracts
 ```
 
 Services means agricultural operational services, not equipment rental.

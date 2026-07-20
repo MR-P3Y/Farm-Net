@@ -14,12 +14,78 @@ from sqlalchemy import (
     UniqueConstraint,
     event,
 )
+from sqlalchemy import inspect
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.common.money import CurrencyCode
 from app.db.base import Base
 from app.modules.finance.enums import AccountStatus, LedgerStatus
-from app.modules.finance.enums import BillingInvoiceStatus, CommissionPolicyStatus
+from app.modules.finance.enums import (
+    BillingInvoiceStatus,
+    CommissionPolicyStatus,
+    FinalPriceProposalStatus,
+)
+
+
+class FinalPriceProposal(Base):
+    __tablename__ = "finance_final_price_proposals"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    source_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    source_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    payer_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    provider_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    proposed_by_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), nullable=False)
+    description_snapshot: Mapped[str] = mapped_column(String(500), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), default=FinalPriceProposalStatus.PROPOSED.value, nullable=False, index=True
+    )
+    active_scope: Mapped[str | None] = mapped_column(String(120), unique=True)
+    accepted_scope: Mapped[str | None] = mapped_column(String(120), unique=True)
+    decided_by_user_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="SET NULL"), index=True
+    )
+    proposed_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "source_type", "source_id", "version", name="uq_final_price_source_version"
+        ),
+        CheckConstraint("amount > 0", name="ck_final_price_amount_positive"),
+        CheckConstraint("currency = 'TOMAN'", name="ck_final_price_currency_toman"),
+        CheckConstraint(
+            "source_type IN ('service_request', 'consultation_request')",
+            name="ck_final_price_source_type",
+        ),
+        CheckConstraint(
+            "status IN ('proposed', 'accepted', 'rejected', 'superseded')",
+            name="ck_final_price_status",
+        ),
+        CheckConstraint(
+            "(status = 'proposed' AND active_scope IS NOT NULL) OR "
+            "(status <> 'proposed' AND active_scope IS NULL)",
+            name="ck_final_price_active_scope",
+        ),
+        CheckConstraint(
+            "(status = 'accepted' AND accepted_scope IS NOT NULL) OR "
+            "(status <> 'accepted' AND accepted_scope IS NULL)",
+            name="ck_final_price_accepted_scope",
+        ),
+        Index("ix_final_price_source", "source_type", "source_id", "version"),
+        Index("ix_final_price_payer_status", "payer_user_id", "status"),
+        Index("ix_final_price_provider_status", "provider_user_id", "status"),
+    )
 
 
 class CommissionPolicy(Base):
@@ -302,6 +368,19 @@ def _reject_posted_ledger_mutation(_mapper, _connection, target) -> None:
     raise RuntimeError(f"Posted ledger record {target.__class__.__name__} is immutable")
 
 
+def _protect_final_price_update(_mapper, _connection, target) -> None:
+    history = inspect(target).attrs.status.history
+    if history.deleted and history.deleted[0] == FinalPriceProposalStatus.ACCEPTED.value:
+        raise RuntimeError("Accepted final-price proposal is immutable")
+
+
+def _protect_final_price_delete(_mapper, _connection, _target) -> None:
+    raise RuntimeError("Final-price proposal history cannot be deleted")
+
+
 for _model in (LedgerTransaction, LedgerEntry, BillingInvoiceItem, BillingCommissionSnapshot):
     event.listen(_model, "before_update", _reject_posted_ledger_mutation)
     event.listen(_model, "before_delete", _reject_posted_ledger_mutation)
+
+event.listen(FinalPriceProposal, "before_update", _protect_final_price_update)
+event.listen(FinalPriceProposal, "before_delete", _protect_final_price_delete)
