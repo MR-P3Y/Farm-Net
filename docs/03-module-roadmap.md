@@ -90,6 +90,11 @@ Phase 21: AI / RAG Assistant Integration
 Phase 22: Production Hardening / Deployment
 ```
 
+Phase 18 implementation began on 2026-07-20. Step 18.1 completed a read-only
+real-state audit; the approved incremental plan is recorded in
+`docs/search/phase-18-real-state-audit.md`. Existing domain discovery contracts
+remain active while shared contracts are added incrementally.
+
 ---
 
 ## 3.1 Current Roadmap Note

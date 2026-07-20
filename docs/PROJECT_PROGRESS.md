@@ -1069,6 +1069,26 @@ model fields exist:
   gaps; payout clearing in this foundation is simulated.
 - Evidence: `docs/finance/phase-20-release-gate.md`.
 
+## Phase 18 — Search, Filters, and Discovery
+
+### Step 18.1 Real-State Audit + Contract Boundary
+
+- Audited public Backend and Mobile discovery for Products, Services, Rentals,
+  Consultants, and Social without changing runtime behavior.
+- Confirmed all five domains already support independent substring search and
+  pagination; filter depth and Mobile exposure differ by domain.
+- Confirmed there is no unified search module/endpoint, common sort contract,
+  relevance score, Persian text normalization, suggestion/history contract, or
+  cross-domain Mobile discovery hub.
+- Identified exact gaps: no public price range filters, category matching is
+  exact-ID rather than descendant-aware, Rental list cannot filter by requested
+  availability window, and several Backend filters are not exposed in Mobile.
+- Confirmed current `%query%` matching has no full-text/search-engine index and
+  fixed domain ordering is used instead of query relevance.
+- Defined Steps 18.2–18.12 with MySQL-first, privacy-preserving contracts; an
+  external search engine is not introduced without measured need.
+- Evidence: `docs/search/phase-18-real-state-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:

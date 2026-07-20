@@ -125,7 +125,8 @@ Phase 20.12 Mobile Wallet, Invoices, and Provider Settlements: completed
 Phase 20.13 Admin Accounting, Settlement, and Reconciliation: completed
 Phase 20.14 Docs/Postman + Runtime Financial Regression: completed
 Phase 20.15 Wallet/Settlement/Accounting Release Gate + Tag: completed (v0.22.0-wallet-settlement-accounting-foundation)
-Next: roadmap selection requires explicit authorization
+Phase 18.1 Search/Filters/Discovery Real-State Audit + Contract Boundary: completed
+Next: Phase 18.2 Shared Search Contracts + Persian Query Normalization
 ```
 
 Services means agricultural operational services, not equipment rental.

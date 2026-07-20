@@ -1,6 +1,6 @@
 # Farm-Net Project Context
 
-Last verified: 2026-07-19
+Last verified: 2026-07-20
 Repository path: `E:\Farm-Net`
 Primary development branch: `develop`
 
@@ -422,6 +422,14 @@ Phase 20 Step 20.15 passed its independent release gate. The Wallet,
 Settlement, and Accounting foundation is released as
 `v0.22.0-wallet-settlement-accounting-foundation`. This release does not claim
 credentialed Zarinpal operation, production payment, or real bank payout.
+
+Phase 18 Search/Filters/Discovery is now active. Step 18.1 audited the real
+public discovery surfaces. Products, Services, Rentals, Consultants, and Social
+already expose independent substring search and selected filters, and their
+Mobile screens provide uneven subsets. There is no unified search contract,
+Persian normalization, relevance model, explicit client-selectable sorting,
+cross-domain result endpoint, or shared discovery screen. Step 18.2 Shared
+Search Contracts + Persian Query Normalization is next.
 
 ## Known Gaps
 
