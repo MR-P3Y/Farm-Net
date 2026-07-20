@@ -1206,6 +1206,25 @@ model fields exist:
   eight Social list parameters, and the 22-request Postman collection parsed.
 - Evidence: `docs/search/phase-18-social-discovery.md`.
 
+### Step 18.8 Unified Cross-Domain Search API + Ranking Boundary
+
+- Added public read-only `POST /api/v1/search` backed by the single central
+  `UnifiedSearchEngine` and all six registered domain providers.
+- Added one strict body contract for normalized query, ordered unique result
+  types, domain/geo/price/availability filters, safe sort, and pagination.
+- Returns groups in requested order with independent pagination and a summed
+  total; unlike domain relevance scores are intentionally not globally merged.
+- Preserved every provider's visibility/privacy rules and internal Mobile route
+  contract. No search history, analytics, migration, seed, or permission added.
+- Added focused API/OpenAPI/provider-registration tests, API documentation, and
+  a three-request Unified Search Postman collection.
+- Ruff/compileall and all 161 Backend tests passed with 18 warnings (17 existing
+  UTC deprecations plus one TestClient dependency deprecation).
+- Rebuilt Runtime six-domain normalized search returned HTTP 200 with all six
+  groups in requested order; health reported app/database/Redis `ok`, OpenAPI
+  increased from 253 to 254 paths, and the Search Postman collection parsed.
+- Evidence: `docs/search/phase-18-unified-search-api.md`.
+
 ## Progress Update Rule
 
 After every completed step:

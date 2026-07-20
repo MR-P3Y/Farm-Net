@@ -132,7 +132,8 @@ Phase 18.4 Services Discovery Hardening: completed
 Phase 18.5 Equipment Rental Discovery Hardening: completed
 Phase 18.6 Consultant Discovery Hardening: completed
 Phase 18.7 Social Discovery Hardening: completed
-Next: Phase 18.8 Unified Cross-Domain Search API
+Phase 18.8 Unified Cross-Domain Search API + Ranking Boundary: completed
+Next: Phase 18.9 Mobile Unified Discovery Hub
 ```
 
 Services means agricultural operational services, not equipment rental.

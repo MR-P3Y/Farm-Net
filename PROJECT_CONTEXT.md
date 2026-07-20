@@ -472,6 +472,14 @@ and category metadata; supports category/type/geo filters and allow-listed
 relevance/newest sorting. Members-only, hidden, rejected, deleted, and draft
 content cannot enter results. Step 18.8 Unified Cross-Domain Search API is next.
 
+Phase 18 Step 18.8 exposes the public read-only `POST /api/v1/search` endpoint.
+One typed request selects any ordered subset of all six providers and returns
+independently paginated groups plus a summed total. Persian normalization,
+strict `TOMAN`, filter validation, safe internal routes, and each provider's
+privacy boundary are retained. Rankings are not globally merged across unlike
+domains, and no query history or analytics is stored. Step 18.9 Mobile Unified
+Discovery Hub is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

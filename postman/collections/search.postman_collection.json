@@ -1,0 +1,39 @@
+{
+  "info": {
+    "name": "Farm Net - Unified Search",
+    "description": "Phase 18.8 public cross-domain search. Read-only and no search history is stored.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8000/api/v1"}
+  ],
+  "item": [
+    {
+      "name": "Search - All public domains",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"q\": \"خدمات كشاورزي\",\n  \"sort\": \"relevance\",\n  \"page\": 1,\n  \"page_size\": 5\n}"},
+        "url": "{{base_url}}/search"
+      }
+    },
+    {
+      "name": "Search - Selected domains and geo",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"q\": \"تراکتور\",\n  \"types\": [\"product\", \"rental_equipment\", \"service\"],\n  \"filters\": {\n    \"province_id\": 1,\n    \"city_id\": 1,\n    \"min_price\": 0,\n    \"max_price\": 50000000,\n    \"currency\": \"TOMAN\"\n  },\n  \"sort\": \"price_asc\"\n}"},
+        "url": "{{base_url}}/search"
+      }
+    },
+    {
+      "name": "Search - Rental availability",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"q\": \"کمباین\",\n  \"types\": [\"rental_equipment\"],\n  \"filters\": {\n    \"rental_available_from\": \"2026-08-01T00:00:00Z\",\n    \"rental_available_to\": \"2026-08-02T00:00:00Z\",\n    \"currency\": \"TOMAN\"\n  }\n}"},
+        "url": "{{base_url}}/search"
+      }
+    }
+  ]
+}
