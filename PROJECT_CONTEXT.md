@@ -411,6 +411,13 @@ Reconciliation health summary. New Admin read APIs use existing dedicated
 Finance permissions. No raw JSON or real bank payout is introduced. Step 20.14
 Docs/Postman + Runtime Financial Regression is next.
 
+Phase 20 Step 20.14 consolidated the financial API/Postman contract and ran the
+full release regression. Backend lint/compile/tests, migration/seed, runtime
+health, reconciliation and OpenAPI passed; Mobile and Admin analyze/tests/Web
+builds passed. The runtime contained no successful Payment or Refund rows, so
+reconciliation is clean but zero-data. Credentialed Zarinpal sandbox and real
+bank payout remain explicitly unverified. Step 20.15 Release Gate + Tag is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

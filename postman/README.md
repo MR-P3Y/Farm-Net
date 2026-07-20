@@ -47,8 +47,11 @@ management, moderation, ownership/privacy, and the request status workflow.
 
 ## Orders / Payments / Finance Flow
 
-`collections/orders-payments-commission.postman_collection.json` contains 34
+`collections/orders-payments-commission.postman_collection.json` contains 48
 requests covering Cart, atomic/idempotent Checkout, Buyer/Seller/Admin orders,
 payment initiation and exact-once verification, full Refund processing,
-commission settings, and all Admin Finance read models. Set user/admin tokens
-and the product, cart, order, payment, invoice, attempt, and refund IDs.
+commission settings, own Wallet/Invoice/Settlement flows, Admin Ledger/Wallet/
+Settlement/Reconciliation/Adjustment operations, and Zarinpal callback
+contracts. Set user/admin tokens and the product, cart, order, payment, invoice,
+attempt, refund, settlement, and wallet account IDs. Raw request templates are
+valid JSON after Postman variables are resolved.

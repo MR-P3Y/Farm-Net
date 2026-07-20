@@ -1027,6 +1027,28 @@ model fields exist:
   app/database/Redis health passed; OpenAPI has 253 paths.
 - Evidence: `docs/finance/phase-20-admin-accounting.md`.
 
+### Step 20.14 Docs/Postman + Runtime Financial Regression
+
+- Consolidated the Phase 20 financial release evidence and corrected the
+  Orders/Payments/Finance Postman inventory to its actual 48 requests.
+- Backend Ruff and compileall passed; all 129 Backend tests passed with 17
+  existing UTC deprecation warnings. Alembic upgraded/current is
+  `fdcb2ab80c12 (head)` and Auth seed passed twice idempotently with 12 roles
+  and 249 permissions.
+- Runtime app/database/Redis health passed. Finance reconciliation was clean:
+  all mismatch arrays were empty, with zero successful Payment/Refund rows and
+  zero corresponding posted journals in this environment.
+- OpenAPI exposes 253 total paths and 27 Finance/Payment/Admin-refund paths.
+  The 48-request Postman collection and all 18 variable-bearing raw JSON body
+  templates parse successfully after normal Postman variable resolution.
+- Mobile analyze passed, all 38 tests passed, and Web build passed. Admin
+  analyze passed, all 17 tests passed, and Web build passed; Wasm dry-runs also
+  succeeded for both applications.
+- Credentialed Zarinpal sandbox smoke was skipped because no Merchant ID/public
+  HTTPS callback is configured. Real bank payout remains outside the current
+  simulated-clearing contract. No real-row money movement is claimed.
+- Evidence: `docs/finance/phase-20-runtime-regression.md`.
+
 ## Progress Update Rule
 
 After every completed step:

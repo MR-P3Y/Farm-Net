@@ -123,7 +123,8 @@ Phase 20.10 Real Payment Gateway Adapter + Callback Verification: completed (dis
 Phase 20.11 Financial Notifications + Privacy/Audit Hardening: completed
 Phase 20.12 Mobile Wallet, Invoices, and Provider Settlements: completed
 Phase 20.13 Admin Accounting, Settlement, and Reconciliation: completed
-Next: Phase 20.14 Docs/Postman + Runtime Financial Regression
+Phase 20.14 Docs/Postman + Runtime Financial Regression: completed
+Next: Phase 20.15 Wallet/Settlement/Accounting Release Gate + Tag
 ```
 
 Services means agricultural operational services, not equipment rental.
