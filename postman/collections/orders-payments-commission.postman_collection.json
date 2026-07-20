@@ -2,7 +2,7 @@
   "info": {
     "name": "Farm Net - Orders Payments Commission Foundation",
     "_postman_id": "48d02b90-9f11-4bb8-9bfb-orders-payments-commission",
-    "description": "Phase 9 Orders/Payments plus Phase 20 Ledger release, own wallet, and simulated settlement clearing contracts. Simulated payout is not a bank transfer.",
+    "description": "Phase 9 Orders/Payments plus Phase 20 Ledger release, own wallet, simulated settlement clearing, release reversal, and audited adjustment contracts. Simulated payout is not a bank transfer.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -353,6 +353,7 @@
     {"name":"Settlement - Request Idempotent","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{access_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/finance/settlements","body":{"mode":"raw","raw":"{\n  \"amount\": 100000,\n  \"currency\": \"TOMAN\",\n  \"idempotency_key\": \"postman-settlement-0001\",\n  \"note\": \"Test settlement request\"\n}"}}},
     {"name":"Admin Settlement - List","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/admin/finance/settlements?page=1&page_size=20"}},
     {"name":"Admin Settlement - Approve","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/admin/finance/settlements/{{settlement_id}}/decision","body":{"mode":"raw","raw":"{\n  \"decision\": \"approve\",\n  \"admin_note\": \"Approved for simulated clearing\"\n}"}}},
-    {"name":"Admin Settlement - Simulate Payout","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"POST","url":"{{base_url}}/admin/finance/settlements/{{settlement_id}}/simulate-payout","description":"Moves reserved liability to payout clearing only. It does not execute or claim a bank transfer."}}
+    {"name":"Admin Settlement - Simulate Payout","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"POST","url":"{{base_url}}/admin/finance/settlements/{{settlement_id}}/simulate-payout","description":"Moves reserved liability to payout clearing only. It does not execute or claim a bank transfer."}},
+    {"name":"Admin Finance - Provider Wallet Adjustment","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_access_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/admin/finance/adjustments","body":{"mode":"raw","raw":"{\n  \"provider_user_id\": 1,\n  \"amount\": 10000,\n  \"direction\": \"credit\",\n  \"currency\": \"TOMAN\",\n  \"idempotency_key\": \"postman-adjustment-0001\",\n  \"reason\": \"Approved accounting correction for provider wallet\"\n}"},"description":"Posts an idempotent, balanced, audited TOMAN adjustment. Debit adjustments cannot overdraw available balance."}}
   ]
 }

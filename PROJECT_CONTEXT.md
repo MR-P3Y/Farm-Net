@@ -375,6 +375,14 @@ Alembic head `fdcb2ab80c12`. Simulated payout is not an external bank transfer.
 Unfunded domains cannot release revenue. Step 20.9 Refund, Reversal, Adjustment
 + Concurrency Hardening is next.
 
+Phase 20 Step 20.9 makes Product Order Refund safe after provider balance
+Release. A released amount is restored to pending through a linked immutable
+Reversal before the Refund journal; row locks serialize it against Settlement.
+Refund fails closed when funds are reserved or already in simulated clearing,
+so no provider wallet can become negative. Controlled `TOMAN` provider wallet
+Adjustments are balanced, idempotent, reason-required, permission-guarded and
+audited. Step 20.10 is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

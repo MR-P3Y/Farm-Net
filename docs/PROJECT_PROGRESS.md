@@ -931,6 +931,28 @@ model fields exist:
   release or reservation.
 - Evidence: `docs/finance/phase-20-balance-release-settlement.md`.
 
+### Step 20.9 Refund, Reversal, Adjustment + Concurrency Hardening
+
+- Product Order Refund now detects a prior Release and posts an immutable,
+  exact-once linked Reversal from provider available back to pending before the
+  existing Refund Journal reverses Payment economics.
+- Release Journal and provider available account row locks serialize Refund
+  against Settlement reservation. Refund fails closed when released funds are
+  reserved or in simulated payout clearing; negative wallet balances are not
+  allowed.
+- Added controlled Admin provider-wallet credit/debit Adjustments with a
+  dedicated permission, `TOMAN` validation, mandatory reason, idempotency
+  conflict detection, balanced adjustment clearing, debit no-overdraft, and
+  exact-once Admin Audit logging.
+- Added OpenAPI and Postman coverage plus focused contracts for reversal sides,
+  blocked reserved funds, adjustment accounting, permissions, and routing.
+- Ruff and compileall passed; 25 focused and all 113 Backend tests passed with
+  16 existing UTC warnings. Alembic remains at `fdcb2ab80c12 (head)` because
+  this step needs no schema change. Auth seed passed twice idempotently with 12
+  roles/249 permissions. Runtime app/database/Redis health passed; OpenAPI has
+  248 paths including Adjustment. Postman JSON parses with 42 requests.
+- Evidence: `docs/finance/phase-20-refund-reversal-adjustment.md`.
+
 ## Progress Update Rule
 
 After every completed step:

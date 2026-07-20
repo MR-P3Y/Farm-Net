@@ -19,6 +19,7 @@ class AccountPurpose(StrEnum):
     DEPOSIT_LIABILITY = "deposit_liability"
     REFUND_CLEARING = "refund_clearing"
     PAYOUT_CLEARING = "payout_clearing"
+    ADJUSTMENT_CLEARING = "adjustment_clearing"
 
 
 class AccountStatus(StrEnum):

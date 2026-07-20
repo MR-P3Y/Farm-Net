@@ -173,6 +173,7 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("finance.wallets.read", "Read wallets", "finance", "View wallet accounts"),
     PermissionSeed("finance.ledger.read", "Read ledger", "finance", "View ledger journals and entries"),
     PermissionSeed("finance.ledger.post_internal", "Post ledger", "finance", "Post internal balanced ledger journals"),
+    PermissionSeed("finance.adjustments.create", "Create adjustments", "finance", "Create audited provider wallet adjustments"),
     PermissionSeed("finance.ledger.reconcile", "Reconcile ledger", "finance", "Run and review ledger reconciliation"),
 
     PermissionSeed("shops.read", "Read shops", "store", "View shops"),
@@ -836,6 +837,7 @@ def assign_default_permissions(
             "finance.ledger.reconcile",
             "finance.settlements.read",
             "finance.settlements.manage",
+            "finance.adjustments.create",
             "billing.subscriptions.read",
             "commission.read",
         ],

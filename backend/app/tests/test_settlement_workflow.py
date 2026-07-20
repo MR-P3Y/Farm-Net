@@ -8,6 +8,7 @@ from app.main import app
 from app.modules.auth.seed import BASE_PERMISSIONS
 from app.modules.finance.enums import AccountPurpose, EntrySide, SettlementStatus
 from app.modules.finance.models import (
+    LedgerTransaction,
     SettlementRequest,
     _protect_settlement_delete,
     _protect_settlement_update,
@@ -43,6 +44,7 @@ def test_wallet_and_settlement_routes_are_registered() -> None:
     assert "post" in paths[
         "/api/v1/admin/finance/settlements/{settlement_id}/simulate-payout"
     ]
+    assert "post" in paths["/api/v1/admin/finance/adjustments"]
 
 
 def test_release_moves_provider_pending_to_available_without_new_money() -> None:
@@ -95,3 +97,65 @@ def test_status_vocabulary_does_not_claim_real_bank_payout() -> None:
         "simulated_completed",
     }
     assert not hasattr(SettlementStatus, "PAID")
+
+
+def test_release_reversal_restores_pending_before_refund() -> None:
+    db = Mock()
+    release = SimpleNamespace(id=19)
+    query = db.query.return_value
+    query.filter.return_value.with_for_update.return_value.one_or_none.return_value = release
+    query.filter.return_value.one_or_none.return_value = None
+    service = LedgerMovementService(db)
+    service._lock_account = Mock()
+    service.balance = Mock(return_value=SimpleNamespace(available_amount=Decimal("900")))
+    service._post = Mock(return_value=SimpleNamespace(id=20))
+
+    service.reverse_order_release_for_refund(
+        order_id=7, provider_user_id=30, amount=Decimal("900"),
+        actor_user_id=9, trace_id="trace",
+    )
+
+    call = service._post.call_args.kwargs
+    assert call["reversal_of_id"] == 19
+    assert call["lines"] == (
+        (AccountPurpose.PROVIDER_AVAILABLE, 30, EntrySide.DEBIT, Decimal("900")),
+        (AccountPurpose.PROVIDER_PENDING, 30, EntrySide.CREDIT, Decimal("900")),
+    )
+
+
+def test_release_reversal_blocks_reserved_or_settled_funds() -> None:
+    db = Mock()
+    query = db.query.return_value
+    query.filter.return_value.with_for_update.return_value.one_or_none.return_value = (
+        SimpleNamespace(id=19)
+    )
+    query.filter.return_value.one_or_none.return_value = None
+    service = LedgerMovementService(db)
+    service._lock_account = Mock()
+    service.balance = Mock(return_value=SimpleNamespace(available_amount=Decimal("899")))
+
+    import pytest
+    from app.modules.finance.settlement_service import SettlementContractError
+
+    with pytest.raises(SettlementContractError, match="reserved or settled"):
+        service.reverse_order_release_for_refund(
+            order_id=7, provider_user_id=30, amount=Decimal("900"),
+            actor_user_id=9, trace_id="trace",
+        )
+
+
+def test_adjustment_is_balanced_and_debit_cannot_overdraw() -> None:
+    service = LedgerMovementService(Mock())
+    service.db.query.return_value.filter.return_value.one_or_none.return_value = None
+    service._lock_account = Mock()
+    service.balance = Mock(return_value=SimpleNamespace(available_amount=Decimal("500")))
+    service._post = Mock(return_value=SimpleNamespace(id=22))
+    service.post_adjustment(
+        provider_user_id=30, amount=Decimal("100"), direction="debit",
+        idempotency_key="adjust-001", reason="Correct duplicate provider credit",
+        actor_user_id=9, trace_id="trace",
+    )
+    lines = service._post.call_args.kwargs["lines"]
+    assert lines[0][:3] == (AccountPurpose.ADJUSTMENT_CLEARING, None, EntrySide.CREDIT)
+    assert lines[1][:3] == (AccountPurpose.PROVIDER_AVAILABLE, 30, EntrySide.DEBIT)
+    assert LedgerTransaction.__table__.c.reversal_of_id.unique is not False

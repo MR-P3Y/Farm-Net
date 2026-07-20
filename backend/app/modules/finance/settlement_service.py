@@ -152,6 +152,79 @@ class LedgerMovementService:
             ),
         )
 
+    def reverse_order_release_for_refund(
+        self, *, order_id: int, provider_user_id: int, amount: Decimal,
+        actor_user_id: int, trace_id: str,
+    ) -> LedgerTransaction | None:
+        release = (
+            self.db.query(LedgerTransaction)
+            .filter(
+                LedgerTransaction.idempotency_key == f"release:product_order:{order_id}"
+            )
+            .with_for_update()
+            .one_or_none()
+        )
+        if release is None:
+            return None
+        existing = (
+            self.db.query(LedgerTransaction)
+            .filter(LedgerTransaction.reversal_of_id == release.id)
+            .one_or_none()
+        )
+        if existing is not None:
+            return existing
+        self._lock_account(AccountPurpose.PROVIDER_AVAILABLE, provider_user_id)
+        if self.balance(provider_user_id).available_amount < amount:
+            raise SettlementContractError(
+                "Refund is blocked because released provider funds are reserved or settled"
+            )
+        return self._post(
+            event_type=FinancialEventType.REVERSAL.value,
+            source_type=BillableSourceType.PRODUCT_ORDER.value,
+            source_id=order_id,
+            idempotency_key=f"reversal:release:product_order:{order_id}",
+            actor_user_id=actor_user_id,
+            trace_id=trace_id,
+            description=f"Reverse order {order_id} release before refund",
+            reversal_of_id=release.id,
+            lines=(
+                (AccountPurpose.PROVIDER_AVAILABLE, provider_user_id, EntrySide.DEBIT, amount),
+                (AccountPurpose.PROVIDER_PENDING, provider_user_id, EntrySide.CREDIT, amount),
+            ),
+        )
+
+    def post_adjustment(
+        self, *, provider_user_id: int, amount: Decimal, direction: str,
+        idempotency_key: str, reason: str, actor_user_id: int, trace_id: str,
+    ) -> LedgerTransaction:
+        existing = self.db.query(LedgerTransaction).filter(
+            LedgerTransaction.idempotency_key == f"adjustment:{idempotency_key}"
+        ).one_or_none()
+        if existing is not None:
+            expected_description = f"{direction}: {reason}"
+            if (
+                existing.source_id != provider_user_id
+                or existing.total_debit != amount
+                or existing.description != expected_description
+            ):
+                raise SettlementContractError("Adjustment idempotency key payload conflict")
+            return existing
+        self._lock_account(AccountPurpose.PROVIDER_AVAILABLE, provider_user_id)
+        if direction == "debit" and self.balance(provider_user_id).available_amount < amount:
+            raise SettlementContractError("Adjustment exceeds provider available balance")
+        provider_side = EntrySide.CREDIT if direction == "credit" else EntrySide.DEBIT
+        clearing_side = EntrySide.DEBIT if direction == "credit" else EntrySide.CREDIT
+        return self._post(
+            event_type="adjustment", source_type="provider_wallet",
+            source_id=provider_user_id, idempotency_key=f"adjustment:{idempotency_key}",
+            actor_user_id=actor_user_id, trace_id=trace_id,
+            description=f"{direction}: {reason}",
+            lines=(
+                (AccountPurpose.ADJUSTMENT_CLEARING, None, clearing_side, amount),
+                (AccountPurpose.PROVIDER_AVAILABLE, provider_user_id, provider_side, amount),
+            ),
+        )
+
     def balance(self, user_id: int) -> WalletBalanceOut:
         values = {}
         for purpose in (
@@ -201,6 +274,7 @@ class LedgerMovementService:
         trace_id,
         description,
         lines,
+        reversal_of_id=None,
     ) -> LedgerTransaction:
         existing = (
             self.db.query(LedgerTransaction)
@@ -230,6 +304,7 @@ class LedgerMovementService:
             currency=CurrencyCode.TOMAN.value,
             total_debit=debit,
             total_credit=credit,
+            reversal_of_id=reversal_of_id,
             actor_user_id=actor_user_id,
             trace_id=trace_id,
             description=description,
@@ -251,6 +326,9 @@ class LedgerMovementService:
             )
         self.db.flush()
         return journal
+
+    def _lock_account(self, purpose: AccountPurpose, owner_id: int | None) -> WalletAccount:
+        return self._account(purpose=purpose, owner_id=owner_id)
 
     def _account(self, *, purpose: AccountPurpose, owner_id: int | None) -> WalletAccount:
         code = f"{'system' if owner_id is None else f'user:{owner_id}'}:{purpose.value}:TOMAN"

@@ -1,4 +1,5 @@
 from math import ceil
+import json
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
@@ -11,8 +12,11 @@ from app.modules.orders.finance_service import AdminFinanceService
 from app.modules.finance.service import LedgerReconciliationService
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.finance.models import SettlementRequest
-from app.modules.finance.schemas import SettlementDecisionIn
-from app.modules.finance.settlement_service import SettlementContractError, SettlementService
+from app.modules.finance.schemas import AdjustmentCreateIn, SettlementDecisionIn
+from app.modules.finance.settlement_service import (
+    LedgerMovementService, SettlementContractError, SettlementService,
+)
+from app.modules.orders.models import AdminAuditLog
 
 router = APIRouter(prefix="/admin/finance", tags=["Admin Finance"])
 
@@ -108,3 +112,61 @@ def simulate_settlement_payout(settlement_id: int, request: Request, db: Session
         raise ValidationAuthError(message=str(exc)) from exc
     db.commit()
     return success_response(data=service.output(row).model_dump(mode="json"), message="Moved to simulated payout clearing; no bank transfer occurred", meta={"trace_id": request.state.trace_id})
+
+
+@router.post("/adjustments")
+def create_adjustment(
+    payload: AdjustmentCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("finance.adjustments.create")),
+):
+    service = LedgerMovementService(db)
+    try:
+        journal = service.post_adjustment(
+            provider_user_id=payload.provider_user_id,
+            amount=payload.amount,
+            direction=payload.direction,
+            idempotency_key=payload.idempotency_key,
+            reason=payload.reason,
+            actor_user_id=user.id,
+            trace_id=request.state.trace_id,
+        )
+    except SettlementContractError as exc:
+        raise ValidationAuthError(message=str(exc)) from exc
+    audit_exists = db.query(AdminAuditLog.id).filter(
+        AdminAuditLog.action == "FINANCE_WALLET_ADJUSTMENT",
+        AdminAuditLog.target_type == "finance_ledger_transaction",
+        AdminAuditLog.target_id == str(journal.id),
+    ).scalar()
+    if audit_exists is None:
+        db.add(AdminAuditLog(
+            admin_user_id=user.id,
+            action="FINANCE_WALLET_ADJUSTMENT",
+            target_type="finance_ledger_transaction",
+            target_id=str(journal.id),
+            old_value=None,
+            new_value=json.dumps({
+                "provider_user_id": payload.provider_user_id,
+                "amount": str(payload.amount),
+                "currency": payload.currency,
+                "direction": payload.direction,
+                "reason": payload.reason,
+            }),
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            trace_id=request.state.trace_id,
+        ))
+    db.commit()
+    return success_response(
+        data={
+            "journal_id": journal.id,
+            "journal_number": journal.journal_number,
+            "provider_user_id": payload.provider_user_id,
+            "amount": payload.amount,
+            "currency": payload.currency,
+            "direction": payload.direction,
+        },
+        message="Audited wallet adjustment posted",
+        meta={"trace_id": request.state.trace_id},
+    )

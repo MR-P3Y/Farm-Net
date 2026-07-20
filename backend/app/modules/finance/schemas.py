@@ -99,3 +99,20 @@ class SettlementOut(BaseModel):
     requested_at: datetime
     decided_at: datetime | None
     simulated_completed_at: datetime | None
+
+
+class AdjustmentCreateIn(BaseModel):
+    provider_user_id: int = Field(ge=1)
+    amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    direction: str = Field(pattern="^(credit|debit)$")
+    currency: str = Field(default="TOMAN", min_length=5, max_length=10)
+    idempotency_key: str = Field(min_length=8, max_length=180)
+    reason: str = Field(min_length=10, max_length=1000)
+
+    model_config = {"extra": "forbid"}
+    _currency = field_validator("currency", mode="before")(toman_currency)
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def normalize_reason(cls, value):
+        return value.strip() if isinstance(value, str) else value

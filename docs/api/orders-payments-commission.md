@@ -700,6 +700,18 @@ available balance; Admin may approve/reject and explicitly simulate transfer to
 payout clearing. `simulated_completed` is not a bank payment. Services,
 Consultations, and Rentals cannot release balance until they have real payment
 journals.
+
+Phase 20.9 hardens Product Order Refund against Release and Settlement races.
+When provider revenue was released, Refund first posts an exact immutable
+reversal from available back to pending and links it through `reversal_of_id`;
+the existing Refund Journal then reverses the Payment economics. The provider
+available account and Release Journal are row-locked. If the released amount is
+already reserved or moved to simulated payout clearing, Refund fails closed
+instead of producing a negative wallet. Admin Finance also exposes
+`POST /api/v1/admin/finance/adjustments`: `TOMAN` only, positive amount,
+credit/debit direction, mandatory reason, idempotency conflict detection,
+balanced clearing entry, no-overdraft debit, dedicated permission, and an
+exact-once Admin Audit Log. Adjustments never mutate posted Ledger rows.
 No stock reservation yet
 No shipment provider integration yet
 No invoice generation yet

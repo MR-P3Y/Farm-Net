@@ -9,6 +9,7 @@ from app.common.money import BillableSourceType, CurrencyCode, FinancialEventTyp
 from app.modules.finance.enums import AccountKind, AccountPurpose, EntrySide, LedgerStatus
 from app.modules.finance.models import LedgerEntry, LedgerTransaction, WalletAccount
 from app.modules.finance.schemas import LedgerReconciliationOut
+from app.modules.finance.settlement_service import LedgerMovementService
 from app.modules.finance.billing_service import UniversalBillingService
 from app.modules.orders.enums import FinancialTransactionStatus, FinancialTransactionType
 from app.modules.orders.models import FinancialInvoice, FinancialTransaction
@@ -52,6 +53,14 @@ class OrderLedgerBridge:
         actor_user_id: int | None,
         trace_id: str,
     ) -> LedgerTransaction:
+        provider_id = self._provider_id(invoice)
+        LedgerMovementService(self.db).reverse_order_release_for_refund(
+            order_id=invoice.order_id,
+            provider_user_id=provider_id,
+            amount=invoice.provider_amount,
+            actor_user_id=actor_user_id,
+            trace_id=trace_id,
+        )
         journal = self._post(
             invoice=invoice,
             transaction=transaction,
@@ -59,7 +68,7 @@ class OrderLedgerBridge:
             trace_id=trace_id,
             event_type=FinancialEventType.REFUND.value,
             lines=(
-                (AccountPurpose.PROVIDER_PENDING, self._provider_id(invoice), AccountKind.LIABILITY, EntrySide.DEBIT, invoice.provider_amount),
+                (AccountPurpose.PROVIDER_PENDING, provider_id, AccountKind.LIABILITY, EntrySide.DEBIT, invoice.provider_amount),
                 (AccountPurpose.PLATFORM_REVENUE, None, AccountKind.REVENUE, EntrySide.DEBIT, invoice.platform_amount),
                 (AccountPurpose.PLATFORM_CASH, None, AccountKind.ASSET, EntrySide.CREDIT, invoice.total_amount),
             ),
