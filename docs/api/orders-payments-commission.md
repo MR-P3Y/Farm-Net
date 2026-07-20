@@ -10,6 +10,11 @@ Base path:
 
 Phase 9 provides the first marketplace transaction foundation.
 
+Phase 20.5 preserves these public APIs while atomically mirroring newly created
+product-order invoices, items, and commission snapshots into the universal
+billing foundation. Services, Consultation, and Rental do not create universal
+invoices in this step.
+
 Implemented:
 
 ```text

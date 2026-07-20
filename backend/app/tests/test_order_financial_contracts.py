@@ -174,6 +174,8 @@ def test_checkout_locks_stock_and_builds_financial_contracts(monkeypatch) -> Non
     service.repo.get_active_default_commission.return_value = commission
     service.repo.create_order.return_value = order
     service.repo.create_financial_invoice.return_value = invoice
+    commission_snapshot = SimpleNamespace(id=11)
+    service.repo.create_commission_snapshot.return_value = commission_snapshot
     service.repo.create_order_item.return_value = order_item
     service.repo.create_payment.return_value = payment
     service._order_out = lambda _: OrderOut(
@@ -196,6 +198,10 @@ def test_checkout_locks_stock_and_builds_financial_contracts(monkeypatch) -> Non
     )
     monkeypatch.setattr("app.modules.orders.service._notify_order_created", lambda **_: None)
     monkeypatch.setattr("app.modules.orders.service._notify_payment_created", lambda **_: None)
+    billing = MagicMock()
+    monkeypatch.setattr(
+        "app.modules.orders.service.UniversalBillingService", lambda _db: billing
+    )
 
     result = service.checkout(
         user=SimpleNamespace(id=7), payload=CheckoutIn(idempotency_key="checkout-test-7")
@@ -207,6 +213,10 @@ def test_checkout_locks_stock_and_builds_financial_contracts(monkeypatch) -> Non
     service.repo.create_financial_invoice.assert_called_once()
     service.repo.create_financial_invoice_item.assert_called_once()
     service.repo.create_commission_snapshot.assert_called_once()
+    billing.create_from_order.assert_called_once_with(
+        legacy_invoice=invoice,
+        legacy_snapshot=commission_snapshot,
+    )
     service.repo.create_inventory_reservation.assert_called_once()
     service.repo.create_payment_attempt.assert_called_once()
     service.repo.commit.assert_called_once_with()
@@ -399,13 +409,17 @@ def test_admin_cancel_releases_reserved_or_consumed_inventory(monkeypatch) -> No
         cancelled_at=None,
         admin_note=None,
     )
-    invoice = SimpleNamespace(status="paid", cancelled_at=None)
+    invoice = SimpleNamespace(id=14, status="paid", cancelled_at=None)
     service = AdminOrderService(MagicMock())
     service.repo = MagicMock()
     service.repo.get_admin_order_by_id.return_value = order
     service.repo.get_invoice_by_order.return_value = invoice
     service._order_out = lambda value: value
     monkeypatch.setattr("app.modules.orders.service._notify_order_status_changed", lambda **_: None)
+    billing = MagicMock()
+    monkeypatch.setattr(
+        "app.modules.orders.service.UniversalBillingService", lambda _db: billing
+    )
 
     service.update_admin_order_status(
         user=SimpleNamespace(id=1),
@@ -415,4 +429,5 @@ def test_admin_cancel_releases_reserved_or_consumed_inventory(monkeypatch) -> No
 
     assert invoice.status == "refund_pending"
     service.repo.release_order_inventory.assert_called_once()
+    billing.mark_refund_pending.assert_called_once_with(legacy_invoice_id=14)
     assert service.repo.release_order_inventory.call_args.kwargs["include_consumed"] is True

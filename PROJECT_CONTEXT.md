@@ -347,6 +347,13 @@ reports missing or unbalanced bridges. Provider funds remain pending; no
 balance release or settlement occurs. Step 20.5 Universal Invoice + Commission
 Foundation is next.
 
+Phase 20 Step 20.5 added the `TOMAN`-only universal Invoice, Item, Commission
+Policy, and immutable Commission Snapshot foundation at Alembic head
+`f7a6d4b20606`. Product Checkout is atomically mirrored while all Phase 9 APIs
+remain compatible. Service/Consultation budgets cannot invoice, and Rental is
+deferred for revenue/deposit separation. Step 20.6 Services/Consultation
+Final-Price Contracts is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

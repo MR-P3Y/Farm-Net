@@ -18,13 +18,19 @@ def _invoice(*, platform: str = "100", provider: str = "900"):
     )
 
 
-def test_payment_bridge_builds_balanced_cash_revenue_and_pending_lines() -> None:
+def test_payment_bridge_builds_balanced_cash_revenue_and_pending_lines(monkeypatch) -> None:
     bridge = OrderLedgerBridge(MagicMock())
     bridge._provider_id = MagicMock(return_value=44)
     bridge._post = MagicMock(return_value="journal")
+    billing = MagicMock()
+    monkeypatch.setattr(
+        "app.modules.finance.service.UniversalBillingService", lambda _db: billing
+    )
+    invoice = _invoice()
+    invoice.paid_at = "paid-at"
 
     result = bridge.post_payment(
-        invoice=_invoice(),
+        invoice=invoice,
         transaction=SimpleNamespace(id=9),
         actor_user_id=7,
         trace_id="trace-payment",
@@ -36,15 +42,22 @@ def test_payment_bridge_builds_balanced_cash_revenue_and_pending_lines() -> None
     assert lines[0][3] == EntrySide.DEBIT
     assert sum(x[4] for x in lines if x[3] == EntrySide.DEBIT) == Decimal("1000")
     assert sum(x[4] for x in lines if x[3] == EntrySide.CREDIT) == Decimal("1000")
+    billing.mark_paid.assert_called_once_with(legacy_invoice_id=1, paid_at="paid-at")
 
 
-def test_refund_bridge_exactly_reverses_payment_economics() -> None:
+def test_refund_bridge_exactly_reverses_payment_economics(monkeypatch) -> None:
     bridge = OrderLedgerBridge(MagicMock())
     bridge._provider_id = MagicMock(return_value=44)
     bridge._post = MagicMock(return_value="refund-journal")
+    billing = MagicMock()
+    monkeypatch.setattr(
+        "app.modules.finance.service.UniversalBillingService", lambda _db: billing
+    )
+    invoice = _invoice()
+    invoice.refunded_at = "refunded-at"
 
     result = bridge.post_refund(
-        invoice=_invoice(),
+        invoice=invoice,
         transaction=SimpleNamespace(id=10),
         actor_user_id=8,
         trace_id="trace-refund",
@@ -56,3 +69,6 @@ def test_refund_bridge_exactly_reverses_payment_economics() -> None:
     assert lines[-1][3] == EntrySide.CREDIT
     assert sum(x[4] for x in lines if x[3] == EntrySide.DEBIT) == Decimal("1000")
     assert sum(x[4] for x in lines if x[3] == EntrySide.CREDIT) == Decimal("1000")
+    billing.mark_refunded.assert_called_once_with(
+        legacy_invoice_id=1, refunded_at="refunded-at"
+    )

@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.finance.service import OrderLedgerBridge
+from app.modules.finance.billing_service import UniversalBillingService
 from app.modules.orders.enums import (
     CartStatus,
     InvoiceStatus,
@@ -560,7 +561,7 @@ class CheckoutService:
                 invoice_number=f"INV-{order.order_number}",
                 order=order,
             )
-            self.repo.create_commission_snapshot(
+            commission_snapshot = self.repo.create_commission_snapshot(
                 order=order,
                 invoice_id=invoice.id,
                 commission_setting_id=commission.id,
@@ -579,6 +580,11 @@ class CheckoutService:
                     order_item=order_item,
                     expires_at=reservation_expires_at,
                 )
+
+            UniversalBillingService(self.db).create_from_order(
+                legacy_invoice=invoice,
+                legacy_snapshot=commission_snapshot,
+            )
 
             payment = self.repo.create_payment(
                 order_id=order.id,
@@ -1153,9 +1159,16 @@ class AdminOrderService:
             if invoice is not None:
                 if order.payment_status == PaymentStatus.PAID.value:
                     invoice.status = InvoiceStatus.REFUND_PENDING.value
+                    UniversalBillingService(self.db).mark_refund_pending(
+                        legacy_invoice_id=invoice.id
+                    )
                 else:
                     invoice.status = InvoiceStatus.CANCELLED.value
                     invoice.cancelled_at = now
+                    UniversalBillingService(self.db).mark_cancelled(
+                        legacy_invoice_id=invoice.id,
+                        cancelled_at=now,
+                    )
 
         if payload.status == OrderStatus.REFUNDED.value:
             order.payment_status = PaymentStatus.REFUNDED.value
@@ -1466,15 +1479,15 @@ class RefundService:
         transaction = self.repo.create_refund_transaction(
             refund=row, provider_reference=payload.provider_reference
         )
+        row.transaction_id = transaction.id
+        invoice.status = InvoiceStatus.REFUNDED.value
+        invoice.refunded_at = now
         OrderLedgerBridge(self.db).post_refund(
             invoice=invoice,
             transaction=transaction,
             actor_user_id=user.id,
             trace_id=(audit_context or {}).get("trace_id") or f"refund:{row.id}",
         )
-        row.transaction_id = transaction.id
-        invoice.status = InvoiceStatus.REFUNDED.value
-        invoice.refunded_at = now
         old_status = order.status
         order.status = OrderStatus.REFUNDED.value
         order.payment_status = PaymentStatus.REFUNDED.value

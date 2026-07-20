@@ -844,6 +844,27 @@ model fields exist:
   transactions; therefore no existing real-row posting smoke was available.
 - Evidence: `docs/finance/phase-20-order-ledger-bridge.md`.
 
+### Step 20.5 Universal Invoice + Commission Foundation
+
+- Added domain-neutral Invoice, Invoice Item, Commission Policy, and Commission
+  Snapshot tables while preserving every Phase 9 public order/payment API.
+- Enforced `TOMAN`, positive/nonnegative amount rules, exact provider/platform
+  split, unique source/legacy links, immutable item/snapshot records, and one
+  database-enforced default Commission Policy per domain source.
+- Atomically mirrors new product-order Checkout invoices/items/commission into
+  universal billing and synchronizes paid, refund-pending, refunded, and unpaid
+  cancellation states. Historical Phase 9 invoices bridge lazily on transition.
+- Explicitly blocked Service/Consultation budgets from invoicing and deferred
+  Rental until revenue and deposit principal are separated in Step 20.7.
+- Ruff/compileall and focused tests passed; all 92 Backend tests passed with 16
+  existing UTC warnings. Alembic reached `f7a6d4b20606 (head)` and all four
+  Runtime tables plus app/database/Redis health were verified.
+- Alembic metadata check found no Finance drift and reported only the four
+  pre-existing Consultant/Services unique-index naming differences.
+- Runtime contained zero legacy invoices, so no existing-row billing smoke was
+  available. No API path was added and Postman remained unchanged.
+- Evidence: `docs/finance/phase-20-universal-billing-foundation.md`.
+
 ## Progress Update Rule
 
 After every completed step:

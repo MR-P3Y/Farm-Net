@@ -1466,3 +1466,9 @@ Order payment/refund journals link one-to-one to the existing successful
 `finance_transactions` row through a unique, `RESTRICT`-protected
 `legacy_transaction_id`. This is the exact-once reconciliation boundary between
 the Phase 9 operational finance records and the Phase 20 accounting ledger.
+
+Universal billing uses `finance_billing_invoices`, ordered immutable invoice
+items, source-scoped commission policies, and immutable commission snapshots.
+`source_type + source_id` and legacy links are unique. `default_scope` is null
+for non-default policies and equals `source_type` for a default policy; its
+unique constraint permits at most one default policy per billing source.

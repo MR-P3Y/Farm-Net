@@ -35,3 +35,16 @@ class EntrySide(StrEnum):
 class LedgerStatus(StrEnum):
     POSTED = "posted"
     REVERSED = "reversed"
+
+
+class BillingInvoiceStatus(StrEnum):
+    PAYMENT_PENDING = "payment_pending"
+    PAID = "paid"
+    CANCELLED = "cancelled"
+    REFUND_PENDING = "refund_pending"
+    REFUNDED = "refunded"
+
+
+class CommissionPolicyStatus(StrEnum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"

@@ -9,6 +9,7 @@ from app.common.money import BillableSourceType, CurrencyCode, FinancialEventTyp
 from app.modules.finance.enums import AccountKind, AccountPurpose, EntrySide, LedgerStatus
 from app.modules.finance.models import LedgerEntry, LedgerTransaction, WalletAccount
 from app.modules.finance.schemas import LedgerReconciliationOut
+from app.modules.finance.billing_service import UniversalBillingService
 from app.modules.orders.enums import FinancialTransactionStatus, FinancialTransactionType
 from app.modules.orders.models import FinancialInvoice, FinancialTransaction
 from app.modules.stores.models import Store
@@ -26,7 +27,7 @@ class OrderLedgerBridge:
         actor_user_id: int | None,
         trace_id: str,
     ) -> LedgerTransaction:
-        return self._post(
+        journal = self._post(
             invoice=invoice,
             transaction=transaction,
             actor_user_id=actor_user_id,
@@ -38,6 +39,10 @@ class OrderLedgerBridge:
                 (AccountPurpose.PLATFORM_REVENUE, None, AccountKind.REVENUE, EntrySide.CREDIT, invoice.platform_amount),
             ),
         )
+        UniversalBillingService(self.db).mark_paid(
+            legacy_invoice_id=invoice.id, paid_at=invoice.paid_at
+        )
+        return journal
 
     def post_refund(
         self,
@@ -47,7 +52,7 @@ class OrderLedgerBridge:
         actor_user_id: int | None,
         trace_id: str,
     ) -> LedgerTransaction:
-        return self._post(
+        journal = self._post(
             invoice=invoice,
             transaction=transaction,
             actor_user_id=actor_user_id,
@@ -59,6 +64,10 @@ class OrderLedgerBridge:
                 (AccountPurpose.PLATFORM_CASH, None, AccountKind.ASSET, EntrySide.CREDIT, invoice.total_amount),
             ),
         )
+        UniversalBillingService(self.db).mark_refunded(
+            legacy_invoice_id=invoice.id, refunded_at=invoice.refunded_at
+        )
+        return journal
 
     def _provider_id(self, invoice: FinancialInvoice) -> int:
         owner_id = self.db.query(Store.owner_user_id).filter(Store.id == invoice.store_id).scalar()
