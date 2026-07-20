@@ -89,6 +89,13 @@ booking, and complete an in-progress booking. Requesters may cancel only
 pricing, blocks, and accepted/in-progress overlap, then snapshots price per
 unit, rental amount, deposit, total, and currency. No payment is claimed.
 
+Phase 20.7 mirrors accepted snapshots into immutable `TOMAN` financial terms.
+Rental revenue and refundable deposit principal are separate, and their sum
+must equal the funding total. The deposit is never revenue or commission base.
+Starting work requires these terms. Status remains explicitly `unfunded`; no
+capture, deposit release, damage, penalty, Invoice, or ledger posting is
+claimed by this step.
+
 Each transition writes a unique deterministic status-log event. Requester and
 lessor contracts omit `admin_note`; only the Admin detail contract exposes it.
 

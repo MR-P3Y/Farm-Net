@@ -24,7 +24,65 @@ from app.modules.finance.enums import (
     BillingInvoiceStatus,
     CommissionPolicyStatus,
     FinalPriceProposalStatus,
+    RentalFinancialTermsStatus,
 )
+
+
+class RentalFinancialTerms(Base):
+    __tablename__ = "finance_rental_terms"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    rental_request_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("rental_requests.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    payer_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    provider_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    pricing_rule_id_snapshot: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    requested_units_snapshot: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    unit_price_snapshot: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    rental_revenue_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    deposit_principal_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    funding_total_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(50), default=RentalFinancialTermsStatus.UNFUNDED.value, nullable=False, index=True
+    )
+    accepted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime)
+    operationally_completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint("requested_units_snapshot > 0", name="ck_rental_terms_units_positive"),
+        CheckConstraint("unit_price_snapshot > 0", name="ck_rental_terms_unit_price_positive"),
+        CheckConstraint("rental_revenue_amount > 0", name="ck_rental_terms_revenue_positive"),
+        CheckConstraint(
+            "deposit_principal_amount >= 0", name="ck_rental_terms_deposit_nonnegative"
+        ),
+        CheckConstraint(
+            "funding_total_amount = rental_revenue_amount + deposit_principal_amount",
+            name="ck_rental_terms_total_components",
+        ),
+        CheckConstraint("currency = 'TOMAN'", name="ck_rental_terms_currency_toman"),
+        CheckConstraint(
+            "status IN ('unfunded', 'cancelled_unfunded', "
+            "'operationally_completed_unfunded')",
+            name="ck_rental_terms_status",
+        ),
+        Index("ix_rental_terms_payer_status", "payer_user_id", "status"),
+        Index("ix_rental_terms_provider_status", "provider_user_id", "status"),
+    )
 
 
 class FinalPriceProposal(Base):
@@ -378,9 +436,34 @@ def _protect_final_price_delete(_mapper, _connection, _target) -> None:
     raise RuntimeError("Final-price proposal history cannot be deleted")
 
 
+def _protect_rental_terms_update(_mapper, _connection, target) -> None:
+    immutable = (
+        "rental_request_id",
+        "payer_user_id",
+        "provider_user_id",
+        "pricing_rule_id_snapshot",
+        "requested_units_snapshot",
+        "unit_price_snapshot",
+        "rental_revenue_amount",
+        "deposit_principal_amount",
+        "funding_total_amount",
+        "currency",
+        "accepted_at",
+    )
+    state = inspect(target)
+    if any(getattr(state.attrs, name).history.has_changes() for name in immutable):
+        raise RuntimeError("Accepted rental financial amounts are immutable")
+
+
+def _protect_rental_terms_delete(_mapper, _connection, _target) -> None:
+    raise RuntimeError("Rental financial terms cannot be deleted")
+
+
 for _model in (LedgerTransaction, LedgerEntry, BillingInvoiceItem, BillingCommissionSnapshot):
     event.listen(_model, "before_update", _reject_posted_ledger_mutation)
     event.listen(_model, "before_delete", _reject_posted_ledger_mutation)
 
 event.listen(FinalPriceProposal, "before_update", _protect_final_price_update)
 event.listen(FinalPriceProposal, "before_delete", _protect_final_price_delete)
+event.listen(RentalFinancialTerms, "before_update", _protect_rental_terms_update)
+event.listen(RentalFinancialTerms, "before_delete", _protect_rental_terms_delete)

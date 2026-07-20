@@ -1479,3 +1479,11 @@ agreement history is `finance_final_price_proposals`, keyed by billable source
 and version. Nullable unique active/accepted scopes enforce one current offer
 and one immutable acceptance per source. Only accepted positive `TOMAN` values
 may create universal billing snapshots.
+
+## Rental revenue and deposit
+
+`finance_rental_terms` is the immutable accepted-term boundary. Rental revenue
+and refundable deposit principal must use separate columns and their exact sum
+must equal the funding total. Deposit principal cannot be classified as
+provider revenue or commission base. Operational completion cannot imply that
+money was captured or a deposit was released.

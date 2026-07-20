@@ -888,6 +888,28 @@ model fields exist:
   Consultation policy, so a real-row acceptance smoke was not possible.
 - Evidence: `docs/finance/phase-20-service-consultation-final-price.md`.
 
+### Step 20.7 Rental Revenue + Deposit Accounting Boundaries
+
+- Added exact-once immutable `finance_rental_terms` from authoritative accepted
+  request snapshots: unit price/units, rental revenue, refundable deposit
+  principal, funding total, payer/provider, currency, and acceptance time.
+- Enforced `TOMAN`, positive revenue, nonnegative deposit, and exact
+  `funding total = rental revenue + deposit principal` at database level.
+- Rental acceptance creates terms atomically; `in_progress` requires them;
+  cancellation and operational completion retain truthful `unfunded` status.
+- Deposit principal is never provider revenue or Commission base. No Invoice,
+  ledger posting, capture, custody/release, damage, penalty, refund, or
+  settlement is claimed.
+- Migration safely backfills valid accepted/in-progress/completed requests.
+  Runtime contained zero eligible rows and therefore produced zero terms.
+- Focused tests passed; final full regression is recorded in the evidence doc.
+  All 105 Backend tests passed with 16 existing UTC warnings. Alembic reached
+  `ecba19a70b11 (head)`, Runtime constraints and app/database/
+  Redis health passed, and no new metadata drift remains.
+- Rental Postman JSON remains at 29 paths/35 requests and parses successfully;
+  its description now records the Phase 20.7 boundary.
+- Evidence: `docs/finance/phase-20-rental-revenue-deposit-boundary.md`.
+
 ## Progress Update Rule
 
 After every completed step:

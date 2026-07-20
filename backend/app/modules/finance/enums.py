@@ -55,3 +55,9 @@ class FinalPriceProposalStatus(StrEnum):
     ACCEPTED = "accepted"
     REJECTED = "rejected"
     SUPERSEDED = "superseded"
+
+
+class RentalFinancialTermsStatus(StrEnum):
+    UNFUNDED = "unfunded"
+    CANCELLED_UNFUNDED = "cancelled_unfunded"
+    OPERATIONALLY_COMPLETED_UNFUNDED = "operationally_completed_unfunded"

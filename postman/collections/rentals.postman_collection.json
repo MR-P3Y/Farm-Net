@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Farm-Net Equipment Rental",
-    "description": "Phase 16.12 complete Equipment Rental API collection: 35 requests covering all 29 public, requester, lessor, and Admin paths plus notification, privacy, and concurrency contracts.",
+    "description": "Phase 16.12 Rental APIs plus Phase 20.7 immutable unfunded revenue/deposit boundaries. The 35 requests cover all 29 public, requester, lessor, and Admin paths; no payment capture or deposit release is claimed.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

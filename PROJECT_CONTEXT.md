@@ -361,6 +361,13 @@ Invoice and immutable commission snapshot. Work cannot start without accepted
 price. Acceptance fails closed until an active default policy for that exact
 domain is configured. Step 20.7 Rental Revenue + Deposit Contracts is next.
 
+Phase 20 Step 20.7 adds immutable accepted Rental financial terms at Alembic
+head `ecba19a70b11`. Rental revenue and refundable deposit principal remain
+separate and sum exactly to the future funding total. The terms are explicitly
+unfunded: no Invoice, payment capture, deposit custody/release, commission,
+damage, penalty, refund, or ledger posting is claimed. Step 20.8 Balance Release
++ Settlement/Payout Workflow is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

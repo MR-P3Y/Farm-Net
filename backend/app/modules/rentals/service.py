@@ -7,6 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
+from app.modules.finance.rental_service import (
+    RentalFinancialContractError,
+    RentalFinancialService,
+)
 from app.modules.media.enums import MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType, NotificationPriority
 from app.modules.notifications.service import NotificationService
@@ -643,6 +647,7 @@ class RentalService:
         self._apply_request_status(
             row, RentalRequestStatus.CANCELLED.value, user.id, payload.reason
         )
+        self._sync_financial_terms(row, RentalRequestStatus.CANCELLED.value)
         self._notify_request_transition(
             row,
             old_status=old_status,
@@ -685,7 +690,10 @@ class RentalService:
         old_status = row.status
         if payload.status == RentalRequestStatus.ACCEPTED.value:
             self._accept_request(row)
+        elif payload.status == RentalRequestStatus.IN_PROGRESS.value:
+            self._require_financial_terms(row)
         self._apply_request_status(row, payload.status, user.id, payload.note)
+        self._sync_financial_terms(row, payload.status)
         self._notify_request_transition(
             row,
             old_status=old_status,
@@ -723,9 +731,12 @@ class RentalService:
         old_status = row.status
         if payload.status == RentalRequestStatus.ACCEPTED.value:
             self._accept_request(row)
+        elif payload.status == RentalRequestStatus.IN_PROGRESS.value:
+            self._require_financial_terms(row)
         if payload.status == RentalRequestStatus.CANCELLED.value:
             row.cancel_reason = payload.note
         self._apply_request_status(row, payload.status, admin_user.id, payload.note)
+        self._sync_financial_terms(row, payload.status)
         self._notify_request_transition(
             row,
             old_status=old_status,
@@ -796,6 +807,33 @@ class RentalService:
                 event_key=f"rental_request:{row.id}:status:{from_status}:{to_status}",
             )
         )
+
+    def _require_financial_terms(self, row: RentalRequest) -> None:
+        try:
+            RentalFinancialService(self.db).require(rental_request_id=row.id)
+        except RentalFinancialContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
+
+    def _sync_financial_terms(self, row: RentalRequest, status: str) -> None:
+        finance = RentalFinancialService(self.db)
+        try:
+            if status == RentalRequestStatus.ACCEPTED.value:
+                finance.snapshot(
+                    request=row,
+                    provider_user_id=row.lessor_profile.user_id,
+                )
+            elif status == RentalRequestStatus.CANCELLED.value:
+                finance.cancel_unfunded(
+                    rental_request_id=row.id,
+                    at=row.cancelled_at or self._now(),
+                )
+            elif status == RentalRequestStatus.COMPLETED.value:
+                finance.mark_operationally_completed_unfunded(
+                    rental_request_id=row.id,
+                    at=row.completed_at or self._now(),
+                )
+        except RentalFinancialContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
 
     def _validate_request_status_filter(self, status: str | None) -> None:
         if status and status not in {item.value for item in RentalRequestStatus}:
