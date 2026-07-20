@@ -135,7 +135,8 @@ Phase 18.7 Social Discovery Hardening: completed
 Phase 18.8 Unified Cross-Domain Search API + Ranking Boundary: completed
 Phase 18.9 Mobile Unified Discovery Hub: completed
 Phase 18.10 Performance, Privacy, and Abuse Hardening: completed
-Next: Phase 18.11 Docs/Postman + Runtime Search Regression
+Phase 18.11 Docs/Postman + Runtime Search Regression: completed
+Next: Phase 18.12 Search/Filters/Discovery Release Gate + Tag
 ```
 
 Services means agricultural operational services, not equipment rental.

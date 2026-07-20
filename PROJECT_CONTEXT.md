@@ -197,6 +197,15 @@ remain absent. Existing domain indexes are sufficient for current sparse data;
 FULLTEXT/external search remains evidence-driven. Step 18.11 Docs/Postman +
 Runtime Search Regression is next.
 
+Phase 18 Step 18.11 consolidates the final Search API/operations documentation,
+expands Unified Search Postman from 3 to 12 positive/negative requests, and adds
+a reusable read-only Runtime regression script. Backend/Mobile/Admin full gates,
+Alembic head, two idempotent auth seeds, health, OpenAPI, six-provider execution,
+privacy headers, and validation failures passed. Runtime currently has zero
+matching public rows in all six domains, so populated-result behavior is covered
+by typed tests rather than falsely claimed as real-row evidence. Step 18.12
+Search/Filters/Discovery Release Gate + Tag is next.
+
 Step 11.8 completed Mobile Notification Center hardening: typed preferences and
 device contracts, channel settings UI, resilient updates, and expanded action
 routing. Real vendor token acquisition remains explicitly blocked on SDK/vendor

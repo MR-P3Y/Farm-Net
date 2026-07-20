@@ -11,6 +11,8 @@
 - `notifications.postman_collection.json`
 - `orders-payments-commission.postman_collection.json`
 - `products.postman_collection.json`
+- `rentals.postman_collection.json`
+- `search.postman_collection.json`
 - `social-expert.postman_collection.json`
 - `services.postman_collection.json`
 - `stores.postman_collection.json`
@@ -28,3 +30,8 @@ requester cancellation, and role ownership.
 `orders-payments-commission.postman_collection.json` covers 34 Phase 9 requests,
 including idempotent Checkout/payment, verify, full Refund, Admin Finance, and
 Audit Log contracts.
+
+`search.postman_collection.json` covers all-domain and per-domain Unified Search,
+geo/price and Rental availability filters, Persian normalization, privacy
+headers, duplicate types, non-TOMAN rejection, response-budget rejection, and
+incomplete availability rejection.

@@ -1259,6 +1259,29 @@ model fields exist:
   both privacy headers, and OpenAPI remained 254 paths.
 - Evidence: `docs/search/phase-18-performance-privacy-abuse.md`.
 
+### Step 18.11 Docs/Postman + Runtime Search Regression
+
+- Consolidated the Unified Search API, ranking, privacy, rate-limit, response
+  budget, deployment boundary, Mobile Hub, and reusable regression instructions.
+- Expanded Search Postman from 3 to 12 requests: all six domains, individual
+  domains, geo/TOMAN price, Rental availability, Persian normalization, privacy
+  headers, duplicate types, non-TOMAN, response budget, and interval rejection.
+- Added read-only `backend/scripts/search_runtime_regression.py`; it verifies
+  health, 254-path OpenAPI, seven positive searches, four negative contracts,
+  group ordering/totals, safe internal routes, private-key exclusion, `TOMAN`,
+  and no-store/noindex headers.
+- Ruff/compileall and all 164 Backend tests passed with 18 known warnings.
+  Mobile analyze/all 40 tests/Web-Wasm build passed. Admin analyze/all 17
+  tests/Web-Wasm build passed despite no Admin Search behavior change.
+- Alembic upgraded/current at `fdcb2ab80c12 (head)`. Auth seed ran twice with
+  stable 12 roles / 249 permissions. Health app/database/Redis is `ok`.
+- All 13 project Postman collections parsed: 284 total requests; all 12 Search
+  raw bodies parsed as JSON.
+- Runtime all-domain and each per-domain total were zero. This proves real SQL,
+  response shape, privacy, and empty state but not populated real-row navigation;
+  typed provider/model tests cover populated contracts.
+- Evidence: `docs/search/phase-18-docs-postman-runtime-regression.md`.
+
 ## Progress Update Rule
 
 After every completed step:

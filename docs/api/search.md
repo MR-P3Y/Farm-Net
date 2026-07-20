@@ -68,3 +68,22 @@ request, and accounting fields are excluded.
 - Existing public/status/geo/price indexes are retained. Shared normalized
   substring matching is scan-based; no FULLTEXT/external engine is claimed
   without representative production volume and measured query plans.
+
+## Regression command
+
+With the Backend running locally:
+
+```powershell
+py -3 backend\scripts\search_runtime_regression.py --base-url http://localhost:8000
+```
+
+The script verifies health, OpenAPI, all-domain ordering, each of the six
+providers, normalized Persian output, safe routes, `TOMAN`, forbidden private
+keys, privacy headers, duplicate-type rejection, non-TOMAN rejection, response
+budget, and Rental interval validation. It performs no writes.
+
+The authoritative Postman collection is
+`postman/collections/search.postman_collection.json` with 12 requests covering
+the same positive and negative boundaries. Running many requests rapidly may
+intentionally reach the Search-specific 429 limit; restart/wait for the window
+before a deterministic regression run.
