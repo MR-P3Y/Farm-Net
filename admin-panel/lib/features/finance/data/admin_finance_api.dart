@@ -58,4 +58,49 @@ class AdminFinanceApi {
       );
     }
   }
+
+  Future<AdminReconciliation> reconciliation() async {
+    _client.setToken(await _tokens.getAccessToken());
+    try {
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/admin/finance/reconciliation',
+      );
+      return AdminReconciliation.fromJson(
+        response.data!['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (error) {
+      throw AdminFinanceApiException(_mapError(error));
+    }
+  }
+
+  Future<void> decideSettlement(int id, String decision) async {
+    _client.setToken(await _tokens.getAccessToken());
+    try {
+      await _client.dio.patch(
+        '/admin/finance/settlements/$id/decision',
+        data: {'decision': decision},
+      );
+    } on DioException catch (error) {
+      throw AdminFinanceApiException(_mapError(error));
+    }
+  }
+
+  Future<void> simulatePayout(int id) async {
+    _client.setToken(await _tokens.getAccessToken());
+    try {
+      await _client.dio.post('/admin/finance/settlements/$id/simulate-payout');
+    } on DioException catch (error) {
+      throw AdminFinanceApiException(_mapError(error));
+    }
+  }
+
+  AdminApiError _mapError(DioException error) {
+    final data = error.response?.data;
+    return data is Map
+        ? AdminApiError.fromJson(data.cast<String, dynamic>())
+        : AdminApiError(
+          code: 'NETWORK_ERROR',
+          message: error.message ?? 'Network error',
+        );
+  }
 }

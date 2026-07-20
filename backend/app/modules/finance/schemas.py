@@ -64,6 +64,30 @@ class LedgerReconciliationOut(BaseModel):
         )
 
 
+class AdminLedgerJournalOut(BaseModel):
+    id: int
+    journal_number: str
+    event_type: str
+    source_type: str
+    source_id: int
+    status: str
+    currency: str
+    total_debit: Decimal
+    total_credit: Decimal
+    trace_id: str
+    posted_at: datetime
+
+
+class AdminWalletAccountOut(BaseModel):
+    id: int
+    owner_user_id: int | None
+    account_code: str
+    purpose: str
+    currency: str
+    status: str
+    created_at: datetime
+
+
 class WalletBalanceOut(BaseModel):
     currency: str
     pending_amount: Decimal

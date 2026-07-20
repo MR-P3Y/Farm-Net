@@ -9,4 +9,8 @@ class AdminFinanceRepository {
     AdminFinanceResource resource, {
     required int page,
   }) => _api.list(resource, page: page);
+  Future<AdminReconciliation> reconciliation() => _api.reconciliation();
+  Future<void> decideSettlement(int id, String decision) =>
+      _api.decideSettlement(id, decision);
+  Future<void> simulatePayout(int id) => _api.simulatePayout(id);
 }

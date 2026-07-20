@@ -11,8 +11,11 @@ from app.modules.auth.models import AuthUser
 from app.modules.orders.finance_service import AdminFinanceService
 from app.modules.finance.service import LedgerReconciliationService
 from app.modules.auth.exceptions import ValidationAuthError
-from app.modules.finance.models import SettlementRequest
-from app.modules.finance.schemas import AdjustmentCreateIn, SettlementDecisionIn
+from app.modules.finance.models import LedgerTransaction, SettlementRequest, WalletAccount
+from app.modules.finance.schemas import (
+    AdjustmentCreateIn, AdminLedgerJournalOut, AdminWalletAccountOut,
+    SettlementDecisionIn,
+)
 from app.modules.finance.settlement_service import (
     LedgerMovementService, SettlementContractError, SettlementService,
 )
@@ -78,6 +81,44 @@ def reconciliation(
     return success_response(data=data, message="OK", meta={"trace_id": request.state.trace_id})
 
 
+@router.get("/ledger")
+def ledger_journals(
+    request: Request, page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100), db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("finance.ledger.read")),
+):
+    query = db.query(LedgerTransaction)
+    total = query.count()
+    rows = query.order_by(LedgerTransaction.id.desc()).offset(
+        (page - 1) * page_size
+    ).limit(page_size).all()
+    return success_response(
+        data=[AdminLedgerJournalOut.model_validate(row, from_attributes=True).model_dump(mode="json") for row in rows],
+        message="OK", meta={"page": page, "page_size": page_size, "total": total,
+                            "total_pages": ceil(total / page_size) if total else 0,
+                            "trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/wallets")
+def wallet_accounts(
+    request: Request, page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100), db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("finance.wallets.read")),
+):
+    query = db.query(WalletAccount)
+    total = query.count()
+    rows = query.order_by(WalletAccount.id.desc()).offset(
+        (page - 1) * page_size
+    ).limit(page_size).all()
+    return success_response(
+        data=[AdminWalletAccountOut.model_validate(row, from_attributes=True).model_dump(mode="json") for row in rows],
+        message="OK", meta={"page": page, "page_size": page_size, "total": total,
+                            "total_pages": ceil(total / page_size) if total else 0,
+                            "trace_id": request.state.trace_id},
+    )
+
+
 @router.get("/settlements")
 def settlements(request: Request, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100), db: Session = Depends(get_db), _: AuthUser = Depends(require_permission("finance.settlements.read"))):
     query = db.query(SettlementRequest)
@@ -86,7 +127,9 @@ def settlements(request: Request, page: int = Query(1, ge=1), page_size: int = Q
     return success_response(
         data=[SettlementService.output(row).model_dump(mode="json") for row in rows],
         message="OK",
-        meta={"page": page, "page_size": page_size, "total": total, "trace_id": request.state.trace_id},
+        meta={"page": page, "page_size": page_size, "total": total,
+              "total_pages": ceil(total / page_size) if total else 0,
+              "trace_id": request.state.trace_id},
     )
 
 

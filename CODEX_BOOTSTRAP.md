@@ -122,7 +122,8 @@ Phase 20.9 Refund, Reversal, Adjustment + Concurrency Hardening: completed
 Phase 20.10 Real Payment Gateway Adapter + Callback Verification: completed (disabled by default; credentialed sandbox smoke pending)
 Phase 20.11 Financial Notifications + Privacy/Audit Hardening: completed
 Phase 20.12 Mobile Wallet, Invoices, and Provider Settlements: completed
-Next: Phase 20.13 Admin Accounting, Settlement, and Reconciliation
+Phase 20.13 Admin Accounting, Settlement, and Reconciliation: completed
+Next: Phase 20.14 Docs/Postman + Runtime Financial Regression
 ```
 
 Services means agricultural operational services, not equipment rental.

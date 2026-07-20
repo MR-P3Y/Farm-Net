@@ -405,6 +405,12 @@ APIs exclude platform/provider economics. Buyer-only roles retain invoice access
 when provider wallet permissions are absent. Step 20.13 Admin Accounting,
 Settlement, and Reconciliation is next.
 
+Phase 20 Step 20.13 extends the typed Admin Finance panel with paginated Ledger
+Journals, Wallet Accounts, Settlement decisions/simulated clearing, and a live
+Reconciliation health summary. New Admin read APIs use existing dedicated
+Finance permissions. No raw JSON or real bank payout is introduced. Step 20.14
+Docs/Postman + Runtime Financial Regression is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

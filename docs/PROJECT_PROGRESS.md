@@ -1011,6 +1011,22 @@ model fields exist:
   Runtime app/database/Redis health passed; OpenAPI has 251 paths.
 - Evidence: `docs/finance/phase-20-mobile-finance-center.md`.
 
+### Step 20.13 Admin Accounting, Settlement, and Reconciliation
+
+- Extended the typed Admin Finance model/API/Repository and tabbed UI with
+  Ledger Journals, Wallet Accounts, Settlement workflow, and Reconciliation.
+- Finance Admin can approve/reject requested Settlements and move approved rows
+  to explicitly simulated clearing. UI never labels simulation as bank payout.
+- Added a refreshable Reconciliation health card with typed counts for missing
+  Payment/Refund bridges and unbalanced journals.
+- Added paginated `GET /api/v1/admin/finance/ledger` and `/wallets`, protected by
+  dedicated Ledger/Wallet read permissions. Existing loading/empty/error and
+  pagination behavior covers the new resources.
+- Admin analyze passed, all 16 Admin tests and Web build passed. Backend Ruff/
+  compileall and all 129 tests passed with 17 existing UTC warnings. Runtime
+  app/database/Redis health passed; OpenAPI has 253 paths.
+- Evidence: `docs/finance/phase-20-admin-accounting.md`.
+
 ## Progress Update Rule
 
 After every completed step:

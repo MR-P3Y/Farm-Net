@@ -20,6 +20,7 @@ class _AdminFinancePageState extends State<AdminFinancePage>
   AdminFinancePageResult? _result;
   String? _error;
   bool _loading = true;
+  AdminReconciliation? _reconciliation;
   AdminFinanceResource get _resource =>
       AdminFinanceResource.values[_tabs.index];
 
@@ -33,6 +34,30 @@ class _AdminFinancePageState extends State<AdminFinancePage>
       if (!_tabs.indexIsChanging) _load(1);
     });
     _load(1);
+    _checkReconciliation();
+  }
+
+  Future<void> _checkReconciliation() async {
+    try {
+      final result = await _repository.reconciliation();
+      if (mounted) setState(() => _reconciliation = result);
+    } on AdminFinanceApiException catch (e) {
+      if (mounted) setState(() => _error = e.error.message);
+    }
+  }
+
+  Future<void> _settlementAction(AdminFinanceRecord row, String action) async {
+    try {
+      if (action == 'simulate') {
+        await _repository.simulatePayout(row.id);
+      } else {
+        await _repository.decideSettlement(row.id, action);
+      }
+      await _load(_result?.page ?? 1);
+      await _checkReconciliation();
+    } on AdminFinanceApiException catch (e) {
+      if (mounted) setState(() => _error = e.error.message);
+    }
   }
 
   @override
@@ -77,7 +102,12 @@ class _AdminFinancePageState extends State<AdminFinancePage>
                 message: _error!,
                 onRetry: () => _load(_result?.page ?? 1),
               )
-              : _buildContent(),
+              : Column(
+                children: [
+                  _reconciliationCard(),
+                  Expanded(child: _buildContent()),
+                ],
+              ),
     );
   }
 
@@ -99,6 +129,7 @@ class _AdminFinancePageState extends State<AdminFinancePage>
                 DataColumn(label: Text('مبلغ')),
                 DataColumn(label: Text('مرجع')),
                 DataColumn(label: Text('تاریخ')),
+                DataColumn(label: Text('عملیات')),
               ],
               rows: [
                 for (final row in result.items)
@@ -112,6 +143,7 @@ class _AdminFinancePageState extends State<AdminFinancePage>
                       DataCell(
                         Text(row.createdAt?.toLocal().toString() ?? '-'),
                       ),
+                      DataCell(_actions(row)),
                     ],
                   ),
               ],
@@ -143,5 +175,63 @@ class _AdminFinancePageState extends State<AdminFinancePage>
         ),
       ],
     );
+  }
+
+  Widget _reconciliationCard() {
+    final row = _reconciliation;
+    return Card(
+      margin: const EdgeInsets.all(12),
+      child: ListTile(
+        leading: Icon(
+          row?.clean == true ? Icons.check_circle : Icons.warning_amber,
+          color: row?.clean == true ? Colors.green : Colors.orange,
+        ),
+        title: Text(
+          row == null
+              ? 'تطبیق دفتر کل'
+              : row.clean
+              ? 'تطبیق مالی سالم است'
+              : 'مغایرت مالی نیازمند بررسی است',
+        ),
+        subtitle:
+            row == null
+                ? null
+                : Text(
+                  'پرداخت مفقود: ${row.missingPayments}، بازپرداخت مفقود: ${row.missingRefunds}، سند نامتوازن: ${row.unbalanced}',
+                ),
+        trailing: IconButton(
+          onPressed: _checkReconciliation,
+          icon: const Icon(Icons.refresh),
+          tooltip: 'اجرای مجدد تطبیق',
+        ),
+      ),
+    );
+  }
+
+  Widget _actions(AdminFinanceRecord row) {
+    if (_resource != AdminFinanceResource.settlements) {
+      return const Text('-');
+    }
+    if (row.status == 'requested') {
+      return Wrap(
+        children: [
+          TextButton(
+            onPressed: () => _settlementAction(row, 'approve'),
+            child: const Text('تأیید'),
+          ),
+          TextButton(
+            onPressed: () => _settlementAction(row, 'reject'),
+            child: const Text('رد'),
+          ),
+        ],
+      );
+    }
+    if (row.status == 'approved') {
+      return TextButton(
+        onPressed: () => _settlementAction(row, 'simulate'),
+        child: const Text('تسویه شبیه‌سازی‌شده'),
+      );
+    }
+    return const Text('-');
   }
 }

@@ -48,6 +48,8 @@ def test_wallet_and_settlement_routes_are_registered() -> None:
     assert "post" in paths["/api/v1/admin/finance/adjustments"]
     assert "get" in paths["/api/v1/finance/invoices/me"]
     assert "get" in paths["/api/v1/finance/invoices/me/{invoice_id}"]
+    assert "get" in paths["/api/v1/admin/finance/ledger"]
+    assert "get" in paths["/api/v1/admin/finance/wallets"]
 
 
 def test_own_invoice_contract_hides_provider_economics() -> None:

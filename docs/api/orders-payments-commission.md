@@ -716,6 +716,12 @@ Mobile Finance uses `GET /api/v1/finance/invoices/me` and
 contracts expose totals and lifecycle state but intentionally omit platform and
 provider shares. Wallet and Settlement APIs retain their provider permissions;
 all displayed and submitted amounts use Iranian toman.
+
+Admin accounting adds paginated `/api/v1/admin/finance/ledger` and `/wallets`
+read contracts with dedicated permissions. The typed Admin panel also consumes
+Settlement decision/simulated-clearing and Reconciliation APIs. Simulated
+clearing remains an internal accounting state and is never presented as a bank
+transfer.
 Phase 20.8 exposes Ledger-derived own pending/available/reserved balances and an
 idempotent settlement workflow. Only a paid Product Order reaching `delivered`
 releases provider pending revenue to available. Settlement requests reserve
