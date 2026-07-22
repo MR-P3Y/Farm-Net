@@ -49,6 +49,12 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       SizedBox(height: r.v(24)),
                       FilledButton.icon(
+                        onPressed: () => context.push('/activity'),
+                        icon: const Icon(Icons.dashboard_customize_outlined),
+                        label: const Text('مرکز فعالیت‌های من'),
+                      ),
+                      SizedBox(height: r.v(12)),
+                      FilledButton.icon(
                         onPressed: () => context.push('/search'),
                         icon: const Icon(Icons.manage_search),
                         label: const Text('جستجو در همه بخش‌ها'),

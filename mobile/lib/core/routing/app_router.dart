@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/activity/presentation/activity_center_screen.dart';
 import '../../features/auth/presentation/auth_gate.dart';
 import '../../features/consultants/presentation/consultant_detail_screen.dart';
 import '../../features/consultants/presentation/consultant_list_screen.dart';
@@ -66,6 +67,11 @@ final GoRouter appRouter = GoRouter(
       path: '/home',
       name: 'home',
       builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      path: '/activity',
+      name: 'my-activity-center',
+      builder: (context, state) => const ActivityCenterScreen(),
     ),
     GoRoute(
       path: '/search',

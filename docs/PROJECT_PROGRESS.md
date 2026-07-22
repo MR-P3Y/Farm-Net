@@ -1332,6 +1332,20 @@ model fields exist:
   changed.
 - Evidence: `docs/activity-center/phase-23-typed-activity-catalog.md`.
 
+### Step 23.3 Activity Center Shell + Common Personal Activity
+
+- Added the responsive authenticated `/activity` Mobile screen and a primary
+  Home entry for `مرکز فعالیت‌های من`.
+- Rendered the common personal catalog section for Profile, Verification,
+  Notifications, Finance, Buyer Orders, and own Service/Rental/Consultation
+  requests, with each optional destination permission-driven.
+- Added explicit loading and unauthenticated deep-link states and retained the
+  real Auth Gate as the login destination.
+- Deliberately kept role sections hidden until their Steps 23.4–23.7 integrations
+  are complete, and retained legacy Home shortcuts until Step 23.9.
+- Mobile analyze passed, all 44 tests passed, and Web/Wasm build passed.
+- Evidence: `docs/activity-center/phase-23-activity-shell-personal.md`.
+
 ## Progress Update Rule
 
 After every completed step:

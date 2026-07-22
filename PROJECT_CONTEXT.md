@@ -529,6 +529,13 @@ multi-role users without a role switch. The Seller Orders destination remains
 unexposed until its Mobile workbench is implemented. Step 23.3 Activity Center
 Shell + Common Personal Activity is next.
 
+Phase 23 Step 23.3 adds the authenticated responsive `/activity` Mobile shell
+and Home entry. It renders permission-backed common Profile, Verification,
+Notification, Finance, Buyer Order, and requester activities from the typed
+catalog, with loading and unauthenticated deep-link states. Business-role
+sections remain hidden until their integrations are complete. Step 23.4 Shop
+Owner Center + Seller Order Workbench is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
