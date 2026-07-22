@@ -522,6 +522,13 @@ Backend authorization as final authority. Backend Seller Order operations exist
 but their Mobile workbench is the one confirmed functional gap. Step 23.2 Typed
 Role/Permission Activity Catalog is next.
 
+Phase 23 Step 23.2 adds one typed Mobile activity catalog driven by real roles
+and permissions. It composes common and four independent business-role sections,
+distinguishes setup access from approved operational workbenches, and supports
+multi-role users without a role switch. The Seller Orders destination remains
+unexposed until its Mobile workbench is implemented. Step 23.3 Activity Center
+Shell + Common Personal Activity is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

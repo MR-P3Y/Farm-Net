@@ -1317,6 +1317,21 @@ model fields exist:
   and release gate.
 - Evidence: `docs/activity-center/phase-23-real-state-audit.md`.
 
+### Step 23.2 Typed Role/Permission Activity Catalog
+
+- Added a pure typed Mobile catalog that derives ordered personal, Shop,
+  Service Provider, Lessor, and Consultant sections from authoritative
+  `AuthUser.roles` and `AuthUser.permissions`.
+- Kept setup permissions distinct from approved-role workbench permissions and
+  retained permission checks on every action inside a role section.
+- Added four focused tests for common permission filtering, setup state, Shop
+  action filtering, and deterministic multi-role composition.
+- Reserved the permission-protected Seller Orders destination for Step 23.4;
+  no current UI consumes it before its real Mobile route/workbench exists.
+- Mobile analyze passed and all 44 tests passed. No Backend/Admin/API behavior
+  changed.
+- Evidence: `docs/activity-center/phase-23-typed-activity-catalog.md`.
+
 ## Progress Update Rule
 
 After every completed step:
