@@ -514,6 +514,14 @@ seed, and Git release gates. Phase 18 is complete and released as
 so real populated-result ranking remains test-backed rather than claimed as
 live-data evidence.
 
+Phase 23 Role-Based My Activity Center is active. Step 23.1 audited the real
+Mobile identity and navigation state: common and four business-role surfaces
+exist but are exposed through a flat, non-role-aware Home page. The center will
+derive a typed multi-role action catalog from real roles/permissions and retain
+Backend authorization as final authority. Backend Seller Order operations exist
+but their Mobile workbench is the one confirmed functional gap. Step 23.2 Typed
+Role/Permission Activity Catalog is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

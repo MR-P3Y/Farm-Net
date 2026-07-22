@@ -1299,6 +1299,24 @@ model fields exist:
   `v0.23.0-search-discovery-foundation`.
 - Evidence: `docs/search/phase-18-release-gate.md`.
 
+## Phase 23 — Role-Based My Activity Center
+
+### Step 23.1 Real-State Audit + Contract Boundary
+
+- Confirmed Mobile already has common Buyer/Requester, Finance, Verification,
+  Notification, Shop, Service Provider, Lessor, and Consultant destinations,
+  but Home exposes them as one flat non-role-aware list.
+- Confirmed `AuthUser.roles` and `AuthUser.permissions` are the authoritative
+  typed inputs for a multi-role activity catalog; Backend permission checks
+  remain the final authorization boundary.
+- Found one functional Mobile gap: Backend Seller Order list/detail/status APIs
+  exist, but Mobile has no Seller Order workbench.
+- Defined a Mobile-first, no-new-aggregate-API delivery sequence through Step
+  23.11, including common activity, four business-role sections, seller order
+  completion, verification/setup guidance, navigation hardening, regression,
+  and release gate.
+- Evidence: `docs/activity-center/phase-23-real-state-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:

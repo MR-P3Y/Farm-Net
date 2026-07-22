@@ -88,6 +88,7 @@ Phase 19: Reviews / Ratings / Reports
 Phase 20: Wallet / Settlement / Accounting
 Phase 21: AI / RAG Assistant Integration
 Phase 22: Production Hardening / Deployment
+Phase 23: Role-Based My Activity Center
 ```
 
 Phase 18 implementation began on 2026-07-20. Step 18.1 completed a read-only
@@ -2123,6 +2124,7 @@ Phase 19: Reviews / Ratings / Reports
 Phase 20: Wallet / Settlement / Accounting
 Phase 21: AI / RAG Assistant Integration
 Phase 22: Production Hardening / Deployment
+Phase 23: Role-Based My Activity Center
 ```
 
 ---

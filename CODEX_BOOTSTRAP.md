@@ -137,7 +137,8 @@ Phase 18.9 Mobile Unified Discovery Hub: completed
 Phase 18.10 Performance, Privacy, and Abuse Hardening: completed
 Phase 18.11 Docs/Postman + Runtime Search Regression: completed
 Phase 18.12 Search/Filters/Discovery Release Gate + Tag: completed (v0.23.0-search-discovery-foundation)
-Next: select the next roadmap phase with explicit owner authorization
+Phase 23.1 Role-Based My Activity Center Real-State Audit: completed
+Next: Phase 23.2 Typed Role/Permission Activity Catalog
 ```
 
 Services means agricultural operational services, not equipment rental.
