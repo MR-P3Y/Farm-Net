@@ -1282,6 +1282,23 @@ model fields exist:
   typed provider/model tests cover populated contracts.
 - Evidence: `docs/search/phase-18-docs-postman-runtime-regression.md`.
 
+### Step 18.12 Search/Filters/Discovery Release Gate + Tag
+
+- Independently reran Backend Ruff/compileall and all 164 tests; all passed
+  with the same 18 known deprecation warnings.
+- Reran Mobile analyze, all 40 tests, and Web/Wasm build; all passed.
+- Reran Admin analyze, all 17 tests, and Web/Wasm build; all passed.
+- Verified Docker Backend/MySQL/Redis are running, Alembic is current at
+  `fdcb2ab80c12 (head)`, and two Auth seed runs remain stable at 12 roles and
+  249 permissions.
+- Runtime Search passed seven positive and four negative contracts across all
+  six providers with 254 OpenAPI paths and healthy application/database/Redis.
+- All 13 current Postman collections and 313 requests parse; the 12 Search
+  requests and all raw Search JSON bodies are valid.
+- Phase 18 passed its release gate and is released as
+  `v0.23.0-search-discovery-foundation`.
+- Evidence: `docs/search/phase-18-release-gate.md`.
+
 ## Progress Update Rule
 
 After every completed step:

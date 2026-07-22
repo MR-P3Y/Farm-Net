@@ -136,7 +136,8 @@ Phase 18.8 Unified Cross-Domain Search API + Ranking Boundary: completed
 Phase 18.9 Mobile Unified Discovery Hub: completed
 Phase 18.10 Performance, Privacy, and Abuse Hardening: completed
 Phase 18.11 Docs/Postman + Runtime Search Regression: completed
-Next: Phase 18.12 Search/Filters/Discovery Release Gate + Tag
+Phase 18.12 Search/Filters/Discovery Release Gate + Tag: completed (v0.23.0-search-discovery-foundation)
+Next: select the next roadmap phase with explicit owner authorization
 ```
 
 Services means agricultural operational services, not equipment rental.

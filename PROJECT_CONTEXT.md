@@ -506,6 +506,14 @@ Backend-provided internal routes. Initial/loading/empty/error/retry states and
 safe model parsing are covered. Step 18.10 Performance, Privacy, and Abuse
 Hardening is next.
 
+Phase 18 Steps 18.10 and 18.11 completed performance/privacy/abuse hardening
+and consolidated documentation, Postman, and Runtime regression. Step 18.12
+then passed the independent Backend, Mobile, Admin, Runtime, Postman, database,
+seed, and Git release gates. Phase 18 is complete and released as
+`v0.23.0-search-discovery-foundation`. Runtime contains no matching public rows,
+so real populated-result ranking remains test-backed rather than claimed as
+live-data evidence.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -560,5 +568,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.22.0-wallet-settlement-accounting-foundation
+v0.23.0-search-discovery-foundation
 ```
