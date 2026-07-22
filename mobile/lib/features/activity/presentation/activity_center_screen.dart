@@ -29,6 +29,9 @@ class ActivityCenterScreen extends ConsumerWidget {
           final personal = ActivityCatalog.forUser(user).firstWhere(
             (section) => section.kind == ActivitySectionKind.personal,
           );
+          final shopSections = ActivityCatalog.forUser(
+            user,
+          ).where((section) => section.kind == ActivitySectionKind.shop);
 
           return SingleChildScrollView(
             padding: r.pagePadding(),
@@ -73,6 +76,32 @@ class ActivityCenterScreen extends ConsumerWidget {
                         );
                       },
                     ),
+                    for (final shop in shopSections) ...[
+                      SizedBox(height: r.v(24)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              shop.title,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ),
+                          if (shop.isSetupSection)
+                            const Chip(label: Text('نیازمند تکمیل و تأیید')),
+                        ],
+                      ),
+                      SizedBox(height: r.v(12)),
+                      ...shop.actions.map(
+                        (action) => Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.storefront_outlined),
+                            title: Text(action.title),
+                            trailing: const Icon(Icons.chevron_left),
+                            onTap: () => context.push(action.route),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

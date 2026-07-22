@@ -1346,6 +1346,25 @@ model fields exist:
 - Mobile analyze passed, all 44 tests passed, and Web/Wasm build passed.
 - Evidence: `docs/activity-center/phase-23-activity-shell-personal.md`.
 
+### Step 23.4 Shop Owner Center + Seller Order Workbench
+
+- Connected the permission-backed Shop Owner section to own Store, Products,
+  and the newly completed Seller Order Mobile flow.
+- Added typed Seller list/detail/status API and repository operations, paginated
+  state, status filtering, refresh, empty/error/denied handling, delivery/item/
+  timeline detail, optional Seller note, and list refresh after update.
+- Exposed only the Backend transition matrix `paid -> confirmed -> processing
+  -> shipped -> delivered`; invalid, backward, cancellation, and refund actions
+  remain hidden.
+- Preserved list/detail privacy and rendered order total/Seller share only in
+  canonical `TOMAN`; commission and Admin note are not rendered.
+- Mobile analyze passed, all 46 tests passed, and Web/Wasm build passed. Backend
+  all 164 tests, Runtime app/database/Redis health, 254-path OpenAPI, and all
+  three Seller Order contracts passed.
+- Runtime had no authenticated Shop Owner order fixture, so no real status
+  mutation is claimed.
+- Evidence: `docs/activity-center/phase-23-shop-owner-seller-orders.md`.
+
 ## Progress Update Rule
 
 After every completed step:

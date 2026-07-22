@@ -347,7 +347,61 @@ class Order {
               .toList(),
     );
   }
+
+  String? get sellerNextStatus {
+    if (paymentStatus != 'paid') return null;
+    return switch (status) {
+      'paid' => 'confirmed',
+      'confirmed' => 'processing',
+      'processing' => 'shipped',
+      'shipped' => 'delivered',
+      _ => null,
+    };
+  }
 }
+
+class SellerOrderPage {
+  const SellerOrderPage({
+    required this.items,
+    required this.page,
+    required this.pageSize,
+    required this.total,
+    required this.totalPages,
+  });
+
+  final List<Order> items;
+  final int page;
+  final int pageSize;
+  final int total;
+  final int totalPages;
+
+  factory SellerOrderPage.fromEnvelope(Map<String, dynamic> json) {
+    final rows = json['data'] as List? ?? [];
+    final meta = json['meta'] as Map<String, dynamic>? ?? {};
+    return SellerOrderPage(
+      items:
+          rows
+              .map((item) => Order.fromJson(item as Map<String, dynamic>))
+              .toList(),
+      page: (meta['page'] as num?)?.toInt() ?? 1,
+      pageSize: (meta['page_size'] as num?)?.toInt() ?? 20,
+      total: (meta['total'] as num?)?.toInt() ?? 0,
+      totalPages: (meta['total_pages'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+String orderStatusLabelFa(String status) => switch (status) {
+  'pending_payment' => 'در انتظار پرداخت',
+  'paid' => 'پرداخت‌شده',
+  'confirmed' => 'تأییدشده',
+  'processing' => 'در حال آماده‌سازی',
+  'shipped' => 'ارسال‌شده',
+  'delivered' => 'تحویل‌شده',
+  'cancelled' => 'لغوشده',
+  'refunded' => 'بازپرداخت‌شده',
+  _ => status,
+};
 
 class CheckoutInput {
   const CheckoutInput({

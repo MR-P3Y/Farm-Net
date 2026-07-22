@@ -16,6 +16,8 @@ import '../../features/notifications/presentation/notification_preferences_scree
 import '../../features/orders/presentation/cart_screen.dart';
 import '../../features/orders/presentation/my_orders_screen.dart';
 import '../../features/orders/presentation/order_detail_screen.dart';
+import '../../features/orders/presentation/seller_order_detail_screen.dart';
+import '../../features/orders/presentation/seller_orders_screen.dart';
 import '../../features/products/presentation/my_products_screen.dart';
 import '../../features/products/presentation/public_product_detail_screen.dart';
 import '../../features/products/presentation/public_products_screen.dart';
@@ -366,6 +368,19 @@ final GoRouter appRouter = GoRouter(
         final id = int.tryParse(state.pathParameters['orderId'] ?? '') ?? 0;
         return OrderDetailScreen(orderId: id);
       },
+    ),
+    GoRoute(
+      path: '/seller/orders',
+      name: 'seller-orders',
+      builder: (context, state) => const SellerOrdersScreen(),
+    ),
+    GoRoute(
+      path: '/seller/orders/:orderId',
+      name: 'seller-order-detail',
+      builder:
+          (context, state) => SellerOrderDetailScreen(
+            orderId: int.tryParse(state.pathParameters['orderId'] ?? '') ?? 0,
+          ),
     ),
     GoRoute(
       path: '/stores/:storeSlug/products',

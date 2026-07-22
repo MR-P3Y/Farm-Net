@@ -536,6 +536,13 @@ catalog, with loading and unauthenticated deep-link states. Business-role
 sections remain hidden until their integrations are complete. Step 23.4 Shop
 Owner Center + Seller Order Workbench is next.
 
+Phase 23 Step 23.4 completes the Shop Owner section and the previously missing
+Mobile Seller Order workbench over the existing owner-scoped Backend APIs.
+Seller list/detail/pagination/privacy and the exact paid-to-delivered transition
+chain are typed and tested; Store, Products, and Seller Orders are permission-
+backed Activity Center destinations. Step 23.5 Service Provider Activity
+Integration is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

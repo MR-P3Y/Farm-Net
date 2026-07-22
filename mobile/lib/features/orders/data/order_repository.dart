@@ -44,6 +44,24 @@ class OrderRepository {
     return _api.getMyOrder(orderId);
   }
 
+  Future<SellerOrderPage> listSellerOrders({
+    int page = 1,
+    int pageSize = 20,
+    String? status,
+  }) => _api.listSellerOrders(page: page, pageSize: pageSize, status: status);
+
+  Future<Order> getSellerOrder(int orderId) => _api.getSellerOrder(orderId);
+
+  Future<Order> updateSellerOrderStatus({
+    required int orderId,
+    required String status,
+    String? sellerNote,
+  }) => _api.updateSellerOrderStatus(
+    orderId: orderId,
+    status: status,
+    sellerNote: sellerNote,
+  );
+
   Future<List<Payment>> listMyPayments({String? status}) {
     return _api.listMyPayments(status: status);
   }

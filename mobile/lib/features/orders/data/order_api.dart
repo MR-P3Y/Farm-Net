@@ -103,6 +103,44 @@ class OrderApi {
     return Order.fromJson(json['data'] as Map<String, dynamic>);
   }
 
+  Future<SellerOrderPage> listSellerOrders({
+    int page = 1,
+    int pageSize = 20,
+    String? status,
+  }) async {
+    await _setStoredToken();
+    final query = <String, String>{
+      'page': page.toString(),
+      'page_size': pageSize.toString(),
+    };
+    if (status != null && status.isNotEmpty) query['status'] = status;
+    final uri = Uri(path: '/seller/orders', queryParameters: query);
+    return SellerOrderPage.fromEnvelope(await _get(uri.toString()));
+  }
+
+  Future<Order> getSellerOrder(int orderId) async {
+    await _setStoredToken();
+    final json = await _get('/seller/orders/$orderId');
+    return Order.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
+  Future<Order> updateSellerOrderStatus({
+    required int orderId,
+    required String status,
+    String? sellerNote,
+  }) async {
+    await _setStoredToken();
+    final json = await _patch(
+      '/seller/orders/$orderId/status',
+      data: {
+        'status': status,
+        if (sellerNote != null && sellerNote.trim().isNotEmpty)
+          'seller_note': sellerNote.trim(),
+      },
+    );
+    return Order.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
   Future<List<Payment>> listMyPayments({String? status}) async {
     await _setStoredToken();
 
