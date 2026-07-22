@@ -141,7 +141,8 @@ Phase 23.1 Role-Based My Activity Center Real-State Audit: completed
 Phase 23.2 Typed Role/Permission Activity Catalog: completed
 Phase 23.3 Activity Center Shell + Common Personal Activity: completed
 Phase 23.4 Shop Owner Center + Seller Order Workbench: completed
-Next: Phase 23.5 Service Provider Activity Integration
+Phase 23.5 Service Provider Activity Integration: completed
+Next: Phase 23.6 Lessor Activity Integration
 ```
 
 Services means agricultural operational services, not equipment rental.

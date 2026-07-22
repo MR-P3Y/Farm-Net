@@ -543,6 +543,12 @@ chain are typed and tested; Store, Products, and Seller Orders are permission-
 backed Activity Center destinations. Step 23.5 Service Provider Activity
 Integration is next.
 
+Phase 23 Step 23.5 connects the existing Service Provider Profile, Offers, and
+assigned-request Workbench through the shared role-section renderer. Setup and
+approved operations remain permission-distinct, existing moderation/403 states
+remain authoritative in their destination screens, and no Services API behavior
+changed. Step 23.6 Lessor Activity Integration is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

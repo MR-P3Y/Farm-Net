@@ -26,12 +26,15 @@ class ActivityCenterScreen extends ConsumerWidget {
             return _SignedOutView(padding: r.pagePadding());
           }
 
-          final personal = ActivityCatalog.forUser(user).firstWhere(
+          final catalog = ActivityCatalog.forUser(user);
+          final personal = catalog.firstWhere(
             (section) => section.kind == ActivitySectionKind.personal,
           );
-          final shopSections = ActivityCatalog.forUser(
-            user,
-          ).where((section) => section.kind == ActivitySectionKind.shop);
+          final businessSections = catalog.where(
+            (section) =>
+                section.kind == ActivitySectionKind.shop ||
+                section.kind == ActivitySectionKind.services,
+          );
 
           return SingleChildScrollView(
             padding: r.pagePadding(),
@@ -76,30 +79,11 @@ class ActivityCenterScreen extends ConsumerWidget {
                         );
                       },
                     ),
-                    for (final shop in shopSections) ...[
+                    for (final section in businessSections) ...[
                       SizedBox(height: r.v(24)),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              shop.title,
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                          ),
-                          if (shop.isSetupSection)
-                            const Chip(label: Text('نیازمند تکمیل و تأیید')),
-                        ],
-                      ),
-                      SizedBox(height: r.v(12)),
-                      ...shop.actions.map(
-                        (action) => Card(
-                          child: ListTile(
-                            leading: const Icon(Icons.storefront_outlined),
-                            title: Text(action.title),
-                            trailing: const Icon(Icons.chevron_left),
-                            onTap: () => context.push(action.route),
-                          ),
-                        ),
+                      _BusinessActivitySection(
+                        section: section,
+                        onAction: (action) => context.push(action.route),
                       ),
                     ],
                   ],
@@ -111,6 +95,66 @@ class ActivityCenterScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _BusinessActivitySection extends StatelessWidget {
+  const _BusinessActivitySection({
+    required this.section,
+    required this.onAction,
+  });
+
+  final ActivitySection section;
+  final ValueChanged<ActivityAction> onAction;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Row(
+        children: [
+          Icon(_sectionIcon(section.kind)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              section.title,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
+          if (section.isSetupSection)
+            const Chip(label: Text('نیازمند تکمیل و تأیید')),
+        ],
+      ),
+      const SizedBox(height: 12),
+      ...section.actions.map(
+        (action) => Card(
+          child: ListTile(
+            leading: Icon(_actionIcon(action.id)),
+            title: Text(action.title),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () => onAction(action),
+          ),
+        ),
+      ),
+    ],
+  );
+
+  IconData _sectionIcon(ActivitySectionKind kind) => switch (kind) {
+    ActivitySectionKind.shop => Icons.storefront_outlined,
+    ActivitySectionKind.services => Icons.home_repair_service_outlined,
+    ActivitySectionKind.rental => Icons.agriculture_outlined,
+    ActivitySectionKind.consultant => Icons.support_agent_outlined,
+    ActivitySectionKind.personal => Icons.person_outline,
+  };
+
+  IconData _actionIcon(ActivityActionId id) => switch (id) {
+    ActivityActionId.shopProfile => Icons.store_outlined,
+    ActivityActionId.shopProducts => Icons.inventory_2_outlined,
+    ActivityActionId.sellerOrders => Icons.receipt_long_outlined,
+    ActivityActionId.serviceProviderProfile => Icons.badge_outlined,
+    ActivityActionId.serviceOffers => Icons.design_services_outlined,
+    ActivityActionId.serviceWorkbench => Icons.work_outline,
+    _ => Icons.chevron_left,
+  };
 }
 
 class _IdentityCard extends StatelessWidget {

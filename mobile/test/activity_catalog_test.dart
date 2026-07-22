@@ -81,6 +81,30 @@ void main() {
     ]);
   });
 
+  test('approved service provider receives profile offers and workbench', () {
+    final sections = ActivityCatalog.forUser(
+      user(
+        roles: const ['user', 'service_provider'],
+        permissions: const [
+          'service_providers.profile_manage',
+          'service_offers.create',
+          'service_offers.update',
+          'service_requests.manage_assigned',
+        ],
+      ),
+    );
+    final services = sections.firstWhere(
+      (section) => section.kind == ActivitySectionKind.services,
+    );
+
+    expect(services.isSetupSection, isFalse);
+    expect(services.actions.map((action) => action.id), [
+      ActivityActionId.serviceProviderProfile,
+      ActivityActionId.serviceOffers,
+      ActivityActionId.serviceWorkbench,
+    ]);
+  });
+
   test('multi-role user receives independent ordered role sections', () {
     final sections = ActivityCatalog.forUser(
       user(

@@ -1365,6 +1365,21 @@ model fields exist:
   mutation is claimed.
 - Evidence: `docs/activity-center/phase-23-shop-owner-seller-orders.md`.
 
+### Step 23.5 Service Provider Activity Integration
+
+- Generalized the Activity Center business-section renderer and connected the
+  existing Provider Profile, Offers, and assigned-request Workbench flows.
+- Preserved setup-vs-approved behavior: base profile management shows only the
+  setup destination, while Offers and assigned work require their exact real
+  permissions; role name alone never grants an action.
+- Added focused approved-provider catalog coverage. Mobile analyze passed, all
+  47 tests passed, and Web/Wasm build passed.
+- Runtime application/database/Redis health is `ok`; 254-path OpenAPI contains
+  all eight required provider profile/offer/assigned-request contracts.
+- No Services API or workflow behavior changed and no counters/status were
+  fabricated in the Activity Center.
+- Evidence: `docs/activity-center/phase-23-service-provider-integration.md`.
+
 ## Progress Update Rule
 
 After every completed step:
