@@ -1462,6 +1462,21 @@ model fields exist:
   bodies parsed after variable normalization.
 - Evidence: `docs/activity-center/phase-23-docs-tests-runtime-regression.md`.
 
+### Step 23.11 Role-Based My Activity Center Release Gate + Tag
+
+- Independently reran Backend Ruff/compileall and all 164 tests; all passed
+  with the same 18 known deprecation warnings.
+- Reran Mobile analyze, all 52 tests, and Web/Wasm build; all passed. Reran
+  Admin analyze, all 17 tests, and Web/Wasm build; all passed.
+- Verified Docker Backend/MySQL/Redis, Alembic head `fdcb2ab80c12`, two stable
+  Auth seed runs at 12 roles / 249 permissions, 254-path OpenAPI, 16 Activity
+  contract groups, nine private 401 boundaries, and zero Runtime mutations.
+- All 13 Postman collections / 313 requests and 125 normalized raw JSON bodies
+  passed parsing. Git release candidate was clean and synchronized.
+- Phase 23 passed its release gate and is released as
+  `v0.24.0-activity-center-foundation`.
+- Evidence: `docs/activity-center/phase-23-release-gate.md`.
+
 ## Progress Update Rule
 
 After every completed step:

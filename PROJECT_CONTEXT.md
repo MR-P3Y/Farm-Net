@@ -1,6 +1,6 @@
 # Farm-Net Project Context
 
-Last verified: 2026-07-20
+Last verified: 2026-07-22
 Repository path: `E:\Farm-Net`
 Primary development branch: `develop`
 
@@ -580,6 +580,11 @@ idempotent 12-role/249-permission seed, nine private 401 checks, and all 13
 Postman collections / 313 requests passed. No Runtime mutation was performed.
 Step 23.11 Release Gate + Tag is next.
 
+Phase 23 Step 23.11 passed the independent release gate across Backend,
+Runtime, Mobile, Admin, Postman, and Git safety. Role-Based My Activity Center
+is released as `v0.24.0-activity-center-foundation`. Authenticated fixtures for
+live mutation across every professional role remain an explicit E2E boundary.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -634,5 +639,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.23.0-search-discovery-foundation
+v0.24.0-activity-center-foundation
 ```

@@ -147,7 +147,8 @@ Phase 23.7 Consultant Activity Integration: completed
 Phase 23.8 Role Setup/Verification + Multi-Role Hardening: completed
 Phase 23.9 Home Navigation Simplification + Deep-Link/Auth Hardening: completed
 Phase 23.10 Docs, Tests, and Runtime Regression: completed
-Next: Phase 23.11 Release Gate + Tag
+Phase 23.11 Role-Based My Activity Center Release Gate + Tag: completed (v0.24.0-activity-center-foundation)
+Next roadmap step: not selected
 ```
 
 Services means agricultural operational services, not equipment rental.
