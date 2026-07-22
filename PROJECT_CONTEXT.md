@@ -549,6 +549,12 @@ approved operations remain permission-distinct, existing moderation/403 states
 remain authoritative in their destination screens, and no Services API behavior
 changed. Step 23.6 Lessor Activity Integration is next.
 
+Phase 23 Step 23.6 connects the existing Lessor Profile, Equipment/commercial
+management, and assigned Rental Request Workbench through the shared role
+renderer. Exact profile/equipment/assigned permissions remain authoritative;
+pricing, availability, and status stay in their real owner screens. Step 23.7
+Consultant Activity Integration is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

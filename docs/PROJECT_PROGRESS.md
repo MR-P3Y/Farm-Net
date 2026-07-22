@@ -1380,6 +1380,22 @@ model fields exist:
   fabricated in the Activity Center.
 - Evidence: `docs/activity-center/phase-23-service-provider-integration.md`.
 
+### Step 23.6 Lessor Activity Integration
+
+- Connected the permission-backed Lessor section through the shared Activity
+  Center renderer to existing Profile, Equipment/commercial management, and
+  assigned Rental Request Workbench flows.
+- Preserved exact access boundaries for profile management, equipment create/
+  update, and assigned-request management; absent Lessor access creates no
+  misleading empty section.
+- Added focused approved-Lessor catalog coverage. Mobile analyze passed, all 48
+  tests passed, and Web/Wasm build passed.
+- Runtime application/database/Redis health is `ok`; 254-path OpenAPI passed
+  method checks for ten key Lessor Profile, Equipment, Pricing, Availability,
+  and assigned-request contracts.
+- No Rental API, workflow, availability, pricing, or financial behavior changed.
+- Evidence: `docs/activity-center/phase-23-lessor-integration.md`.
+
 ## Progress Update Rule
 
 After every completed step:

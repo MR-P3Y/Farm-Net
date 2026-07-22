@@ -105,6 +105,30 @@ void main() {
     ]);
   });
 
+  test('approved lessor receives profile equipment and workbench', () {
+    final sections = ActivityCatalog.forUser(
+      user(
+        roles: const ['user', 'lessor'],
+        permissions: const [
+          'rental_lessors.profile_manage',
+          'rental_equipment.create',
+          'rental_equipment.manage_pricing',
+          'rental_requests.manage_assigned',
+        ],
+      ),
+    );
+    final rental = sections.firstWhere(
+      (section) => section.kind == ActivitySectionKind.rental,
+    );
+
+    expect(rental.isSetupSection, isFalse);
+    expect(rental.actions.map((action) => action.id), [
+      ActivityActionId.lessorProfile,
+      ActivityActionId.rentalEquipment,
+      ActivityActionId.rentalWorkbench,
+    ]);
+  });
+
   test('multi-role user receives independent ordered role sections', () {
     final sections = ActivityCatalog.forUser(
       user(

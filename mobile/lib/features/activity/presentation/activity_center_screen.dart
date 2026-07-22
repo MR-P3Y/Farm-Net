@@ -33,7 +33,8 @@ class ActivityCenterScreen extends ConsumerWidget {
           final businessSections = catalog.where(
             (section) =>
                 section.kind == ActivitySectionKind.shop ||
-                section.kind == ActivitySectionKind.services,
+                section.kind == ActivitySectionKind.services ||
+                section.kind == ActivitySectionKind.rental,
           );
 
           return SingleChildScrollView(
@@ -153,6 +154,9 @@ class _BusinessActivitySection extends StatelessWidget {
     ActivityActionId.serviceProviderProfile => Icons.badge_outlined,
     ActivityActionId.serviceOffers => Icons.design_services_outlined,
     ActivityActionId.serviceWorkbench => Icons.work_outline,
+    ActivityActionId.lessorProfile => Icons.badge_outlined,
+    ActivityActionId.rentalEquipment => Icons.agriculture_outlined,
+    ActivityActionId.rentalWorkbench => Icons.work_history_outlined,
     _ => Icons.chevron_left,
   };
 }
