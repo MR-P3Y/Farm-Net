@@ -27,6 +27,9 @@ class ActivityCenterScreen extends ConsumerWidget {
           }
 
           final catalog = ActivityCatalog.forUser(user);
+          final professionalRoles = ActivityCatalog.professionalRolesForUser(
+            user,
+          );
           final personal = catalog.firstWhere(
             (section) => section.kind == ActivitySectionKind.personal,
           );
@@ -49,7 +52,20 @@ class ActivityCenterScreen extends ConsumerWidget {
                     _IdentityCard(
                       identity: user.email ?? user.phone ?? 'کاربر فارم‌نت',
                       rolesCount:
-                          user.roles.where((role) => role != 'user').length,
+                          professionalRoles
+                              .where((role) => role.isActive)
+                              .length,
+                    ),
+                    SizedBox(height: r.v(16)),
+                    _ProfessionalRolesCard(
+                      roles: professionalRoles,
+                      onSetup: (role) => context.push(role.setupRoute),
+                      onVerifications: () => context.push('/verifications'),
+                      onRefresh:
+                          () =>
+                              ref
+                                  .read(authControllerProvider.notifier)
+                                  .loadCurrentUser(),
                     ),
                     SizedBox(height: r.v(20)),
                     Text(
@@ -97,6 +113,79 @@ class ActivityCenterScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _ProfessionalRolesCard extends StatelessWidget {
+  const _ProfessionalRolesCard({
+    required this.roles,
+    required this.onSetup,
+    required this.onVerifications,
+    required this.onRefresh,
+  });
+
+  final List<ProfessionalRoleJourney> roles;
+  final ValueChanged<ProfessionalRoleJourney> onSetup;
+  final VoidCallback onVerifications;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.workspace_premium_outlined),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'نقش‌های حرفه‌ای من',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              IconButton(
+                tooltip: 'به‌روزرسانی نقش‌ها',
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ...roles.map(
+            (role) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                role.isActive
+                    ? Icons.verified_outlined
+                    : Icons.pending_actions_outlined,
+                color:
+                    role.isActive
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
+              ),
+              title: Text(role.title),
+              subtitle: Text(
+                role.isActive ? 'فعال و تأییدشده' : role.setupLabel,
+              ),
+              onTap: role.isActive ? null : () => onSetup(role),
+              trailing:
+                  role.isActive
+                      ? const Chip(label: Text('فعال'))
+                      : const Icon(Icons.chevron_left),
+            ),
+          ),
+          const Divider(),
+          TextButton.icon(
+            onPressed: onVerifications,
+            icon: const Icon(Icons.fact_check_outlined),
+            label: const Text('مشاهده همه درخواست‌های تأیید'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _BusinessActivitySection extends StatelessWidget {

@@ -176,4 +176,41 @@ void main() {
       isTrue,
     );
   });
+
+  test('professional role journeys are complete ordered and role driven', () {
+    final journeys = ActivityCatalog.professionalRolesForUser(
+      user(
+        roles: const [
+          'user',
+          'consultant',
+          'shop_owner',
+          'consultant',
+          'admin',
+        ],
+      ),
+    );
+
+    expect(journeys.map((journey) => journey.roleCode), [
+      'shop_owner',
+      'service_provider',
+      'lessor',
+      'consultant',
+    ]);
+    expect(
+      journeys
+          .where((journey) => journey.isActive)
+          .map((journey) => journey.roleCode),
+      ['shop_owner', 'consultant'],
+    );
+    expect(
+      journeys.firstWhere((journey) => journey.roleCode == 'lessor').setupRoute,
+      '/verifications',
+    );
+    expect(
+      journeys
+          .firstWhere((journey) => journey.roleCode == 'service_provider')
+          .setupRoute,
+      '/services/me/provider-profile',
+    );
+  });
 }

@@ -561,6 +561,12 @@ Requester requests remain personal activity, while professional work requires
 the exact assigned-management permission. Step 23.8 Role Setup/Verification +
 Multi-Role Hardening is next.
 
+Phase 23 Step 23.8 adds a typed four-business-role journey, canonical setup and
+Verification destinations, and authenticated identity refresh after approval.
+Multi-role rendering is ordered, duplicate-safe, non-switching, and excludes
+Admin/support/data roles from the professional count. Step 23.9 Home Navigation
+Simplification + Deep-Link/Auth Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

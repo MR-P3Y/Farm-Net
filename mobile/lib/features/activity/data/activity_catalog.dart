@@ -52,6 +52,22 @@ class ActivitySection {
   final List<ActivityAction> actions;
 }
 
+class ProfessionalRoleJourney {
+  const ProfessionalRoleJourney({
+    required this.roleCode,
+    required this.title,
+    required this.isActive,
+    required this.setupRoute,
+    required this.setupLabel,
+  });
+
+  final String roleCode;
+  final String title;
+  final bool isActive;
+  final String setupRoute;
+  final String setupLabel;
+}
+
 class ActivityCatalog {
   ActivityCatalog._();
 
@@ -235,6 +251,40 @@ class ActivityCatalog {
     );
 
     return List.unmodifiable(sections);
+  }
+
+  static List<ProfessionalRoleJourney> professionalRolesForUser(AuthUser user) {
+    final roles = user.roles.toSet();
+    return List.unmodifiable([
+      ProfessionalRoleJourney(
+        roleCode: 'shop_owner',
+        title: 'فروشنده و مالک فروشگاه',
+        isActive: roles.contains('shop_owner'),
+        setupRoute: '/verifications',
+        setupLabel: 'درخواست تأیید فروشندگی',
+      ),
+      ProfessionalRoleJourney(
+        roleCode: 'service_provider',
+        title: 'خدمات‌دهنده کشاورزی',
+        isActive: roles.contains('service_provider'),
+        setupRoute: '/services/me/provider-profile',
+        setupLabel: 'تکمیل پروفایل خدمات‌دهنده',
+      ),
+      ProfessionalRoleJourney(
+        roleCode: 'lessor',
+        title: 'موجر تجهیزات',
+        isActive: roles.contains('lessor'),
+        setupRoute: '/verifications',
+        setupLabel: 'درخواست تأیید موجر',
+      ),
+      ProfessionalRoleJourney(
+        roleCode: 'consultant',
+        title: 'مشاور کشاورزی',
+        isActive: roles.contains('consultant'),
+        setupRoute: '/consultants/me/profile',
+        setupLabel: 'تکمیل پروفایل مشاور',
+      ),
+    ]);
   }
 
   static void _addSection(

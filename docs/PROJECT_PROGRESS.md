@@ -1411,6 +1411,23 @@ model fields exist:
 - No Consultation API, workflow, final-price, or financial behavior changed.
 - Evidence: `docs/activity-center/phase-23-consultant-integration.md`.
 
+### Step 23.8 Role Setup/Verification + Multi-Role Hardening
+
+- Added a typed four-role journey showing authoritative active roles and real
+  setup destinations for Shop Owner, Service Provider, Lessor, and Consultant.
+- Added direct Verification history access and authenticated identity refresh
+  so newly approved roles/permissions appear without logout/login.
+- Hardened multi-role behavior with deterministic ordering, duplicate-safe role
+  membership, no role switching, and a business-only active-role count that
+  excludes Admin/support/data roles.
+- Confirmed Backend approval assigns the exact Verification target role and
+  Mobile safely routes both legacy and canonical Verification notification URLs.
+- Mobile analyze passed, all 50 tests passed, and Web/Wasm build passed. Runtime
+  app/database/Redis health and five identity/Verification OpenAPI contracts
+  passed against 254 paths.
+- No real role assignment or document upload was performed.
+- Evidence: `docs/activity-center/phase-23-role-verification-multirole.md`.
+
 ## Progress Update Rule
 
 After every completed step:
