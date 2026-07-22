@@ -4,9 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../core/responsive/responsive.dart';
-import '../../core/utils/dates.dart';
 import '../../core/widgets/farm_app_bar.dart';
-import '../../core/widgets/farm_price_text.dart';
 import '../auth/state/auth_controller.dart';
 import '../notifications/presentation/notification_badge_button.dart';
 
@@ -16,8 +14,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final auth = ref.watch(authControllerProvider);
-    final user = auth.user;
+    final user = ref.watch(authControllerProvider).user;
 
     return Scaffold(
       appBar: FarmAppBar(
@@ -25,20 +22,17 @@ class HomeScreen extends ConsumerWidget {
         showBack: false,
         actions: [
           NotificationBadgeButton(
-            onPressed: () {
-              context.push('/notifications');
-            },
+            onPressed: () => context.push('/notifications'),
           ),
         ],
       ),
       body: ResponsiveBuilder(
-        builder: (context, constraints, r) {
-          return SingleChildScrollView(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: r.maxContentWidth()),
-                child: Padding(
-                  padding: r.pagePadding(),
+        builder:
+            (context, constraints, r) => SingleChildScrollView(
+              padding: r.pagePadding(),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: r.maxContentWidth()),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -47,7 +41,15 @@ class HomeScreen extends ConsumerWidget {
                         style: Theme.of(context).textTheme.headlineSmall,
                         textAlign: TextAlign.center,
                       ),
-                      SizedBox(height: r.v(24)),
+                      if (user != null &&
+                          (user.email ?? user.phone) != null) ...[
+                        SizedBox(height: r.v(6)),
+                        Text(
+                          user.email ?? user.phone!,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                      SizedBox(height: r.v(22)),
                       FilledButton.icon(
                         onPressed: () => context.push('/activity'),
                         icon: const Icon(Icons.dashboard_customize_outlined),
@@ -59,233 +61,123 @@ class HomeScreen extends ConsumerWidget {
                         icon: const Icon(Icons.manage_search),
                         label: const Text('جستجو در همه بخش‌ها'),
                       ),
-                      SizedBox(height: r.v(12)),
-                      const FarmPriceText(amountToman: 250000),
-                      SizedBox(height: r.v(12)),
-                      Text(
-                        formatJalaliDate(DateTime.now()),
-                        textAlign: TextAlign.center,
-                      ),
-                      if (user != null) ...[
-                        SizedBox(height: r.v(12)),
-                        Text(
-                          user.email ?? user.phone ?? '',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
                       SizedBox(height: r.v(24)),
-                      FilledButton.icon(
-                        onPressed: () => context.push('/finance'),
-                        icon: const Icon(Icons.account_balance_wallet_outlined),
-                        label: const Text('مرکز مالی من'),
+                      Text(
+                        'کاوش در فارم‌نت',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(height: r.v(12)),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.push('/profile');
+                      LayoutBuilder(
+                        builder: (context, box) {
+                          final columns = box.maxWidth >= 720 ? 3 : 2;
+                          const actions = [
+                            _HomeDestination(
+                              title: 'فروشگاه‌ها',
+                              route: '/stores',
+                              icon: Icons.storefront_outlined,
+                            ),
+                            _HomeDestination(
+                              title: 'محصولات',
+                              route: '/products',
+                              icon: Icons.inventory_2_outlined,
+                            ),
+                            _HomeDestination(
+                              title: 'خدمات کشاورزی',
+                              route: '/services',
+                              icon: Icons.home_repair_service_outlined,
+                            ),
+                            _HomeDestination(
+                              title: 'اجاره تجهیزات',
+                              route: '/rentals',
+                              icon: Icons.agriculture_outlined,
+                            ),
+                            _HomeDestination(
+                              title: 'مشاوران',
+                              route: '/consultants',
+                              icon: Icons.support_agent_outlined,
+                            ),
+                            _HomeDestination(
+                              title: 'جامعه کشاورزی',
+                              route: '/social',
+                              icon: Icons.groups_2_outlined,
+                            ),
+                            _HomeDestination(
+                              title: 'آب‌وهوا',
+                              route: '/weather',
+                              icon: Icons.wb_sunny_outlined,
+                            ),
+                            _HomeDestination(
+                              title: 'سبد خرید',
+                              route: '/cart',
+                              icon: Icons.shopping_cart_outlined,
+                            ),
+                          ];
+                          return GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: actions.length,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  crossAxisSpacing: r.s(12),
+                                  mainAxisSpacing: r.s(12),
+                                  childAspectRatio: columns == 3 ? 1.9 : 1.5,
+                                ),
+                            itemBuilder: (context, index) {
+                              final action = actions[index];
+                              return Card(
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: () => context.push(action.route),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(action.icon, size: 30),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          action.title,
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
                         },
-                        icon: const Icon(Icons.person_outline),
-                        label: const Text('پروفایل من'),
                       ),
-                      SizedBox(height: r.v(12)),
+                      SizedBox(height: r.v(24)),
                       OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/services/workbench');
-                        },
-                        icon: const Icon(Icons.work_outline),
-                        label: const Text('میزکار خدمات‌دهنده'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/services/me/provider-profile');
-                        },
-                        icon: const Icon(Icons.engineering_outlined),
-                        label: const Text('پروفایل خدمات‌دهنده من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/services/me/offers');
-                        },
-                        icon: const Icon(Icons.home_repair_service_outlined),
-                        label: const Text('خدمات من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/services/requests');
-                        },
-                        icon: const Icon(Icons.assignment_outlined),
-                        label: const Text('درخواست‌های خدمات من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.push('/stores');
-                        },
-                        icon: const Icon(Icons.storefront_outlined),
-                        label: const Text('مشاهده فروشگاه‌ها'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/my-store');
-                        },
-                        icon: const Icon(Icons.add_business_outlined),
-                        label: const Text('فروشگاه من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.push('/products');
-                        },
-                        icon: const Icon(Icons.inventory_2_outlined),
-                        label: const Text('مشاهده محصولات'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/my-products');
-                        },
-                        icon: const Icon(Icons.add_box_outlined),
-                        label: const Text('محصولات من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.push('/cart');
-                        },
-                        icon: const Icon(Icons.shopping_cart_outlined),
-                        label: const Text('سبد خرید'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/orders');
-                        },
-                        icon: const Icon(Icons.receipt_long_outlined),
-                        label: const Text('سفارش‌های من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.push('/weather');
-                        },
-                        icon: const Icon(Icons.wb_sunny_outlined),
-                        label: const Text('آب‌وهوا'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.push('/social');
-                        },
-                        icon: const Icon(Icons.groups_2_outlined),
-                        label: const Text('جامعه کشاورزی'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.push('/services');
-                        },
-                        icon: const Icon(Icons.agriculture_outlined),
-                        label: const Text('خدمات کشاورزی'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.push('/rentals');
-                        },
-                        icon: const Icon(Icons.agriculture_outlined),
-                        label: const Text('اجاره تجهیزات کشاورزی'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/rentals/requests');
-                        },
-                        icon: const Icon(Icons.assignment_outlined),
-                        label: const Text('درخواست‌های اجاره من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/rentals/me/lessor-profile');
-                        },
-                        icon: const Icon(Icons.badge_outlined),
-                        label: const Text('پروفایل موجر من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/rentals/me/equipment');
-                        },
-                        icon: const Icon(Icons.agriculture_outlined),
-                        label: const Text('تجهیزات اجاره‌ای من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/rentals/workbench');
-                        },
-                        icon: const Icon(Icons.work_outline),
-                        label: const Text('میزکار موجر'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.push('/consultants');
-                        },
-                        icon: const Icon(Icons.support_agent_outlined),
-                        label: const Text('مشاوران کشاورزی'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/consultants/me/profile');
-                        },
-                        icon: const Icon(Icons.badge_outlined),
-                        label: const Text('پروفایل مشاور من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/consultants/requests');
-                        },
-                        icon: const Icon(Icons.assignment_outlined),
-                        label: const Text('درخواست‌های مشاوره من'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/consultants/workbench');
-                        },
-                        icon: const Icon(Icons.work_outline),
-                        label: const Text('میزکار مشاور'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          context.push('/notifications');
-                        },
-                        icon: const Icon(Icons.notifications_none_outlined),
-                        label: const Text('اعلان‌ها'),
-                      ),
-                      SizedBox(height: r.v(12)),
-                      OutlinedButton(
                         onPressed: () {
                           ref.read(authControllerProvider.notifier).logout();
                         },
-                        child: const Text('خروج'),
+                        icon: const Icon(Icons.logout),
+                        label: const Text('خروج از حساب'),
                       ),
                     ],
                   ),
                 ),
               ),
             ),
-          );
-        },
       ),
     );
   }
+}
+
+class _HomeDestination {
+  const _HomeDestination({
+    required this.title,
+    required this.route,
+    required this.icon,
+  });
+
+  final String title;
+  final String route;
+  final IconData icon;
 }

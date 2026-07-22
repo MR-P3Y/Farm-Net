@@ -567,6 +567,12 @@ Multi-role rendering is ordered, duplicate-safe, non-switching, and excludes
 Admin/support/data roles from the professional count. Step 23.9 Home Navigation
 Simplification + Deep-Link/Auth Hardening is next.
 
+Phase 23 Step 23.9 simplifies Home to discovery plus one Activity Center entry
+and adds a shared session-recovery guard around Home and private center routes.
+Direct links no longer build private children before auth resolution; Backend
+permissions remain the final authority. Step 23.10 Docs, Tests, and Runtime
+Regression is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

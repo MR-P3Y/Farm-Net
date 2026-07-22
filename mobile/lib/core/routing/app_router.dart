@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/activity/presentation/activity_center_screen.dart';
 import '../../features/auth/presentation/auth_gate.dart';
+import '../../features/auth/presentation/authenticated_route_guard.dart';
 import '../../features/consultants/presentation/consultant_detail_screen.dart';
 import '../../features/consultants/presentation/consultant_list_screen.dart';
 import '../../features/consultants/presentation/consultant_request_create_screen.dart';
@@ -68,12 +70,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/home',
       name: 'home',
-      builder: (context, state) => const HomeScreen(),
+      builder: (context, state) => protectedRoute(const HomeScreen()),
     ),
     GoRoute(
       path: '/activity',
       name: 'my-activity-center',
-      builder: (context, state) => const ActivityCenterScreen(),
+      builder: (context, state) => protectedRoute(const ActivityCenterScreen()),
     ),
     GoRoute(
       path: '/search',
@@ -83,17 +85,19 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/finance',
       name: 'finance-center',
-      builder: (context, state) => const FinanceCenterScreen(),
+      builder: (context, state) => protectedRoute(const FinanceCenterScreen()),
     ),
     GoRoute(
       path: '/notifications',
       name: 'notifications',
-      builder: (context, state) => const NotificationsScreen(),
+      builder: (context, state) => protectedRoute(const NotificationsScreen()),
     ),
     GoRoute(
       path: '/notifications/preferences',
       name: 'notification-preferences',
-      builder: (context, state) => const NotificationPreferencesScreen(),
+      builder:
+          (context, state) =>
+              protectedRoute(const NotificationPreferencesScreen()),
     ),
     GoRoute(
       path: '/weather',
@@ -108,7 +112,8 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/social/create',
       name: 'social-create',
-      builder: (context, state) => const SocialCreatePostScreen(),
+      builder:
+          (context, state) => protectedRoute(const SocialCreatePostScreen()),
     ),
     GoRoute(
       path: '/social/detail/:id',
@@ -141,120 +146,145 @@ final GoRouter appRouter = GoRouter(
       path: '/rentals/equipment/:equipmentId/request',
       name: 'rental-request-create',
       builder:
-          (context, state) => RentalRequestCreateScreen(
-            equipmentId:
-                int.tryParse(state.pathParameters['equipmentId'] ?? '') ?? 0,
+          (context, state) => protectedRoute(
+            RentalRequestCreateScreen(
+              equipmentId:
+                  int.tryParse(state.pathParameters['equipmentId'] ?? '') ?? 0,
+            ),
           ),
     ),
     GoRoute(
       path: '/rentals/requests',
       name: 'my-rental-requests',
-      builder: (context, state) => const MyRentalRequestsScreen(),
+      builder:
+          (context, state) => protectedRoute(const MyRentalRequestsScreen()),
     ),
     GoRoute(
       path: '/rentals/requests/:requestId',
       name: 'rental-request-detail',
       builder:
-          (context, state) => RentalRequestDetailScreen(
-            requestId:
-                int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+          (context, state) => protectedRoute(
+            RentalRequestDetailScreen(
+              requestId:
+                  int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+            ),
           ),
     ),
     GoRoute(
       path: '/rentals/me/lessor-profile',
-      builder: (context, state) => const MyLessorProfileScreen(),
+      builder:
+          (context, state) => protectedRoute(const MyLessorProfileScreen()),
     ),
     GoRoute(
       path: '/rentals/me/equipment',
-      builder: (context, state) => const MyRentalEquipmentScreen(),
+      builder:
+          (context, state) => protectedRoute(const MyRentalEquipmentScreen()),
     ),
     GoRoute(
       path: '/rentals/me/equipment/new',
-      builder: (context, state) => const RentalEquipmentEditScreen(),
+      builder:
+          (context, state) => protectedRoute(const RentalEquipmentEditScreen()),
     ),
     GoRoute(
       path: '/rentals/me/equipment/:equipmentId/edit',
       builder:
-          (context, state) => RentalEquipmentEditScreen(
-            equipment: state.extra as RentalEquipmentOwner?,
+          (context, state) => protectedRoute(
+            RentalEquipmentEditScreen(
+              equipment: state.extra as RentalEquipmentOwner?,
+            ),
           ),
     ),
     GoRoute(
       path: '/rentals/me/equipment/:equipmentId/commercial',
       builder:
-          (context, state) => RentalCommercialScreen(
-            equipmentId:
-                int.tryParse(state.pathParameters['equipmentId'] ?? '') ?? 0,
+          (context, state) => protectedRoute(
+            RentalCommercialScreen(
+              equipmentId:
+                  int.tryParse(state.pathParameters['equipmentId'] ?? '') ?? 0,
+            ),
           ),
     ),
     GoRoute(
       path: '/rentals/workbench',
-      builder: (context, state) => const RentalWorkbenchScreen(),
+      builder:
+          (context, state) => protectedRoute(const RentalWorkbenchScreen()),
     ),
     GoRoute(
       path: '/rentals/workbench/requests/:requestId',
       builder:
-          (context, state) => RentalWorkbenchDetailScreen(
-            requestId:
-                int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+          (context, state) => protectedRoute(
+            RentalWorkbenchDetailScreen(
+              requestId:
+                  int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+            ),
           ),
     ),
     GoRoute(
       path: '/services/workbench',
       name: 'service-workbench',
-      builder: (context, state) => const ServiceWorkbenchScreen(),
+      builder:
+          (context, state) => protectedRoute(const ServiceWorkbenchScreen()),
     ),
     GoRoute(
       path: '/services/workbench/requests/:requestId',
       name: 'service-workbench-request-detail',
       builder:
-          (context, state) => ServiceWorkbenchDetailScreen(
-            requestId:
-                int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+          (context, state) => protectedRoute(
+            ServiceWorkbenchDetailScreen(
+              requestId:
+                  int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+            ),
           ),
     ),
     GoRoute(
       path: '/services/me/provider-profile',
       name: 'my-service-provider-profile',
-      builder: (context, state) => const MyProviderProfileScreen(),
+      builder:
+          (context, state) => protectedRoute(const MyProviderProfileScreen()),
     ),
     GoRoute(
       path: '/services/me/offers',
       name: 'my-service-offers',
-      builder: (context, state) => const MyOffersScreen(),
+      builder: (context, state) => protectedRoute(const MyOffersScreen()),
     ),
     GoRoute(
       path: '/services/me/offers/new',
       name: 'new-service-offer',
-      builder: (context, state) => const OfferEditScreen(),
+      builder: (context, state) => protectedRoute(const OfferEditScreen()),
     ),
     GoRoute(
       path: '/services/me/offers/:offerId/edit',
       name: 'edit-service-offer',
       builder:
-          (context, state) =>
-              OfferEditScreen(offer: state.extra as ServiceOfferOwner?),
+          (context, state) => protectedRoute(
+            OfferEditScreen(offer: state.extra as ServiceOfferOwner?),
+          ),
     ),
     GoRoute(
       path: '/services/requests',
       name: 'my-service-requests',
-      builder: (context, state) => const MyServiceRequestsScreen(),
+      builder:
+          (context, state) => protectedRoute(const MyServiceRequestsScreen()),
     ),
     GoRoute(
       path: '/services/requests/:requestId',
       name: 'service-request-detail',
       builder:
-          (context, state) => ServiceRequestDetailScreen(
-            requestId:
-                int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+          (context, state) => protectedRoute(
+            ServiceRequestDetailScreen(
+              requestId:
+                  int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0,
+            ),
           ),
     ),
     GoRoute(
       path: '/services/:offerId/request',
       name: 'service-request-create',
       builder:
-          (context, state) => ServiceRequestCreateScreen(
-            offerId: int.tryParse(state.pathParameters['offerId'] ?? '') ?? 0,
+          (context, state) => protectedRoute(
+            ServiceRequestCreateScreen(
+              offerId: int.tryParse(state.pathParameters['offerId'] ?? '') ?? 0,
+            ),
           ),
     ),
     GoRoute(
@@ -273,37 +303,39 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/consultants/requests',
       name: 'my-consultation-requests',
-      builder: (context, state) => const MyConsultationRequestsScreen(),
+      builder:
+          (context, state) =>
+              protectedRoute(const MyConsultationRequestsScreen()),
     ),
     GoRoute(
       path: '/consultants/requests/:requestId',
       name: 'consultation-request-detail',
       builder: (context, state) {
         final id = int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0;
-        return ConsultationRequestDetailScreen(
-          requestId: id,
-          assignedMode: false,
+        return protectedRoute(
+          ConsultationRequestDetailScreen(requestId: id, assignedMode: false),
         );
       },
     ),
     GoRoute(
       path: '/consultants/me/profile',
       name: 'my-consultant-profile',
-      builder: (context, state) => const MyConsultantProfileScreen(),
+      builder:
+          (context, state) => protectedRoute(const MyConsultantProfileScreen()),
     ),
     GoRoute(
       path: '/consultants/workbench',
       name: 'consultant-workbench',
-      builder: (context, state) => const ConsultantWorkbenchScreen(),
+      builder:
+          (context, state) => protectedRoute(const ConsultantWorkbenchScreen()),
     ),
     GoRoute(
       path: '/consultants/workbench/requests/:requestId',
       name: 'consultant-workbench-request-detail',
       builder: (context, state) {
         final id = int.tryParse(state.pathParameters['requestId'] ?? '') ?? 0;
-        return ConsultationRequestDetailScreen(
-          requestId: id,
-          assignedMode: true,
+        return protectedRoute(
+          ConsultationRequestDetailScreen(requestId: id, assignedMode: true),
         );
       },
     ),
@@ -312,7 +344,9 @@ final GoRouter appRouter = GoRouter(
       name: 'consultant-request-create',
       builder: (context, state) {
         final id = int.tryParse(state.pathParameters['profileId'] ?? '') ?? 0;
-        return ConsultantRequestCreateScreen(consultantProfileId: id);
+        return protectedRoute(
+          ConsultantRequestCreateScreen(consultantProfileId: id),
+        );
       },
     ),
     GoRoute(
@@ -326,12 +360,14 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/profile',
       name: 'profile',
-      builder: (context, state) => const ProfileScreen(),
+      builder: (context, state) => protectedRoute(const ProfileScreen()),
     ),
     GoRoute(
       path: '/verifications',
       name: 'verifications',
-      builder: (context, state) => const VerificationRequestsScreen(),
+      builder:
+          (context, state) =>
+              protectedRoute(const VerificationRequestsScreen()),
     ),
     GoRoute(
       path: '/stores',
@@ -354,32 +390,34 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/cart',
       name: 'cart',
-      builder: (context, state) => const CartScreen(),
+      builder: (context, state) => protectedRoute(const CartScreen()),
     ),
     GoRoute(
       path: '/orders',
       name: 'my-orders',
-      builder: (context, state) => const MyOrdersScreen(),
+      builder: (context, state) => protectedRoute(const MyOrdersScreen()),
     ),
     GoRoute(
       path: '/orders/:orderId',
       name: 'order-detail',
       builder: (context, state) {
         final id = int.tryParse(state.pathParameters['orderId'] ?? '') ?? 0;
-        return OrderDetailScreen(orderId: id);
+        return protectedRoute(OrderDetailScreen(orderId: id));
       },
     ),
     GoRoute(
       path: '/seller/orders',
       name: 'seller-orders',
-      builder: (context, state) => const SellerOrdersScreen(),
+      builder: (context, state) => protectedRoute(const SellerOrdersScreen()),
     ),
     GoRoute(
       path: '/seller/orders/:orderId',
       name: 'seller-order-detail',
       builder:
-          (context, state) => SellerOrderDetailScreen(
-            orderId: int.tryParse(state.pathParameters['orderId'] ?? '') ?? 0,
+          (context, state) => protectedRoute(
+            SellerOrderDetailScreen(
+              orderId: int.tryParse(state.pathParameters['orderId'] ?? '') ?? 0,
+            ),
           ),
     ),
     GoRoute(
@@ -401,12 +439,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/my-store',
       name: 'my-store',
-      builder: (context, state) => const MyStoreScreen(),
+      builder: (context, state) => protectedRoute(const MyStoreScreen()),
     ),
     GoRoute(
       path: '/my-products',
       name: 'my-products',
-      builder: (context, state) => const MyProductsScreen(),
+      builder: (context, state) => protectedRoute(const MyProductsScreen()),
     ),
     GoRoute(
       path: '/splash',
@@ -415,3 +453,5 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
+
+Widget protectedRoute(Widget child) => AuthenticatedRouteGuard(child: child);

@@ -1428,6 +1428,23 @@ model fields exist:
 - No real role assignment or document upload was performed.
 - Evidence: `docs/activity-center/phase-23-role-verification-multirole.md`.
 
+### Step 23.9 Home Navigation Simplification + Deep-Link/Auth Hardening
+
+- Replaced the long duplicated Home management menu with Activity Center,
+  Unified Search, public discovery, authenticated Cart, Notification badge, and
+  logout entry points.
+- Added one shared session-recovery guard across Home and the private identity,
+  Verification, Notification, Finance, Cart/Order, requester, owner, Seller,
+  Service Provider, Lessor, and Consultant routes used by the center.
+- Direct deep links now resolve the real session before building private
+  content; unauthenticated/expired sessions render no child and return through
+  the root Auth Gate. Backend permission checks remain final authority.
+- Added authenticated/unauthenticated Guard Widget tests. Mobile analyze passed,
+  all 52 tests passed, and final Web/Wasm build passed.
+- No Backend/API/business behavior changed and generated Web output was not
+  staged.
+- Evidence: `docs/activity-center/phase-23-home-deeplink-auth-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:

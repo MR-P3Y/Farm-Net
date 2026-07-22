@@ -145,7 +145,8 @@ Phase 23.5 Service Provider Activity Integration: completed
 Phase 23.6 Lessor Activity Integration: completed
 Phase 23.7 Consultant Activity Integration: completed
 Phase 23.8 Role Setup/Verification + Multi-Role Hardening: completed
-Next: Phase 23.9 Home Navigation Simplification + Deep-Link/Auth Hardening
+Phase 23.9 Home Navigation Simplification + Deep-Link/Auth Hardening: completed
+Next: Phase 23.10 Docs, Tests, and Runtime Regression
 ```
 
 Services means agricultural operational services, not equipment rental.
