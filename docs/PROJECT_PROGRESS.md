@@ -1445,6 +1445,23 @@ model fields exist:
   staged.
 - Evidence: `docs/activity-center/phase-23-home-deeplink-auth-hardening.md`.
 
+### Step 23.10 Docs, Tests, and Runtime Regression
+
+- Consolidated the real Activity Center personal and four professional-role
+  journeys, permission/auth boundaries, and explicit Runtime fixture limits.
+- Added read-only `backend/scripts/activity_center_runtime_regression.py`; it
+  verifies healthy application/database/Redis, 254-path OpenAPI, 16 required
+  contract groups, and nine representative unauthenticated 401 boundaries
+  without performing a mutation.
+- Backend Ruff/compileall and all 164 tests passed with 18 known warnings.
+  Alembic is current at `fdcb2ab80c12 (head)` and two Auth seed runs remained
+  stable at 12 roles / 249 permissions.
+- Mobile analyze, all 52 tests, and Web/Wasm build passed. Admin analyze, all
+  17 tests, and Web/Wasm build passed.
+- All 13 Postman collections and 313 requests parsed; all 125 templated raw JSON
+  bodies parsed after variable normalization.
+- Evidence: `docs/activity-center/phase-23-docs-tests-runtime-regression.md`.
+
 ## Progress Update Rule
 
 After every completed step:

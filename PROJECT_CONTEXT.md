@@ -573,6 +573,13 @@ Direct links no longer build private children before auth resolution; Backend
 permissions remain the final authority. Step 23.10 Docs, Tests, and Runtime
 Regression is next.
 
+Phase 23 Step 23.10 consolidates the Activity Center contracts and adds a
+reusable read-only Runtime regression. Backend 164 tests, Mobile 52 tests,
+Admin 17 tests, both Flutter Web/Wasm builds, 254-path OpenAPI, health,
+idempotent 12-role/249-permission seed, nine private 401 checks, and all 13
+Postman collections / 313 requests passed. No Runtime mutation was performed.
+Step 23.11 Release Gate + Tag is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
