@@ -129,6 +129,27 @@ void main() {
     ]);
   });
 
+  test('approved consultant receives profile and assigned workbench', () {
+    final sections = ActivityCatalog.forUser(
+      user(
+        roles: const ['user', 'consultant'],
+        permissions: const [
+          'consultants.profile_manage',
+          'consult_requests.manage_assigned',
+        ],
+      ),
+    );
+    final consultant = sections.firstWhere(
+      (section) => section.kind == ActivitySectionKind.consultant,
+    );
+
+    expect(consultant.isSetupSection, isFalse);
+    expect(consultant.actions.map((action) => action.id), [
+      ActivityActionId.consultantProfile,
+      ActivityActionId.consultantWorkbench,
+    ]);
+  });
+
   test('multi-role user receives independent ordered role sections', () {
     final sections = ActivityCatalog.forUser(
       user(

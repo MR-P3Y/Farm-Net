@@ -34,7 +34,8 @@ class ActivityCenterScreen extends ConsumerWidget {
             (section) =>
                 section.kind == ActivitySectionKind.shop ||
                 section.kind == ActivitySectionKind.services ||
-                section.kind == ActivitySectionKind.rental,
+                section.kind == ActivitySectionKind.rental ||
+                section.kind == ActivitySectionKind.consultant,
           );
 
           return SingleChildScrollView(
@@ -157,6 +158,8 @@ class _BusinessActivitySection extends StatelessWidget {
     ActivityActionId.lessorProfile => Icons.badge_outlined,
     ActivityActionId.rentalEquipment => Icons.agriculture_outlined,
     ActivityActionId.rentalWorkbench => Icons.work_history_outlined,
+    ActivityActionId.consultantProfile => Icons.badge_outlined,
+    ActivityActionId.consultantWorkbench => Icons.support_agent_outlined,
     _ => Icons.chevron_left,
   };
 }

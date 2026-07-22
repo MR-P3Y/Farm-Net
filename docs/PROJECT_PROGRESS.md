@@ -1396,6 +1396,21 @@ model fields exist:
 - No Rental API, workflow, availability, pricing, or financial behavior changed.
 - Evidence: `docs/activity-center/phase-23-lessor-integration.md`.
 
+### Step 23.7 Consultant Activity Integration
+
+- Connected the permission-backed Consultant section through the shared
+  Activity Center renderer to existing Profile/specialty/moderation and assigned
+  Consultation Request Workbench flows.
+- Kept requester Consultation activity in the common personal section and
+  retained exact setup-vs-approved and permission boundaries.
+- Added focused approved-Consultant catalog coverage. Mobile analyze passed,
+  all 49 tests passed, and Web/Wasm build passed.
+- Runtime application/database/Redis health is `ok`; 254-path OpenAPI passed
+  exact method checks for five key Consultant Profile and assigned-request
+  contracts.
+- No Consultation API, workflow, final-price, or financial behavior changed.
+- Evidence: `docs/activity-center/phase-23-consultant-integration.md`.
+
 ## Progress Update Rule
 
 After every completed step:
