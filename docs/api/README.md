@@ -11,6 +11,7 @@
 - [Orders / Payments / Commission](orders-payments-commission.md)
 - [Products](products.md)
 - [Profile / Verification](profile-verification.md)
+- [Marketplace Reviews](reviews.md)
 - [Social](social.md)
 - [Services](services.md)
 - [Expert Answers and Consultants](expert-consultants.md)

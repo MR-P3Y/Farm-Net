@@ -12,6 +12,7 @@
 - `orders-payments-commission.postman_collection.json`
 - `products.postman_collection.json`
 - `rentals.postman_collection.json`
+- `reviews.postman_collection.json`
 - `search.postman_collection.json`
 - `social-expert.postman_collection.json`
 - `services.postman_collection.json`
@@ -35,3 +36,7 @@ Audit Log contracts.
 geo/price and Rental availability filters, Persian normalization, privacy
 headers, duplicate types, non-TOMAN rejection, response-budget rejection, and
 incomplete availability rejection.
+
+`reviews.postman_collection.json` currently covers the five authenticated owner
+CRUD operations introduced in Phase 19.3. Public Reviews, reports, and Admin
+moderation will be added in their implementation steps.

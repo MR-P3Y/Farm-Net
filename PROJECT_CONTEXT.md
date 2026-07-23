@@ -599,6 +599,14 @@ idempotent 12-role/257-permission seed, health, and all 168 Backend tests pass.
 No API or rating mutation is active. Step 19.3 Eligibility, Ownership,
 Lifecycle + Review CRUD is next.
 
+Phase 19 Step 19.3 activates owner Review CRUD with server-authoritative,
+row-locked eligibility across the four completed source domains and seven
+subjects. Self-review, cross-owner access, unrelated targets, duplicates, and
+invalid lifecycle changes are rejected. Backend 180 tests, 257-path OpenAPI,
+health, privacy 401, docs, and five Postman requests pass. Runtime has no
+terminal source fixture and no fake Review was inserted. Step 19.4 Public
+Reviews, Aggregates + Discovery Integration is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -606,7 +614,7 @@ Lifecycle + Review CRUD is next.
 - The Zarinpal adapter is implemented but disabled; credentialed sandbox and
   production activation remain operational gaps.
 - SMS, email, and push providers are not connected for production delivery.
-- Contracts, subscriptions, promotion, reviews, real payout integration,
+- Contracts, subscriptions, promotion, remaining Reviews work, real payout integration,
   AI/RAG, BI/data access, and production hardening remain future work.
 
 ## Development Environment

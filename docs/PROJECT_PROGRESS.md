@@ -1518,6 +1518,25 @@ model fields exist:
 - No Review API, client behavior, notification, or fabricated rating was added.
 - Evidence: `docs/reviews/phase-19-review-db-permissions.md`.
 
+### Step 19.3 Eligibility, Ownership, Lifecycle + Review CRUD
+
+- Added typed schemas, repository, domain eligibility service, exceptions, and
+  authenticated create/list/detail/update/delete Review contracts.
+- Backend locks and validates the real delivered Order or completed Service,
+  Rental, or Consultation Request, requires its Buyer/Requester, verifies all
+  seven subject types against domain data, and prevents self-review.
+- Added deterministic duplicate conflict, owner-only privacy, active-only edit,
+  hidden-owner delete, idempotent soft delete, 1–5 score, trimmed/bounded body,
+  and immutable source/subject/reviewer identity.
+- Ruff/compileall and all 180 Backend tests passed with 18 known warnings.
+  Runtime app/database/Redis health, 257-path OpenAPI, three Review paths/five
+  operations, and unauthenticated 401 passed.
+- Added five-request Review Postman collection and complete owner API docs.
+  Runtime has no terminal source fixtures, so no fake live Review was created;
+  all seven populated eligibility branches are covered by focused tests.
+- Aggregate/public reads remain inactive until Step 19.4.
+- Evidence: `docs/reviews/phase-19-eligibility-review-crud.md`.
+
 ## Progress Update Rule
 
 After every completed step:
