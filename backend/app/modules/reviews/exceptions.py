@@ -41,3 +41,22 @@ class ReviewLifecycleError(AppException):
             status_code=status.HTTP_409_CONFLICT,
             details={"current_status": current_status},
         )
+
+
+class ReviewReportConflictError(AppException):
+    def __init__(self, *, report_id: int | None = None) -> None:
+        super().__init__(
+            code="REVIEW_REPORT_ALREADY_EXISTS",
+            message="You have already reported this review",
+            status_code=status.HTTP_409_CONFLICT,
+            details={} if report_id is None else {"report_id": report_id},
+        )
+
+
+class ReviewReportNotFoundError(AppException):
+    def __init__(self) -> None:
+        super().__init__(
+            code="REVIEW_REPORT_NOT_FOUND",
+            message="Review report not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )

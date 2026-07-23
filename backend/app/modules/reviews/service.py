@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from decimal import Decimal, ROUND_HALF_UP
+from uuid import uuid4
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -19,15 +20,29 @@ from app.modules.reviews.exceptions import (
     ReviewEligibilityError,
     ReviewLifecycleError,
     ReviewNotFoundError,
+    ReviewReportConflictError,
+    ReviewReportNotFoundError,
 )
-from app.modules.reviews.models import MarketplaceRatingAggregate, MarketplaceReview
+from app.modules.reviews.models import (
+    MarketplaceRatingAggregate,
+    MarketplaceReview,
+    MarketplaceReviewModerationLog,
+    MarketplaceReviewReport,
+)
 from app.modules.reviews.repository import ReviewsRepository
 from app.modules.reviews.schemas import (
     RatingSummaryOut,
     ReviewCreateIn,
+    ReviewAdminOut,
+    ReviewModerationIn,
+    ReviewModerationLogOut,
     ReviewOwnerOut,
     ReviewPublicAuthorOut,
     ReviewPublicOut,
+    ReviewReportAdminOut,
+    ReviewReportCreateIn,
+    ReviewReportOwnerOut,
+    ReviewReportResolutionIn,
     ReviewUpdateIn,
 )
 from app.modules.services.enums import ServiceRequestStatus
@@ -226,6 +241,159 @@ class ReviewsService:
             for review, profile in rows
         ]
         return items, total, summary
+
+    def report(
+        self, *, user: AuthUser, review_id: int, payload: ReviewReportCreateIn
+    ) -> ReviewReportOwnerOut:
+        review = self.repo.get_review(review_id)
+        if review is None or review.status != ReviewStatus.ACTIVE.value:
+            raise ReviewNotFoundError()
+        if review.reviewer_user_id == user.id:
+            raise ReviewEligibilityError("You cannot report your own review")
+        existing = self.repo.get_report_by_reporter(
+            review_id=review_id, reporter_user_id=user.id
+        )
+        if existing is not None:
+            raise ReviewReportConflictError(report_id=existing.id)
+        row = MarketplaceReviewReport(
+            review_id=review_id,
+            reporter_user_id=user.id,
+            reason=payload.reason.value,
+            description=payload.description,
+            status="open",
+        )
+        try:
+            self.repo.add_report(row)
+            self.repo.commit()
+        except IntegrityError as exc:
+            self.repo.rollback()
+            existing = self.repo.get_report_by_reporter(
+                review_id=review_id, reporter_user_id=user.id
+            )
+            raise ReviewReportConflictError(
+                report_id=None if existing is None else existing.id
+            ) from exc
+        return ReviewReportOwnerOut.model_validate(row, from_attributes=True)
+
+    def list_admin_reviews(self, *, status, page: int, page_size: int):
+        rows, total = self.repo.list_admin_reviews(
+            status=None if status is None else status.value,
+            page=page,
+            page_size=page_size,
+        )
+        return [ReviewAdminOut.model_validate(row) for row in rows], total
+
+    def moderate_review(
+        self,
+        *,
+        admin_user_id: int,
+        review_id: int,
+        payload: ReviewModerationIn,
+    ) -> ReviewAdminOut:
+        row = self.repo.get_review(review_id, for_update=True)
+        if row is None:
+            raise ReviewNotFoundError()
+        target = payload.status.value
+        if target not in {
+            ReviewStatus.ACTIVE.value,
+            ReviewStatus.HIDDEN.value,
+            ReviewStatus.DELETED.value,
+        }:
+            raise ReviewLifecycleError(current_status=row.status)
+        if row.status == ReviewStatus.DELETED.value and target != row.status:
+            raise ReviewLifecycleError(current_status=row.status)
+        if target == row.status:
+            return ReviewAdminOut.model_validate(row)
+        old_status = row.status
+        if old_status == ReviewStatus.ACTIVE.value:
+            self._apply_rating_delta(
+                subject_type=row.subject_type,
+                subject_id=row.subject_id,
+                rating_delta=-row.score,
+                count_delta=-1,
+            )
+        elif target == ReviewStatus.ACTIVE.value:
+            self._apply_rating_delta(
+                subject_type=row.subject_type,
+                subject_id=row.subject_id,
+                rating_delta=row.score,
+                count_delta=1,
+            )
+        row.status = target
+        row.deleted_at = (
+            datetime.now(UTC).replace(tzinfo=None)
+            if target == ReviewStatus.DELETED.value
+            else None
+        )
+        action = {
+            ReviewStatus.ACTIVE.value: "restored",
+            ReviewStatus.HIDDEN.value: "hidden",
+            ReviewStatus.DELETED.value: "deleted",
+        }[target]
+        self.repo.add_moderation_log(
+            MarketplaceReviewModerationLog(
+                review_id=row.id,
+                actor_user_id=admin_user_id,
+                action=action,
+                from_status=old_status,
+                to_status=target,
+                note=payload.note,
+                event_key=f"review:{row.id}:{action}:{uuid4().hex}",
+            )
+        )
+        self.repo.commit()
+        return ReviewAdminOut.model_validate(row)
+
+    def list_admin_reports(self, *, status, page: int, page_size: int):
+        rows, total = self.repo.list_admin_reports(
+            status=None if status is None else status.value,
+            page=page,
+            page_size=page_size,
+        )
+        return [ReviewReportAdminOut.model_validate(row) for row in rows], total
+
+    def resolve_report(
+        self,
+        *,
+        admin_user_id: int,
+        report_id: int,
+        payload: ReviewReportResolutionIn,
+    ) -> ReviewReportAdminOut:
+        report = self.repo.get_report(report_id, for_update=True)
+        if report is None:
+            raise ReviewReportNotFoundError()
+        target = payload.status.value
+        if target == "open":
+            raise ReviewLifecycleError(current_status=report.status)
+        if report.status in {"resolved", "dismissed"}:
+            if report.status == target:
+                return ReviewReportAdminOut.model_validate(report)
+            raise ReviewLifecycleError(current_status=report.status)
+        report.status = target
+        report.reviewed_by_user_id = admin_user_id
+        report.resolution_note = payload.resolution_note
+        report.reviewed_at = datetime.now(UTC).replace(tzinfo=None)
+        action = f"report_{target}"
+        self.repo.add_moderation_log(
+            MarketplaceReviewModerationLog(
+                review_id=report.review_id,
+                actor_user_id=admin_user_id,
+                report_id=report.id,
+                action=action,
+                note=payload.resolution_note,
+                event_key=f"report:{report.id}:{action}:{uuid4().hex}",
+            )
+        )
+        self.repo.commit()
+        return ReviewReportAdminOut.model_validate(report)
+
+    def moderation_logs(self, *, review_id: int):
+        if self.repo.get_review(review_id) is None:
+            raise ReviewNotFoundError()
+        return [
+            ReviewModerationLogOut.model_validate(row)
+            for row in self.repo.list_moderation_logs(review_id)
+        ]
 
     def _apply_rating_delta(
         self,

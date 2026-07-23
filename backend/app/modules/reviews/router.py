@@ -13,6 +13,8 @@ from app.modules.reviews.schemas import (
     ReviewOwnerDetailResponse,
     ReviewOwnerListResponse,
     ReviewPublicListResponse,
+    ReviewReportCreateIn,
+    ReviewReportDetailResponse,
     ReviewUpdateIn,
 )
 from app.modules.reviews.service import ReviewsService
@@ -50,6 +52,30 @@ def list_public_reviews(
             "rating": summary.model_dump(mode="json"),
             "trace_id": request.state.trace_id,
         },
+    )
+
+
+@router.post(
+    "/{review_id}/reports",
+    response_model=ReviewReportDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def report_review(
+    review_id: int,
+    payload: ReviewReportCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("review_reports.create")),
+):
+    result = ReviewsService(db).report(
+        user=user,
+        review_id=review_id,
+        payload=payload,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Review report created",
+        meta={"trace_id": request.state.trace_id},
     )
 
 

@@ -150,6 +150,42 @@ Reviews. A deleted Review cannot be recreated for the same source and subject.
 | `REVIEW_INVALID_STATE` | 409 | Lifecycle disallows the change |
 | `PERMISSION_DENIED` | 403 | Source is owned by another user or permission absent |
 
+## Report a Review
+
+```http
+POST /api/v1/reviews/{review_id}/reports
+Authorization: Bearer <token>
+```
+
+Reasons are `spam`, `abuse`, `harassment`, `privacy`, `fraud`, or `other`.
+Description is optional and limited to 2000 characters. Only active public
+Reviews are reportable. A reviewer cannot report their own Review, and each
+user may report a Review only once. The owner response does not expose Admin
+identity, resolution notes, or other reporters.
+
+## Admin moderation
+
+Dedicated permissions protect these contracts:
+
+- `GET /api/v1/admin/reviews`
+- `PATCH /api/v1/admin/reviews/{review_id}/status`
+- `GET /api/v1/admin/reviews/{review_id}/moderation-logs`
+- `GET /api/v1/admin/reviews/reports`
+- `PATCH /api/v1/admin/reviews/reports/{report_id}/status`
+
+Review transitions are `active`, `hidden`, and terminal `deleted`. A required
+note and durable audit event accompany each real transition. Hide/delete remove
+an active Review from the canonical aggregate; restore adds it back atomically.
+Reports move from `open` to `reviewed`, `resolved`, or `dismissed`, recording
+Admin, resolution note, timestamp, and an audit event.
+
+Additional errors:
+
+| Code | HTTP | Meaning |
+| --- | --- | --- |
+| `REVIEW_REPORT_ALREADY_EXISTS` | 409 | Reporter already reported this Review |
+| `REVIEW_REPORT_NOT_FOUND` | 404 | Admin report target does not exist |
+
 ## Owner privacy
 
 Owner responses contain generic source/subject identities, score/body/status,

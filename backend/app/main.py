@@ -39,6 +39,7 @@ from app.modules.services.router import router as services_router
 from app.modules.rentals.admin_router import router as admin_rentals_router
 from app.modules.rentals.router import router as rentals_router
 from app.modules.reviews.router import router as reviews_router
+from app.modules.reviews.admin_router import router as admin_reviews_router
 from app.modules.stores.public_router import router as public_stores_router
 from app.modules.stores.router import router as stores_router
 from app.modules.weather.admin_router import router as admin_weather_router
@@ -111,6 +112,7 @@ def create_app() -> FastAPI:
     app.include_router(rentals_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_rentals_router, prefix=settings.api_v1_prefix)
     app.include_router(reviews_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_reviews_router, prefix=settings.api_v1_prefix)
     app.include_router(social_router, prefix=settings.api_v1_prefix)
     app.include_router(search_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_social_router, prefix=settings.api_v1_prefix)

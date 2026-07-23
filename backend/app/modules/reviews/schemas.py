@@ -3,7 +3,13 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.modules.reviews.enums import ReviewSourceType, ReviewSubjectType
+from app.modules.reviews.enums import (
+    ReviewReportReason,
+    ReviewReportStatus,
+    ReviewSourceType,
+    ReviewStatus,
+    ReviewSubjectType,
+)
 
 
 class ReviewCreateIn(BaseModel):
@@ -91,3 +97,89 @@ class ReviewPublicListResponse(BaseModel):
     data: list[ReviewPublicOut]
     message: str
     meta: dict
+
+
+class ReviewReportCreateIn(BaseModel):
+    reason: ReviewReportReason
+    description: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("description")
+    @classmethod
+    def normalize_description(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.strip() or None
+
+
+class ReviewReportOwnerOut(BaseModel):
+    id: int
+    review_id: int
+    reason: str
+    description: str | None
+    status: str
+    created_at: datetime
+
+
+class ReviewReportDetailResponse(BaseModel):
+    success: bool
+    data: ReviewReportOwnerOut
+    message: str
+    meta: dict
+
+
+class ReviewModerationIn(BaseModel):
+    status: ReviewStatus
+    note: str = Field(min_length=2, max_length=2000)
+
+
+class ReviewReportResolutionIn(BaseModel):
+    status: ReviewReportStatus
+    resolution_note: str = Field(min_length=2, max_length=2000)
+
+
+class ReviewAdminOut(BaseModel):
+    id: int
+    reviewer_user_id: int
+    source_type: str
+    source_id: int
+    subject_type: str
+    subject_id: int
+    score: int
+    body: str | None
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: datetime | None
+
+    model_config = {"from_attributes": True}
+
+
+class ReviewReportAdminOut(BaseModel):
+    id: int
+    review_id: int
+    reporter_user_id: int
+    reason: str
+    description: str | None
+    status: str
+    reviewed_by_user_id: int | None
+    resolution_note: str | None
+    reviewed_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ReviewModerationLogOut(BaseModel):
+    id: int
+    review_id: int
+    actor_user_id: int | None
+    report_id: int | None
+    action: str
+    from_status: str | None
+    to_status: str | None
+    note: str | None
+    event_key: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

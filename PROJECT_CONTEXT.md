@@ -616,6 +616,14 @@ Ruff/compileall, all 181 Backend tests, runtime health, 258-path OpenAPI, and
 14 Postman collections / 319 requests pass. Step 19.5 Review Reports + User
 Safety is next.
 
+Phase 19 Step 19.5 adds Review reporting and Backend Admin moderation. Self and
+duplicate reports are rejected; reporter responses stay private. Admin hide,
+restore, delete, and report resolution are permission-separated, audited, and
+atomically reflected in canonical ratings. All 185 Backend tests pass. Step
+19.5 runtime health, 264-path OpenAPI, Admin 401 boundaries, and 14 Postman
+collections / 325 requests pass. Step 19.6 Notifications, Privacy, Exact-Once
++ Concurrency Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

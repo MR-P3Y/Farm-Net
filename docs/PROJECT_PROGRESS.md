@@ -1556,6 +1556,26 @@ model fields exist:
 - All 14 Postman collections / 319 requests passed JSON parsing.
 - Evidence: `docs/reviews/phase-19-public-reviews-aggregates.md`.
 
+### Step 19.5 Review Reports, Admin Moderation + Audit Logs
+
+- Added governed Review reporting with six typed reasons, active-only targets,
+  explicit self-report rejection, database-backed duplicate prevention, and a
+  reporter-safe response.
+- Added permission-separated Admin Review/report lists, Review hide/restore/
+  delete, report review/resolve/dismiss, and immutable moderation-log reads.
+- Review moderation changes the canonical aggregate atomically; deleted
+  Reviews and resolved/dismissed reports are terminal, while unchanged
+  operations are idempotent.
+- Every effective transition writes actor, note, status transition, optional
+  report link, timestamp, and unique event key to the durable audit table.
+- Focused 17 and all 185 Backend tests passed with 18 known warnings.
+- Ruff/compileall passed; runtime app/database/Redis health passed at Alembic
+  head `a7c9e1f30d13`. OpenAPI exposes 264 paths / ten Review paths, all six new
+  routes were present, and unauthenticated Admin Review/report reads returned
+  401.
+- All 14 Postman collections / 325 requests passed JSON parsing.
+- Evidence: `docs/reviews/phase-19-review-reports-moderation.md`.
+
 ## Progress Update Rule
 
 After every completed step:

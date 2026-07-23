@@ -10,7 +10,12 @@ from app.modules.profiles.models import UserProfile
 from app.modules.rentals.enums import LessorStatus, RentalEquipmentStatus
 from app.modules.rentals.models import LessorProfile, RentalEquipment, RentalRequest
 from app.modules.reviews.enums import ReviewSubjectType
-from app.modules.reviews.models import MarketplaceRatingAggregate, MarketplaceReview
+from app.modules.reviews.models import (
+    MarketplaceRatingAggregate,
+    MarketplaceReview,
+    MarketplaceReviewModerationLog,
+    MarketplaceReviewReport,
+)
 from app.modules.services.enums import ServiceOfferStatus, ServiceProviderStatus
 from app.modules.services.models import (
     ServiceOffer,
@@ -277,6 +282,80 @@ class ReviewsRepository:
                 ConsultProfile.deleted_at.is_(None),
             )
         return query.first() is not None
+
+    def get_review(self, review_id: int, *, for_update: bool = False):
+        query = self.db.query(MarketplaceReview).filter(
+            MarketplaceReview.id == review_id
+        )
+        if for_update:
+            query = query.with_for_update()
+        return query.one_or_none()
+
+    def get_report_by_reporter(self, *, review_id: int, reporter_user_id: int):
+        return (
+            self.db.query(MarketplaceReviewReport)
+            .filter(
+                MarketplaceReviewReport.review_id == review_id,
+                MarketplaceReviewReport.reporter_user_id == reporter_user_id,
+            )
+            .one_or_none()
+        )
+
+    def add_report(self, row: MarketplaceReviewReport):
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def list_admin_reviews(
+        self, *, status: str | None, page: int, page_size: int
+    ):
+        query = self.db.query(MarketplaceReview)
+        if status is not None:
+            query = query.filter(MarketplaceReview.status == status)
+        total = query.count()
+        return (
+            query.order_by(MarketplaceReview.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all(),
+            total,
+        )
+
+    def list_admin_reports(
+        self, *, status: str | None, page: int, page_size: int
+    ):
+        query = self.db.query(MarketplaceReviewReport)
+        if status is not None:
+            query = query.filter(MarketplaceReviewReport.status == status)
+        total = query.count()
+        return (
+            query.order_by(MarketplaceReviewReport.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all(),
+            total,
+        )
+
+    def get_report(self, report_id: int, *, for_update: bool = False):
+        query = self.db.query(MarketplaceReviewReport).filter(
+            MarketplaceReviewReport.id == report_id
+        )
+        if for_update:
+            query = query.with_for_update()
+        return query.one_or_none()
+
+    def add_moderation_log(self, row: MarketplaceReviewModerationLog):
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def list_moderation_logs(self, review_id: int):
+        return (
+            self.db.query(MarketplaceReviewModerationLog)
+            .filter(MarketplaceReviewModerationLog.review_id == review_id)
+            .order_by(MarketplaceReviewModerationLog.created_at, MarketplaceReviewModerationLog.id)
+            .all()
+        )
 
     def list_own(
         self,

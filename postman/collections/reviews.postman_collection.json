@@ -75,6 +75,66 @@
         "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
         "url": "{{base_url}}/reviews/me/{{review_id}}"
       }
+    },
+    {
+      "name": "Report a public Review",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {"mode": "raw", "raw": "{\n  \"reason\": \"spam\",\n  \"description\": \"محتوای تکراری یا تبلیغاتی\"\n}"},
+        "url": "{{base_url}}/reviews/{{review_id}}/reports"
+      }
+    },
+    {
+      "name": "Admin list Reviews",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/admin/reviews?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin moderate Review",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {"mode": "raw", "raw": "{\n  \"status\": \"hidden\",\n  \"note\": \"نیازمند بررسی حریم خصوصی\"\n}"},
+        "url": "{{base_url}}/admin/reviews/{{review_id}}/status"
+      }
+    },
+    {
+      "name": "Admin Review moderation logs",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/admin/reviews/{{review_id}}/moderation-logs"
+      }
+    },
+    {
+      "name": "Admin list Review reports",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/admin/reviews/reports?status=open&page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Admin resolve Review report",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {"mode": "raw", "raw": "{\n  \"status\": \"resolved\",\n  \"resolution_note\": \"گزارش بررسی و تأیید شد\"\n}"},
+        "url": "{{base_url}}/admin/reviews/reports/1/status"
+      }
     }
   ]
 }
