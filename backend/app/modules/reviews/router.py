@@ -7,17 +7,50 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
-from app.modules.reviews.enums import ReviewStatus
+from app.modules.reviews.enums import ReviewStatus, ReviewSubjectType
 from app.modules.reviews.schemas import (
     ReviewCreateIn,
     ReviewOwnerDetailResponse,
     ReviewOwnerListResponse,
+    ReviewPublicListResponse,
     ReviewUpdateIn,
 )
 from app.modules.reviews.service import ReviewsService
 
 
 router = APIRouter(prefix="/reviews", tags=["Reviews"])
+
+
+@router.get(
+    "/subjects/{subject_type}/{subject_id}",
+    response_model=ReviewPublicListResponse,
+)
+def list_public_reviews(
+    subject_type: ReviewSubjectType,
+    subject_id: int,
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    items, total, summary = ReviewsService(db).list_public(
+        subject_type=subject_type,
+        subject_id=subject_id,
+        page=page,
+        page_size=page_size,
+    )
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "rating": summary.model_dump(mode="json"),
+            "trace_id": request.state.trace_id,
+        },
+    )
 
 
 @router.post("", response_model=ReviewOwnerDetailResponse, status_code=status.HTTP_201_CREATED)

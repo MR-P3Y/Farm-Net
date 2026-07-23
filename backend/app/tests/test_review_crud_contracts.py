@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
@@ -53,6 +54,8 @@ class FakeReviewsRepository:
         self.own_review = None
         self.existing = None
         self.commits = 0
+        self.aggregate = None
+        self.legacy_projection = None
 
     def get_order_for_update(self, source_id: int):
         return self.order if source_id == self.order.id else None
@@ -98,6 +101,24 @@ class FakeReviewsRepository:
 
     def get_own(self, **_kwargs):
         return self.own_review
+
+    def get_aggregate(self, **_kwargs):
+        return self.aggregate
+
+    def add_aggregate(self, row):
+        self.aggregate = row
+        return row
+
+    def sync_legacy_rating_projection(self, **kwargs):
+        self.legacy_projection = kwargs
+
+    def public_subject_exists(self, **_kwargs):
+        return True
+
+    def list_public(self, **_kwargs):
+        if self.own_review is None:
+            return [], 0
+        return [(self.own_review, SimpleNamespace(display_name="کاربر آزمون"))], 1
 
     def commit(self) -> None:
         self.commits += 1
@@ -228,6 +249,9 @@ def test_create_normalizes_contract_prevents_duplicate_and_exposes_owner_flags()
     assert result.can_edit is True
     assert result.can_delete is True
     assert repository.commits == 1
+    assert repository.aggregate.rating_sum == 5
+    assert repository.aggregate.reviews_count == 1
+    assert repository.aggregate.rating_average == Decimal("5.00")
 
     repository.existing = SimpleNamespace(id=100)
     with pytest.raises(ReviewConflictError) as duplicate:
@@ -274,6 +298,8 @@ def test_owner_update_and_idempotent_soft_delete_follow_lifecycle() -> None:
     )
     assert updated.score == 5
     assert updated.body == "دقیق و مفید"
+    assert repository.aggregate.rating_sum == 5
+    assert repository.aggregate.rating_average == Decimal("5.00")
 
     repository.own_review.status = ReviewStatus.HIDDEN.value
     with pytest.raises(ReviewLifecycleError):
@@ -294,6 +320,32 @@ def test_owner_update_and_idempotent_soft_delete_follow_lifecycle() -> None:
     assert repository.commits == commits_after_delete
 
 
+def test_public_reviews_hide_identity_and_return_canonical_summary() -> None:
+    service, repository = _service()
+    service.create(
+        user=SimpleNamespace(id=1),
+        payload=ReviewCreateIn(
+            source_type="order",
+            source_id=10,
+            subject_type="product",
+            subject_id=21,
+            score=4,
+            body="خوب",
+        ),
+    )
+    items, total, summary = service.list_public(
+        subject_type=ReviewSubjectType.PRODUCT,
+        subject_id=21,
+        page=1,
+        page_size=20,
+    )
+    assert total == 1
+    assert items[0].author.display_name == "کاربر آزمون"
+    assert "reviewer_user_id" not in items[0].model_dump()
+    assert summary.rating_average == Decimal("4.00")
+    assert summary.reviews_count == 1
+
+
 def test_review_crud_routes_and_owner_contract_are_typed() -> None:
     from app.main import app
     from app.modules.reviews.schemas import ReviewOwnerOut
@@ -303,6 +355,9 @@ def test_review_crud_routes_and_owner_contract_are_typed() -> None:
     assert {"get"} <= set(paths["/api/v1/reviews/me"])
     assert {"get", "patch", "delete"} <= set(
         paths["/api/v1/reviews/me/{review_id}"]
+    )
+    assert {"get"} <= set(
+        paths["/api/v1/reviews/subjects/{subject_type}/{subject_id}"]
     )
     assert set(ReviewOwnerOut.model_fields) == {
         "id",

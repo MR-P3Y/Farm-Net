@@ -1537,6 +1537,25 @@ model fields exist:
 - Aggregate/public reads remain inactive until Step 19.4.
 - Evidence: `docs/reviews/phase-19-eligibility-review-crud.md`.
 
+### Step 19.4 Public Reviews, Atomic Aggregates + Discovery Integration
+
+- Added unauthenticated paginated public Review reads for every public Review
+  subject, active-only visibility, safe display-name authors, and canonical
+  average/count metadata without leaking reviewer/source/private data.
+- Review create, score update, and active soft-delete now update the shared
+  aggregate in the same transaction with deterministic two-decimal rounding.
+- Synchronized legacy Service Provider/Consultant projections and exposed
+  canonical ratings on public Product, Store, Service Offer, Rental Equipment,
+  and Lessor discovery/detail contracts.
+- Added public API documentation, focused contract coverage, and a sixth
+  Review Postman request.
+- Ruff/compileall and all 181 Backend tests passed with 18 known warnings.
+  Runtime app/database/Redis health passed at Alembic head `a7c9e1f30d13`;
+  OpenAPI exposes 258 paths including four Review paths, and the public
+  missing-subject boundary returned 404.
+- All 14 Postman collections / 319 requests passed JSON parsing.
+- Evidence: `docs/reviews/phase-19-public-reviews-aggregates.md`.
+
 ## Progress Update Rule
 
 After every completed step:

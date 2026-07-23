@@ -94,6 +94,11 @@ def _validate_store_type(store_type: str) -> None:
 
 
 def _public_store_out(repo: StoreRepository, store: Store) -> PublicStoreOut:
+    from app.modules.reviews.repository import ReviewsRepository
+
+    rating_average, reviews_count = ReviewsRepository(repo.db).rating_values(
+        subject_type="store", subject_id=store.id
+    )
     logo_media = (
         repo.get_media_by_id(media_file_id=store.logo_media_file_id)
         if store.logo_media_file_id
@@ -133,6 +138,8 @@ def _public_store_out(repo: StoreRepository, store: Store) -> PublicStoreOut:
         banner_media_file_id=store.banner_media_file_id,
         banner_file_key=banner_file_key,
         banner_url=_media_public_url(file_key=banner_file_key),
+        rating_average=rating_average,
+        reviews_count=reviews_count,
         created_at=store.created_at.isoformat(),
         updated_at=store.updated_at.isoformat(),
     )

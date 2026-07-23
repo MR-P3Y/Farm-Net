@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -19,9 +20,16 @@ from app.modules.reviews.exceptions import (
     ReviewLifecycleError,
     ReviewNotFoundError,
 )
-from app.modules.reviews.models import MarketplaceReview
+from app.modules.reviews.models import MarketplaceRatingAggregate, MarketplaceReview
 from app.modules.reviews.repository import ReviewsRepository
-from app.modules.reviews.schemas import ReviewCreateIn, ReviewOwnerOut, ReviewUpdateIn
+from app.modules.reviews.schemas import (
+    RatingSummaryOut,
+    ReviewCreateIn,
+    ReviewOwnerOut,
+    ReviewPublicAuthorOut,
+    ReviewPublicOut,
+    ReviewUpdateIn,
+)
 from app.modules.services.enums import ServiceRequestStatus
 
 
@@ -63,6 +71,12 @@ class ReviewsService:
         )
         try:
             self.repo.add(row)
+            self._apply_rating_delta(
+                subject_type=payload.subject_type.value,
+                subject_id=payload.subject_id,
+                rating_delta=payload.score,
+                count_delta=1,
+            )
             self.repo.commit()
         except IntegrityError as exc:
             self.repo.rollback()
@@ -122,12 +136,20 @@ class ReviewsService:
         if row.status != ReviewStatus.ACTIVE.value:
             raise ReviewLifecycleError(current_status=row.status)
 
+        previous_score = row.score
         if "score" in payload.model_fields_set:
             if payload.score is None:
                 raise ReviewEligibilityError("Review score cannot be null")
             row.score = payload.score
         if "body" in payload.model_fields_set:
             row.body = payload.body
+        if row.score != previous_score:
+            self._apply_rating_delta(
+                subject_type=row.subject_type,
+                subject_id=row.subject_id,
+                rating_delta=row.score - previous_score,
+                count_delta=0,
+            )
         self.repo.commit()
         return self._owner_out(row)
 
@@ -146,10 +168,124 @@ class ReviewsService:
             ReviewStatus.HIDDEN.value,
         }:
             raise ReviewLifecycleError(current_status=row.status)
+        was_active = row.status == ReviewStatus.ACTIVE.value
         row.status = ReviewStatus.DELETED.value
         row.deleted_at = datetime.now(UTC).replace(tzinfo=None)
+        if was_active:
+            self._apply_rating_delta(
+                subject_type=row.subject_type,
+                subject_id=row.subject_id,
+                rating_delta=-row.score,
+                count_delta=-1,
+            )
         self.repo.commit()
         return self._owner_out(row)
+
+    def list_public(
+        self,
+        *,
+        subject_type: ReviewSubjectType,
+        subject_id: int,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[ReviewPublicOut], int, RatingSummaryOut]:
+        if not self.repo.public_subject_exists(
+            subject_type=subject_type.value,
+            subject_id=subject_id,
+        ):
+            raise ReviewNotFoundError()
+        rows, total = self.repo.list_public(
+            subject_type=subject_type.value,
+            subject_id=subject_id,
+            page=page,
+            page_size=page_size,
+        )
+        aggregate = self.repo.get_aggregate(
+            subject_type=subject_type.value,
+            subject_id=subject_id,
+        )
+        summary = RatingSummaryOut(
+            subject_type=subject_type.value,
+            subject_id=subject_id,
+            rating_average=(
+                Decimal("0.00") if aggregate is None else aggregate.rating_average
+            ),
+            reviews_count=0 if aggregate is None else aggregate.reviews_count,
+        )
+        items = [
+            ReviewPublicOut(
+                id=review.id,
+                score=review.score,
+                body=review.body,
+                author=ReviewPublicAuthorOut(
+                    display_name=self._public_author_name(profile)
+                ),
+                created_at=review.created_at,
+                updated_at=review.updated_at,
+            )
+            for review, profile in rows
+        ]
+        return items, total, summary
+
+    def _apply_rating_delta(
+        self,
+        *,
+        subject_type: str,
+        subject_id: int,
+        rating_delta: int,
+        count_delta: int,
+    ) -> None:
+        aggregate = self.repo.get_aggregate(
+            subject_type=subject_type,
+            subject_id=subject_id,
+            for_update=True,
+        )
+        if aggregate is None:
+            aggregate = self.repo.add_aggregate(
+                MarketplaceRatingAggregate(
+                    subject_type=subject_type,
+                    subject_id=subject_id,
+                    rating_sum=0,
+                    reviews_count=0,
+                    rating_average=Decimal("0.00"),
+                )
+            )
+        rating_sum = aggregate.rating_sum + rating_delta
+        reviews_count = aggregate.reviews_count + count_delta
+        if reviews_count < 0 or rating_sum < 0:
+            raise ReviewLifecycleError(current_status="aggregate_inconsistent")
+        aggregate.rating_sum = rating_sum
+        aggregate.reviews_count = reviews_count
+        aggregate.rating_average = (
+            Decimal("0.00")
+            if reviews_count == 0
+            else (Decimal(rating_sum) / Decimal(reviews_count)).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        )
+        self.repo.sync_legacy_rating_projection(
+            subject_type=subject_type,
+            subject_id=subject_id,
+            rating_average=aggregate.rating_average,
+            reviews_count=reviews_count,
+        )
+
+    @staticmethod
+    def _public_author_name(profile) -> str:
+        if profile is None:
+            return "کاربر فارم‌نت"
+        display_name = getattr(profile, "display_name", None)
+        if display_name and display_name.strip():
+            return display_name.strip()
+        full_name = " ".join(
+            part.strip()
+            for part in (
+                getattr(profile, "first_name", None),
+                getattr(profile, "last_name", None),
+            )
+            if part and part.strip()
+        )
+        return full_name or "کاربر فارم‌نت"
 
     def _validate_eligibility(
         self,

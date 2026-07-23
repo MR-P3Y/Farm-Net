@@ -226,6 +226,8 @@ class PublicStoreOut(BaseModel):
     banner_media_file_id: int | None = None
     banner_file_key: str | None = None
     banner_url: str | None = None
+    rating_average: Decimal = Decimal("0.00")
+    reviews_count: int = 0
 
     created_at: str
     updated_at: str

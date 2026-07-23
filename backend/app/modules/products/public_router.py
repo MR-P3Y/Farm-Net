@@ -183,6 +183,11 @@ def _public_product_out(
 
     primary_image = next((item for item in image_outputs if item.is_primary), None)
     category = product.category if product.category else None
+    from app.modules.reviews.repository import ReviewsRepository
+
+    rating_average, reviews_count = ReviewsRepository(repo.db).rating_values(
+        subject_type="product", subject_id=product.id
+    )
 
     return PublicProductOut(
         id=product.id,
@@ -205,6 +210,8 @@ def _public_product_out(
         min_order_quantity=product.min_order_quantity,
         max_order_quantity=product.max_order_quantity,
         is_featured=product.is_featured,
+        rating_average=rating_average,
+        reviews_count=reviews_count,
         primary_image=primary_image,
         images=image_outputs,
         created_at=product.created_at.isoformat(),

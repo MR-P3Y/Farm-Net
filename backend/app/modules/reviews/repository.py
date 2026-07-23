@@ -1,10 +1,23 @@
 from sqlalchemy.orm import Session
+from decimal import Decimal
 
+from app.modules.consultants.enums import ConsultProfileStatus
 from app.modules.consultants.models import ConsultProfile, ConsultRequest
 from app.modules.orders.models import Order, OrderItem
-from app.modules.rentals.models import LessorProfile, RentalRequest
-from app.modules.reviews.models import MarketplaceReview
-from app.modules.services.models import ServiceProviderProfile, ServiceRequest
+from app.modules.products.enums import ProductStatus
+from app.modules.products.models import StoreProduct
+from app.modules.profiles.models import UserProfile
+from app.modules.rentals.enums import LessorStatus, RentalEquipmentStatus
+from app.modules.rentals.models import LessorProfile, RentalEquipment, RentalRequest
+from app.modules.reviews.enums import ReviewSubjectType
+from app.modules.reviews.models import MarketplaceRatingAggregate, MarketplaceReview
+from app.modules.services.enums import ServiceOfferStatus, ServiceProviderStatus
+from app.modules.services.models import (
+    ServiceOffer,
+    ServiceProviderProfile,
+    ServiceRequest,
+)
+from app.modules.stores.enums import StoreStatus
 from app.modules.stores.models import Store
 
 
@@ -123,6 +136,147 @@ class ReviewsRepository:
         self.db.add(row)
         self.db.flush()
         return row
+
+    def get_aggregate(
+        self,
+        *,
+        subject_type: str,
+        subject_id: int,
+        for_update: bool = False,
+    ) -> MarketplaceRatingAggregate | None:
+        query = self.db.query(MarketplaceRatingAggregate).filter(
+            MarketplaceRatingAggregate.subject_type == subject_type,
+            MarketplaceRatingAggregate.subject_id == subject_id,
+        )
+        if for_update:
+            query = query.with_for_update()
+        return query.one_or_none()
+
+    def rating_values(
+        self, *, subject_type: str, subject_id: int
+    ) -> tuple[Decimal, int]:
+        aggregate = self.get_aggregate(
+            subject_type=subject_type,
+            subject_id=subject_id,
+        )
+        if aggregate is None:
+            return Decimal("0.00"), 0
+        return aggregate.rating_average, aggregate.reviews_count
+
+    def add_aggregate(
+        self, row: MarketplaceRatingAggregate
+    ) -> MarketplaceRatingAggregate:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def sync_legacy_rating_projection(
+        self,
+        *,
+        subject_type: str,
+        subject_id: int,
+        rating_average,
+        reviews_count: int,
+    ) -> None:
+        if subject_type == ReviewSubjectType.SERVICE_PROVIDER.value:
+            self.db.query(ServiceProviderProfile).filter(
+                ServiceProviderProfile.id == subject_id
+            ).update(
+                {
+                    ServiceProviderProfile.rating_average: rating_average,
+                    ServiceProviderProfile.reviews_count: reviews_count,
+                },
+                synchronize_session=False,
+            )
+        elif subject_type == ReviewSubjectType.CONSULTANT.value:
+            self.db.query(ConsultProfile).filter(
+                ConsultProfile.id == subject_id
+            ).update(
+                {
+                    ConsultProfile.rating_average: rating_average,
+                    ConsultProfile.reviews_count: reviews_count,
+                },
+                synchronize_session=False,
+            )
+
+    def list_public(
+        self,
+        *,
+        subject_type: str,
+        subject_id: int,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[tuple[MarketplaceReview, UserProfile | None]], int]:
+        query = (
+            self.db.query(MarketplaceReview, UserProfile)
+            .outerjoin(
+                UserProfile,
+                UserProfile.user_id == MarketplaceReview.reviewer_user_id,
+            )
+            .filter(
+                MarketplaceReview.subject_type == subject_type,
+                MarketplaceReview.subject_id == subject_id,
+                MarketplaceReview.status == "active",
+            )
+        )
+        total = query.count()
+        rows = (
+            query.order_by(
+                MarketplaceReview.created_at.desc(),
+                MarketplaceReview.id.desc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+        return rows, total
+
+    def public_subject_exists(self, *, subject_type: str, subject_id: int) -> bool:
+        if subject_type == ReviewSubjectType.PRODUCT.value:
+            query = self.db.query(StoreProduct.id).filter(
+                StoreProduct.id == subject_id,
+                StoreProduct.status == ProductStatus.PUBLISHED.value,
+                StoreProduct.deleted_at.is_(None),
+            )
+        elif subject_type == ReviewSubjectType.STORE.value:
+            query = self.db.query(Store.id).filter(
+                Store.id == subject_id,
+                Store.status == StoreStatus.APPROVED.value,
+                Store.deleted_at.is_(None),
+            )
+        elif subject_type == ReviewSubjectType.SERVICE_OFFER.value:
+            query = self.db.query(ServiceOffer.id).filter(
+                ServiceOffer.id == subject_id,
+                ServiceOffer.status == ServiceOfferStatus.APPROVED.value,
+                ServiceOffer.is_active.is_(True),
+                ServiceOffer.deleted_at.is_(None),
+            )
+        elif subject_type == ReviewSubjectType.SERVICE_PROVIDER.value:
+            query = self.db.query(ServiceProviderProfile.id).filter(
+                ServiceProviderProfile.id == subject_id,
+                ServiceProviderProfile.status == ServiceProviderStatus.APPROVED.value,
+                ServiceProviderProfile.deleted_at.is_(None),
+            )
+        elif subject_type == ReviewSubjectType.RENTAL_EQUIPMENT.value:
+            query = self.db.query(RentalEquipment.id).filter(
+                RentalEquipment.id == subject_id,
+                RentalEquipment.status == RentalEquipmentStatus.APPROVED.value,
+                RentalEquipment.is_active.is_(True),
+                RentalEquipment.deleted_at.is_(None),
+            )
+        elif subject_type == ReviewSubjectType.RENTAL_LESSOR.value:
+            query = self.db.query(LessorProfile.id).filter(
+                LessorProfile.id == subject_id,
+                LessorProfile.status == LessorStatus.APPROVED.value,
+                LessorProfile.deleted_at.is_(None),
+            )
+        else:
+            query = self.db.query(ConsultProfile.id).filter(
+                ConsultProfile.id == subject_id,
+                ConsultProfile.status == ConsultProfileStatus.APPROVED.value,
+                ConsultProfile.deleted_at.is_(None),
+            )
+        return query.first() is not None
 
     def list_own(
         self,

@@ -1613,6 +1613,8 @@ class ServicesService:
             )
 
     def _offer_out(self, row: ServiceOffer) -> ServiceOfferOut:
+        from app.modules.reviews.repository import ReviewsRepository
+
         media = [
             self._media_out(item)
             for item in sorted(row.media or [], key=lambda item: (item.sort_order, item.id))
@@ -1626,6 +1628,9 @@ class ServicesService:
         provider = None
         if row.provider_profile is not None:
             provider = self._public_profile_out(row.provider_profile)
+        rating_average, reviews_count = ReviewsRepository(self.db).rating_values(
+            subject_type="service_offer", subject_id=row.id
+        )
 
         return ServiceOfferOut(
             id=row.id,
@@ -1653,6 +1658,8 @@ class ServicesService:
             views_count=row.views_count,
             requests_count=row.requests_count,
             completed_requests_count=row.completed_requests_count,
+            rating_average=rating_average,
+            reviews_count=reviews_count,
             media=media,
             primary_media=primary_media,
             category=category,

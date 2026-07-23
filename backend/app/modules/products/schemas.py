@@ -283,6 +283,8 @@ class PublicProductOut(BaseModel):
     max_order_quantity: int | None = None
 
     is_featured: bool
+    rating_average: Decimal = Decimal("0.00")
+    reviews_count: int = 0
 
     primary_image: PublicProductImageOut | None = None
     images: list[PublicProductImageOut] = Field(default_factory=list)

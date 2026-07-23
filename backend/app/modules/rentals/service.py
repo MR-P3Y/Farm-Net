@@ -1126,7 +1126,16 @@ class RentalService:
         )
 
     def _public_equipment_out(self, row: RentalEquipment) -> RentalEquipmentPublicOut:
+        from app.modules.reviews.repository import ReviewsRepository
+
         owner = self._equipment_out(row)
+        ratings = ReviewsRepository(self.db)
+        rating_average, reviews_count = ratings.rating_values(
+            subject_type="rental_equipment", subject_id=row.id
+        )
+        lessor_rating_average, lessor_reviews_count = ratings.rating_values(
+            subject_type="rental_lessor", subject_id=row.lessor_profile_id
+        )
         return RentalEquipmentPublicOut(
             **owner.model_dump(
                 exclude={
@@ -1140,7 +1149,11 @@ class RentalService:
                     "created_at",
                     "updated_at",
                 }
-            )
+            ),
+            rating_average=rating_average,
+            reviews_count=reviews_count,
+            lessor_rating_average=lessor_rating_average,
+            lessor_reviews_count=lessor_reviews_count,
         )
 
     def _validate_parent(self, category_id: int, parent_id: int | None) -> None:

@@ -200,6 +200,10 @@ class RentalEquipmentPublicOut(BaseModel):
     media: list[RentalEquipmentMediaOut]
     category: RentalCategoryOut | None
     lessor_display_name: str | None
+    rating_average: Decimal = Decimal("0.00")
+    reviews_count: int = 0
+    lessor_rating_average: Decimal = Decimal("0.00")
+    lessor_reviews_count: int = 0
 
 
 class RentalPricingRuleIn(BaseModel):

@@ -1,8 +1,8 @@
 # Marketplace Reviews API
 
-Phase 19.3 exposes authenticated owner CRUD only. Public Review listing,
-rating aggregates, Review reports, Admin moderation, and notifications are not
-active in this contract.
+Phase 19.4 exposes authenticated owner CRUD, public active Reviews, and the
+canonical rating aggregate. Review reports, Admin moderation, and notifications
+are not active in this contract.
 
 Base path:
 
@@ -57,6 +57,39 @@ Content-Type: application/json
 
 Score is an integer from 1 through 5. Body is optional, trimmed, empty-to-null,
 and limited to 2000 characters. Success returns HTTP 201.
+
+Creating a Review updates `rating_sum`, `reviews_count`, and two-decimal
+`rating_average` in the same database transaction. Updating a score applies
+only its delta; deleting an active Review removes its contribution. The legacy
+Service Provider and Consultant rating columns are synchronized projections,
+while the shared aggregate remains authoritative.
+
+## List public Reviews and rating summary
+
+```http
+GET /api/v1/reviews/subjects/{subject_type}/{subject_id}?page=1&page_size=20
+```
+
+No authentication is required. The subject must currently be public/approved.
+Only `active` Reviews are returned. Each item exposes score, optional body,
+safe author display name, and timestamps; reviewer user ID, source identity,
+contacts, reports, and moderation data are never public.
+
+Pagination is returned in `meta`; `meta.rating` contains:
+
+```json
+{
+  "subject_type": "product",
+  "subject_id": 21,
+  "rating_average": "4.50",
+  "reviews_count": 2
+}
+```
+
+Public Product, Store, Service Offer, and Rental Equipment discovery/detail
+contracts expose the same canonical average/count. Rental Equipment also
+includes its Lessor aggregate. Service Provider and Consultant discovery use
+their atomically synchronized projections.
 
 ## List own
 

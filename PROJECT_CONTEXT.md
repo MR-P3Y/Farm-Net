@@ -607,6 +607,15 @@ health, privacy 401, docs, and five Postman requests pass. Runtime has no
 terminal source fixture and no fake Review was inserted. Step 19.4 Public
 Reviews, Aggregates + Discovery Integration is next.
 
+Phase 19 Step 19.4 activates public active-only Review lists and the canonical
+shared rating aggregate. Review create/update/delete adjusts aggregate
+sum/count/average atomically; legacy Service Provider and Consultant rating
+fields are synchronized projections. Product, Store, Service Offer, Rental
+Equipment, and Lessor public contracts now expose canonical rating data.
+Ruff/compileall, all 181 Backend tests, runtime health, 258-path OpenAPI, and
+14 Postman collections / 319 requests pass. Step 19.5 Review Reports + User
+Safety is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

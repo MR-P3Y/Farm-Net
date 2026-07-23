@@ -352,6 +352,8 @@ class ServiceOfferOut(BaseModel):
     views_count: int
     requests_count: int
     completed_requests_count: int
+    rating_average: Decimal = Decimal("0.00")
+    reviews_count: int = 0
     media: list[ServiceOfferMediaOut] = Field(default_factory=list)
     primary_media: ServiceOfferMediaOut | None = None
     category: ServiceCategoryOut | None = None
@@ -395,6 +397,8 @@ class ServiceOfferPublicOut(BaseModel):
     views_count: int
     requests_count: int
     completed_requests_count: int
+    rating_average: Decimal = Decimal("0.00")
+    reviews_count: int = 0
     media: list[ServiceOfferMediaOut] = Field(default_factory=list)
     primary_media: ServiceOfferMediaOut | None = None
     category: ServiceCategoryOut | None = None

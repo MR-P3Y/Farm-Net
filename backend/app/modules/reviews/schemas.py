@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -61,5 +62,32 @@ class ReviewOwnerListResponse(BaseModel):
 class ReviewOwnerDetailResponse(BaseModel):
     success: bool
     data: ReviewOwnerOut
+    message: str
+    meta: dict
+
+
+class ReviewPublicAuthorOut(BaseModel):
+    display_name: str
+
+
+class ReviewPublicOut(BaseModel):
+    id: int
+    score: int
+    body: str | None = None
+    author: ReviewPublicAuthorOut
+    created_at: datetime
+    updated_at: datetime
+
+
+class RatingSummaryOut(BaseModel):
+    subject_type: str
+    subject_id: int
+    rating_average: Decimal
+    reviews_count: int
+
+
+class ReviewPublicListResponse(BaseModel):
+    success: bool
+    data: list[ReviewPublicOut]
     message: str
     meta: dict
