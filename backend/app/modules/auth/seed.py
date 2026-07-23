@@ -270,6 +270,15 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("rental_requests.admin_read", "Admin read rental requests", "rental", "Inspect all rental requests"),
     PermissionSeed("rental_requests.admin_manage", "Admin manage rental requests", "rental", "Manage rental request status"),
 
+    PermissionSeed("reviews.create", "Create reviews", "reviews", "Create an eligible marketplace review"),
+    PermissionSeed("reviews.read_own", "Read own reviews", "reviews", "Read current user's marketplace reviews"),
+    PermissionSeed("reviews.manage_own", "Manage own reviews", "reviews", "Update or delete current user's marketplace reviews"),
+    PermissionSeed("review_reports.create", "Report reviews", "reviews", "Report marketplace reviews for moderation"),
+    PermissionSeed("reviews.admin_read", "Admin read reviews", "reviews", "Inspect marketplace reviews"),
+    PermissionSeed("reviews.admin_moderate", "Admin moderate reviews", "reviews", "Hide or restore marketplace reviews"),
+    PermissionSeed("review_reports.admin_read", "Admin read review reports", "reviews", "Inspect marketplace review reports"),
+    PermissionSeed("review_reports.admin_resolve", "Admin resolve review reports", "reviews", "Resolve marketplace review reports"),
+
 
     PermissionSeed(
         "weather.public_read",
@@ -616,6 +625,10 @@ def assign_default_permissions(
             "orders.cancel",
             "payments.read",
             "payments.create",
+            "reviews.create",
+            "reviews.read_own",
+            "reviews.manage_own",
+            "review_reports.create",
         ],
         "support": [
             "users.read",
@@ -651,6 +664,8 @@ def assign_default_permissions(
             "orders.admin_read",
             "payments.admin_read",
             "media.admin_read",
+            "reviews.admin_read",
+            "review_reports.admin_read",
         ],
         "shop_owner": [
             "wallet.read_own",
@@ -702,6 +717,10 @@ def assign_default_permissions(
             "products.manage_images",
             "orders.seller_read",
             "orders.seller_update",
+            "reviews.create",
+            "reviews.read_own",
+            "reviews.manage_own",
+            "review_reports.create",
         ],
         "service_provider": [
             "wallet.read_own",
@@ -746,6 +765,10 @@ def assign_default_permissions(
             "orders.cancel",
             "payments.read",
             "payments.create",
+            "reviews.create",
+            "reviews.read_own",
+            "reviews.manage_own",
+            "review_reports.create",
         ],
         "lessor": [
             "wallet.read_own",
@@ -782,6 +805,10 @@ def assign_default_permissions(
             "social.bookmark",
             "social.report",
             "expert_answer.read",
+            "reviews.create",
+            "reviews.read_own",
+            "reviews.manage_own",
+            "review_reports.create",
         ],
         "consultant": [
             "wallet.read_own",
@@ -804,6 +831,10 @@ def assign_default_permissions(
             "expert_answer.read",
             "expert_answer.create",
             "expert_answer.manage_own",
+            "reviews.create",
+            "reviews.read_own",
+            "reviews.manage_own",
+            "review_reports.create",
         ],
         "verification_admin": [
             "documents.read",
@@ -858,6 +889,10 @@ def assign_default_permissions(
             "consult_specialties.update",
             "consultants.read",
             "consult_requests.read",
+            "reviews.admin_read",
+            "reviews.admin_moderate",
+            "review_reports.admin_read",
+            "review_reports.admin_resolve",
         ],
         "admin": [
             "dashboard.read",
@@ -967,6 +1002,10 @@ def assign_default_permissions(
             "expert_answer.admin_read",
             "expert_answer.admin_moderate",
             "expert_answer.admin_manage",
+            "reviews.admin_read",
+            "reviews.admin_moderate",
+            "review_reports.admin_read",
+            "review_reports.admin_resolve",
         ],
         "data_client": [
             "data_access.exports.read",

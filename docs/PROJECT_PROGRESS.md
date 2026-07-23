@@ -1499,6 +1499,25 @@ model fields exist:
   Runtime result is claimed; static source evidence is authoritative for 19.1.
 - Evidence: `docs/reviews/phase-19-real-state-audit.md`.
 
+### Step 19.2 Shared Review DB + Permission Foundation
+
+- Added four inactive shared tables for marketplace Reviews, rating aggregates,
+  Review reports, and exact-once moderation logs at Alembic head
+  `a7c9e1f30d13`.
+- Added database constraints for 1–5 scores, typed source/subject compatibility,
+  owner/source/subject uniqueness, lifecycle/deletion consistency, aggregate
+  ranges, one report per user/Review, and unique moderation event keys.
+- Added eight dedicated owner/moderation permissions, assigned four owner
+  permissions to customer/business roles, read-only access to Support, full
+  moderation to Content Manager/Admin, and all eight to Super Admin.
+- Ruff/compileall passed; four focused and all 168 Backend tests passed with 18
+  known warnings. Real MySQL migration, two stable 12-role/257-permission seed
+  runs, and app/database/Redis health passed.
+- `alembic check` reports only the four known pre-existing Consultant/Services
+  index reflection differences and no Review-table drift.
+- No Review API, client behavior, notification, or fabricated rating was added.
+- Evidence: `docs/reviews/phase-19-review-db-permissions.md`.
+
 ## Progress Update Rule
 
 After every completed step:

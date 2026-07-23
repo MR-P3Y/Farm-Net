@@ -593,6 +593,12 @@ real Buyer/Requester is the only reviewer. Step 19.2 Shared Review DB +
 Permission Foundation is next. See
 `docs/reviews/phase-19-real-state-audit.md`.
 
+Phase 19 Step 19.2 adds four inactive shared Review/aggregate/report/moderation
+tables at Alembic head `a7c9e1f30d13` and eight dedicated permissions. MySQL,
+idempotent 12-role/257-permission seed, health, and all 168 Backend tests pass.
+No API or rating mutation is active. Step 19.3 Eligibility, Ownership,
+Lifecycle + Review CRUD is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

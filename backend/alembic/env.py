@@ -20,6 +20,7 @@ from app.modules.expert import models as expert_models  # noqa: F401
 from app.modules.consultants import models as consultant_models  # noqa: F401
 from app.modules.rentals import models as rental_models  # noqa: F401
 from app.modules.finance import models as finance_models  # noqa: F401
+from app.modules.reviews import models as review_models  # noqa: F401
 
 
 config = context.config
