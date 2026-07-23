@@ -1477,6 +1477,28 @@ model fields exist:
   `v0.24.0-activity-center-foundation`.
 - Evidence: `docs/activity-center/phase-23-release-gate.md`.
 
+## Phase 19 — Reviews / Ratings / Reports
+
+### Step 19.1 Real-State Audit + Contract Boundary
+
+- Confirmed there is no marketplace Review/Rating model, migration, API,
+  permission, Mobile/Admin feature, or Postman collection.
+- Kept existing Social post/comment reports, Verification review logs, and
+  future management `reports.*` permissions outside this shared marketplace
+  Review engine.
+- Confirmed the four authoritative eligibility sources: delivered Order,
+  completed Service Request, completed Rental Request, and completed
+  Consultation Request, always owned by the real Buyer/Requester.
+- Identified Service Provider and Consultant rating/count fields as currently
+  unbacked zero-valued placeholders; Product, Store, Equipment, and Lessor have
+  no rating aggregates.
+- Defined one shared 1–5 Review contract, exact-once source/subject ownership,
+  public privacy, governed Review reports, atomic aggregates, moderation audit,
+  and an implementation sequence through Step 19.11.
+- Docker Desktop/Runtime was unavailable during this read-only audit, so no
+  Runtime result is claimed; static source evidence is authoritative for 19.1.
+- Evidence: `docs/reviews/phase-19-real-state-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:

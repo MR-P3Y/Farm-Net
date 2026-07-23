@@ -96,6 +96,12 @@ real-state audit; the approved incremental plan is recorded in
 `docs/search/phase-18-real-state-audit.md`. Existing domain discovery contracts
 remain active while shared contracts are added incrementally.
 
+Phase 19 implementation began on 2026-07-23. Step 19.1 confirmed that no
+marketplace Review/Rating engine exists; Social reports and Verification review
+logs are separate domains. The approved shared-engine sequence and completed-
+source eligibility boundary are recorded in
+`docs/reviews/phase-19-real-state-audit.md`.
+
 ---
 
 ## 3.1 Current Roadmap Note

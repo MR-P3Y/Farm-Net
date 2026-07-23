@@ -148,7 +148,8 @@ Phase 23.8 Role Setup/Verification + Multi-Role Hardening: completed
 Phase 23.9 Home Navigation Simplification + Deep-Link/Auth Hardening: completed
 Phase 23.10 Docs, Tests, and Runtime Regression: completed
 Phase 23.11 Role-Based My Activity Center Release Gate + Tag: completed (v0.24.0-activity-center-foundation)
-Next roadmap step: not selected
+Phase 19.1 Reviews/Ratings/Reports Real-State Audit + Contract Boundary: completed
+Next: Phase 19.2 Shared Review DB + Permission Foundation
 ```
 
 Services means agricultural operational services, not equipment rental.

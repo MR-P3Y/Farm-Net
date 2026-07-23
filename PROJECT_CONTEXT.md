@@ -585,6 +585,14 @@ Runtime, Mobile, Admin, Postman, and Git safety. Role-Based My Activity Center
 is released as `v0.24.0-activity-center-foundation`. Authenticated fixtures for
 live mutation across every professional role remain an explicit E2E boundary.
 
+Phase 19 Reviews / Ratings / Reports is now active. Step 19.1 confirmed there
+is no marketplace Review engine. Existing Social reports and Verification
+review logs remain separate. Delivered Orders and completed Service, Rental,
+and Consultation Requests are the only authoritative eligibility sources; the
+real Buyer/Requester is the only reviewer. Step 19.2 Shared Review DB +
+Permission Foundation is next. See
+`docs/reviews/phase-19-real-state-audit.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
