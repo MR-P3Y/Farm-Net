@@ -37,6 +37,7 @@ geo/price and Rental availability filters, Persian normalization, privacy
 headers, duplicate types, non-TOMAN rejection, response-budget rejection, and
 incomplete availability rejection.
 
-`reviews.postman_collection.json` currently covers the five authenticated owner
-CRUD operations introduced in Phase 19.3. Public Reviews, reports, and Admin
-moderation will be added in their implementation steps.
+`reviews.postman_collection.json` covers all Phase 19 Review route groups:
+authenticated owner CRUD, public active-only Reviews and rating summaries,
+governed reporting, typed Admin Review/report moderation, and immutable
+moderation-log reads.

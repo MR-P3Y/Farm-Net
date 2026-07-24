@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Farm-Net Marketplace Reviews",
-    "description": "Phase 19.4 owner Review CRUD, public active Reviews, canonical atomic rating aggregates, and discovery rating projections. Eligibility is server-authoritative and requires a real delivered/completed source.",
+    "description": "Phase 19 marketplace Reviews: owner CRUD, public active-only reads, canonical atomic rating aggregates, governed reports, typed Admin moderation, and immutable audit logs. Eligibility is server-authoritative and requires a real delivered/completed source.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -11,7 +11,8 @@
     {"key": "review_source_id", "value": "1"},
     {"key": "review_subject_type", "value": "service_provider"},
     {"key": "review_subject_id", "value": "1"},
-    {"key": "review_id", "value": "1"}
+    {"key": "review_id", "value": "1"},
+    {"key": "review_report_id", "value": "1"}
   ],
   "item": [
     {
@@ -133,7 +134,7 @@
           {"key": "Content-Type", "value": "application/json"}
         ],
         "body": {"mode": "raw", "raw": "{\n  \"status\": \"resolved\",\n  \"resolution_note\": \"گزارش بررسی و تأیید شد\"\n}"},
-        "url": "{{base_url}}/admin/reviews/reports/1/status"
+        "url": "{{base_url}}/admin/reviews/reports/{{review_report_id}}/status"
       }
     }
   ]

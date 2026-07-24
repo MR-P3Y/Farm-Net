@@ -217,3 +217,17 @@ Owner responses contain generic source/subject identities, score/body/status,
 capability flags, and timestamps. They do not expose Store/provider/lessor/
 consultant owner user IDs, contact data, request notes, commercial snapshots,
 Admin notes, reports, or moderation actor details.
+
+## Runtime regression
+
+With the Backend running locally:
+
+```powershell
+py -3 backend\scripts\reviews_runtime_regression.py --base-url http://localhost:8000
+```
+
+The command is read-only. It verifies app/database/Redis health, all ten Review
+OpenAPI path groups, typed response references, seven subject and four source
+types, public-schema privacy, unauthenticated owner/Admin boundaries, and the
+public missing-subject contract. Authentication failures stop write requests
+before any mutation.

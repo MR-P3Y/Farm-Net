@@ -1652,6 +1652,25 @@ model fields exist:
   added because this step hardens existing contracts.
 - Evidence: `docs/reviews/phase-19-cross-domain-runtime-hardening.md`.
 
+### Step 19.10 Docs, Postman + Runtime Regression
+
+- Consolidated the complete owner, public, reporting, Admin moderation,
+  aggregate, privacy, and audit-log API documentation.
+- Updated the Review Postman collection metadata and replaced the hard-coded
+  report resolution ID with the reusable `review_report_id` variable; all 12
+  implemented Review operations remain represented.
+- Added a reusable read-only Runtime regression covering health, all ten Review
+  OpenAPI path groups, typed responses, seven subject/four source enums, public
+  privacy, seven unauthenticated boundaries, and missing-subject 404 behavior.
+- Ruff/compileall and all 186 Backend tests passed with 18 known warnings.
+- Mobile analyze, all 54 tests, and Web build/Wasm dry run passed.
+- Admin analyze, all 20 tests, and Web build/Wasm dry run passed.
+- Runtime app/database/Redis health, Alembic head `a7c9e1f30d13`, and two
+  idempotent Auth seed runs at 12 roles / 257 permissions passed.
+- All 14 Postman collections / 325 requests / 130 raw bodies parsed; the
+  Runtime regression performed zero successful mutations.
+- Evidence: `docs/reviews/phase-19-docs-postman-runtime-regression.md`.
+
 ## Progress Update Rule
 
 After every completed step:

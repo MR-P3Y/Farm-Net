@@ -654,6 +654,14 @@ Admin tests, both Web builds, runtime app/database/Redis health, 264-path
 OpenAPI, and 14 Postman collections / 325 requests pass. Step 19.10
 Documentation, Postman + Runtime Regression is next.
 
+Phase 19 Step 19.10 completes Review documentation and Postman metadata and
+adds a reusable read-only Runtime regression for all ten Review path groups,
+typed schemas, privacy, access boundaries, and missing-subject behavior. Ruff/
+compileall, all 186 Backend tests, all 54 Mobile tests, all 20 Admin tests, both
+Web builds, two stable 12-role/257-permission seeds, runtime health, 264-path
+OpenAPI, and 14 Postman collections / 325 requests pass with zero Runtime
+mutations. Step 19.11 Release Gate + Tag is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
