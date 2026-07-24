@@ -715,6 +715,22 @@ tool tests, Mobile analyze/all 54 tests, Admin analyze/all 20 tests, and
 app/database/Redis health pass. Step 22.6 Authentication, Session + Token
 Storage Hardening is next.
 
+Phase 22 Step 22.6 binds access/refresh JWTs to database sessions, adds
+one-time transaction-locked refresh rotation, preserves the fixed session
+lifetime, makes logout invalidate access immediately, and treats reuse of a
+known revoked refresh token as family replay by closing the whole session.
+Mobile and Admin bearer tokens now use `flutter_secure_storage`; legacy
+`SharedPreferences` tokens migrate once and are erased. The overly broad
+`storage/` Git ignore rule that hid both client source files is restricted to
+runtime storage. Six Backend and three tests per client protect these
+contracts. Backend Ruff/compileall, 203 Backend plus eight backup-tool tests,
+Mobile analyze/57 tests/Web build, Admin analyze/23 tests/Web build, real
+OTP/rotation/replay Runtime smoke, Alembic check, and app/database/Redis health
+pass. Web bearer storage still requires HTTPS, HSTS, CSP, and strong XSS
+controls; a future HttpOnly-cookie migration would require an explicit
+CSRF/CORS contract change. Step 22.7 Abuse Protection, Security Headers +
+Transport Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

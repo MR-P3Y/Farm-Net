@@ -226,21 +226,44 @@ class AuthService:
 
         try:
             user_id = int(payload["sub"])
+            session_id = int(payload["sid"])
         except (KeyError, TypeError, ValueError) as exc:
             raise TokenInvalidError() from exc
 
         token_hash = hash_token(refresh_token)
-        stored_token = self.repo.get_refresh_token_by_hash(token_hash)
+        stored_token = self.repo.get_refresh_token_by_hash_for_update(token_hash)
 
         if stored_token is None:
             raise TokenInvalidError()
 
         if stored_token.status != TokenStatus.ACTIVE.value:
+            if stored_token.session_id is not None:
+                now = datetime.utcnow()
+                self.repo.revoke_session(stored_token.session_id, revoked_at=now)
+                self.repo.revoke_active_refresh_tokens_for_session(
+                    stored_token.session_id,
+                    revoked_at=now,
+                )
+                self.repo.commit()
             raise TokenInvalidError()
 
-        if stored_token.expires_at < datetime.utcnow():
+        if stored_token.user_id != user_id or stored_token.session_id != session_id:
+            raise TokenInvalidError()
+
+        now = datetime.utcnow()
+        if stored_token.expires_at < now:
             stored_token.status = TokenStatus.EXPIRED.value
             self.repo.commit()
+            raise TokenInvalidError()
+
+        session = self.repo.get_session_by_id(session_id)
+        if (
+            session is None
+            or session.user_id != user_id
+            or session.status != SessionStatus.ACTIVE.value
+            or session.expires_at is None
+            or session.expires_at < now
+        ):
             raise TokenInvalidError()
 
         user = self.repo.get_user_by_id(user_id)
@@ -249,14 +272,33 @@ class AuthService:
 
         self._ensure_user_can_login(user)
 
-        access_token = create_access_token(subject=user.id)
-
-        # Refresh token rotation is intentionally deferred to the stricter auth phase.
+        remaining_lifetime = session.expires_at - now
+        access_token = create_access_token(
+            subject=user.id,
+            extra_claims={"sid": session.id},
+            expires_delta=min(
+                remaining_lifetime,
+                timedelta(minutes=self.settings.jwt_access_token_expire_minutes),
+            ),
+        )
+        rotated_refresh_token = create_refresh_token(
+            subject=user.id,
+            extra_claims={"sid": session.id},
+            expires_delta=remaining_lifetime,
+        )
+        self.repo.revoke_refresh_token(stored_token, revoked_at=now)
+        self.repo.create_refresh_token(
+            user_id=user.id,
+            session_id=session.id,
+            token_hash=hash_token(rotated_refresh_token),
+            status=TokenStatus.ACTIVE.value,
+            expires_at=session.expires_at,
+        )
         self.repo.commit()
 
         return TokenPairOut(
             access_token=access_token,
-            refresh_token=refresh_token,
+            refresh_token=rotated_refresh_token,
             user=self._user_out(user),
         )
 
@@ -332,7 +374,10 @@ class AuthService:
             expires_at=session_expires_at,
         )
 
-        access_token = create_access_token(subject=user.id)
+        access_token = create_access_token(
+            subject=user.id,
+            extra_claims={"sid": session.id},
+        )
         refresh_token = create_refresh_token(
             subject=user.id,
             extra_claims={"sid": session.id},

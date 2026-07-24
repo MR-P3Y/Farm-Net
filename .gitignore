@@ -48,7 +48,8 @@ ios/.symlinks/
 Thumbs.db
 
 # Storage / Uploads
-storage/
+/storage/
+/backend/storage/
 uploads/
 /media/
 /storage/documents/

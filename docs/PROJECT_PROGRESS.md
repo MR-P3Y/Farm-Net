@@ -1787,6 +1787,31 @@ model fields exist:
   app/database/Redis health remained `ok`.
 - Evidence: `docs/api/openapi-success-contract.md`.
 
+### Step 22.6 Authentication, Session + Token Storage Hardening
+
+- Bound every new access/refresh token to an existing database session through
+  `sid`; access tokens now also carry unique `jti` values.
+- Enforced active, unexpired, same-user session validation on every
+  authenticated Backend request, making logout invalidate access immediately.
+- Added transaction-locked, one-time refresh-token rotation without extending
+  the original session lifetime.
+- Added replay detection: reuse of a known revoked refresh token revokes the
+  complete session and all active tokens in its family.
+- Replaced plaintext Mobile/Admin `SharedPreferences` bearer storage with
+  `flutter_secure_storage`, including one-time legacy migration and erasure.
+- Corrected the broad Git `storage/` ignore rule that had hidden both client
+  token-storage source files; runtime storage remains ignored.
+- Added six Backend session/rotation tests and three secure-storage tests per
+  Flutter client.
+- Backend Ruff/compileall passed; 203 Backend and eight backup-tool tests
+  passed. Mobile analyze/57 tests/Web build and Admin analyze/23 tests/Web
+  build passed.
+- Real Runtime OTP/login/access/rotation/replay smoke passed, its fixture was
+  removed, and app/database/Redis health remained `ok`.
+- Documented the residual Web bearer/XSS boundary and mandatory HTTPS,
+  HSTS/CSP controls without introducing an unplanned cookie/CSRF API migration.
+- Evidence: `docs/production/auth-session-token-storage-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:
