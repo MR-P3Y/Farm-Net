@@ -73,7 +73,13 @@ milestone `v0.25.0-reviews-foundation` (`756e7ea`), not the later Phase 22 audit
 commit. This keeps `main` on a known tested commit while `develop` continues
 with Phase 22 work.
 
-No historical tag or commit is rewritten. Future stable promotion follows the
+The remote `main` had an additional merged PR history that was not an ancestor
+of the stable tag. A non-force two-parent promotion commit `c6ac2f1` preserves
+both histories while its tree is byte-for-byte equal to the tested tag. That
+stable history was merged back into `develop` with zero tree change, so `main`
+is again an ancestor of ongoing development.
+
+No historical tag or commit was rewritten. Future stable promotion follows the
 release-branch workflow above.
 
 ## Roadmap identity

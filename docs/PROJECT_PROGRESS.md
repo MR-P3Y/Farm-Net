@@ -1725,6 +1725,9 @@ model fields exist:
   roadmap phases, historical step numbers, and semantic release versions.
 - Selected `v0.25.0-reviews-foundation` as the safe stable `main` recovery
   target; later Phase 22 commits remain on `develop`.
+- Promoted the exact stable-tag tree to `main` through non-force merge commit
+  `c6ac2f1`, preserving the newer remote PR ancestry, then merged that history
+  back into `develop` with zero file-tree change.
 - No application/API/database/client behavior or runtime secret changed.
 - Evidence: `docs/production/release-branch-version-governance.md`.
 

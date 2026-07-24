@@ -681,9 +681,9 @@ stable `main`, hotfix back-merges, immutable annotated tags, and one cross-
 surface version line. Historical foundation tags remain non-production
 milestones. Development metadata now represents `0.26.0-dev.1` across runtime,
 Backend package, Mobile, and Admin. Stable `main` is recovered only to the
-tested `v0.25.0-reviews-foundation` commit while Phase 22 continues on
-`develop`. Step 22.3 Production Configuration, Secret + Dev-Switch Safety is
-next.
+tested `v0.25.0-reviews-foundation` tree through non-force history-preserving
+merge `c6ac2f1`; its history is merged back into `develop` without file
+changes. Step 22.3 Production Configuration, Secret + Dev-Switch Safety is next.
 
 ## Known Gaps
 
