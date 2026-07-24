@@ -1,6 +1,6 @@
 # Farm-Net Project Progress
 
-Last verified: 2026-07-24
+Last verified: 2026-07-25
 Branch at verification: `develop`
 Verified HEAD before Phase 9.2 commit: `f2b96be`
 
@@ -8,8 +8,8 @@ Verified HEAD before Phase 9.2 commit: `f2b96be`
 
 The latest completed development foundation is
 `v0.25.0-reviews-foundation`. Phase 21 AI/RAG is deferred by owner decision.
-Phase 22 Production Hardening is active; Step 22.1 is complete and Step 22.2
-governs release branches, stable `main`, and synchronized product versioning.
+Phase 22 Production Hardening is active. Steps 22.1 through 22.8 are complete;
+Step 22.9 Observability, Readiness, Metrics + Alerting is next.
 
 ## Completed Foundations
 
@@ -1833,6 +1833,33 @@ model fields exist:
 - Mobile/Admin behavior did not change; their Step 22.6 gate remains the
   applicable client baseline.
 - Evidence: `docs/production/abuse-security-transport-hardening.md`.
+
+### Step 22.8 Production Topology, Container + Worker Hardening
+
+- Added a production Compose topology for internal MySQL/Redis, one-shot
+  migration, non-root Backend, independent Email/SMS/Push workers, and the
+  Nginx TLS edge; only Nginx publishes host ports.
+- Added digest-pinned base/service images, a multi-stage read-only Backend
+  runtime, version-locked Python dependencies, strict Docker build exclusions,
+  persistent database/Redis/Media volumes, resource/log limits, and reduced
+  Linux privileges.
+- Added regular-file secret loading through `*_FILE` settings without secret
+  echo, plus ignored local production secret/config paths.
+- Replaced one-batch notification execution with supervised long-running
+  workers supporting graceful shutdown, structured logs, isolated database
+  sessions, atomic heartbeat state, and failure/staleness health contracts.
+- A complete isolated Production topology drill passed: migration exited `0`;
+  Backend, three workers, MySQL, Redis, and Nginx were healthy; HTTPS health
+  reported app/database/redis `ok`; Backend ran as `10001` with a read-only
+  root filesystem; MySQL/Redis had no host port bindings.
+- The drill's containers, networks, and volumes were removed afterward.
+- Backend Ruff/compileall passed and all 217 Backend tests passed with 27 known
+  deprecation warnings.
+- Real production deployment, certificate automation, immutable registry
+  publication/scanning, provider credentials, monitoring, and rollout remain
+  later Phase 22 work.
+- Evidence:
+  `docs/production/production-topology-container-worker-hardening.md`.
 
 ## Progress Update Rule
 

@@ -745,6 +745,21 @@ template is not a live deployment; real certificates/topology remain later
 Phase 22 work. Step 22.8 Production Topology, Container + Worker Hardening is
 next.
 
+Phase 22 Step 22.8 adds a deployable production Compose contract with
+internal-only authenticated MySQL/Redis, a one-shot migration gate, non-root
+read-only Backend, three independently supervised notification workers,
+persistent data/Media volumes, and an Nginx TLS edge as the only published
+service. Backend and service images are version/digest pinned as applicable;
+file-mounted secrets resolve through fail-closed `*_FILE` settings without
+secret echo. A full isolated topology drill passed migration, all service and
+worker health checks, and HTTPS app/database/Redis health; the Backend ran as
+UID/GID 10001 with no capabilities, and MySQL/Redis exposed no host ports.
+Ruff/compileall and all 217 Backend tests pass. This is verified deployment
+topology, not a claim of live production operation; registry/scanning,
+certificate automation, monitoring, external providers, and rollout remain
+later Phase 22 work. Step 22.9 Observability, Readiness, Metrics + Alerting is
+next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

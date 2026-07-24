@@ -69,6 +69,8 @@ backups/
 *.crt
 ssl/
 certs/
+/infra/production.env
+/infra/secrets/
 
 # Node / Web
 node_modules/

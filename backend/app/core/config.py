@@ -1,5 +1,6 @@
 from functools import lru_cache
 from ipaddress import ip_network
+from pathlib import Path
 from pathlib import PurePosixPath, PureWindowsPath
 from urllib.parse import urlparse
 
@@ -18,9 +19,11 @@ class Settings(BaseSettings):
     admin_base_url: str = "http://localhost:8080"
     media_base_url: str = "http://localhost:8000/media"
 
-    database_url: str
+    database_url: str = ""
+    database_url_file: str = ""
 
     redis_url: str = "redis://redis:6379/0"
+    redis_url_file: str = ""
     media_storage_dir: str = "storage/media"
 
     auth_dev_otp_enabled: bool = True
@@ -30,12 +33,14 @@ class Settings(BaseSettings):
     otp_rate_limit_seconds: int = 60
 
     jwt_secret_key: str = "change-me"
+    jwt_secret_key_file: str = ""
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 30
     jwt_refresh_token_expire_days: int = 30
     super_admin_email: str = "admin@example.com"
     super_admin_phone: str = "09120000000"
     super_admin_password: str = "change-me"
+    super_admin_password_file: str = ""
 
     cors_origins: str = "http://localhost:3000,http://localhost:8080"
 
@@ -58,6 +63,7 @@ class Settings(BaseSettings):
     email_port: int = 587
     email_user: str = ""
     email_password: str = ""
+    email_password_file: str = ""
     email_from: str = ""
     email_starttls: bool = True
     email_use_ssl: bool = False
@@ -67,6 +73,7 @@ class Settings(BaseSettings):
     sms_provider: str = ""
     sms_api_url: str = ""
     sms_api_key: str = ""
+    sms_api_key_file: str = ""
     sms_sender: str = ""
     sms_timeout_seconds: int = 15
 
@@ -74,11 +81,13 @@ class Settings(BaseSettings):
     push_provider: str = ""
     push_api_url: str = ""
     push_api_key: str = ""
+    push_api_key_file: str = ""
     push_timeout_seconds: int = 15
 
     payment_gateway_enabled: bool = False
     payment_gateway: str = "zarinpal"
     payment_merchant_id: str = ""
+    payment_merchant_id_file: str = ""
     payment_callback_base_url: str = ""
     payment_zarinpal_sandbox: bool = True
     payment_gateway_timeout_seconds: int = 15
@@ -88,6 +97,32 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    def model_post_init(self, _context: object) -> None:
+        secret_fields = (
+            ("database_url", "database_url_file"),
+            ("redis_url", "redis_url_file"),
+            ("jwt_secret_key", "jwt_secret_key_file"),
+            ("super_admin_password", "super_admin_password_file"),
+            ("email_password", "email_password_file"),
+            ("sms_api_key", "sms_api_key_file"),
+            ("push_api_key", "push_api_key_file"),
+            ("payment_merchant_id", "payment_merchant_id_file"),
+        )
+        for value_field, file_field in secret_fields:
+            secret_file = getattr(self, file_field).strip()
+            if not secret_file:
+                continue
+            try:
+                path = Path(secret_file)
+                if not path.is_file() or path.is_symlink():
+                    raise OSError
+                value = path.read_text(encoding="utf-8").strip()
+            except OSError as exc:
+                raise ValueError(f"Secret file unavailable: {file_field.upper()}") from exc
+            if not value or len(value) > 65536:
+                raise ValueError(f"Secret file invalid: {file_field.upper()}")
+            object.__setattr__(self, value_field, value)
 
     @property
     def cors_origin_list(self) -> list[str]:
