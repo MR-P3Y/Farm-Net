@@ -1,6 +1,6 @@
 # Step 22.4 — Database Drift, Migration + Backup/Restore Hardening
 
-Date: 2026-07-24  
+Date: 2026-07-24
 Branch: `develop`
 
 ## Database drift
