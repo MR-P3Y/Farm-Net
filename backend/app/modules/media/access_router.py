@@ -14,7 +14,20 @@ router = APIRouter(
 )
 
 
-@router.get("/public/{file_key}")
+@router.get(
+    "/public/{file_key}",
+    response_class=FileResponse,
+    responses={
+        200: {
+            "description": "Public media binary",
+            "content": {
+                "application/octet-stream": {
+                    "schema": {"type": "string", "format": "binary"}
+                }
+            },
+        }
+    },
+)
 def get_public_media(
     file_key: str,
     request: Request,
@@ -35,7 +48,20 @@ def get_public_media(
     )
 
 
-@router.get("/private/{file_key}")
+@router.get(
+    "/private/{file_key}",
+    response_class=FileResponse,
+    responses={
+        200: {
+            "description": "Private media binary",
+            "content": {
+                "application/octet-stream": {
+                    "schema": {"type": "string", "format": "binary"}
+                }
+            },
+        }
+    },
+)
 def get_private_media(
     file_key: str,
     request: Request,

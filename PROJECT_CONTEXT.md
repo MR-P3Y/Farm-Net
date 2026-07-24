@@ -704,6 +704,17 @@ downgrade/upgrade/check, and app/database/Redis health pass. Off-host
 scheduling, retention, and monitoring remain production infrastructure work.
 Step 22.5 Typed OpenAPI Response Contract Hardening is next.
 
+Phase 22 Step 22.5 gives every one of 303 operations across 264 OpenAPI paths
+a non-empty successful response schema. It preserves 22 exact domain response
+models, documents 278 legacy JSON operations through the shared
+`StandardSuccessEnvelope`, and correctly represents three Media downloads as
+binary rather than JSON. Four focused regressions protect coverage, envelope
+compatibility, exact-model precedence, and binary contracts. Runtime behavior
+did not change. Backend Ruff/compileall, 197 Backend tests plus eight backup
+tool tests, Mobile analyze/all 54 tests, Admin analyze/all 20 tests, and
+app/database/Redis health pass. Step 22.6 Authentication, Session + Token
+Storage Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

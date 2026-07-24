@@ -5,6 +5,7 @@ from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
 from app.core.middleware import trace_id_middleware
+from app.core.openapi import install_typed_openapi
 from app.core.rate_limit import create_rate_limit_middleware
 from app.modules.admin.router import router as admin_router
 from app.modules.auth.router import router as auth_router
@@ -120,6 +121,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_expert_router, prefix=settings.api_v1_prefix)
 
     register_exception_handlers(app)
+    install_typed_openapi(app)
 
     return app
 

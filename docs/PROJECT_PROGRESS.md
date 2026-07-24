@@ -1768,6 +1768,25 @@ model fields exist:
   orchestration remain bounded infrastructure work for later Phase 22 steps.
 - Evidence: `docs/production/database-backup-restore-hardening.md`.
 
+### Step 22.5 Typed OpenAPI Response Contract Hardening
+
+- Added the `StandardSuccessEnvelope` OpenAPI component for legacy JSON routes
+  while preserving all 22 existing exact domain response models.
+- Every one of 303 operations across 264 paths now has a non-empty successful
+  response schema: 278 shared envelopes, 22 exact domain models, and three
+  binary Media download contracts.
+- Corrected the three Media access specifications to
+  `application/octet-stream` binary responses instead of empty JSON schemas.
+- Added regression tests for complete success-schema coverage, real envelope
+  compatibility, exact-model precedence, and binary response accuracy.
+- No runtime serialization, endpoint behavior, database, permission, Mobile,
+  or Admin behavior changed.
+- Backend Ruff/compileall passed; Backend tests reported 197 passed with 18
+  known warnings and backup-tool tests reported 8 passed.
+- Mobile analyze/all 54 tests and Admin analyze/all 20 tests passed. Runtime
+  app/database/Redis health remained `ok`.
+- Evidence: `docs/api/openapi-success-contract.md`.
+
 ## Progress Update Rule
 
 After every completed step:
