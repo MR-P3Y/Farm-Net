@@ -1633,6 +1633,25 @@ model fields exist:
   with all five Admin Review route groups present.
 - Evidence: `docs/reviews/phase-19-admin-moderation-panel.md`.
 
+### Step 19.9 Cross-Domain Contract + Runtime Hardening
+
+- Added explicit typed OpenAPI response envelopes to every Admin Review/report
+  list, status-update, and moderation-log route group.
+- Unified Product, Store, and Rental Equipment Search results now read average
+  and count from the canonical shared Review aggregate, matching the existing
+  Service and Consultant integration without synthetic data.
+- Preserved existing API paths, Review lifecycle, Search visibility/privacy,
+  Mobile behavior, Admin behavior, and `TOMAN` money contracts.
+- Ruff/compileall and all 186 Backend tests passed with 18 known warnings.
+- Mobile analyze, all 54 tests, and Web build/Wasm dry run passed.
+- Admin analyze, all 20 tests, and Web build/Wasm dry run passed.
+- Runtime app/database/Redis health passed at Alembic head `a7c9e1f30d13`;
+  OpenAPI remained 264 paths / ten Review paths and the typed Admin response
+  references were verified from the live schema.
+- All 14 Postman collections / 325 requests passed JSON parsing. No request was
+  added because this step hardens existing contracts.
+- Evidence: `docs/reviews/phase-19-cross-domain-runtime-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:

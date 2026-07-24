@@ -8,14 +8,22 @@ from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
 from app.modules.reviews.enums import ReviewReportStatus, ReviewStatus
-from app.modules.reviews.schemas import ReviewModerationIn, ReviewReportResolutionIn
+from app.modules.reviews.schemas import (
+    ReviewAdminDetailResponse,
+    ReviewAdminListResponse,
+    ReviewModerationIn,
+    ReviewModerationLogListResponse,
+    ReviewReportAdminDetailResponse,
+    ReviewReportAdminListResponse,
+    ReviewReportResolutionIn,
+)
 from app.modules.reviews.service import ReviewsService
 
 
 router = APIRouter(prefix="/admin/reviews", tags=["Admin Reviews"])
 
 
-@router.get("/reports")
+@router.get("/reports", response_model=ReviewReportAdminListResponse)
 def list_reports(
     request: Request,
     status: ReviewReportStatus | None = Query(default=None),
@@ -40,7 +48,10 @@ def list_reports(
     )
 
 
-@router.patch("/reports/{report_id}/status")
+@router.patch(
+    "/reports/{report_id}/status",
+    response_model=ReviewReportAdminDetailResponse,
+)
 def resolve_report(
     report_id: int,
     payload: ReviewReportResolutionIn,
@@ -58,7 +69,7 @@ def resolve_report(
     )
 
 
-@router.get("")
+@router.get("", response_model=ReviewAdminListResponse)
 def list_reviews(
     request: Request,
     status: ReviewStatus | None = Query(default=None),
@@ -83,7 +94,10 @@ def list_reviews(
     )
 
 
-@router.patch("/{review_id}/status")
+@router.patch(
+    "/{review_id}/status",
+    response_model=ReviewAdminDetailResponse,
+)
 def moderate_review(
     review_id: int,
     payload: ReviewModerationIn,
@@ -101,7 +115,10 @@ def moderate_review(
     )
 
 
-@router.get("/{review_id}/moderation-logs")
+@router.get(
+    "/{review_id}/moderation-logs",
+    response_model=ReviewModerationLogListResponse,
+)
 def list_moderation_logs(
     review_id: int,
     request: Request,

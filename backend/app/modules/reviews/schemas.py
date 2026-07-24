@@ -183,3 +183,38 @@ class ReviewModerationLogOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ReviewAdminListResponse(BaseModel):
+    success: bool
+    data: list[ReviewAdminOut]
+    message: str
+    meta: dict
+
+
+class ReviewAdminDetailResponse(BaseModel):
+    success: bool
+    data: ReviewAdminOut
+    message: str
+    meta: dict
+
+
+class ReviewReportAdminListResponse(BaseModel):
+    success: bool
+    data: list[ReviewReportAdminOut]
+    message: str
+    meta: dict
+
+
+class ReviewReportAdminDetailResponse(BaseModel):
+    success: bool
+    data: ReviewReportAdminOut
+    message: str
+    meta: dict
+
+
+class ReviewModerationLogListResponse(BaseModel):
+    success: bool
+    data: list[ReviewModerationLogOut]
+    message: str
+    meta: dict

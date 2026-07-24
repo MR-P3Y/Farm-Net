@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from app.common.search import (
     SearchProvider,
     SearchResultType,
@@ -9,13 +11,20 @@ from app.common.search import (
 )
 from app.modules.rentals.enums import RentalDiscoverySort
 from app.modules.rentals.repository import RentalRepository
+from app.modules.reviews.repository import ReviewsRepository
 
 
 class RentalSearchProvider(SearchProvider):
     result_type = SearchResultType.RENTAL_EQUIPMENT
 
-    def __init__(self, db, repository: RentalRepository | None = None) -> None:
+    def __init__(
+        self,
+        db,
+        repository: RentalRepository | None = None,
+        ratings_repository: ReviewsRepository | None = None,
+    ) -> None:
         self.repo = repository or RentalRepository(db)
+        self.ratings = ratings_repository or ReviewsRepository(db)
 
     def search(self, query: UnifiedSearchQuery) -> UnifiedSearchGroup:
         sort = {
@@ -39,6 +48,10 @@ class RentalSearchProvider(SearchProvider):
             page=query.page,
             page_size=query.page_size,
         )
+        ratings = self.ratings.rating_values_by_subject_ids(
+            subject_type="rental_equipment",
+            subject_ids=[row.id for row in rows],
+        )
         items = []
         for row in rows:
             active_prices = [
@@ -47,17 +60,21 @@ class RentalSearchProvider(SearchProvider):
                 if price.is_active and price.currency == "TOMAN"
             ]
             minimum_price = min(active_prices, key=lambda price: price.price_amount, default=None)
+            rating, _ = ratings.get(row.id, (Decimal("0.00"), 0))
             items.append(
                 UnifiedSearchResult(
                     type=self.result_type,
                     resource_id=row.id,
                     title=row.title,
-                    subtitle=row.description[:500] if row.description else row.lessor_profile.display_name,
+                    subtitle=row.description[:500]
+                    if row.description
+                    else row.lessor_profile.display_name,
                     route=f"/rentals/equipment/{row.id}",
                     province_id=row.province_id,
                     city_id=row.city_id,
                     price=minimum_price.price_amount if minimum_price else None,
                     currency=minimum_price.currency if minimum_price else None,
+                    rating=rating,
                     relevance_score=search_relevance_score(
                         query.q,
                         row.title,

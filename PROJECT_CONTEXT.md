@@ -646,6 +646,14 @@ actions, and immutable audit timeline rendering. Admin Flutter analyze, all 20
 tests, Web build, runtime health, and five Admin Review OpenAPI route groups
 pass. Step 19.9 Cross-Domain Contract and Runtime Hardening is next.
 
+Phase 19 Step 19.9 hardens cross-domain contracts by publishing explicit typed
+OpenAPI responses for all five Admin Review route groups and sourcing Product,
+Store, and Rental Equipment unified-search ratings from the canonical Review
+aggregate. Ruff/compileall, all 186 Backend tests, all 54 Mobile tests, all 20
+Admin tests, both Web builds, runtime app/database/Redis health, 264-path
+OpenAPI, and 14 Postman collections / 325 requests pass. Step 19.10
+Documentation, Postman + Runtime Regression is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

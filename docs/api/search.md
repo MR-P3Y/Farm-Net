@@ -48,6 +48,11 @@ Allowed shared sorts are `relevance`, `newest`, `price_asc`, `price_desc`, and
 `rating`. A provider applies a sort when meaningful; otherwise it uses its safe
 relevance/default ordering. Money filters and results are `TOMAN` only.
 
+Search result ratings are backed by the shared Review aggregate. Product,
+Store, and Rental Equipment providers read the canonical aggregate directly;
+Service and Consultant providers expose its synchronized projections. Missing
+aggregates return zero average/count and never create synthetic rating data.
+
 Every provider retains its existing public visibility and privacy rules. Result
 routes are internal Mobile routes, and private contact, ownership, moderation,
 request, and accounting fields are excluded.

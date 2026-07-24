@@ -170,6 +170,30 @@ class ReviewsRepository:
             return Decimal("0.00"), 0
         return aggregate.rating_average, aggregate.reviews_count
 
+    def rating_values_by_subject_ids(
+        self,
+        *,
+        subject_type: str,
+        subject_ids: list[int],
+    ) -> dict[int, tuple[Decimal, int]]:
+        if not subject_ids:
+            return {}
+        aggregates = (
+            self.db.query(MarketplaceRatingAggregate)
+            .filter(
+                MarketplaceRatingAggregate.subject_type == subject_type,
+                MarketplaceRatingAggregate.subject_id.in_(subject_ids),
+            )
+            .all()
+        )
+        return {
+            aggregate.subject_id: (
+                aggregate.rating_average,
+                aggregate.reviews_count,
+            )
+            for aggregate in aggregates
+        }
+
     def add_aggregate(
         self, row: MarketplaceRatingAggregate
     ) -> MarketplaceRatingAggregate:

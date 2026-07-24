@@ -173,6 +173,10 @@ Dedicated permissions protect these contracts:
 - `GET /api/v1/admin/reviews/reports`
 - `PATCH /api/v1/admin/reviews/reports/{report_id}/status`
 
+All five Admin route groups publish explicit typed OpenAPI response envelopes
+for Review/report lists and details plus moderation-log lists. These contracts
+match the typed Admin client and do not expose raw persistence objects.
+
 Review transitions are `active`, `hidden`, and terminal `deleted`. A required
 note and durable audit event accompany each real transition. Hide/delete remove
 an active Review from the canonical aggregate; restore adds it back atomically.
@@ -201,6 +205,11 @@ body, contacts, source/order/request identity, and other reporter identities.
 The first concurrent rating contribution uses a database savepoint and the
 unique subject aggregate constraint. A competing insert reuses and locks the
 winning aggregate row before applying its delta.
+
+Unified Search reads the same canonical aggregate for Product, Store, and
+Rental Equipment results. Service and Consultant Search results use their
+synchronized canonical projections. A subject without an aggregate returns
+`rating_average = 0.00` and `reviews_count = 0`; no placeholder row is created.
 
 ## Owner privacy
 

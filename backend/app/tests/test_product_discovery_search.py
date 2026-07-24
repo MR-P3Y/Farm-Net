@@ -46,7 +46,9 @@ def test_product_provider_maps_shared_filters_and_public_result() -> None:
         sort="price_asc",
     )
 
-    group = ProductSearchProvider(None, repository).search(query)
+    ratings = Mock()
+    ratings.rating_values_by_subject_ids.return_value = {7: (Decimal("4.50"), 2)}
+    group = ProductSearchProvider(None, repository, ratings).search(query)
 
     repository.list_public_products.assert_called_once_with(
         q="سم پاش",
@@ -62,6 +64,7 @@ def test_product_provider_maps_shared_filters_and_public_result() -> None:
     assert group.type == SearchResultType.PRODUCT
     assert group.items[0].route == "/products/7"
     assert group.items[0].currency.value == "TOMAN"
+    assert group.items[0].rating == Decimal("4.50")
 
 
 def test_store_provider_falls_back_to_relevance_for_price_sort() -> None:
@@ -81,10 +84,13 @@ def test_store_provider_falls_back_to_relevance_for_price_sort() -> None:
     )
     query = UnifiedSearchQuery(q="بازار", types=["store"], sort="price_desc")
 
-    group = StoreSearchProvider(None, repository).search(query)
+    ratings = Mock()
+    ratings.rating_values_by_subject_ids.return_value = {9: (Decimal("4.25"), 4)}
+    group = StoreSearchProvider(None, repository, ratings).search(query)
 
     assert repository.list_public_stores.call_args.kwargs["sort"] == StoreDiscoverySort.RELEVANCE
     assert group.items[0].route == "/stores/agri-market"
+    assert group.items[0].rating == Decimal("4.25")
 
 
 def test_public_product_openapi_exposes_hardened_filters() -> None:

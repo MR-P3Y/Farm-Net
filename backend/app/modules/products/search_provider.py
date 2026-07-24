@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from app.common.search import (
     SearchProvider,
     SearchResultType,
@@ -9,13 +11,20 @@ from app.common.search import (
 )
 from app.modules.products.enums import ProductDiscoverySort
 from app.modules.products.repository import ProductRepository
+from app.modules.reviews.repository import ReviewsRepository
 
 
 class ProductSearchProvider(SearchProvider):
     result_type = SearchResultType.PRODUCT
 
-    def __init__(self, db, repository: ProductRepository | None = None) -> None:
+    def __init__(
+        self,
+        db,
+        repository: ProductRepository | None = None,
+        ratings_repository: ReviewsRepository | None = None,
+    ) -> None:
         self.repo = repository or ProductRepository(db)
+        self.ratings = ratings_repository or ReviewsRepository(db)
 
     def search(self, query: UnifiedSearchQuery) -> UnifiedSearchGroup:
         sort = {
@@ -35,28 +44,35 @@ class ProductSearchProvider(SearchProvider):
             page=query.page,
             page_size=query.page_size,
         )
-        items = [
-            UnifiedSearchResult(
-                type=self.result_type,
-                resource_id=row.id,
-                title=row.name,
-                subtitle=row.short_description or getattr(row.store, "name", None),
-                route=f"/products/{row.id}",
-                province_id=getattr(row.store, "province_id", None),
-                city_id=getattr(row.store, "city_id", None),
-                price=row.price,
-                currency=row.currency,
-                relevance_score=search_relevance_score(
-                    query.q,
-                    row.name,
-                    row.slug,
-                    row.short_description,
-                    row.description,
-                    getattr(row.store, "name", None),
-                ),
+        ratings = self.ratings.rating_values_by_subject_ids(
+            subject_type="product",
+            subject_ids=[row.id for row in rows],
+        )
+        items = []
+        for row in rows:
+            rating, _ = ratings.get(row.id, (Decimal("0.00"), 0))
+            items.append(
+                UnifiedSearchResult(
+                    type=self.result_type,
+                    resource_id=row.id,
+                    title=row.name,
+                    subtitle=row.short_description or getattr(row.store, "name", None),
+                    route=f"/products/{row.id}",
+                    province_id=getattr(row.store, "province_id", None),
+                    city_id=getattr(row.store, "city_id", None),
+                    price=row.price,
+                    currency=row.currency,
+                    rating=rating,
+                    relevance_score=search_relevance_score(
+                        query.q,
+                        row.name,
+                        row.slug,
+                        row.short_description,
+                        row.description,
+                        getattr(row.store, "name", None),
+                    ),
+                )
             )
-            for row in rows
-        ]
         return UnifiedSearchGroup(
             type=self.result_type,
             items=items,

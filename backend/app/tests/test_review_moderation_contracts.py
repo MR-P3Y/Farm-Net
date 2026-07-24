@@ -192,6 +192,18 @@ def test_review_report_and_admin_routes_have_separate_permissions():
     assert "get" in paths["/api/v1/admin/reviews/{review_id}/moderation-logs"]
     assert "get" in paths["/api/v1/admin/reviews/reports"]
     assert "patch" in paths["/api/v1/admin/reviews/reports/{report_id}/status"]
+    assert (
+        paths["/api/v1/admin/reviews"]["get"]["responses"]["200"]["content"][
+            "application/json"
+        ]["schema"]["$ref"]
+        == "#/components/schemas/ReviewAdminListResponse"
+    )
+    assert (
+        paths["/api/v1/admin/reviews/reports"]["get"]["responses"]["200"][
+            "content"
+        ]["application/json"]["schema"]["$ref"]
+        == "#/components/schemas/ReviewReportAdminListResponse"
+    )
 
 
 def test_review_notifications_use_stable_keys_and_privacy_safe_payloads(

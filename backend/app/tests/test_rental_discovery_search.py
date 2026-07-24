@@ -61,7 +61,9 @@ def test_rental_provider_maps_price_availability_and_public_result() -> None:
         sort="price_asc",
     )
 
-    group = RentalSearchProvider(None, repository).search(query)
+    ratings = Mock()
+    ratings.rating_values_by_subject_ids.return_value = {21: (Decimal("4.75"), 8)}
+    group = RentalSearchProvider(None, repository, ratings).search(query)
 
     repository.list_equipment.assert_called_once_with(
         public=True,
@@ -81,6 +83,7 @@ def test_rental_provider_maps_price_availability_and_public_result() -> None:
     assert group.type == SearchResultType.RENTAL_EQUIPMENT
     assert group.items[0].route == "/rentals/equipment/21"
     assert group.items[0].price == Decimal("2000000")
+    assert group.items[0].rating == Decimal("4.75")
 
 
 def test_rental_availability_filter_requires_valid_pair() -> None:
@@ -109,9 +112,7 @@ def test_rental_openapi_exposes_hardened_discovery_filters() -> None:
     operation = schema["paths"]["/api/v1/rentals/equipment"]["get"]
     parameters = {parameter["name"]: parameter for parameter in operation["parameters"]}
 
-    assert {"min_price", "max_price", "available_from", "available_to", "sort"}.issubset(
-        parameters
-    )
+    assert {"min_price", "max_price", "available_from", "available_to", "sort"}.issubset(parameters)
     sort_schema = parameters["sort"]["schema"]
     enum_name = sort_schema["anyOf"][0]["$ref"].split("/")[-1]
     assert schema["components"]["schemas"][enum_name]["enum"] == [
