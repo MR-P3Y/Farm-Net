@@ -1812,6 +1812,28 @@ model fields exist:
   HSTS/CSP controls without introducing an unplanned cookie/CSRF API migration.
 - Evidence: `docs/production/auth-session-token-storage-hardening.md`.
 
+### Step 22.7 Abuse Protection, Security Headers + Transport Hardening
+
+- Added atomic Redis-backed distributed rate limiting for staging/production
+  while retaining bounded in-memory development behavior.
+- Added independent general, Search, and sensitive Auth limits; Redis failure
+  now fails closed with a stable HTTP 503 contract.
+- Hardened trusted-proxy parsing with IP/CIDR allowlists and right-to-left XFF
+  chain resolution to prevent spoofed-first-value bypasses.
+- Added global security headers, protected-response `no-store`, trusted HTTPS
+  HSTS, explicit CORS methods/headers, and exposed rate-limit/trace headers.
+- Production-like startup now requires Redis rate limiting and an explicit
+  trusted immediate proxy.
+- Replaced the Nginx placeholder with a TLS 1.2/1.3, HTTP redirect, edge-limit,
+  security-header, bounded-size/timeout, and canonical proxy-header template.
+- Focused regressions reported 19 passed; full Backend reported 212 passed
+  with 27 known warnings and eight backup-tool tests passed.
+- Real Redis atomic limiting, Runtime Auth 429/headers, CORS/security headers,
+  `nginx -t`, app/database/Redis health, and Alembic no-drift checks passed.
+- Mobile/Admin behavior did not change; their Step 22.6 gate remains the
+  applicable client baseline.
+- Evidence: `docs/production/abuse-security-transport-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:

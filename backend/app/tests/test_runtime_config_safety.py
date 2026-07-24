@@ -31,6 +31,8 @@ def secure_production_settings(**overrides) -> Settings:
         "super_admin_phone": "09121111111",
         "super_admin_password": "strong-admin-password",
         "cors_origins": ("https://app.farmnet.example,https://admin.farmnet.example"),
+        "rate_limit_backend": "redis",
+        "trusted_proxy_hosts": "10.10.0.10",
         "_env_file": None,
     }
     values.update(overrides)

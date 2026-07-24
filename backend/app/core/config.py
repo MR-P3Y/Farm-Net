@@ -1,4 +1,5 @@
 from functools import lru_cache
+from ipaddress import ip_network
 from pathlib import PurePosixPath, PureWindowsPath
 from urllib.parse import urlparse
 
@@ -39,11 +40,14 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://localhost:8080"
 
     rate_limit_enabled: bool = True
+    rate_limit_backend: str = "memory"
     rate_limit_requests: int = 120
     rate_limit_window_seconds: int = 60
     rate_limit_max_keys: int = 10000
     search_rate_limit_requests: int = 30
     search_rate_limit_window_seconds: int = 60
+    auth_rate_limit_requests: int = 10
+    auth_rate_limit_window_seconds: int = 60
     trusted_proxy_hosts: str = ""
 
     log_level: str = "INFO"
@@ -173,6 +177,20 @@ class Settings(BaseSettings):
             errors.append("CORS_ORIGINS_INSECURE")
         if not self.rate_limit_enabled:
             errors.append("RATE_LIMIT_DISABLED")
+        if self.rate_limit_backend != "redis":
+            errors.append("RATE_LIMIT_BACKEND_NOT_DISTRIBUTED")
+        if not self.trusted_proxy_host_set:
+            errors.append("TRUSTED_PROXY_HOSTS_EMPTY")
+        else:
+            for proxy in self.trusted_proxy_host_set:
+                try:
+                    network = ip_network(proxy, strict=False)
+                except ValueError:
+                    errors.append("TRUSTED_PROXY_HOSTS_INVALID")
+                    break
+                if network.prefixlen == 0:
+                    errors.append("TRUSTED_PROXY_HOSTS_OVERBROAD")
+                    break
 
         database = urlparse(self.database_url)
         if not database.password or self._is_placeholder(database.password):

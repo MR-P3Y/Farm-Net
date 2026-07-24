@@ -731,6 +731,20 @@ controls; a future HttpOnly-cookie migration would require an explicit
 CSRF/CORS contract change. Step 22.7 Abuse Protection, Security Headers +
 Transport Hardening is next.
 
+Phase 22 Step 22.7 adds atomic Redis distributed rate limiting with independent
+general/Search/Auth policies, fail-closed Redis outages, hashed client keys,
+and right-to-left trusted proxy chain resolution. It adds global security
+headers, protected-response no-store, trusted HTTPS HSTS, explicit CORS
+methods/headers, and production startup requirements for Redis limiting plus
+an immediate proxy allowlist. The Nginx placeholder is replaced by a validated
+TLS 1.2/1.3, redirect, edge-limit, security-header, size/timeout, and canonical
+forwarded-header template. Backend Ruff/compileall, 212 Backend plus eight
+backup-tool tests, real Redis limiting, Runtime Auth 429/header and CORS/header
+smokes, `nginx -t`, Alembic no-drift, and app/database/Redis health pass. The
+template is not a live deployment; real certificates/topology remain later
+Phase 22 work. Step 22.8 Production Topology, Container + Worker Hardening is
+next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
