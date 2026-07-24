@@ -694,6 +694,16 @@ Ruff/compileall and all 193 Backend tests pass; local Docker health remains
 `ok`. Real OTP and credentialed provider delivery remain Step 22.10 work. Step
 22.4 Database Drift, Migration + Backup/Restore Hardening is next.
 
+Phase 22 Step 22.4 resolves all four known Alembic index drifts through
+revision `b8d4f2c71e04`, retaining the canonical uniqueness contracts. It adds
+atomic MySQL/Media backup, versioned SHA-256 manifests, safe archive
+validation, explicit-confirmation restore, and eight focused safety tests. A
+real backup restored successfully into an isolated 98-table database and was
+cleaned up afterward. Backend Ruff/compileall, all 193 Backend tests, Alembic
+downgrade/upgrade/check, and app/database/Redis health pass. Off-host
+scheduling, retention, and monitoring remain production infrastructure work.
+Step 22.5 Typed OpenAPI Response Contract Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

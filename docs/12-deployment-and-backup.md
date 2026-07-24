@@ -970,3 +970,19 @@ payment secret داخل log
 ```text
 اگر امروز کل سرور پاک شود، باید بتوانیم پروژه را از Git + Backup + Env امن دوباره بالا بیاوریم.
 ```
+
+---
+
+# 31. ابزار اجرایی فعلی
+
+در Step 22.4 ابزار واقعی بکاپ و بازیابی اضافه و با restore ایزوله آزمایش شد:
+
+```powershell
+py -3 scripts\backup\farmnet_backup.py
+py -3 scripts\backup\farmnet_restore.py backups\<backup-directory>
+```
+
+جزئیات checksum، تأیید صریح restore، محدودیت مسیر Media و نتیجه‌ی drill در
+`docs/production/database-backup-restore-hardening.md` ثبت شده است. بکاپ محلی
+فقط یک ابزار بازیابی است؛ انتقال رمزگذاری‌شده به فضای خارج از سرور، زمان‌بندی،
+retention و مانیتورینگ job همچنان باید در زیرساخت production اعمال شوند.

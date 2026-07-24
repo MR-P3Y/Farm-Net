@@ -1749,6 +1749,25 @@ model fields exist:
   explicitly deferred to Step 22.10.
 - Evidence: `docs/production/production-config-safety.md`.
 
+### Step 22.4 Database Drift, Migration + Backup/Restore Hardening
+
+- Added Alembic revision `b8d4f2c71e04` to remove four redundant unnamed
+  Consultant/Service unique indexes while preserving the canonical named
+  unique indexes and uniqueness contracts.
+- Downgrade, upgrade, and `alembic check` passed; reflected database metadata
+  now matches the SQLAlchemy model metadata.
+- Replaced the backup placeholder with atomic MySQL/Media backup, versioned
+  manifest, byte-size and SHA-256 verification, archive traversal/link
+  rejection, and explicit-confirmation restore tooling.
+- Created and verified a real local backup, then restored it to the isolated
+  `farmnet_restore_22_4` database; all 98 tables were present and the drill
+  database was removed afterward.
+- Backup safety tests: 8 passed. Backend Ruff/compileall and all 193 Backend
+  tests passed with 18 known warnings; app/database/Redis health remained `ok`.
+- Production off-host storage, scheduling, retention, alerting, and recovery
+  orchestration remain bounded infrastructure work for later Phase 22 steps.
+- Evidence: `docs/production/database-backup-restore-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:
