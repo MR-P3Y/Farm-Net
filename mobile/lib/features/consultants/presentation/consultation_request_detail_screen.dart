@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/digits.dart';
@@ -7,6 +8,7 @@ import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/consultant_models.dart';
 import '../state/consultant_request_detail_controller.dart';
+import '../../reviews/data/review_models.dart';
 
 class ConsultationRequestDetailScreen extends ConsumerStatefulWidget {
   const ConsultationRequestDetailScreen({
@@ -106,6 +108,27 @@ class _ConsultationRequestDetailScreenState
                           onCancel: () => _confirmCancel(request),
                           onChangeStatus: () => _changeStatus(request),
                         ),
+                        if (!widget.assignedMode &&
+                            request.status == 'completed' &&
+                            request.consultantProfileId != null) ...[
+                          SizedBox(height: r.v(12)),
+                          FilledButton.icon(
+                            onPressed: () => context.push(
+                              '/reviews/create',
+                              extra: ReviewCreateTarget(
+                                sourceType: 'consult_request',
+                                sourceId: request.id,
+                                subjectType: 'consultant',
+                                subjectId: request.consultantProfileId!,
+                                title:
+                                    request.consultant?.resolvedName ??
+                                    'مشاور',
+                              ),
+                            ),
+                            icon: const Icon(Icons.rate_review_outlined),
+                            label: const Text('ثبت نظر برای مشاور'),
+                          ),
+                        ],
                       ],
                     ],
                   ),

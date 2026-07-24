@@ -7,6 +7,7 @@ import '../../../core/utils/api_urls.dart';
 import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../reviews/presentation/public_reviews_section.dart';
 import '../data/consultant_models.dart';
 import '../data/consultant_repository.dart';
 
@@ -127,6 +128,11 @@ class ConsultantDetailScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
+                          ),
+                          SizedBox(height: r.v(12)),
+                          PublicReviewsSection(
+                            subjectType: 'consultant',
+                            subjectId: consultant.id,
                           ),
                           SizedBox(height: r.v(12)),
                           FilledButton.icon(

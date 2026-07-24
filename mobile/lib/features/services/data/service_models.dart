@@ -221,6 +221,7 @@ class ServiceRequest {
     required this.currency,
     required this.createdAt,
     this.offerId,
+    this.providerProfileId,
     this.offerTitle,
     this.categoryTitle,
     this.providerDisplayName,
@@ -242,6 +243,7 @@ class ServiceRequest {
   final int id;
   final int? requesterUserId;
   final int? offerId;
+  final int? providerProfileId;
   final String? offerTitle;
   final String? categoryTitle;
   final String? providerDisplayName;
@@ -269,6 +271,7 @@ class ServiceRequest {
     id: (json['id'] as num?)?.toInt() ?? 0,
     requesterUserId: (json['requester_user_id'] as num?)?.toInt(),
     offerId: (json['offer_id'] as num?)?.toInt(),
+    providerProfileId: (json['provider_profile_id'] as num?)?.toInt(),
     offerTitle: json['offer_title']?.toString(),
     categoryTitle: json['category_title']?.toString(),
     providerDisplayName: json['provider_display_name']?.toString(),

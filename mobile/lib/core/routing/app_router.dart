@@ -37,6 +37,9 @@ import '../../features/rentals/presentation/rental_commercial_screen.dart';
 import '../../features/rentals/presentation/rental_workbench_screen.dart';
 import '../../features/rentals/presentation/rental_workbench_detail_screen.dart';
 import '../../features/rentals/data/rental_models.dart';
+import '../../features/reviews/data/review_models.dart';
+import '../../features/reviews/presentation/my_reviews_screen.dart';
+import '../../features/reviews/presentation/review_editor_screen.dart';
 import '../../features/social/presentation/social_create_post_screen.dart';
 import '../../features/social/presentation/social_feed_screen.dart';
 import '../../features/social/presentation/social_post_detail_screen.dart';
@@ -98,6 +101,18 @@ final GoRouter appRouter = GoRouter(
       builder:
           (context, state) =>
               protectedRoute(const NotificationPreferencesScreen()),
+    ),
+    GoRoute(
+      path: '/reviews',
+      name: 'my-reviews',
+      builder: (context, state) => protectedRoute(const MyReviewsScreen()),
+    ),
+    GoRoute(
+      path: '/reviews/create',
+      name: 'review-create',
+      builder: (context, state) => protectedRoute(
+        ReviewEditorScreen(target: state.extra! as ReviewCreateTarget),
+      ),
     ),
     GoRoute(
       path: '/weather',

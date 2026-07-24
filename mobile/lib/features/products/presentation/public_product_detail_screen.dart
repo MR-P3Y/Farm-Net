@@ -5,6 +5,7 @@ import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../../orders/state/order_controller.dart';
+import '../../reviews/presentation/public_reviews_section.dart';
 import '../data/product_models.dart';
 import '../state/product_controller.dart';
 
@@ -149,6 +150,11 @@ class _PublicProductDetailScreenState
                                 product.primaryImage!.filePath,
                           ),
                         ],
+                        SizedBox(height: r.v(20)),
+                        PublicReviewsSection(
+                          subjectType: 'product',
+                          subjectId: product.id,
+                        ),
                         SizedBox(height: r.v(20)),
                         FilledButton.icon(
                           onPressed:

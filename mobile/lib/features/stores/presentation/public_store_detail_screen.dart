@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../reviews/presentation/public_reviews_section.dart';
 import '../state/store_controller.dart';
 
 class PublicStoreDetailScreen extends ConsumerStatefulWidget {
@@ -142,6 +143,11 @@ class _PublicStoreDetailScreenState
                         _InfoRow(
                           label: 'کد پستی',
                           value: store.postalCode ?? '-',
+                        ),
+                        SizedBox(height: r.v(16)),
+                        PublicReviewsSection(
+                          subjectType: 'store',
+                          subjectId: store.id,
                         ),
                         SizedBox(height: r.v(16)),
                         OutlinedButton.icon(

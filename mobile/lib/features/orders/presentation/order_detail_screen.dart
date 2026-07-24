@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/order_models.dart';
 import '../state/order_controller.dart';
+import '../../reviews/data/review_models.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
   const OrderDetailScreen({required this.orderId, super.key});
@@ -99,6 +101,44 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       _InfoRow(label: 'تماس', value: order.shippingPhone!),
                   ],
                 ),
+                if (order.status == 'delivered') ...[
+                  SizedBox(height: r.v(12)),
+                  _SectionCard(
+                    title: 'ثبت نظر',
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          '/reviews/create',
+                          extra: ReviewCreateTarget(
+                            sourceType: 'order',
+                            sourceId: order.id,
+                            subjectType: 'store',
+                            subjectId: order.storeId,
+                            title: 'فروشگاه سفارش',
+                          ),
+                        ),
+                        icon: const Icon(Icons.storefront_outlined),
+                        label: const Text('نظر درباره فروشگاه'),
+                      ),
+                      ...order.items.map(
+                        (item) => TextButton.icon(
+                          onPressed: () => context.push(
+                            '/reviews/create',
+                            extra: ReviewCreateTarget(
+                              sourceType: 'order',
+                              sourceId: order.id,
+                              subjectType: 'product',
+                              subjectId: item.productId,
+                              title: item.productNameSnapshot,
+                            ),
+                          ),
+                          icon: const Icon(Icons.rate_review_outlined),
+                          label: Text('نظر درباره ${item.productNameSnapshot}'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 SizedBox(height: r.v(12)),
                 if (canPay) ...[
                   FilledButton.icon(

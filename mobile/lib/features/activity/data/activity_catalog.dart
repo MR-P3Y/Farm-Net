@@ -11,6 +11,7 @@ enum ActivityActionId {
   serviceRequests,
   rentalRequests,
   consultationRequests,
+  reviews,
   shopProfile,
   shopProducts,
   sellerOrders,
@@ -124,6 +125,12 @@ class ActivityCatalog {
               id: ActivityActionId.consultationRequests,
               title: 'درخواست‌های مشاوره من',
               route: '/consultants/requests',
+            ),
+          if (_has(permissions, 'reviews.read_own'))
+            const ActivityAction(
+              id: ActivityActionId.reviews,
+              title: 'نظرات من',
+              route: '/reviews',
             ),
         ],
       ),

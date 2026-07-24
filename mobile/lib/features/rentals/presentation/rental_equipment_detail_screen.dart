@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../reviews/presentation/public_reviews_section.dart';
 import '../data/rental_models.dart';
 import '../state/rental_discovery_controller.dart';
 
@@ -127,6 +128,11 @@ class _Detail extends StatelessWidget {
               ),
             ),
           ),
+        const SizedBox(height: 12),
+        PublicReviewsSection(
+          subjectType: 'rental_equipment',
+          subjectId: item.id,
+        ),
         const SizedBox(height: 12),
         FilledButton.icon(
           onPressed:

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/rental_models.dart';
 import '../state/rental_request_controller.dart';
+import '../../reviews/data/review_models.dart';
 
 class RentalRequestDetailScreen extends ConsumerStatefulWidget {
   const RentalRequestDetailScreen({super.key, required this.requestId});
@@ -156,6 +158,24 @@ class _State extends ConsumerState<RentalRequestDetailScreen> {
                                 state.isSaving ? null : () => _cancel(row),
                             icon: const Icon(Icons.cancel_outlined),
                             label: const Text('لغو درخواست'),
+                          ),
+                        ),
+                      if (row.status == 'completed')
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: FilledButton.icon(
+                            onPressed: () => context.push(
+                              '/reviews/create',
+                              extra: ReviewCreateTarget(
+                                sourceType: 'rental_request',
+                                sourceId: row.id,
+                                subjectType: 'rental_equipment',
+                                subjectId: row.equipmentId,
+                                title: row.equipmentTitle,
+                              ),
+                            ),
+                            icon: const Icon(Icons.rate_review_outlined),
+                            label: const Text('ثبت نظر برای این تجهیز'),
                           ),
                         ),
                     ],

@@ -1599,6 +1599,22 @@ model fields exist:
   was added because this step hardens existing contracts.
 - Evidence: `docs/reviews/phase-19-notification-privacy-hardening.md`.
 
+### Step 19.7 Mobile Review Creation, History + Public Rendering
+
+- Added one typed shared Mobile Review API/repository/model foundation for all
+  seven subjects, including public ratings, owner history, create, update, and
+  delete contracts.
+- Added a protected 1–5-star creation form, permission-aware `نظرات من`
+  Activity Center entry, lifecycle-aware history edit/delete, and complete
+  loading/error/empty/saving states.
+- Connected eligible creation actions to delivered Orders and completed
+  Service, Rental, and Consultant Requests; Backend remains authoritative.
+- Added reusable public Review rendering to Product, Store, Service Offer,
+  Rental Equipment, and Consultant detail screens.
+- Flutter analyze passed, all 54 tests passed including three focused Review
+  model contracts, and Flutter Web build/Wasm dry run passed.
+- Evidence: `docs/reviews/phase-19-mobile-reviews.md`.
+
 ## Progress Update Rule
 
 After every completed step:

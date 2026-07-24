@@ -227,6 +227,7 @@ class RentalRequest {
   const RentalRequest({
     required this.id,
     required this.equipmentId,
+    required this.lessorProfileId,
     required this.pricingRuleId,
     required this.equipmentTitle,
     required this.startsAt,
@@ -248,6 +249,7 @@ class RentalRequest {
   });
   final int id;
   final int equipmentId;
+  final int lessorProfileId;
   final int pricingRuleId;
   final String equipmentTitle;
   final String? lessorDisplayName;
@@ -276,6 +278,7 @@ class RentalRequest {
   factory RentalRequest.fromJson(Map<String, dynamic> json) => RentalRequest(
     id: (json['id'] as num?)?.toInt() ?? 0,
     equipmentId: (json['equipment_id'] as num?)?.toInt() ?? 0,
+    lessorProfileId: (json['lessor_profile_id'] as num?)?.toInt() ?? 0,
     pricingRuleId: (json['pricing_rule_id'] as num?)?.toInt() ?? 0,
     equipmentTitle: json['equipment_title']?.toString() ?? '',
     lessorDisplayName: json['lessor_display_name']?.toString(),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/service_models.dart';
 import '../state/service_request_controller.dart';
+import '../../reviews/data/review_models.dart';
 
 class ServiceRequestDetailScreen extends ConsumerStatefulWidget {
   const ServiceRequestDetailScreen({required this.requestId, super.key});
@@ -152,6 +154,24 @@ class _State extends ConsumerState<ServiceRequestDetailScreen> {
                       onPressed: state.isSaving ? null : () => _cancel(request),
                       icon: const Icon(Icons.cancel_outlined),
                       label: const Text('لغو درخواست'),
+                    ),
+                  ],
+                  if (request.status == 'completed' &&
+                      request.offerId != null) ...[
+                    SizedBox(height: r.v(16)),
+                    FilledButton.icon(
+                      onPressed: () => context.push(
+                        '/reviews/create',
+                        extra: ReviewCreateTarget(
+                          sourceType: 'service_request',
+                          sourceId: request.id,
+                          subjectType: 'service_offer',
+                          subjectId: request.offerId!,
+                          title: request.offerTitle ?? 'خدمت دریافت‌شده',
+                        ),
+                      ),
+                      icon: const Icon(Icons.rate_review_outlined),
+                      label: const Text('ثبت نظر برای این خدمت'),
                     ),
                   ],
                 ],

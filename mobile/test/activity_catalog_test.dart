@@ -17,7 +17,13 @@ void main() {
 
   test('personal actions are permission aware and always include identity', () {
     final sections = ActivityCatalog.forUser(
-      user(permissions: const ['notifications.read', 'orders.read']),
+      user(
+        permissions: const [
+          'notifications.read',
+          'orders.read',
+          'reviews.read_own',
+        ],
+      ),
     );
 
     expect(sections.single.kind, ActivitySectionKind.personal);
@@ -28,6 +34,7 @@ void main() {
         ActivityActionId.verifications,
         ActivityActionId.notifications,
         ActivityActionId.buyerOrders,
+        ActivityActionId.reviews,
       ]),
     );
     expect(

@@ -335,6 +335,7 @@ class _ActivityActionCard extends StatelessWidget {
     ActivityActionId.serviceRequests => Icons.home_repair_service_outlined,
     ActivityActionId.rentalRequests => Icons.agriculture_outlined,
     ActivityActionId.consultationRequests => Icons.support_agent_outlined,
+    ActivityActionId.reviews => Icons.rate_review_outlined,
     _ => Icons.work_outline,
   };
 }

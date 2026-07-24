@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../reviews/presentation/public_reviews_section.dart';
 import '../data/service_models.dart';
 import '../state/service_discovery_controller.dart';
 
@@ -92,6 +93,11 @@ class ServiceDetailScreen extends ConsumerWidget {
                               const Divider(height: 32),
                               _ProviderCard(provider: offer.provider!),
                             ],
+                            const SizedBox(height: 12),
+                            PublicReviewsSection(
+                              subjectType: 'service_offer',
+                              subjectId: offer.id,
+                            ),
                             const SizedBox(height: 20),
                             FilledButton.icon(
                               onPressed:
