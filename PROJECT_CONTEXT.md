@@ -760,6 +760,20 @@ certificate automation, monitoring, external providers, and rollout remain
 later Phase 22 work. Step 22.9 Observability, Readiness, Metrics + Alerting is
 next.
 
+Phase 22 Step 22.9 separates dependency-free liveness from dependency-aware
+readiness, adds privacy-bounded JSON request logging and low-cardinality
+Prometheus HTTP/build/dependency metrics, and deploys internal-only,
+digest-pinned Prometheus plus Alertmanager services. Nginx blocks public
+metrics/readiness while the safe liveness probe remains available. Five rules
+cover API/Alertmanager availability, dependency readiness, server-error ratio,
+and p95 latency; config validation and deterministic alert firing tests pass.
+A full isolated Production drill showed all services healthy, all three scrape
+targets `up=1`, correct build metadata, correlated JSON logs, and edge results
+`/live=200`, `/metrics=404`, `/ready=404`. Ruff/compileall and all 222 Backend
+tests pass. External operator paging is honestly unconfigured until an owner
+selects the incident channel and provisions credentials. Step 22.10
+Credentialed Staging Provider Verification is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

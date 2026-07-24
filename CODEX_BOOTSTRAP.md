@@ -168,7 +168,8 @@ Phase 22.5 Typed OpenAPI Response Contract Hardening: completed
 Phase 22.6 Authentication, Session + Token Storage Hardening: completed
 Phase 22.7 Abuse Protection, Security Headers + Transport Hardening: completed
 Phase 22.8 Production Topology, Container + Worker Hardening: completed
-Next: Phase 22.9 Observability, Readiness, Metrics + Alerting
+Phase 22.9 Observability, Readiness, Metrics + Alerting: completed
+Next: Phase 22.10 Credentialed Staging Provider Verification
 ```
 
 Services means agricultural operational services, not equipment rental.

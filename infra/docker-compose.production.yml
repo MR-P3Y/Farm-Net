@@ -143,7 +143,7 @@ services:
         - CMD
         - python
         - -c
-        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3).read()
       interval: 15s
       timeout: 5s
       retries: 5
@@ -237,7 +237,7 @@ services:
         - -q
         - -O
         - /dev/null
-        - http://backend:8000/health
+        - http://backend:8000/live
       interval: 15s
       timeout: 5s
       retries: 5
@@ -254,6 +254,73 @@ services:
     logging: *default-logging
     networks:
       - edge
+
+  prometheus:
+    image: prom/prometheus:v3.5.0@sha256:63805ebb8d2b3920190daf1cb14a60871b16fd38bed42b857a3182bc621f4996
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    read_only: true
+    user: "65534:65534"
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    healthcheck:
+      test: ["CMD", "/bin/promtool", "check", "healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      backend:
+        condition: service_healthy
+      alertmanager:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 0.5
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - data
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1@sha256:27c475db5fb156cab31d5c18a4251ac7ed567746a2483ff264516437a39b15ba
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    volumes:
+      - ./observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    read_only: true
+    user: "65534:65534"
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    healthcheck:
+      test:
+        - CMD
+        - /bin/amtool
+        - check-config
+        - /etc/alertmanager/alertmanager.yml
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 0.25
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - data
 
 secrets:
   database_url:
@@ -275,6 +342,8 @@ volumes:
   mysql_data:
   redis_data:
   media_data:
+  prometheus_data:
+  alertmanager_data:
 
 networks:
   edge:

@@ -5,6 +5,7 @@ from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
 from app.core.middleware import trace_id_middleware
+from app.core.observability import configure_app_info
 from app.core.openapi import install_typed_openapi
 from app.core.rate_limit import create_rate_limit_middleware
 from app.core.security_headers import create_security_headers_middleware
@@ -16,6 +17,7 @@ from app.modules.expert.admin_router import router as admin_expert_router
 from app.modules.expert.router import router as expert_router
 from app.modules.geo.router import router as geo_router
 from app.modules.health.router import router as health_router
+from app.modules.health.observability_router import router as observability_router
 from app.modules.media.access_router import router as media_access_router
 from app.modules.media.admin_access_router import router as admin_media_access_router
 from app.modules.media.admin_router import router as admin_media_router
@@ -53,6 +55,7 @@ settings = get_settings()
 
 def create_app() -> FastAPI:
     setup_logging(settings.log_level)
+    configure_app_info(version=settings.app_version, environment=settings.app_env)
 
     app = FastAPI(
         title=settings.app_name,
@@ -105,6 +108,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
     app.include_router(health_router, prefix=settings.api_v1_prefix)
+    app.include_router(observability_router)
     app.include_router(auth_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_router, prefix=settings.api_v1_prefix)
     app.include_router(geo_router, prefix=settings.api_v1_prefix)

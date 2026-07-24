@@ -8,8 +8,8 @@ Verified HEAD before Phase 9.2 commit: `f2b96be`
 
 The latest completed development foundation is
 `v0.25.0-reviews-foundation`. Phase 21 AI/RAG is deferred by owner decision.
-Phase 22 Production Hardening is active. Steps 22.1 through 22.8 are complete;
-Step 22.9 Observability, Readiness, Metrics + Alerting is next.
+Phase 22 Production Hardening is active. Steps 22.1 through 22.9 are complete;
+Step 22.10 Credentialed Staging Provider Verification is next.
 
 ## Completed Foundations
 
@@ -1860,6 +1860,28 @@ model fields exist:
   later Phase 22 work.
 - Evidence:
   `docs/production/production-topology-container-worker-hardening.md`.
+
+### Step 22.9 Observability, Readiness, Metrics + Alerting
+
+- Separated dependency-free `/live` from dependency-aware `/ready`; readiness
+  returns 503 when MySQL or Redis is unavailable while legacy health contracts
+  remain unchanged.
+- Added JSON request logs with sanitized trace IDs, normalized routes, status,
+  and duration without query/body/header/credential capture.
+- Added low-cardinality HTTP, build-info, in-progress, latency, and dependency
+  readiness Prometheus metrics.
+- Added internal-only, digest-pinned, non-root Prometheus and Alertmanager
+  services with persistent data, retention, health, resource, and security
+  boundaries; Nginx blocks public `/metrics` and `/ready`.
+- Added five availability/readiness/error-ratio/latency alert rules and
+  deterministic firing tests.
+- A complete isolated Production drill passed all service health checks,
+  three live Prometheus targets, JSON log correlation, public probe isolation,
+  Prometheus/Alertmanager validation, and alert firing tests.
+- Ruff/compileall and all 222 Backend tests passed with 27 known warnings.
+- Real operator paging remains explicitly unconfigured pending an owner-chosen
+  incident channel and credentials; no delivery claim is made.
+- Evidence: `docs/production/observability-readiness-metrics-alerting.md`.
 
 ## Progress Update Rule
 
