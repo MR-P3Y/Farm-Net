@@ -1615,6 +1615,24 @@ model fields exist:
   model contracts, and Flutter Web build/Wasm dry run passed.
 - Evidence: `docs/reviews/phase-19-mobile-reviews.md`.
 
+### Step 19.8 Admin Review/Report Moderation Panel
+
+- Added a typed Admin Reviews feature with API/repository/state layers for
+  Review, report, moderation-log, and pagination contracts.
+- Added permission-guarded route/sidebar navigation and two responsive tabs
+  with status filters, pagination, refresh, loading, error, empty, and saving
+  states.
+- Added Review hide/restore/terminal-delete and report reviewed/resolved/
+  dismissed actions, all requiring a moderation note, plus an immutable audit
+  timeline dialog.
+- No raw JSON reaches UI; terminal/invalid actions are hidden or disabled while
+  Backend permissions and lifecycle remain authoritative.
+- Admin Flutter analyze passed, all 20 tests passed including four focused
+  Review contracts, and Web build/Wasm dry run passed.
+- Runtime app/database/Redis health remained `ok`; OpenAPI remained 264 paths
+  with all five Admin Review route groups present.
+- Evidence: `docs/reviews/phase-19-admin-moderation-panel.md`.
+
 ## Progress Update Rule
 
 After every completed step:

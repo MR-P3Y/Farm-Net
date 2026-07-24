@@ -640,6 +640,12 @@ Delivered/completed source screens expose server-authoritative creation entry
 points. Flutter analyze, all 54 tests, and Web build pass. Step 19.8 Admin
 Review/Report Moderation Panel is next.
 
+Phase 19 Step 19.8 adds the permission-guarded typed Admin Review/report
+moderation panel with filters, pagination, required notes, lifecycle-aware
+actions, and immutable audit timeline rendering. Admin Flutter analyze, all 20
+tests, Web build, runtime health, and five Admin Review OpenAPI route groups
+pass. Step 19.9 Cross-Domain Contract and Runtime Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

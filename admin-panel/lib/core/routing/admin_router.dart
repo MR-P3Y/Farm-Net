@@ -14,6 +14,7 @@ import '../../features/products/presentation/admin_products_page.dart';
 import '../../features/products/presentation/admin_product_categories_page.dart';
 import '../../features/services/presentation/admin_services_page.dart';
 import '../../features/rentals/presentation/admin_rentals_page.dart';
+import '../../features/reviews/presentation/admin_reviews_page.dart';
 import '../../features/social/presentation/admin_social_page.dart';
 import '../../features/social/presentation/admin_social_categories_page.dart';
 import '../../features/stores/presentation/admin_stores_page.dart';
@@ -205,6 +206,14 @@ final GoRouter adminRouter = GoRouter(
               child: AdminSocialPage(),
             );
           },
+        ),
+        GoRoute(
+          path: '/reviews',
+          name: 'admin-reviews',
+          builder: (context, state) => const AdminPermissionGuard(
+            permission: 'reviews.admin_read',
+            child: AdminReviewsPage(),
+          ),
         ),
         GoRoute(
           path: '/social-categories',

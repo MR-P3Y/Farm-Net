@@ -22,6 +22,12 @@ class AdminSidebar extends ConsumerWidget {
     final canManageTaxonomies = ref
         .watch(adminAuthStateProvider)
         .hasAnyPermission(adminTaxonomyPermissions);
+    final canReadReviews = ref
+        .watch(adminAuthStateProvider)
+        .hasAnyPermission(const [
+          'reviews.admin_read',
+          'review_reports.admin_read',
+        ]);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -126,6 +132,13 @@ class AdminSidebar extends ConsumerWidget {
                   compact: isCompact,
                   onTap: () => context.go('/social'),
                 ),
+                if (canReadReviews)
+                  _SidebarItem(
+                    icon: Icons.rate_review_outlined,
+                    label: 'نظرات و گزارش‌ها',
+                    compact: isCompact,
+                    onTap: () => context.go('/reviews'),
+                  ),
                 _SidebarItem(
                   icon: Icons.payments_outlined,
                   label: l10n.finance,
