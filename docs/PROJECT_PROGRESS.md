@@ -1731,6 +1731,24 @@ model fields exist:
 - No application/API/database/client behavior or runtime secret changed.
 - Evidence: `docs/production/release-branch-version-governance.md`.
 
+### Step 22.3 Production Configuration, Secret + Dev-Switch Safety
+
+- Added startup fail-fast validation for staging/production debug, Dev OTP,
+  JWT/Super Admin defaults, HTTPS base URLs/CORS, rate limiting, database/Redis
+  credentials, absolute Media storage, and production payment sandbox.
+- Enabled Email/SMS/Push/Payment providers now require a complete supported and
+  transport-safe configuration instead of silently accepting partial config.
+- Removed the static OTP fallback when Dev OTP is disabled; codes now use a
+  six-digit cryptographic random source and are not returned to the client.
+- Aligned local Media storage with the documented `MEDIA_STORAGE_DIR` setting
+  and added a non-secret runtime configuration validation command.
+- Added seven focused safety contracts. Ruff/compileall and all 193 Backend
+  tests passed; unsafe production failed with stable codes and no secret echo.
+- Local Docker development app/database/Redis health remained `ok`.
+- Real OTP/provider delivery and credentialed network verification remain
+  explicitly deferred to Step 22.10.
+- Evidence: `docs/production/production-config-safety.md`.
+
 ## Progress Update Rule
 
 After every completed step:

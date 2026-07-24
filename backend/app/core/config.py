@@ -1,4 +1,7 @@
 from functools import lru_cache
+from pathlib import PurePosixPath, PureWindowsPath
+from urllib.parse import urlparse
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,9 +13,14 @@ class Settings(BaseSettings):
 
     api_v1_prefix: str = "/api/v1"
 
+    public_base_url: str = "http://localhost:8000"
+    admin_base_url: str = "http://localhost:8080"
+    media_base_url: str = "http://localhost:8000/media"
+
     database_url: str
 
     redis_url: str = "redis://redis:6379/0"
+    media_storage_dir: str = "storage/media"
 
     auth_dev_otp_enabled: bool = True
     auth_dev_otp_code: str = "111111"
@@ -85,7 +93,127 @@ class Settings(BaseSettings):
     def trusted_proxy_host_set(self) -> set[str]:
         return {host.strip() for host in self.trusted_proxy_hosts.split(",") if host.strip()}
 
+    def validate_runtime_safety(self) -> None:
+        environment = self.app_env.strip().lower()
+        if environment not in {"development", "test", "staging", "production"}:
+            raise ValueError("Unsafe runtime configuration: APP_ENV_UNSUPPORTED")
+
+        errors = self._enabled_provider_errors()
+        if environment in {"staging", "production"}:
+            errors.extend(self._production_like_errors(environment=environment))
+
+        if errors:
+            raise ValueError("Unsafe runtime configuration: " + ", ".join(sorted(set(errors))))
+
+    def _enabled_provider_errors(self) -> list[str]:
+        errors: list[str] = []
+        if self.email_enabled:
+            if self.email_provider != "smtp":
+                errors.append("EMAIL_PROVIDER_UNSUPPORTED")
+            if not self.email_host.strip() or not self.email_from.strip():
+                errors.append("EMAIL_CONFIGURATION_INCOMPLETE")
+            if not (self.email_starttls or self.email_use_ssl):
+                errors.append("EMAIL_TRANSPORT_INSECURE")
+
+        if self.sms_enabled:
+            if self.sms_provider != "http_json":
+                errors.append("SMS_PROVIDER_UNSUPPORTED")
+            if not self._is_https_url(self.sms_api_url) or not all(
+                value.strip() for value in (self.sms_api_key, self.sms_sender)
+            ):
+                errors.append("SMS_CONFIGURATION_INCOMPLETE")
+
+        if self.push_enabled:
+            if self.push_provider != "http_json":
+                errors.append("PUSH_PROVIDER_UNSUPPORTED")
+            if not self._is_https_url(self.push_api_url) or not self.push_api_key.strip():
+                errors.append("PUSH_CONFIGURATION_INCOMPLETE")
+
+        if self.payment_gateway_enabled:
+            if self.payment_gateway != "zarinpal":
+                errors.append("PAYMENT_GATEWAY_UNSUPPORTED")
+            if len(self.payment_merchant_id.strip()) != 36:
+                errors.append("PAYMENT_MERCHANT_INVALID")
+            if not self._is_https_url(self.payment_callback_base_url):
+                errors.append("PAYMENT_CALLBACK_INSECURE")
+        return errors
+
+    def _production_like_errors(self, *, environment: str) -> list[str]:
+        errors: list[str] = []
+        if self.app_debug:
+            errors.append("APP_DEBUG_ENABLED")
+        if self.auth_dev_otp_enabled:
+            errors.append("AUTH_DEV_OTP_ENABLED")
+        if self.jwt_algorithm != "HS256":
+            errors.append("JWT_ALGORITHM_UNSUPPORTED")
+        if len(self.jwt_secret_key.strip()) < 32 or self._is_placeholder(self.jwt_secret_key):
+            errors.append("JWT_SECRET_WEAK")
+        if len(self.super_admin_password) < 12 or self._is_placeholder(self.super_admin_password):
+            errors.append("SUPER_ADMIN_PASSWORD_WEAK")
+        if (
+            self.super_admin_email.strip().lower() == "admin@example.com"
+            or self.super_admin_phone.strip() == "09120000000"
+        ):
+            errors.append("SUPER_ADMIN_IDENTITY_DEFAULT")
+
+        for name, value in (
+            ("PUBLIC_BASE_URL", self.public_base_url),
+            ("ADMIN_BASE_URL", self.admin_base_url),
+            ("MEDIA_BASE_URL", self.media_base_url),
+        ):
+            if not self._is_https_url(value):
+                errors.append(f"{name}_INSECURE")
+
+        origins = self.cors_origin_list
+        if (
+            not origins
+            or "*" in origins
+            or any(not self._is_https_url(origin) for origin in origins)
+        ):
+            errors.append("CORS_ORIGINS_INSECURE")
+        if not self.rate_limit_enabled:
+            errors.append("RATE_LIMIT_DISABLED")
+
+        database = urlparse(self.database_url)
+        if not database.password or self._is_placeholder(database.password):
+            errors.append("DATABASE_CREDENTIALS_WEAK")
+        redis = urlparse(self.redis_url)
+        if not redis.password or self._is_placeholder(redis.password):
+            errors.append("REDIS_AUTH_MISSING")
+        if not self.media_storage_path_is_absolute:
+            errors.append("MEDIA_STORAGE_PATH_RELATIVE")
+        if (
+            environment == "production"
+            and self.payment_gateway_enabled
+            and self.payment_zarinpal_sandbox
+        ):
+            errors.append("PAYMENT_SANDBOX_ENABLED")
+        return errors
+
+    @staticmethod
+    def _is_placeholder(value: str) -> bool:
+        normalized = value.strip().lower()
+        return not normalized or normalized in {
+            "change-me",
+            "changeme",
+            "password",
+            "secret",
+            "admin",
+        }
+
+    @staticmethod
+    def _is_https_url(value: str) -> bool:
+        parsed = urlparse(value.strip())
+        return parsed.scheme == "https" and bool(parsed.netloc)
+
+    @property
+    def media_storage_path_is_absolute(self) -> bool:
+        value = self.media_storage_dir.strip()
+        return PurePosixPath(value).is_absolute() or PureWindowsPath(value).is_absolute()
+
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    settings.validate_runtime_safety()
+    return settings

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import secrets
 
 from sqlalchemy.orm import Session
 
@@ -365,6 +366,4 @@ class AuthService:
         if self.settings.auth_dev_otp_enabled:
             return self.settings.auth_dev_otp_code
 
-        # SMS provider واقعی در فاز Notification/SMS اضافه می‌شود.
-        # فعلاً اگر dev OTP خاموش شد، باز هم code ساده تولید می‌کنیم تا سرویس نشکند.
-        return self.settings.auth_dev_otp_code
+        return f"{secrets.randbelow(1_000_000):06d}"

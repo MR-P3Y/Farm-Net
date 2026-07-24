@@ -685,6 +685,15 @@ tested `v0.25.0-reviews-foundation` tree through non-force history-preserving
 merge `c6ac2f1`; its history is merged back into `develop` without file
 changes. Step 22.3 Production Configuration, Secret + Dev-Switch Safety is next.
 
+Phase 22 Step 22.3 makes staging/production configuration fail closed for
+debug/Dev OTP, weak JWT or bootstrap identity, insecure URLs/CORS, disabled
+rate limiting, weak database/Redis credentials, relative Media paths,
+production payment sandbox, and incomplete enabled providers. Dev OTP off now
+uses cryptographic random codes rather than the configured static fallback.
+Ruff/compileall and all 193 Backend tests pass; local Docker health remains
+`ok`. Real OTP and credentialed provider delivery remain Step 22.10 work. Step
+22.4 Database Drift, Migration + Backup/Restore Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
