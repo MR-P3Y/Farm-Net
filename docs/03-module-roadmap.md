@@ -102,6 +102,11 @@ logs are separate domains. The approved shared-engine sequence and completed-
 source eligibility boundary are recorded in
 `docs/reviews/phase-19-real-state-audit.md`.
 
+Phase 19 is complete and released as `v0.25.0-reviews-foundation`. By owner
+decision, Phase 21 AI/RAG is deferred. Phase 22 Production Hardening is now the
+active track; its read-only audit and approved 22.1–22.13 sequence are recorded
+in `docs/production/phase-22-real-state-audit.md`.
+
 ---
 
 ## 3.1 Current Roadmap Note

@@ -667,6 +667,15 @@ database/seed, Runtime/OpenAPI, Review regression, Mobile, Admin, Postman, and
 Git. Phase 19 Reviews / Ratings / Reports is complete and released as
 `v0.25.0-reviews-foundation`.
 
+Phase 21 AI/RAG is intentionally deferred by owner decision. Phase 22
+Production Hardening is active. Step 22.1 audited the real release baseline and
+confirmed healthy development Runtime/tests alongside production blockers:
+no CI/CD or production topology, placeholder Nginx/backup, `main` 122 commits
+behind `develop`, four Alembic index drifts, mostly untyped OpenAPI responses,
+auth/session hardening gaps, disabled external providers, and no production
+observability/E2E/recovery evidence. The approved sequence is 22.2 through
+22.13; Release/Branch/Version + Documentation Governance is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

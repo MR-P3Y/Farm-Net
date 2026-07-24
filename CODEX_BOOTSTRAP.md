@@ -159,7 +159,9 @@ Phase 19.8 Admin Review/Report Moderation Panel: completed
 Phase 19.9 Cross-Domain Contract + Runtime Hardening: completed
 Phase 19.10 Docs, Postman + Runtime Regression: completed
 Phase 19.11 Reviews/Ratings/Reports Release Gate + Tag: completed (v0.25.0-reviews-foundation)
-Next roadmap phase: not selected
+Phase 21 AI/RAG: deferred by owner decision
+Phase 22.1 Production Readiness Real-State Audit: completed
+Next: Phase 22.2 Release, Branch, Version + Documentation Governance
 ```
 
 Services means agricultural operational services, not equipment rental.

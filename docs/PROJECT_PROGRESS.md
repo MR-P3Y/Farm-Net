@@ -1688,6 +1688,28 @@ model fields exist:
   released as `v0.25.0-reviews-foundation`.
 - Evidence: `docs/reviews/phase-19-release-gate.md`.
 
+## Phase 22 — Production Hardening / Deployment
+
+### Step 22.1 Production Readiness Real-State Audit
+
+- Recorded owner decision to defer Phase 21 AI/RAG and make Phase 22 the active
+  engineering track.
+- Reverified clean/synchronized `develop` at
+  `v0.25.0-reviews-foundation`, healthy Backend/MySQL/Redis Runtime, single
+  Alembic head, 98 tables, and the latest Backend/Mobile/Admin/Postman gates.
+- Confirmed production blockers: no CI/CD or production/staging topology,
+  placeholder Nginx/backup, no worker orchestration/observability/recovery
+  evidence, and disabled credentialed providers.
+- Identified governance/security/contract debt: `main` 122 commits behind,
+  inconsistent app versions, four Alembic index drifts, 281/303 operations
+  without useful typed success schemas, unsafe-default guard gaps, deferred
+  refresh rotation, non-secure Mobile token storage, and shallow E2E coverage.
+- Kept AI/RAG and new business modules outside Phase 22.
+- Defined a bounded Step 22.2–22.13 implementation and release sequence.
+- No application, API, database, client, provider, or infrastructure behavior
+  changed.
+- Evidence: `docs/production/phase-22-real-state-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:
