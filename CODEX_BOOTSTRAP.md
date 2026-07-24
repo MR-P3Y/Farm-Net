@@ -151,7 +151,15 @@ Phase 23.11 Role-Based My Activity Center Release Gate + Tag: completed (v0.24.0
 Phase 19.1 Reviews/Ratings/Reports Real-State Audit + Contract Boundary: completed
 Phase 19.2 Shared Review DB + Permission Foundation: completed (a7c9e1f30d13)
 Phase 19.3 Eligibility, Ownership, Lifecycle + Review CRUD: completed
-Next: Phase 19.4 Public Reviews, Aggregates + Discovery Integration
+Phase 19.4 Public Reviews, Aggregates + Discovery Integration: completed
+Phase 19.5 Review Reports, Admin Moderation + Audit Logs: completed
+Phase 19.6 Notifications, Privacy, Exact-Once + Concurrency Hardening: completed
+Phase 19.7 Mobile Review Creation, History + Public Rendering: completed
+Phase 19.8 Admin Review/Report Moderation Panel: completed
+Phase 19.9 Cross-Domain Contract + Runtime Hardening: completed
+Phase 19.10 Docs, Postman + Runtime Regression: completed
+Phase 19.11 Reviews/Ratings/Reports Release Gate + Tag: completed (v0.25.0-reviews-foundation)
+Next roadmap phase: not selected
 ```
 
 Services means agricultural operational services, not equipment rental.

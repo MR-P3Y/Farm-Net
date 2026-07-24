@@ -1,6 +1,6 @@
 # Farm-Net Project Progress
 
-Last verified: 2026-07-19
+Last verified: 2026-07-24
 Branch at verification: `develop`
 Verified HEAD before Phase 9.2 commit: `f2b96be`
 
@@ -1670,6 +1670,23 @@ model fields exist:
 - All 14 Postman collections / 325 requests / 130 raw bodies parsed; the
   Runtime regression performed zero successful mutations.
 - Evidence: `docs/reviews/phase-19-docs-postman-runtime-regression.md`.
+
+### Step 19.11 Reviews / Ratings / Reports Release Gate + Tag
+
+- Re-ran the complete Backend, database/seed, Runtime/OpenAPI, Review
+  regression, Mobile, Admin, Postman, and Git release gate without adding
+  features or changing behavior.
+- Ruff/compileall and all 186 Backend tests passed with 18 known warnings.
+- Alembic upgraded/current at `a7c9e1f30d13`; two Auth seed runs remained
+  stable at 12 roles / 257 permissions; app/database/Redis health passed.
+- The read-only Review regression verified ten path groups, typed contracts,
+  seven subjects, four sources, privacy/access boundaries, and zero mutations.
+- Mobile analyze, all 54 tests, and Web/Wasm build passed.
+- Admin analyze, all 20 tests, and Web/Wasm build passed.
+- All 14 Postman collections / 325 requests / 130 raw JSON bodies parsed.
+- The release candidate was clean and synchronized on `develop`; Phase 19 is
+  released as `v0.25.0-reviews-foundation`.
+- Evidence: `docs/reviews/phase-19-release-gate.md`.
 
 ## Progress Update Rule
 

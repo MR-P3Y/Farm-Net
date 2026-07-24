@@ -1,6 +1,6 @@
 # Farm-Net Project Context
 
-Last verified: 2026-07-22
+Last verified: 2026-07-24
 Repository path: `E:\Farm-Net`
 Primary development branch: `develop`
 
@@ -662,6 +662,11 @@ Web builds, two stable 12-role/257-permission seeds, runtime health, 264-path
 OpenAPI, and 14 Postman collections / 325 requests pass with zero Runtime
 mutations. Step 19.11 Release Gate + Tag is next.
 
+Phase 19 Step 19.11 passed the independent release gate across Backend,
+database/seed, Runtime/OpenAPI, Review regression, Mobile, Admin, Postman, and
+Git. Phase 19 Reviews / Ratings / Reports is complete and released as
+`v0.25.0-reviews-foundation`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -669,7 +674,7 @@ mutations. Step 19.11 Release Gate + Tag is next.
 - The Zarinpal adapter is implemented but disabled; credentialed sandbox and
   production activation remain operational gaps.
 - SMS, email, and push providers are not connected for production delivery.
-- Contracts, subscriptions, promotion, remaining Reviews work, real payout integration,
+- Contracts, subscriptions, promotion, real payout integration,
   AI/RAG, BI/data access, and production hardening remain future work.
 
 ## Development Environment
@@ -716,5 +721,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.24.0-activity-center-foundation
+v0.25.0-reviews-foundation
 ```
