@@ -676,6 +676,15 @@ auth/session hardening gaps, disabled external providers, and no production
 observability/E2E/recovery evidence. The approved sequence is 22.2 through
 22.13; Release/Branch/Version + Documentation Governance is next.
 
+Phase 22 Step 22.2 establishes `develop` integration, frozen release branches,
+stable `main`, hotfix back-merges, immutable annotated tags, and one cross-
+surface version line. Historical foundation tags remain non-production
+milestones. Development metadata now represents `0.26.0-dev.1` across runtime,
+Backend package, Mobile, and Admin. Stable `main` is recovered only to the
+tested `v0.25.0-reviews-foundation` commit while Phase 22 continues on
+`develop`. Step 22.3 Production Configuration, Secret + Dev-Switch Safety is
+next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

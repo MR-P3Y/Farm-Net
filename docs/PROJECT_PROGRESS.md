@@ -6,8 +6,10 @@ Verified HEAD before Phase 9.2 commit: `f2b96be`
 
 ## Current Position
 
-The Services foundation is released as `v0.17.0-services-foundation`. Phase 9
-completion has resumed; Steps 9.1 through 9.4 are complete.
+The latest completed development foundation is
+`v0.25.0-reviews-foundation`. Phase 21 AI/RAG is deferred by owner decision.
+Phase 22 Production Hardening is active; Step 22.1 is complete and Step 22.2
+governs release branches, stable `main`, and synchronized product versioning.
 
 ## Completed Foundations
 
@@ -1709,6 +1711,22 @@ model fields exist:
 - No application, API, database, client, provider, or infrastructure behavior
   changed.
 - Evidence: `docs/production/phase-22-real-state-audit.md`.
+
+### Step 22.2 Release, Branch, Version + Documentation Governance
+
+- Defined authoritative roles for `develop`, `release/vX.Y.Z`, `main`, and
+  `hotfix/vX.Y.Z`, plus fast-forward/reviewed promotion and immutable annotated
+  tag rules.
+- Classified historical `*-foundation` tags as development milestones rather
+  than retroactive production-deployment claims.
+- Set the next shared product line to `0.26.0-dev.1`: PEP 440
+  `0.26.0.dev1` for Backend and build `+26` for both Flutter clients.
+- Updated the stale progress header and documented the difference between
+  roadmap phases, historical step numbers, and semantic release versions.
+- Selected `v0.25.0-reviews-foundation` as the safe stable `main` recovery
+  target; later Phase 22 commits remain on `develop`.
+- No application/API/database/client behavior or runtime secret changed.
+- Evidence: `docs/production/release-branch-version-governance.md`.
 
 ## Progress Update Rule
 

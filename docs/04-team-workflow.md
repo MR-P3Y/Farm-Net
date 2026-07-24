@@ -231,6 +231,11 @@ release/v0.2.0
 release/v1.0.0
 ```
 
+The authoritative Phase 22 release/branch/version rules are in
+`docs/production/release-branch-version-governance.md`. Historical foundation
+tags are development milestones; a production release additionally requires
+staging, backup/rollback, `main` promotion, deploy, and post-deploy evidence.
+
 ---
 
 # 6. قوانین Git
@@ -585,6 +590,11 @@ v0.8.0-billing-finance
 v0.9.0-store-core
 v1.0.0-mvp-release
 ```
+
+Git tag, Backend runtime/package, Mobile, Admin, release notes, and deployment
+artifact versions must represent the same release line. Development prerelease
+metadata is allowed only on `develop`; the release branch replaces it with the
+final version before the release tag.
 
 ## مراحل Release
 
