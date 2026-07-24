@@ -1576,6 +1576,29 @@ model fields exist:
 - All 14 Postman collections / 325 requests passed JSON parsing.
 - Evidence: `docs/reviews/phase-19-review-reports-moderation.md`.
 
+### Step 19.6 Notifications, Privacy, Exact-Once + Concurrency Hardening
+
+- Added seven Review/report Notification event types using the existing routed
+  Notification pipeline, stable persisted-identity keys, recipient/channel
+  uniqueness, and self-notification suppression.
+- Report creation targets active users by the real
+  `review_reports.admin_read` permission; moderation notifies the Review
+  author and report resolution notifies the reporter.
+- Minimized payloads exclude Review/report/resolution text, contacts, private
+  source identity, and unrelated reporter identity.
+- Hardened concurrent first-Aggregate creation with a savepoint, unique-row
+  recovery, and locking read before atomic delta application.
+- Added focused coverage for stable keys, privacy-safe payloads, permission
+  recipients, aggregate recovery use, and existing exact-once contracts.
+- Ruff/compileall and all 186 Backend tests passed with 18 known warnings.
+- Runtime app/database/Redis health passed at Alembic head `a7c9e1f30d13`;
+  OpenAPI remained 264 paths / ten Review paths. Permission-based recipient
+  lookup resolved the real seeded Review Admin, and a rolled-back
+  `review.reported` event smoke left zero rows.
+- All 14 Postman collections / 325 requests remained JSON-valid; no API request
+  was added because this step hardens existing contracts.
+- Evidence: `docs/reviews/phase-19-notification-privacy-hardening.md`.
+
 ## Progress Update Rule
 
 After every completed step:

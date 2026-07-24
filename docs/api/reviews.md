@@ -186,6 +186,22 @@ Additional errors:
 | `REVIEW_REPORT_ALREADY_EXISTS` | 409 | Reporter already reported this Review |
 | `REVIEW_REPORT_NOT_FOUND` | 404 | Admin report target does not exist |
 
+## Notification and concurrency hardening
+
+Step 19.6 emits exact-once notification events for a new Review report to
+active users holding `review_reports.admin_read`, Review moderation to its
+author, and report resolution to its reporter. Stable event keys derive from
+the persisted report or moderation-log ID. Recipient/channel uniqueness
+prevents duplicate delivery and the shared Notification service suppresses
+self-notification.
+
+Notification payloads exclude report descriptions, resolution notes, Review
+body, contacts, source/order/request identity, and other reporter identities.
+
+The first concurrent rating contribution uses a database savepoint and the
+unique subject aggregate constraint. A competing insert reuses and locks the
+winning aggregate row before applying its delta.
+
 ## Owner privacy
 
 Owner responses contain generic source/subject identities, score/body/status,

@@ -4,6 +4,13 @@
 
 Notifications provides an in-app inbox plus user-controlled channel routing.
 
+Phase 19 Reviews reuses this same pipeline for `review.reported`,
+`review.hidden`, `review.restored`, `review.deleted`,
+`review_report.reviewed`, `review_report.resolved`, and
+`review_report.dismissed`. Review events use stable persisted-identity keys,
+recipient/channel uniqueness, self-notification suppression, permission-based
+Admin recipients, and privacy-minimized payloads.
+
 Default channel:
 
 ```text

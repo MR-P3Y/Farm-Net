@@ -109,6 +109,17 @@ class FakeReviewsRepository:
         self.aggregate = row
         return row
 
+    def get_or_create_aggregate(self, **kwargs):
+        if self.aggregate is None:
+            self.aggregate = SimpleNamespace(
+                subject_type=kwargs["subject_type"],
+                subject_id=kwargs["subject_id"],
+                rating_sum=0,
+                reviews_count=0,
+                rating_average=Decimal("0.00"),
+            )
+        return self.aggregate
+
     def sync_legacy_rating_projection(self, **kwargs):
         self.legacy_projection = kwargs
 

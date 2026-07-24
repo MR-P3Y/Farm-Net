@@ -60,6 +60,9 @@ class ModerationRepository:
     def get_aggregate(self, **_kwargs):
         return self.aggregate
 
+    def get_or_create_aggregate(self, **_kwargs):
+        return self.aggregate
+
     def sync_legacy_rating_projection(self, **_kwargs):
         pass
 
@@ -86,6 +89,9 @@ def _service():
     service = ReviewsService.__new__(ReviewsService)
     service.db = None
     service.repo = ModerationRepository()
+    service._notify_review_reported = lambda **_kwargs: None
+    service._notify_review_moderated = lambda **_kwargs: None
+    service._notify_report_resolution = lambda **_kwargs: None
     return service
 
 
@@ -186,3 +192,62 @@ def test_review_report_and_admin_routes_have_separate_permissions():
     assert "get" in paths["/api/v1/admin/reviews/{review_id}/moderation-logs"]
     assert "get" in paths["/api/v1/admin/reviews/reports"]
     assert "patch" in paths["/api/v1/admin/reviews/reports/{report_id}/status"]
+
+
+def test_review_notifications_use_stable_keys_and_privacy_safe_payloads(
+    monkeypatch,
+):
+    calls = []
+
+    class FakeNotificationService:
+        def __init__(self, _db):
+            pass
+
+        def create_event_and_notify_many(self, **kwargs):
+            calls.append(("many", kwargs))
+
+        def create_event_and_notify_user(self, **kwargs):
+            calls.append(("user", kwargs))
+
+    monkeypatch.setattr(
+        "app.modules.reviews.service.NotificationService",
+        FakeNotificationService,
+    )
+    service = ReviewsService.__new__(ReviewsService)
+    service.db = None
+    service.repo = SimpleNamespace(
+        list_recipient_user_ids_for_permission=lambda _permission: [50, 51]
+    )
+    report = SimpleNamespace(
+        id=11,
+        review_id=10,
+        reporter_user_id=2,
+        reason="privacy",
+        description="متن خصوصی گزارش",
+        resolution_note="یادداشت خصوصی مدیر",
+        status="resolved",
+    )
+    review = SimpleNamespace(id=10, reviewer_user_id=1, status="hidden")
+
+    service._notify_review_reported(report=report, actor_user_id=2)
+    service._notify_review_moderated(
+        review=review,
+        actor_user_id=99,
+        action="hidden",
+        event_key="review-moderation:7",
+    )
+    service._notify_report_resolution(
+        report=report,
+        actor_user_id=99,
+        event_key="review-report-resolution:8",
+    )
+
+    assert [call[1]["event_key"] for call in calls] == [
+        "review-report-created:11",
+        "review-moderation:7",
+        "review-report-resolution:8",
+    ]
+    serialized = repr([call[1]["payload_json"] for call in calls])
+    assert "متن خصوصی گزارش" not in serialized
+    assert "یادداشت خصوصی مدیر" not in serialized
+    assert calls[0][1]["recipient_user_ids"] == [50, 51]

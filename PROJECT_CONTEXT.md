@@ -624,6 +624,15 @@ atomically reflected in canonical ratings. All 185 Backend tests pass. Step
 collections / 325 requests pass. Step 19.6 Notifications, Privacy, Exact-Once
 + Concurrency Hardening is next.
 
+Phase 19 Step 19.6 integrates seven Review/report events into the shared
+Notification engine with permission-based Admin recipients, stable exact-once
+keys, self-notification suppression, and privacy-minimized payloads. Concurrent
+first-Aggregate creation now recovers the unique winner under a locking read.
+All 186 Backend tests, runtime health, permission-recipient lookup,
+rolled-back event smoke, 264-path OpenAPI, and 14 Postman collections / 325
+requests pass. Step 19.7 Mobile Review Creation, History + Public Rendering is
+next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

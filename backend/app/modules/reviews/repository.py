@@ -1,3 +1,5 @@
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from decimal import Decimal
 
@@ -174,6 +176,38 @@ class ReviewsRepository:
         self.db.add(row)
         self.db.flush()
         return row
+
+    def get_or_create_aggregate(
+        self, *, subject_type: str, subject_id: int
+    ) -> MarketplaceRatingAggregate:
+        existing = self.get_aggregate(
+            subject_type=subject_type,
+            subject_id=subject_id,
+            for_update=True,
+        )
+        if existing is not None:
+            return existing
+        candidate = MarketplaceRatingAggregate(
+            subject_type=subject_type,
+            subject_id=subject_id,
+            rating_sum=0,
+            reviews_count=0,
+            rating_average=Decimal("0.00"),
+        )
+        try:
+            with self.db.begin_nested():
+                self.db.add(candidate)
+                self.db.flush()
+            return candidate
+        except IntegrityError:
+            existing = self.get_aggregate(
+                subject_type=subject_type,
+                subject_id=subject_id,
+                for_update=True,
+            )
+            if existing is None:
+                raise
+            return existing
 
     def sync_legacy_rating_projection(
         self,
@@ -356,6 +390,25 @@ class ReviewsRepository:
             .order_by(MarketplaceReviewModerationLog.created_at, MarketplaceReviewModerationLog.id)
             .all()
         )
+
+    def list_recipient_user_ids_for_permission(self, permission_code: str) -> list[int]:
+        rows = self.db.execute(
+            text(
+                """
+                SELECT DISTINCT u.id
+                FROM auth_users u
+                JOIN auth_user_roles ur ON ur.user_id = u.id
+                JOIN auth_roles r ON r.id = ur.role_id AND r.is_active = 1
+                JOIN auth_role_permissions rp ON rp.role_id = r.id
+                JOIN auth_permissions p
+                  ON p.id = rp.permission_id AND p.is_active = 1
+                WHERE p.code = :permission_code AND u.status = 'active'
+                ORDER BY u.id
+                """
+            ),
+            {"permission_code": permission_code},
+        ).fetchall()
+        return [int(row[0]) for row in rows]
 
     def list_own(
         self,

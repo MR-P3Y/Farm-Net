@@ -70,6 +70,14 @@ class NotificationEventType(str, Enum):
     RENTAL_REQUEST_COMPLETED = "rental_request.completed"
     RENTAL_REQUEST_CANCELLED = "rental_request.cancelled"
 
+    REVIEW_REPORTED = "review.reported"
+    REVIEW_HIDDEN = "review.hidden"
+    REVIEW_RESTORED = "review.restored"
+    REVIEW_DELETED = "review.deleted"
+    REVIEW_REPORT_REVIEWED = "review_report.reviewed"
+    REVIEW_REPORT_RESOLVED = "review_report.resolved"
+    REVIEW_REPORT_DISMISSED = "review_report.dismissed"
+
     SYSTEM_MESSAGE = "system.message"
 
 

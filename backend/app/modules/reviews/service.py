@@ -9,6 +9,8 @@ from app.modules.auth.exceptions import PermissionDeniedError
 from app.modules.auth.models import AuthUser
 from app.modules.consultants.enums import ConsultRequestStatus
 from app.modules.orders.enums import OrderStatus
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.service import NotificationService
 from app.modules.rentals.enums import RentalRequestStatus
 from app.modules.reviews.enums import (
     ReviewSourceType,
@@ -24,7 +26,6 @@ from app.modules.reviews.exceptions import (
     ReviewReportNotFoundError,
 )
 from app.modules.reviews.models import (
-    MarketplaceRatingAggregate,
     MarketplaceReview,
     MarketplaceReviewModerationLog,
     MarketplaceReviewReport,
@@ -264,6 +265,10 @@ class ReviewsService:
         )
         try:
             self.repo.add_report(row)
+            self._notify_review_reported(
+                report=row,
+                actor_user_id=user.id,
+            )
             self.repo.commit()
         except IntegrityError as exc:
             self.repo.rollback()
@@ -330,7 +335,7 @@ class ReviewsService:
             ReviewStatus.HIDDEN.value: "hidden",
             ReviewStatus.DELETED.value: "deleted",
         }[target]
-        self.repo.add_moderation_log(
+        log = self.repo.add_moderation_log(
             MarketplaceReviewModerationLog(
                 review_id=row.id,
                 actor_user_id=admin_user_id,
@@ -340,6 +345,12 @@ class ReviewsService:
                 note=payload.note,
                 event_key=f"review:{row.id}:{action}:{uuid4().hex}",
             )
+        )
+        self._notify_review_moderated(
+            review=row,
+            actor_user_id=admin_user_id,
+            action=action,
+            event_key=f"review-moderation:{log.id}",
         )
         self.repo.commit()
         return ReviewAdminOut.model_validate(row)
@@ -374,7 +385,7 @@ class ReviewsService:
         report.resolution_note = payload.resolution_note
         report.reviewed_at = datetime.now(UTC).replace(tzinfo=None)
         action = f"report_{target}"
-        self.repo.add_moderation_log(
+        log = self.repo.add_moderation_log(
             MarketplaceReviewModerationLog(
                 review_id=report.review_id,
                 actor_user_id=admin_user_id,
@@ -383,6 +394,11 @@ class ReviewsService:
                 note=payload.resolution_note,
                 event_key=f"report:{report.id}:{action}:{uuid4().hex}",
             )
+        )
+        self._notify_report_resolution(
+            report=report,
+            actor_user_id=admin_user_id,
+            event_key=f"review-report-resolution:{log.id}",
         )
         self.repo.commit()
         return ReviewReportAdminOut.model_validate(report)
@@ -403,21 +419,10 @@ class ReviewsService:
         rating_delta: int,
         count_delta: int,
     ) -> None:
-        aggregate = self.repo.get_aggregate(
+        aggregate = self.repo.get_or_create_aggregate(
             subject_type=subject_type,
             subject_id=subject_id,
-            for_update=True,
         )
-        if aggregate is None:
-            aggregate = self.repo.add_aggregate(
-                MarketplaceRatingAggregate(
-                    subject_type=subject_type,
-                    subject_id=subject_id,
-                    rating_sum=0,
-                    reviews_count=0,
-                    rating_average=Decimal("0.00"),
-                )
-            )
         rating_sum = aggregate.rating_sum + rating_delta
         reviews_count = aggregate.reviews_count + count_delta
         if reviews_count < 0 or rating_sum < 0:
@@ -436,6 +441,95 @@ class ReviewsService:
             subject_id=subject_id,
             rating_average=aggregate.rating_average,
             reviews_count=reviews_count,
+        )
+
+    def _notify_review_reported(
+        self, *, report: MarketplaceReviewReport, actor_user_id: int
+    ) -> None:
+        recipient_ids = self.repo.list_recipient_user_ids_for_permission(
+            "review_reports.admin_read"
+        )
+        if not recipient_ids:
+            return
+        NotificationService(self.db).create_event_and_notify_many(
+            event_type=NotificationEventType.REVIEW_REPORTED.value,
+            recipient_user_ids=recipient_ids,
+            title="گزارش جدید برای یک نظر",
+            body="یک نظر عمومی برای بررسی مدیریتی گزارش شد.",
+            actor_user_id=actor_user_id,
+            source_type="review_report",
+            source_id=str(report.id),
+            payload_json={
+                "report_id": report.id,
+                "review_id": report.review_id,
+                "reason": report.reason,
+            },
+            action_url="/admin/reviews/reports",
+            priority="high",
+            event_key=f"review-report-created:{report.id}",
+            commit=False,
+        )
+
+    def _notify_review_moderated(
+        self,
+        *,
+        review: MarketplaceReview,
+        actor_user_id: int,
+        action: str,
+        event_key: str,
+    ) -> None:
+        event_type = {
+            "hidden": NotificationEventType.REVIEW_HIDDEN.value,
+            "restored": NotificationEventType.REVIEW_RESTORED.value,
+            "deleted": NotificationEventType.REVIEW_DELETED.value,
+        }[action]
+        title = {
+            "hidden": "نظر شما مخفی شد",
+            "restored": "نظر شما بازیابی شد",
+            "deleted": "نظر شما حذف شد",
+        }[action]
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=event_type,
+            recipient_user_id=review.reviewer_user_id,
+            title=title,
+            body="وضعیت نظر شما پس از بررسی مدیریتی تغییر کرد.",
+            actor_user_id=actor_user_id,
+            source_type="review",
+            source_id=str(review.id),
+            payload_json={"review_id": review.id, "status": review.status},
+            action_url="/reviews/me",
+            event_key=event_key,
+            commit=False,
+        )
+
+    def _notify_report_resolution(
+        self,
+        *,
+        report: MarketplaceReviewReport,
+        actor_user_id: int,
+        event_key: str,
+    ) -> None:
+        event_type = {
+            "reviewed": NotificationEventType.REVIEW_REPORT_REVIEWED.value,
+            "resolved": NotificationEventType.REVIEW_REPORT_RESOLVED.value,
+            "dismissed": NotificationEventType.REVIEW_REPORT_DISMISSED.value,
+        }[report.status]
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=event_type,
+            recipient_user_id=report.reporter_user_id,
+            title="نتیجه بررسی گزارش نظر",
+            body="وضعیت گزارش شما پس از بررسی مدیریتی به‌روزرسانی شد.",
+            actor_user_id=actor_user_id,
+            source_type="review_report",
+            source_id=str(report.id),
+            payload_json={
+                "report_id": report.id,
+                "review_id": report.review_id,
+                "status": report.status,
+            },
+            action_url="/notifications",
+            event_key=event_key,
+            commit=False,
         )
 
     @staticmethod
