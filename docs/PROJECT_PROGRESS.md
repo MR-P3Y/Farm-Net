@@ -1921,6 +1921,26 @@ model fields exist:
 - No application/API/database/client behavior changed.
 - Evidence: `docs/farms/phase-24-real-state-audit.md`.
 
+### Step 24.2 Crop/Measurement References, Permissions + DB Contract
+
+- Added four reference tables for measurement units, crop categories, crops,
+  and curated crop varieties through Alembic revision `c3e7a9f41b02`.
+- Established square metre as the canonical area base, positive conversion
+  factors, annual/perennial crop types, restricted reference deletion, and
+  explicit uniqueness/index contracts.
+- Added an idempotent reference seed with 8 units, 7 categories, and 13 crops;
+  no unverified varieties were guessed.
+- Added own-farm, farm-admin, reference-read, and reference-management
+  permissions with least-privilege role mappings.
+- Migration upgrade and no-drift checks passed against MySQL; Auth and Farm
+  seeds each ran twice with stable counts; app/database/Redis health was `ok`.
+- Ruff/compileall passed, 4 focused tests passed, and all 230 Backend tests
+  passed with 27 existing deprecation warnings.
+- Mobile/Admin were unchanged and therefore not rebuilt in this Backend-only
+  foundation step.
+- Evidence:
+  `docs/farms/phase-24-reference-permission-db-contract.md`.
+
 ## Progress Update Rule
 
 After every completed step:

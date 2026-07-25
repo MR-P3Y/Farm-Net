@@ -67,6 +67,13 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("profiles.update", "Update profiles", "profiles", "Update own profile"),
     PermissionSeed("profiles.read_private", "Read private profiles", "profiles", "View private profile fields"),
 
+    PermissionSeed("farms.read_own", "Read own farms", "farms", "Read current user's farms and nested records"),
+    PermissionSeed("farms.manage_own", "Manage own farms", "farms", "Create, update, and archive current user's farms"),
+    PermissionSeed("farms.admin_read", "Admin read farms", "farms", "Inspect private farm records with explicit admin access"),
+    PermissionSeed("farms.admin_manage", "Admin manage farms", "farms", "Perform audited administrative farm actions"),
+    PermissionSeed("farm_references.read", "Read farm references", "farms", "Read active crop and measurement references"),
+    PermissionSeed("farm_references.manage", "Manage farm references", "farms", "Manage crop and measurement references"),
+
     PermissionSeed("consultants.read", "Read consultants", "consultants", "View consultants"),
     PermissionSeed("consultants.profile_manage", "Manage own consultant profile", "consultants", "Create and update own consultant profile"),
     PermissionSeed("consultants.approve", "Approve consultants", "consultants", "Approve consultants"),
@@ -579,6 +586,9 @@ def assign_default_permissions(
 ) -> None:
     role_permissions: dict[str, list[str]] = {
         "user": [
+            "farms.read_own",
+            "farms.manage_own",
+            "farm_references.read",
             "wallet.read_own",
             "profiles.update",
             "geo.read",
@@ -873,6 +883,8 @@ def assign_default_permissions(
             "commission.read",
         ],
         "content_manager": [
+            "farm_references.read",
+            "farm_references.manage",
             "store_categories.read",
             "store_categories.create",
             "store_categories.update",
@@ -895,6 +907,10 @@ def assign_default_permissions(
             "review_reports.admin_resolve",
         ],
         "admin": [
+            "farms.admin_read",
+            "farms.admin_manage",
+            "farm_references.read",
+            "farm_references.manage",
             "dashboard.read",
             "users.read",
             "users.read_detail",

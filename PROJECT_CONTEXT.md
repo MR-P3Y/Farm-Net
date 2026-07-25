@@ -795,7 +795,14 @@ farms per user, owner-derived access, nested plots and crop history, canonical
 area, hierarchical Geo, archive-first lifecycle, private coordinates, Weather
 linkage, and an explicit AI consent/audit boundary. Phase 22.10 remains open;
 starting Phase 24 does not claim Production provider verification succeeded.
-Step 24.2 Crop/Measurement References, Permissions + DB Contract is next.
+Step 24.2 Crop/Measurement References, Permissions + DB Contract is complete.
+Four shared reference tables now cover measurement units, crop categories,
+crops, and curated varieties. An idempotent seed maintains 8 measurement
+units, 7 categories, and 13 crops without guessing varieties. Explicit
+own-farm, administrative Farm, and reference permissions are mapped with least
+privilege. Alembic upgrade/no-drift, twice-run Auth/Farm seeds, app/database/
+Redis health, Ruff, compileall, 4 focused tests, and all 230 Backend tests
+passed. Step 24.3 Owner-Scoped Farm CRUD + Archive Lifecycle is next.
 
 ## Known Gaps
 
