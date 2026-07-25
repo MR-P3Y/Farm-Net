@@ -1959,6 +1959,22 @@ model fields exist:
 - Mobile/Admin were unchanged in this Backend-only step.
 - Evidence: `docs/farms/phase-24-owner-farm-crud-archive.md`.
 
+### Step 24.4 Plot, Geo Point/Boundary + Area Consistency
+
+- Added positive declared Farm area and private nested Plot records through
+  Alembic revision `e5a9c1b63d24`.
+- Stored area canonically in square metres and serialized optional exact point
+  and closed-boundary data only through authenticated owner APIs.
+- Added complete active Geo hierarchy checks across Province, County,
+  District, Rural District, City, and Village.
+- Locked the owner Farm before allocation changes and prevented total Plot area
+  (including retained archived Plots) from exceeding declared Farm area.
+- Added typed list/create/detail/update/archive/restore Plot routes with
+  cross-owner 404 behavior and no public Farm/Plot route.
+- Ruff/compileall, 18 focused tests, all 244 Backend tests, MySQL migration,
+  Alembic no-drift, OpenAPI privacy contracts, and health passed.
+- Evidence: `docs/farms/phase-24-plot-geo-boundary-area.md`.
+
 ## Progress Update Rule
 
 After every completed step:

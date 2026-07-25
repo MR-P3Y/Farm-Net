@@ -815,6 +815,18 @@ compileall, 10 focused tests, all 236 Backend tests, OpenAPI contracts, and
 app/database/Redis health passed. Step 24.4 Plot, Geo Point/Boundary + Area
 Consistency is next.
 
+Step 24.4 Plot, Geo Point/Boundary + Area Consistency is complete. Farms may
+declare a positive canonical square-metre area and contain private owner-only
+Plots with area, full active Geo hierarchy, optional exact point, and a
+validated closed boundary ring. Farm rows are locked before area allocation;
+all retained Plots, including archived ones, count toward the declared limit.
+Geo children require and must belong to their explicit parents. Exact
+coordinates/boundaries have no public route and are management declarations,
+not cadastral proof. Alembic revision `e5a9c1b63d24`, no-drift, Ruff,
+compileall, 18 focused tests, all 244 Backend tests, OpenAPI privacy contracts,
+and app/database/Redis health passed. Step 24.5 Crop Catalog, Varieties +
+Crop-Cycle Lifecycle is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

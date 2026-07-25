@@ -21,6 +21,7 @@ def _row(*, status: str = "active"):
         owner_user_id=7,
         name="مزرعه نمونه",
         description=None,
+        declared_area_sqm=None,
         status=status,
         archived_at=now if status == "archived" else None,
         archive_reason="پایان فعالیت" if status == "archived" else None,

@@ -12,9 +12,13 @@ from app.modules.farms.schemas import (
     FarmCreateIn,
     FarmOwnerDetailResponse,
     FarmOwnerListResponse,
+    FarmPlotCreateIn,
+    FarmPlotDetailResponse,
+    FarmPlotListResponse,
+    FarmPlotUpdateIn,
     FarmUpdateIn,
 )
-from app.modules.farms.service import FarmService
+from app.modules.farms.service import FarmPlotService, FarmService
 
 
 router = APIRouter(prefix="/farms", tags=["Farms"])
@@ -121,5 +125,125 @@ def restore_my_farm(
     return success_response(
         data=result.model_dump(mode="json"),
         message="Farm restored",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post(
+    "/{farm_id}/plots",
+    response_model=FarmPlotDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_farm_plot(
+    farm_id: int,
+    payload: FarmPlotCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("farms.manage_own")),
+):
+    result = FarmPlotService(db).create(user=user, farm_id=farm_id, payload=payload)
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Farm plot created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/{farm_id}/plots", response_model=FarmPlotListResponse)
+def list_farm_plots(
+    farm_id: int,
+    request: Request,
+    include_archived: bool = Query(default=False),
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("farms.read_own")),
+):
+    items = FarmPlotService(db).list_own(
+        user=user,
+        farm_id=farm_id,
+        include_archived=include_archived,
+    )
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={"count": len(items), "trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/{farm_id}/plots/{plot_id}", response_model=FarmPlotDetailResponse)
+def get_farm_plot(
+    farm_id: int,
+    plot_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("farms.read_own")),
+):
+    result = FarmPlotService(db).get_own(
+        user=user, farm_id=farm_id, plot_id=plot_id
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.patch("/{farm_id}/plots/{plot_id}", response_model=FarmPlotDetailResponse)
+def update_farm_plot(
+    farm_id: int,
+    plot_id: int,
+    payload: FarmPlotUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("farms.manage_own")),
+):
+    result = FarmPlotService(db).update(
+        user=user, farm_id=farm_id, plot_id=plot_id, payload=payload
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Farm plot updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post(
+    "/{farm_id}/plots/{plot_id}/archive",
+    response_model=FarmPlotDetailResponse,
+)
+def archive_farm_plot(
+    farm_id: int,
+    plot_id: int,
+    payload: FarmArchiveIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("farms.manage_own")),
+):
+    result = FarmPlotService(db).archive(
+        user=user, farm_id=farm_id, plot_id=plot_id, reason=payload.reason
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Farm plot archived",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post(
+    "/{farm_id}/plots/{plot_id}/restore",
+    response_model=FarmPlotDetailResponse,
+)
+def restore_farm_plot(
+    farm_id: int,
+    plot_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("farms.manage_own")),
+):
+    result = FarmPlotService(db).restore(
+        user=user, farm_id=farm_id, plot_id=plot_id
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Farm plot restored",
         meta={"trace_id": request.state.trace_id},
     )

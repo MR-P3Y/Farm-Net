@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    JSON,
     Numeric,
     String,
     Text,
@@ -32,6 +33,10 @@ class Farm(Base):
     )
     name: Mapped[str] = mapped_column(String(180), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    declared_area_sqm: Mapped[Decimal | None] = mapped_column(
+        Numeric(18, 2),
+        nullable=True,
+    )
     status: Mapped[str] = mapped_column(
         String(30),
         default=FarmStatus.ACTIVE.value,
@@ -47,8 +52,13 @@ class Farm(Base):
         onupdate=datetime.utcnow,
         nullable=False,
     )
+    plots: Mapped[list["FarmPlot"]] = relationship(back_populates="farm")
 
     __table_args__ = (
+        CheckConstraint(
+            "declared_area_sqm IS NULL OR declared_area_sqm > 0",
+            name="ck_farms_declared_area_positive",
+        ),
         CheckConstraint(
             "(status = 'active' AND archived_at IS NULL AND archive_reason IS NULL) OR "
             "(status = 'archived' AND archived_at IS NOT NULL)",
@@ -59,6 +69,91 @@ class Farm(Base):
             name="ck_farms_status",
         ),
         Index("ix_farms_owner_status_updated", "owner_user_id", "status", "updated_at"),
+    )
+
+
+class FarmPlot(Base):
+    __tablename__ = "farm_plots"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    farm_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("farms.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(180), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    area_sqm: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    province_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("geo_provinces.id", ondelete="RESTRICT"), nullable=True
+    )
+    county_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("geo_counties.id", ondelete="RESTRICT"), nullable=True
+    )
+    district_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("geo_districts.id", ondelete="RESTRICT"), nullable=True
+    )
+    rural_district_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("geo_rural_districts.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    city_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("geo_cities.id", ondelete="RESTRICT"), nullable=True
+    )
+    village_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("geo_villages.id", ondelete="RESTRICT"), nullable=True
+    )
+    latitude: Mapped[Decimal | None] = mapped_column(Numeric(10, 7), nullable=True)
+    longitude: Mapped[Decimal | None] = mapped_column(Numeric(10, 7), nullable=True)
+    boundary: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(30), default=FarmStatus.ACTIVE.value, nullable=False
+    )
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    archive_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    farm: Mapped["Farm"] = relationship(back_populates="plots")
+
+    __table_args__ = (
+        CheckConstraint("area_sqm > 0", name="ck_farm_plots_area_positive"),
+        CheckConstraint(
+            "(latitude IS NULL AND longitude IS NULL) OR "
+            "(latitude IS NOT NULL AND longitude IS NOT NULL)",
+            name="ck_farm_plots_coordinate_pair",
+        ),
+        CheckConstraint(
+            "latitude IS NULL OR latitude BETWEEN -90 AND 90",
+            name="ck_farm_plots_latitude",
+        ),
+        CheckConstraint(
+            "longitude IS NULL OR longitude BETWEEN -180 AND 180",
+            name="ck_farm_plots_longitude",
+        ),
+        CheckConstraint(
+            "(status = 'active' AND archived_at IS NULL AND archive_reason IS NULL) OR "
+            "(status = 'archived' AND archived_at IS NOT NULL)",
+            name="ck_farm_plots_archive_state",
+        ),
+        CheckConstraint(
+            "status in ('active', 'archived')",
+            name="ck_farm_plots_status",
+        ),
+        Index("ix_farm_plots_farm_status_updated", "farm_id", "status", "updated_at"),
+        Index(
+            "ix_farm_plots_geo",
+            "province_id",
+            "county_id",
+            "district_id",
+            "rural_district_id",
+            "city_id",
+            "village_id",
+        ),
     )
 
 
