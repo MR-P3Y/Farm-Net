@@ -572,3 +572,74 @@ class FarmWeatherAlertListResponse(BaseModel):
     data: list[FarmWeatherAlertOut]
     message: str
     meta: dict
+
+
+class AdminFarmSummaryOut(BaseModel):
+    id: int
+    owner_user_id: int
+    name: str
+    status: FarmStatus
+    declared_area_sqm: Decimal | None
+    plots_count: int
+    cycles_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminFarmPlotSummaryOut(BaseModel):
+    id: int
+    name: str
+    area_sqm: Decimal
+    status: FarmStatus
+    province_id: int | None
+    city_id: int | None
+    cycles_count: int
+
+
+class AdminFarmCycleSummaryOut(BaseModel):
+    id: int
+    plot_id: int
+    crop_id: int
+    variety_id: int | None
+    title: str | None
+    status: CropCycleStatus
+    planned_start_date: date
+    planned_end_date: date
+    actual_start_date: date | None
+    actual_end_date: date | None
+
+
+class AdminFarmDetailOut(AdminFarmSummaryOut):
+    plots: list[AdminFarmPlotSummaryOut]
+    cycles: list[AdminFarmCycleSummaryOut]
+
+
+class AdminFarmAuditOut(BaseModel):
+    id: int
+    actor_user_id: int
+    action: str
+    target_type: str
+    target_id: int
+    details: dict | None
+    created_at: datetime
+
+
+class AdminFarmListResponse(BaseModel):
+    success: bool
+    data: list[AdminFarmSummaryOut]
+    message: str
+    meta: dict
+
+
+class AdminFarmDetailResponse(BaseModel):
+    success: bool
+    data: AdminFarmDetailOut
+    message: str
+    meta: dict
+
+
+class AdminFarmAuditListResponse(BaseModel):
+    success: bool
+    data: list[AdminFarmAuditOut]
+    message: str
+    meta: dict

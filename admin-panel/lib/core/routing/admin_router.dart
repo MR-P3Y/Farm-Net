@@ -6,6 +6,7 @@ import '../../features/commission/presentation/admin_commission_page.dart';
 import '../../features/consultants/presentation/admin_consultants_page.dart';
 import '../../features/dashboard/admin_dashboard_page.dart';
 import '../../features/finance/presentation/admin_finance_page.dart';
+import '../../features/farms/presentation/admin_farms_page.dart';
 import '../../features/media/presentation/admin_media_page.dart';
 import '../../features/notifications/presentation/admin_notifications_page.dart';
 import '../../features/notifications/presentation/admin_delivery_operations_page.dart';
@@ -49,6 +50,15 @@ final GoRouter adminRouter = GoRouter(
               (context, state) => const AdminPermissionGuard(
                 permission: 'finance.invoices.read',
                 child: AdminFinancePage(),
+              ),
+        ),
+        GoRoute(
+          path: '/farms',
+          name: 'admin-farms',
+          builder:
+              (context, state) => const AdminPermissionGuard(
+                permission: 'farms.admin_read',
+                child: AdminFarmsPage(),
               ),
         ),
         GoRoute(
@@ -210,10 +220,11 @@ final GoRouter adminRouter = GoRouter(
         GoRoute(
           path: '/reviews',
           name: 'admin-reviews',
-          builder: (context, state) => const AdminPermissionGuard(
-            permission: 'reviews.admin_read',
-            child: AdminReviewsPage(),
-          ),
+          builder:
+              (context, state) => const AdminPermissionGuard(
+                permission: 'reviews.admin_read',
+                child: AdminReviewsPage(),
+              ),
         ),
         GoRoute(
           path: '/social-categories',

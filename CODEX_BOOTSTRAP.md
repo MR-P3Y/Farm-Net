@@ -181,8 +181,9 @@ Phase 24.7 Operation Diary, Inputs, Harvest + Farm Media: completed
 Phase 24.8 Privacy, Concurrency, Audit + Retention Hardening: completed
 Phase 24.9 Farm Weather Linking + Contextual Alerts: completed
 Phase 24.10 Mobile My Farms, Plots, Cycles + Diary: completed
+Phase 24.11 Activity Center + Restricted Admin Support: completed
 Active product track: Phase 24 Farm Management / Digital Farm Profiles
-Next: Phase 24.11 Activity Center + Restricted Admin Support
+Next: Phase 24.12 Docs/Postman + Runtime Regression
 ```
 
 Services means agricultural operational services, not equipment rental.

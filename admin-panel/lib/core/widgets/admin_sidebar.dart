@@ -22,12 +22,12 @@ class AdminSidebar extends ConsumerWidget {
     final canManageTaxonomies = ref
         .watch(adminAuthStateProvider)
         .hasAnyPermission(adminTaxonomyPermissions);
-    final canReadReviews = ref
+    final canReadReviews = ref.watch(adminAuthStateProvider).hasAnyPermission(
+      const ['reviews.admin_read', 'review_reports.admin_read'],
+    );
+    final canReadFarms = ref
         .watch(adminAuthStateProvider)
-        .hasAnyPermission(const [
-          'reviews.admin_read',
-          'review_reports.admin_read',
-        ]);
+        .hasPermission('farms.admin_read');
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -90,6 +90,13 @@ class AdminSidebar extends ConsumerWidget {
                   compact: isCompact,
                   onTap: () => context.go('/rentals'),
                 ),
+                if (canReadFarms)
+                  _SidebarItem(
+                    icon: Icons.landscape_outlined,
+                    label: 'پشتیبانی مزارع',
+                    compact: isCompact,
+                    onTap: () => context.go('/farms'),
+                  ),
                 _SidebarItem(
                   icon: Icons.receipt_long_outlined,
                   label: 'سفارش‌ها',

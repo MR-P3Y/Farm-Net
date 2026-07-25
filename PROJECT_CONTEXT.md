@@ -894,6 +894,15 @@ passed. Farm Mobile code has no analyzer diagnostics; 7 non-fatal existing
 `withOpacity` infos remain outside this step, including concurrent Auth work.
 Step 24.11 Activity Center + Restricted Admin Support is next.
 
+Step 24.11 Activity Center + Restricted Admin Support is complete. The
+permission-aware Mobile Activity Center entry from 24.10 is retained and Admin
+now has read-only, typed Farm search/detail/audit support protected by
+`farms.admin_read`. The support contract excludes coordinates, boundaries,
+laboratory values, diary notes, and media/storage details, and provides no
+mutation or ownership-transfer action. Backend Ruff/compileall, 2 focused
+tests, all 278 Backend tests, Admin analyze, 24 Admin tests, and Admin Web build
+passed. Step 24.12 Docs/Postman + Runtime Regression is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

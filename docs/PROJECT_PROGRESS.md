@@ -2075,6 +2075,18 @@ model fields exist:
   edited Auth UI and were not mixed into this commit.
 - Evidence: `docs/farms/phase-24-mobile-my-farms.md`.
 
+### Step 24.11 Activity Center + Restricted Admin Support
+
+- Retained the role/permission-aware Mobile Activity Center Farm entry.
+- Added read-only Admin Farm list/detail/audit APIs and a typed Admin page with
+  search, lifecycle filtering, pagination, summaries, and audit history.
+- Enforced `farms.admin_read` in Backend and Admin routing.
+- Excluded exact location, boundary, lab, diary, and media/storage data; no
+  write or ownership-transfer action is available.
+- Backend Ruff/compileall, 2 focused tests, all 278 Backend tests, Admin
+  analyze, 24 Admin tests, and Admin Web build passed.
+- Evidence: `docs/farms/phase-24-activity-admin-support.md`.
+
 ## Progress Update Rule
 
 After every completed step:
