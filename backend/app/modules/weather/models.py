@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -22,6 +23,13 @@ class WeatherLocation(Base):
     __tablename__ = "weather_locations"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    owner_user_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"),
+        nullable=True, index=True,
+    )
+    visibility: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="public", index=True
+    )
 
     country_code: Mapped[str | None] = mapped_column(String(2), nullable=True, index=True)
 
@@ -56,6 +64,11 @@ class WeatherLocation(Base):
     )
 
     __table_args__ = (
+        CheckConstraint(
+            "(visibility = 'public' AND owner_user_id IS NULL) OR "
+            "(visibility = 'private' AND owner_user_id IS NOT NULL)",
+            name="ck_weather_locations_visibility_owner",
+        ),
         Index("ix_weather_locations_lat_lon", "latitude", "longitude"),
         Index("ix_weather_locations_geo_ids", "province_id", "city_id", "village_id"),
     )

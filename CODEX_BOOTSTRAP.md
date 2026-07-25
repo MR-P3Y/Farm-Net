@@ -179,8 +179,9 @@ Phase 24.5 Crop Catalog, Varieties + Crop-Cycle Lifecycle: completed
 Phase 24.6 Soil, Water, Irrigation + Laboratory Observations: completed
 Phase 24.7 Operation Diary, Inputs, Harvest + Farm Media: completed
 Phase 24.8 Privacy, Concurrency, Audit + Retention Hardening: completed
+Phase 24.9 Farm Weather Linking + Contextual Alerts: completed
 Active product track: Phase 24 Farm Management / Digital Farm Profiles
-Next: Phase 24.9 Farm Weather Linking + Contextual Alerts
+Next: Phase 24.10 Mobile My Farms, Plots, Cycles + Diary
 ```
 
 Services means agricultural operational services, not equipment rental.

@@ -376,6 +376,24 @@ class FarmAuditLog(Base):
     )
 
 
+class FarmPlotWeatherLink(Base):
+    __tablename__ = "farm_plot_weather_links"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    plot_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_plots.id", ondelete="RESTRICT"),
+        nullable=False, unique=True, index=True,
+    )
+    weather_location_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("weather_locations.id", ondelete="RESTRICT"),
+        nullable=False, unique=True, index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+
 class FarmSoilProfile(Base):
     __tablename__ = "farm_soil_profiles"
 

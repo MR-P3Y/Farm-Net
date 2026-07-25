@@ -502,3 +502,64 @@ class FarmRecordMediaListResponse(BaseModel):
     data: list[FarmRecordMediaOut]
     message: str
     meta: dict
+
+
+class FarmWeatherSnapshotOut(BaseModel):
+    provider: str
+    temperature_c: Decimal | None
+    feels_like_c: Decimal | None
+    humidity_percent: Decimal | None
+    wind_speed_mps: Decimal | None
+    wind_direction_deg: int | None
+    pressure_hpa: Decimal | None
+    condition_code: str | None
+    condition_text: str | None
+    observed_at: datetime
+
+
+class FarmWeatherForecastOut(BaseModel):
+    provider: str
+    forecast_type: str
+    forecast_time: datetime
+    temperature_c: Decimal | None
+    min_temperature_c: Decimal | None
+    max_temperature_c: Decimal | None
+    humidity_percent: Decimal | None
+    precipitation_mm: Decimal | None
+    precipitation_probability: Decimal | None
+    wind_speed_mps: Decimal | None
+    condition_code: str | None
+    condition_text: str | None
+
+
+class FarmWeatherAlertOut(BaseModel):
+    id: int
+    alert_type: str
+    severity: str
+    title: str
+    body: str
+    starts_at: datetime
+    ends_at: datetime | None
+
+
+class FarmWeatherContextOut(BaseModel):
+    farm_id: int
+    plot_id: int
+    snapshot: FarmWeatherSnapshotOut | None
+    forecasts: list[FarmWeatherForecastOut]
+    alerts: list[FarmWeatherAlertOut]
+    refreshed: bool
+
+
+class FarmWeatherContextResponse(BaseModel):
+    success: bool
+    data: FarmWeatherContextOut
+    message: str
+    meta: dict
+
+
+class FarmWeatherAlertListResponse(BaseModel):
+    success: bool
+    data: list[FarmWeatherAlertOut]
+    message: str
+    meta: dict

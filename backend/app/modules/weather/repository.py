@@ -31,15 +31,24 @@ class WeatherRepository:
         self.db.flush()
         return row
 
-    def get_location_by_id(self, *, location_id: int) -> WeatherLocation | None:
-        return (
-            self.db.query(WeatherLocation)
-            .filter(
-                WeatherLocation.id == location_id,
-                WeatherLocation.is_active == True,  # noqa: E712
-            )
-            .one_or_none()
+    def get_location_by_id(
+        self, *, location_id: int, owner_user_id: int | None = None
+    ) -> WeatherLocation | None:
+        query = self.db.query(WeatherLocation).filter(
+            WeatherLocation.id == location_id,
+            WeatherLocation.is_active == True,  # noqa: E712
         )
+        if owner_user_id is None:
+            query = query.filter(WeatherLocation.visibility == "public")
+        else:
+            query = query.filter(
+                (WeatherLocation.visibility == "public")
+                | (
+                    (WeatherLocation.visibility == "private")
+                    & (WeatherLocation.owner_user_id == owner_user_id)
+                )
+            )
+        return query.one_or_none()
 
     def get_location_any_status(
         self,
@@ -55,7 +64,10 @@ class WeatherRepository:
     def list_locations(self, *, limit: int = 100) -> list[WeatherLocation]:
         return (
             self.db.query(WeatherLocation)
-            .filter(WeatherLocation.is_active == True)  # noqa: E712
+            .filter(
+                WeatherLocation.is_active == True,  # noqa: E712
+                WeatherLocation.visibility == "public",
+            )
             .order_by(WeatherLocation.id.desc())
             .limit(limit)
             .all()
@@ -71,7 +83,8 @@ class WeatherRepository:
         page_size: int = 20,
     ) -> tuple[list[WeatherLocation], int]:
         query = self.db.query(WeatherLocation).filter(
-            WeatherLocation.is_active == True  # noqa: E712
+            WeatherLocation.is_active == True,  # noqa: E712
+            WeatherLocation.visibility == "public",
         )
 
         if q:
@@ -107,6 +120,7 @@ class WeatherRepository:
                 WeatherLocation.latitude == latitude,
                 WeatherLocation.longitude == longitude,
                 WeatherLocation.is_active == True,  # noqa: E712
+                WeatherLocation.visibility == "public",
             )
             .one_or_none()
         )

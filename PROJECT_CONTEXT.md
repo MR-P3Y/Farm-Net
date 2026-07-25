@@ -871,6 +871,18 @@ Ruff, compileall, 43 focused Farm tests, all 269 Backend tests, fresh container
 build, and app/database/Redis health passed. Step 24.9 Farm Weather Linking +
 Contextual Alerts is next.
 
+Step 24.9 Farm Weather Linking + Contextual Alerts is complete. Plot coordinate
+pairs now map one-to-one to owner-private Weather locations while existing
+Weather locations remain public. Public Weather lookup/current/forecast/alert
+paths exclude private locations. Owner responses omit coordinates, internal
+location IDs, and owner IDs; contextual notifications go only to the Farm
+owner and contain no exact location. The existing provider/cache/rule/
+duplicate-notification foundations are reused, with forced refresh when Plot
+coordinates change. Alembic revision `3af106b82c79`, no-drift, Ruff,
+compileall, 49 focused Farm tests, all 275 Backend tests, three OpenAPI paths,
+fresh container build, and app/database/Redis health passed. Step 24.10 Mobile
+My Farms, Plots, Cycles + Diary is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

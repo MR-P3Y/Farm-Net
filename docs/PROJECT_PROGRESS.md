@@ -2039,6 +2039,24 @@ model fields exist:
 - Evidence:
   `docs/farms/phase-24-privacy-concurrency-audit-retention.md`.
 
+### Step 24.9 Farm Weather Linking + Contextual Alerts
+
+- Added one-to-one Plot Weather links and private/public Weather-location scope
+  through revision `3af106b82c79`.
+- Kept existing locations backward-compatible and public while excluding
+  private Farm locations from normal Weather lookup/current/forecast/alert
+  routes.
+- Reused the existing provider, 30/180-minute cache, forecast persistence,
+  alert rules, duplicate detection, and Notification foundation.
+- Omitted coordinates, internal location IDs, and owner IDs from contextual
+  responses and notifications; private alerts notify only the Farm owner.
+- Added owner-private current/forecast/alert, explicit refresh, coordinate
+  synchronization, missing-coordinate validation, and audit contracts.
+- Ruff/compileall, 6 Farm Weather tests, 49 focused Farm tests, all 275 Backend
+  tests, MySQL migration/no-drift, fresh container build, OpenAPI paths, and
+  app/database/Redis health passed.
+- Evidence: `docs/farms/phase-24-farm-weather-contextual-alerts.md`.
+
 ## Progress Update Rule
 
 After every completed step:
