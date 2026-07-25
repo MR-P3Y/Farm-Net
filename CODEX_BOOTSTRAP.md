@@ -171,6 +171,9 @@ Phase 22.8 Production Topology, Container + Worker Hardening: completed
 Phase 22.9 Observability, Readiness, Metrics + Alerting: completed
 Phase 22.10 Credentialed Staging Provider Verification: active/blocked on
 external provider credentials and owner-approved staging test targets
+Phase 24.1 Farm Management Real-State Audit + Domain/Privacy Boundary: completed
+Active product track: Phase 24 Farm Management / Digital Farm Profiles
+Next: Phase 24.2 Crop/Measurement References, Permissions + DB Contract
 ```
 
 Services means agricultural operational services, not equipment rental.

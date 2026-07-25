@@ -785,6 +785,18 @@ no external request. SMS/Push vendor compatibility also remains an explicit
 selection/adapter decision. Credentialed success cannot be claimed until
 external provisioning and execute-mode evidence exist.
 
+By owner decision on 2026-07-25, Phase 24 Farm Management / Digital Farm
+Profiles is the active product track and the required data foundation before
+farmer-focused Phase 21 AI/RAG resumes. Step 24.1 verified that no Farm, Plot,
+Crop Cycle, soil/water/irrigation, operation diary, or farm-specific client
+flow exists. Personal Profile, Geo, Weather, Activity Center, and marketplace
+domains are adjacent but not substitutes. Phase 24 defines multiple private
+farms per user, owner-derived access, nested plots and crop history, canonical
+area, hierarchical Geo, archive-first lifecycle, private coordinates, Weather
+linkage, and an explicit AI consent/audit boundary. Phase 22.10 remains open;
+starting Phase 24 does not claim Production provider verification succeeded.
+Step 24.2 Crop/Measurement References, Permissions + DB Contract is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

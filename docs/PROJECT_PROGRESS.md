@@ -7,10 +7,10 @@ Verified HEAD before Phase 9.2 commit: `f2b96be`
 ## Current Position
 
 The latest completed development foundation is
-`v0.25.0-reviews-foundation`. Phase 21 AI/RAG is deferred by owner decision.
-Phase 22 Production Hardening is active. Steps 22.1 through 22.9 are complete;
-Step 22.10 Credentialed Staging Provider Verification is active but blocked on
-external provider selection, credentials, and owner-approved test targets.
+`v0.25.0-reviews-foundation`. Phase 22 Step 22.10 remains blocked on external
+provider credentials. By owner decision, Phase 24 Farm Management / Digital
+Farm Profiles is the active product track and prerequisite for farmer-focused
+Phase 21 AI/RAG.
 
 ## Completed Foundations
 
@@ -1902,6 +1902,24 @@ model fields exist:
 - This step is not complete and must not be reported as credentialed success.
 - Evidence:
   `docs/production/credentialed-staging-provider-verification.md`.
+
+## Phase 24 — Farm Management / Digital Farm Profiles
+
+### Step 24.1 Real-State Audit + Domain/Privacy Boundary
+
+- Confirmed no Farm, Plot, Crop Cycle, soil/water/irrigation, operation diary,
+  or farm-specific Mobile/Admin/API model currently exists.
+- Separated personal Profile, Geo, Weather, Activity, marketplace, and future
+  AI responsibilities from the new private Farm aggregate.
+- Defined multiple farms per user, nested plots/history, canonical square-metre
+  area, hierarchical Geo validation, archive-first lifecycle, and private
+  coordinates/boundaries.
+- Defined the crop-reference, cycle, soil/water, operation, Weather, Mobile,
+  Activity/Admin, documentation, regression, and release sequence.
+- Kept Phase 22.10 honestly open on external credentials and prohibited AI/RAG
+  from consuming incomplete farm data as if production-ready.
+- No application/API/database/client behavior changed.
+- Evidence: `docs/farms/phase-24-real-state-audit.md`.
 
 ## Progress Update Rule
 
