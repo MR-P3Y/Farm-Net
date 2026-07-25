@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PlanFeatureOut(BaseModel):
@@ -39,6 +39,17 @@ class SubscriptionOut(BaseModel):
     grace_ends_at: datetime | None
     auto_renew: bool
     cancel_at_period_end: bool
+    version: int
+
+
+class SubscriptionCancelIn(BaseModel):
+    expected_version: int = Field(ge=1)
+    cancel_at_period_end: bool = True
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class SubscriptionResumeIn(BaseModel):
+    expected_version: int = Field(ge=1)
 
 
 class EntitlementOut(BaseModel):

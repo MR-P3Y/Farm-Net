@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -26,27 +26,26 @@ class SubscriptionReadService:
         self.repo = SubscriptionReadRepository(db)
 
     def plans(self) -> list[PlanOut]:
-        now = datetime.utcnow()
+        now = _utcnow()
         return [self.plan_output(row) for row in self.repo.active_plans(now)]
 
     def plan(self, code: str) -> PlanOut:
-        row = self.repo.active_plan_by_code(code.strip().lower(), datetime.utcnow())
+        row = self.repo.active_plan_by_code(code.strip().lower(), _utcnow())
         if row is None:
             raise AppException("BILLING_PLAN_NOT_FOUND", "Plan not found", 404)
         return self.plan_output(row)
 
     def own_subscription(self, user_id: int) -> SubscriptionOut | None:
-        row = self.repo.own_current(user_id, datetime.utcnow())
+        row = self.repo.own_current(user_id, _utcnow())
         return None if row is None else self.subscription_output(row)
 
     def own_entitlements(self, user_id: int) -> list[EntitlementOut]:
         return [
-            self.entitlement_output(row)
-            for row in self.repo.own_entitlements(user_id, datetime.utcnow())
+            self.entitlement_output(row) for row in self.repo.own_entitlements(user_id, _utcnow())
         ]
 
     def own_usage(self, user_id: int) -> list[FeatureUsageOut]:
-        return [self.usage_output(row) for row in self.repo.own_usage(user_id, datetime.utcnow())]
+        return [self.usage_output(row) for row in self.repo.own_usage(user_id, _utcnow())]
 
     @staticmethod
     def plan_output(row: BillingPlan) -> PlanOut:
@@ -107,6 +106,7 @@ class SubscriptionReadService:
             grace_ends_at=row.grace_ends_at,
             auto_renew=row.auto_renew,
             cancel_at_period_end=row.cancel_at_period_end,
+            version=row.version,
         )
 
     @staticmethod
@@ -140,3 +140,7 @@ class SubscriptionReadService:
             remaining_value=remaining,
             period_ends_at=entitlement.ends_at,
         )
+
+
+def _utcnow() -> datetime:
+    return datetime.now(UTC).replace(tzinfo=None)

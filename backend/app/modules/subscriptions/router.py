@@ -11,7 +11,10 @@ from app.modules.subscriptions.schemas import (
     PlanDetailResponse,
     PlanListResponse,
     UsageListResponse,
+    SubscriptionCancelIn,
+    SubscriptionResumeIn,
 )
+from app.modules.subscriptions.lifecycle_service import SubscriptionLifecycleService
 from app.modules.subscriptions.service import SubscriptionReadService
 
 
@@ -77,4 +80,56 @@ def own_usage(
         data=[item.model_dump(mode="json") for item in items],
         message="OK",
         meta={"total": len(items), "trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/subscription/free", response_model=OwnSubscriptionResponse)
+def activate_free_subscription(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("billing.subscription.manage_own")),
+):
+    item = SubscriptionLifecycleService(db).activate_free(user.id)
+    return success_response(
+        data=item.model_dump(mode="json"),
+        message="Free subscription active",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/subscription/cancel", response_model=OwnSubscriptionResponse)
+def cancel_subscription(
+    payload: SubscriptionCancelIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("billing.subscription.manage_own")),
+):
+    item = SubscriptionLifecycleService(db).cancel(
+        user_id=user.id,
+        expected_version=payload.expected_version,
+        cancel_at_period_end=payload.cancel_at_period_end,
+        reason=payload.reason,
+    )
+    return success_response(
+        data=item.model_dump(mode="json"),
+        message="Subscription cancellation updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/subscription/resume", response_model=OwnSubscriptionResponse)
+def resume_subscription(
+    payload: SubscriptionResumeIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("billing.subscription.manage_own")),
+):
+    item = SubscriptionLifecycleService(db).resume(
+        user_id=user.id,
+        expected_version=payload.expected_version,
+    )
+    return success_response(
+        data=item.model_dump(mode="json"),
+        message="Subscription cancellation removed",
+        meta={"trace_id": request.state.trace_id},
     )

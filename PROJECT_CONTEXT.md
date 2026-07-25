@@ -954,6 +954,15 @@ drift-free at `96f4165b43fe`, all 283 Backend tests passed, and
 app/database/Redis health was OK. Step 25.4 Subscription Lifecycle, Periods +
 Cancellation is next.
 
+Step 25.4 Subscription Lifecycle, Periods + Cancellation is complete. Free
+activation is idempotent and serialized by locking the owner row; it creates a
+30-day period, 15 entitlement snapshots, and five enabled metered usage rows.
+End-period cancel, resume, immediate Free-only cancel, reactivation, ownership,
+and optimistic version conflicts are enforced. Runtime MySQL exercised the
+complete transition chain. Eight focused and all 286 Backend tests, Ruff,
+compileall, Alembic no-drift, and app/database/Redis health passed. Step 25.5
+Atomic Quota Reservation, Usage + Idempotency is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

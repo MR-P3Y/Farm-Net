@@ -18,6 +18,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.modules.auth import models as auth_models  # noqa: F401
+from app.modules.finance import models as finance_models  # noqa: F401
 from app.modules.subscriptions.enums import (
     EntitlementSource,
     FeatureStatus,

@@ -2152,6 +2152,18 @@ model fields exist:
   three 401 owner boundaries, Ruff/compileall, and health passed.
 - Evidence: `docs/subscriptions/phase-25-plan-catalog-read-apis.md`.
 
+### Step 25.4 Subscription Lifecycle, Periods + Cancellation
+
+- Added idempotent Free provisioning with owner locking, a 30-day snapshotted
+  period, 15 Entitlements, and usage rows for five enabled metered features.
+- Added end-period cancel, resume, immediate Free-only cancel, reactivation,
+  reason capture, and optimistic version conflicts.
+- Paid activation and immediate paid cancellation remain blocked until the
+  financial contract is implemented.
+- Runtime lifecycle, 8 focused and all 286 Backend tests, Ruff/compileall,
+  no-drift, and health passed.
+- Evidence: `docs/subscriptions/phase-25-lifecycle-periods-cancellation.md`.
+
 ## Progress Update Rule
 
 After every completed step:
