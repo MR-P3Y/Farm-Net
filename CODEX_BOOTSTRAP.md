@@ -183,8 +183,9 @@ Phase 24.9 Farm Weather Linking + Contextual Alerts: completed
 Phase 24.10 Mobile My Farms, Plots, Cycles + Diary: completed
 Phase 24.11 Activity Center + Restricted Admin Support: completed
 Phase 24.12 Docs, Postman + Runtime Regression: completed
-Active product track: Phase 24 Farm Management / Digital Farm Profiles
-Next: Phase 24.13 Release Gate + Tag
+Phase 24.13 Farm Management Release Gate + Tag: completed
+Phase 24 Farm Management / Digital Farm Profiles: completed
+Next product track: Phase 21 farmer-focused AI/RAG planning and implementation
 ```
 
 Services means agricultural operational services, not equipment rental.

@@ -917,6 +917,12 @@ glass-card login presentation, and matching OTP screens. Mobile analyze, all
 63 tests, and Web/Wasm build passed; generated platform registrants and local
 Flutter migration settings remain outside that focused change.
 
+Step 24.13 Farm Management Release Gate is complete as a non-production
+development foundation milestone. The clean, pushed release commit is tagged
+`v0.26.0-farm-management-foundation`. This does not claim a production release
+or close the credentialed staging provider gate. Phase 24 Farm Management /
+Digital Farm Profiles is complete.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -2106,6 +2106,14 @@ model fields exist:
 - Generated platform registrants and local Flutter migration output were not
   included.
 
+### Step 24.13 Farm Management Release Gate + Tag
+
+- Independent Git/content/verification gates passed on clean `develop`.
+- Created the annotated non-production milestone
+  `v0.26.0-farm-management-foundation`.
+- Production release claims remain excluded by release governance.
+- Evidence: `docs/farms/phase-24-release-gate.md`.
+
 ## Progress Update Rule
 
 After every completed step:
