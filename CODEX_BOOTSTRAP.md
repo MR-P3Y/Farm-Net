@@ -185,7 +185,10 @@ Phase 24.11 Activity Center + Restricted Admin Support: completed
 Phase 24.12 Docs, Postman + Runtime Regression: completed
 Phase 24.13 Farm Management Release Gate + Tag: completed
 Phase 24 Farm Management / Digital Farm Profiles: completed
-Next product track: Phase 21 farmer-focused AI/RAG planning and implementation
+Active product track: Phase 25 Unified Subscription & Entitlement Platform
+Phase 25.1 Real-State Audit + AI Entitlement Boundary: completed
+Next: Phase 25.2 Plan, Feature, Subscription + Entitlement DB Contract
+After Phase 25 release: resume Phase 21 farmer-focused AI/RAG
 ```
 
 Services means agricultural operational services, not equipment rental.

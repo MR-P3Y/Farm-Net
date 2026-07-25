@@ -923,6 +923,17 @@ development foundation milestone. The clean, pushed release commit is tagged
 or close the credentialed staging provider gate. Phase 24 Farm Management /
 Digital Farm Profiles is complete.
 
+By owner decision on 2026-07-26, Phase 25 Unified Subscription & Entitlement
+Platform is the active product track before Phase 21 Farmer AI/RAG resumes.
+Step 25.1 verified that Subscription exists only as historical design and
+seeded permissions: no real plan/subscription/entitlement/quota tables, models,
+migrations, APIs, Mobile, or Admin workflows exist. The platform will provide
+one role-independent subscription system for AI and all other product
+capabilities. Existing TOMAN ledger/wallet/payment conventions are reusable,
+but marketplace provider-split invoices cannot be reused unchanged for
+platform-owned subscriptions. Step 25.2 Plan, Feature, Subscription +
+Entitlement DB Contract is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

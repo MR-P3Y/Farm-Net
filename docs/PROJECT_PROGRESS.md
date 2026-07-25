@@ -2114,6 +2114,20 @@ model fields exist:
 - Production release claims remain excluded by release governance.
 - Evidence: `docs/farms/phase-24-release-gate.md`.
 
+## Phase 25 — Unified Subscription & Entitlement Platform
+
+### Step 25.1 Real-State Audit + AI Entitlement Boundary
+
+- Confirmed Subscription is documented and permission-seeded but has no real
+  models, tables, migrations, APIs, or UI.
+- Defined one product-wide role-independent Entitlement platform; AI is a
+  consumer, not a separate subscription system.
+- Fixed permission + entitlement + quota enforcement, TOMAN-only billing,
+  atomic reservation, non-paywalled safety, and marketplace-invoice reuse
+  boundaries.
+- Approved Steps 25.2 through 25.12.
+- Evidence: `docs/subscriptions/phase-25-real-state-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:
