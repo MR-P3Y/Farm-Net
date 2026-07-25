@@ -11,10 +11,13 @@ from app.modules.subscriptions.schemas import (
     PlanDetailResponse,
     PlanListResponse,
     UsageListResponse,
+    QuotaEstimateIn,
+    QuotaEstimateResponse,
     SubscriptionCancelIn,
     SubscriptionResumeIn,
 )
 from app.modules.subscriptions.lifecycle_service import SubscriptionLifecycleService
+from app.modules.subscriptions.quota_service import QuotaService
 from app.modules.subscriptions.service import SubscriptionReadService
 
 
@@ -80,6 +83,21 @@ def own_usage(
         data=[item.model_dump(mode="json") for item in items],
         message="OK",
         meta={"total": len(items), "trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/usage/estimate", response_model=QuotaEstimateResponse)
+def estimate_usage(
+    payload: QuotaEstimateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("billing.usage.read_own")),
+):
+    item = QuotaService(db).estimate(user.id, payload.feature_code, payload.amount)
+    return success_response(
+        data=item.model_dump(mode="json"),
+        message="Quota estimate calculated",
+        meta={"trace_id": request.state.trace_id},
     )
 
 

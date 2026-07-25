@@ -963,6 +963,16 @@ complete transition chain. Eight focused and all 286 Backend tests, Ruff,
 compileall, Alembic no-drift, and app/database/Redis health passed. Step 25.5
 Atomic Quota Reservation, Usage + Idempotency is next.
 
+Step 25.5 Atomic Quota Reservation, Usage + Idempotency is complete. The
+public owner contract adds only a non-mutating quota estimate; reserve,
+finalize, release, and expiry remain internal Backend operations. Usage locks,
+database-unique idempotency keys, used-plus-reserved limit checks, exact-once
+terminal transitions, expiry reclamation, active metered Entitlement checks,
+and ownership privacy are enforced. Real MySQL reserve/replay/release restored
+the original reserved total. Fourteen focused and all 292 Backend tests, Ruff,
+compileall, Alembic no-drift, and app/database/Redis health passed. Step 25.6
+TOMAN Invoice, Wallet + Payment Integration is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -970,7 +980,7 @@ Atomic Quota Reservation, Usage + Idempotency is next.
 - The Zarinpal adapter is implemented but disabled; credentialed sandbox and
   production activation remain operational gaps.
 - SMS, email, and push providers are not connected for production delivery.
-- Contracts, subscriptions, promotion, real payout integration,
+- Contracts, paid subscription commerce, promotion, real payout integration,
   AI/RAG, BI/data access, and production hardening remain future work.
 
 ## Development Environment

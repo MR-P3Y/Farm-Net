@@ -2164,6 +2164,18 @@ model fields exist:
   no-drift, and health passed.
 - Evidence: `docs/subscriptions/phase-25-lifecycle-periods-cancellation.md`.
 
+### Step 25.5 Atomic Quota Reservation, Usage + Idempotency
+
+- Added a non-mutating owner quota-estimate API and kept all quota mutations
+  behind an internal Backend service boundary.
+- Added row-locked reserve, exact-once finalize, idempotent release/expiry,
+  replay-safe idempotency keys, and limit checks over used plus reserved quota.
+- Enforced active metered Entitlements, ownership privacy, bounded TTL, and
+  Decimal(18,4) quota values without mixing quota with TOMAN billing.
+- Real MySQL reserve/replay/release restoration, 14 focused and all 292
+  Backend tests, Ruff/compileall, Alembic no-drift, and health passed.
+- Evidence: `docs/subscriptions/phase-25-atomic-quota.md`.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -90,6 +90,7 @@ def test_subscription_read_routes_match_public_and_owner_boundaries() -> None:
         "/api/v1/billing/subscription/me": {"get"},
         "/api/v1/billing/entitlements/me": {"get"},
         "/api/v1/billing/usage/me": {"get"},
+        "/api/v1/billing/usage/estimate": {"post"},
         "/api/v1/billing/subscription/free": {"post"},
         "/api/v1/billing/subscription/cancel": {"post"},
         "/api/v1/billing/subscription/resume": {"post"},

@@ -73,6 +73,33 @@ class FeatureUsageOut(BaseModel):
     period_ends_at: datetime
 
 
+class QuotaEstimateIn(BaseModel):
+    feature_code: str = Field(min_length=1, max_length=120)
+    amount: Decimal = Field(gt=0, max_digits=18, decimal_places=4)
+
+
+class QuotaEstimateOut(BaseModel):
+    feature_code: str
+    requested_value: Decimal
+    used_value: Decimal
+    reserved_value: Decimal
+    limit_value: Decimal | None
+    unlimited: bool
+    remaining_before: Decimal | None
+    remaining_after: Decimal | None
+    allowed: bool
+
+
+class QuotaReservationOut(BaseModel):
+    id: int
+    feature_code: str
+    amount: Decimal
+    status: str
+    expires_at: datetime
+    finalized_at: datetime | None
+    released_at: datetime | None
+
+
 class PlanListResponse(BaseModel):
     success: bool
     data: list[PlanOut]
@@ -104,5 +131,12 @@ class EntitlementListResponse(BaseModel):
 class UsageListResponse(BaseModel):
     success: bool
     data: list[FeatureUsageOut]
+    message: str
+    meta: dict
+
+
+class QuotaEstimateResponse(BaseModel):
+    success: bool
+    data: QuotaEstimateOut
     message: str
     meta: dict
