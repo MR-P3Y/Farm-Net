@@ -3,7 +3,16 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.modules.farms.enums import CropCycleStatus, CultivationMode, FarmStatus
+from app.modules.farms.enums import (
+    CropCycleStatus,
+    CultivationMode,
+    FarmStatus,
+    IrrigationMethod,
+    LabMetric,
+    LabSubjectType,
+    SoilTexture,
+    WaterSourceType,
+)
 
 
 def _normalize_required(value: str) -> str:
@@ -283,3 +292,93 @@ class FarmCropCycleListResponse(BaseModel):
 
 class FarmCropCycleTransitionIn(BaseModel):
     effective_date: date
+
+
+class SoilProfileIn(BaseModel):
+    texture: SoilTexture = SoilTexture.UNKNOWN
+    depth_cm: Decimal | None = Field(default=None, gt=0, max_digits=8, decimal_places=2)
+    drainage: str | None = Field(default=None, max_length=100)
+    notes: str | None = Field(default=None, max_length=5000)
+
+    _drainage = field_validator("drainage")(_normalize_optional)
+    _notes = field_validator("notes")(_normalize_optional)
+
+
+class SoilProfileOut(SoilProfileIn):
+    id: int
+    plot_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class WaterSourceIn(BaseModel):
+    name: str = Field(min_length=1, max_length=180)
+    source_type: WaterSourceType
+    notes: str | None = Field(default=None, max_length=5000)
+
+    _name = field_validator("name")(_normalize_required)
+    _notes = field_validator("notes")(_normalize_optional)
+
+
+class WaterSourceOut(WaterSourceIn):
+    id: int
+    farm_id: int
+    status: FarmStatus
+    archived_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class IrrigationProfileIn(BaseModel):
+    water_source_id: int | None = Field(default=None, ge=1)
+    method: IrrigationMethod
+    efficiency_percent: Decimal | None = Field(
+        default=None, ge=0, le=100, max_digits=5, decimal_places=2
+    )
+    notes: str | None = Field(default=None, max_length=5000)
+
+    _notes = field_validator("notes")(_normalize_optional)
+
+
+class IrrigationProfileOut(IrrigationProfileIn):
+    id: int
+    plot_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class LabObservationCreateIn(BaseModel):
+    subject_type: LabSubjectType
+    subject_id: int = Field(ge=1)
+    metric_code: LabMetric
+    value: Decimal = Field(ge=0, max_digits=20, decimal_places=6)
+    unit_code: str = Field(min_length=1, max_length=30)
+    sampled_on: date
+    tested_on: date | None = None
+    laboratory_name: str | None = Field(default=None, max_length=200)
+    notes: str | None = Field(default=None, max_length=5000)
+
+    _unit = field_validator("unit_code")(_normalize_required)
+    _lab = field_validator("laboratory_name")(_normalize_optional)
+    _notes = field_validator("notes")(_normalize_optional)
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.tested_on is not None and self.tested_on < self.sampled_on:
+            raise ValueError("tested_on cannot precede sampled_on")
+        return self
+
+
+class LabObservationOut(BaseModel):
+    id: int
+    subject_type: LabSubjectType
+    subject_id: int
+    metric_code: LabMetric
+    value: Decimal
+    unit_code: str
+    sampled_on: date
+    tested_on: date | None
+    laboratory_name: str | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime

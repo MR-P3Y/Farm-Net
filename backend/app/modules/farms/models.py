@@ -19,7 +19,14 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.modules.farms.enums import CropCycleStatus, CultivationMode, FarmStatus
+from app.modules.farms.enums import (
+    CropCycleStatus,
+    CultivationMode,
+    FarmStatus,
+    IrrigationMethod,
+    SoilTexture,
+    WaterSourceType,
+)
 
 
 class Farm(Base):
@@ -237,6 +244,134 @@ class FarmCropCycle(Base):
             "planned_start_date",
             "planned_end_date",
         ),
+    )
+
+
+class FarmSoilProfile(Base):
+    __tablename__ = "farm_soil_profiles"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    plot_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_plots.id", ondelete="RESTRICT"),
+        nullable=False, unique=True, index=True
+    )
+    texture: Mapped[str] = mapped_column(
+        String(30), default=SoilTexture.UNKNOWN.value, nullable=False
+    )
+    depth_cm: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+    drainage: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+    __table_args__ = (
+        CheckConstraint(
+            "texture in ('sandy','loamy','clay','silty','mixed','unknown')",
+            name="ck_farm_soil_profiles_texture",
+        ),
+        CheckConstraint("depth_cm IS NULL OR depth_cm > 0", name="ck_farm_soil_profiles_depth_positive"),
+    )
+
+
+class FarmWaterSource(Base):
+    __tablename__ = "farm_water_sources"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    farm_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farms.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(180), nullable=False)
+    source_type: Mapped[str] = mapped_column(
+        String(30), default=WaterSourceType.OTHER.value, nullable=False
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default=FarmStatus.ACTIVE.value, nullable=False)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+    __table_args__ = (
+        CheckConstraint(
+            "source_type in ('well','spring','river','canal','reservoir','municipal','other')",
+            name="ck_farm_water_sources_type",
+        ),
+        CheckConstraint(
+            "(status = 'active' AND archived_at IS NULL) OR "
+            "(status = 'archived' AND archived_at IS NOT NULL)",
+            name="ck_farm_water_sources_archive_state",
+        ),
+        Index("ix_farm_water_sources_farm_status", "farm_id", "status"),
+    )
+
+
+class FarmIrrigationProfile(Base):
+    __tablename__ = "farm_irrigation_profiles"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    plot_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_plots.id", ondelete="RESTRICT"),
+        nullable=False, unique=True, index=True
+    )
+    water_source_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_water_sources.id", ondelete="RESTRICT"),
+        nullable=True, index=True
+    )
+    method: Mapped[str] = mapped_column(
+        String(30), default=IrrigationMethod.OTHER.value, nullable=False
+    )
+    efficiency_percent: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+    __table_args__ = (
+        CheckConstraint(
+            "method in ('surface','drip','sprinkler','subsurface','rainfed','other')",
+            name="ck_farm_irrigation_profiles_method",
+        ),
+        CheckConstraint(
+            "efficiency_percent IS NULL OR (efficiency_percent >= 0 AND efficiency_percent <= 100)",
+            name="ck_farm_irrigation_profiles_efficiency",
+        ),
+    )
+
+
+class FarmLabObservation(Base):
+    __tablename__ = "farm_lab_observations"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    soil_profile_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_soil_profiles.id", ondelete="RESTRICT"),
+        nullable=True, index=True
+    )
+    water_source_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_water_sources.id", ondelete="RESTRICT"),
+        nullable=True, index=True
+    )
+    metric_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    value: Mapped[Decimal] = mapped_column(Numeric(20, 6), nullable=False)
+    unit_code: Mapped[str] = mapped_column(String(30), nullable=False)
+    sampled_on: Mapped[date] = mapped_column(Date, nullable=False)
+    tested_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    laboratory_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+    __table_args__ = (
+        CheckConstraint(
+            "(soil_profile_id IS NOT NULL AND water_source_id IS NULL) OR "
+            "(soil_profile_id IS NULL AND water_source_id IS NOT NULL)",
+            name="ck_farm_lab_observations_exact_subject",
+        ),
+        CheckConstraint("value >= 0", name="ck_farm_lab_observations_value_nonnegative"),
+        CheckConstraint("tested_on IS NULL OR tested_on >= sampled_on", name="ck_farm_lab_observations_dates"),
+        Index("ix_farm_lab_observations_soil_sampled", "soil_profile_id", "sampled_on"),
+        Index("ix_farm_lab_observations_water_sampled", "water_source_id", "sampled_on"),
     )
 
 

@@ -176,8 +176,9 @@ Phase 24.2 Crop/Measurement References, Permissions + DB Contract: completed
 Phase 24.3 Owner-Scoped Farm CRUD + Archive Lifecycle: completed
 Phase 24.4 Plot, Geo Point/Boundary + Area Consistency: completed
 Phase 24.5 Crop Catalog, Varieties + Crop-Cycle Lifecycle: completed
+Phase 24.6 Soil, Water, Irrigation + Laboratory Observations: completed
 Active product track: Phase 24 Farm Management / Digital Farm Profiles
-Next: Phase 24.6 Soil, Water, Irrigation + Laboratory Observations
+Next: Phase 24.7 Operation Diary, Inputs, Harvest + Farm Media
 ```
 
 Services means agricultural operational services, not equipment rental.

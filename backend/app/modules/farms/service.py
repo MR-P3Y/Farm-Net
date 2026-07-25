@@ -5,8 +5,20 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppException
 from app.modules.auth.models import AuthUser
-from app.modules.farms.enums import CropCycleStatus, CultivationMode, FarmStatus
-from app.modules.farms.models import Farm, FarmCropCycle
+from app.modules.farms.enums import (
+    CropCycleStatus,
+    CultivationMode,
+    FarmStatus,
+    LabSubjectType,
+)
+from app.modules.farms.models import (
+    Farm,
+    FarmCropCycle,
+    FarmIrrigationProfile,
+    FarmLabObservation,
+    FarmSoilProfile,
+    FarmWaterSource,
+)
 from app.modules.farms.repository import FarmRepository
 from app.modules.farms.schemas import (
     FarmArchiveIn,
@@ -21,6 +33,14 @@ from app.modules.farms.schemas import (
     FarmPlotCreateIn,
     FarmPlotOut,
     FarmPlotUpdateIn,
+    IrrigationProfileIn,
+    IrrigationProfileOut,
+    LabObservationCreateIn,
+    LabObservationOut,
+    SoilProfileIn,
+    SoilProfileOut,
+    WaterSourceIn,
+    WaterSourceOut,
     FarmUpdateIn,
 )
 
@@ -589,4 +609,165 @@ class FarmCropCycleService:
             can_complete=status == CropCycleStatus.ACTIVE,
             can_cancel=status in (CropCycleStatus.PLANNED, CropCycleStatus.ACTIVE),
             created_at=row.created_at, updated_at=row.updated_at,
+        )
+
+
+class FarmEnvironmentService:
+    _metric_units = {
+        ("soil", "ph"): "ph",
+        ("soil", "electrical_conductivity"): "ds_m",
+        ("soil", "organic_matter"): "percent",
+        ("soil", "nitrogen"): "mg_kg",
+        ("soil", "phosphorus"): "mg_kg",
+        ("soil", "potassium"): "mg_kg",
+        ("water", "ph"): "ph",
+        ("water", "electrical_conductivity"): "ds_m",
+        ("water", "tds"): "mg_l",
+        ("water", "sar"): "ratio",
+    }
+
+    def __init__(self, db: Session) -> None:
+        self.db = db
+        self.repo = FarmRepository(db)
+        self.plot_service = FarmPlotService(db)
+        self.plot_service.repo = self.repo
+
+    def upsert_soil(self, *, user, farm_id, plot_id, payload: SoilProfileIn):
+        self._active_plot(user.id, farm_id, plot_id)
+        row = self.repo.get_soil_profile(plot_id)
+        if row is None:
+            row = self.repo.add(FarmSoilProfile(plot_id=plot_id))
+        for field, value in payload.model_dump().items():
+            setattr(row, field, value.value if hasattr(value, "value") else value)
+        self._commit(row)
+        return SoilProfileOut.model_validate(row, from_attributes=True)
+
+    def get_soil(self, *, user, farm_id, plot_id):
+        self.plot_service._plot(user.id, farm_id, plot_id)
+        row = self.repo.get_soil_profile(plot_id)
+        if row is None:
+            raise AppException("FARM_SOIL_PROFILE_NOT_FOUND", "Soil profile not found", 404)
+        return SoilProfileOut.model_validate(row, from_attributes=True)
+
+    def upsert_irrigation(self, *, user, farm_id, plot_id, payload: IrrigationProfileIn):
+        self._active_plot(user.id, farm_id, plot_id)
+        if payload.water_source_id is not None:
+            source = self.repo.get_water_source(
+                farm_id=farm_id, source_id=payload.water_source_id
+            )
+            if source is None or source.status != FarmStatus.ACTIVE.value:
+                raise AppException("FARM_WATER_SOURCE_INVALID", "Active water source not found in farm", 422)
+        row = self.repo.get_irrigation_profile(plot_id)
+        if row is None:
+            row = self.repo.add(FarmIrrigationProfile(plot_id=plot_id))
+        for field, value in payload.model_dump().items():
+            setattr(row, field, value.value if hasattr(value, "value") else value)
+        self._commit(row)
+        return IrrigationProfileOut.model_validate(row, from_attributes=True)
+
+    def get_irrigation(self, *, user, farm_id, plot_id):
+        self.plot_service._plot(user.id, farm_id, plot_id)
+        row = self.repo.get_irrigation_profile(plot_id)
+        if row is None:
+            raise AppException("FARM_IRRIGATION_PROFILE_NOT_FOUND", "Irrigation profile not found", 404)
+        return IrrigationProfileOut.model_validate(row, from_attributes=True)
+
+    def create_water(self, *, user, farm_id, payload: WaterSourceIn):
+        farm = self.plot_service._farm_for_update(user.id, farm_id)
+        FarmService._require_active(farm)
+        row = self.repo.add(FarmWaterSource(
+            farm_id=farm_id, name=payload.name, source_type=payload.source_type.value,
+            notes=payload.notes, status=FarmStatus.ACTIVE.value
+        ))
+        self._commit(row)
+        return WaterSourceOut.model_validate(row, from_attributes=True)
+
+    def list_water(self, *, user, farm_id):
+        self.plot_service._farm(user.id, farm_id)
+        return [WaterSourceOut.model_validate(row, from_attributes=True) for row in self.repo.list_water_sources(farm_id)]
+
+    def archive_water(self, *, user, farm_id, source_id):
+        self.plot_service._farm_for_update(user.id, farm_id)
+        row = self.repo.get_water_source(farm_id=farm_id, source_id=source_id, for_update=True)
+        if row is None:
+            raise AppException("FARM_WATER_SOURCE_NOT_FOUND", "Water source not found", 404)
+        if row.status != FarmStatus.ACTIVE.value:
+            raise AppException("FARM_WATER_SOURCE_ARCHIVED", "Water source is already archived", 409)
+        row.status = FarmStatus.ARCHIVED.value
+        row.archived_at = datetime.now(UTC).replace(tzinfo=None)
+        self._commit(row)
+        return WaterSourceOut.model_validate(row, from_attributes=True)
+
+    def create_observation(self, *, user, farm_id, payload: LabObservationCreateIn):
+        self.plot_service._farm(user.id, farm_id)
+        subject = payload.subject_type.value
+        expected_unit = self._metric_units.get((subject, payload.metric_code.value))
+        if expected_unit is None:
+            raise AppException("FARM_LAB_METRIC_SUBJECT_INVALID", "Metric is not valid for subject", 422)
+        if payload.unit_code.lower() != expected_unit:
+            raise AppException(
+                "FARM_LAB_UNIT_INVALID", "Metric requires its canonical unit", 422,
+                {"expected_unit": expected_unit}
+            )
+        soil_id = water_id = None
+        if payload.subject_type == LabSubjectType.SOIL:
+            row = self.repo.get_soil_profile(payload.subject_id)
+            if row is None:
+                raise AppException("FARM_SOIL_PROFILE_NOT_FOUND", "Soil profile not found", 404)
+            self.plot_service._plot(user.id, farm_id, row.plot_id)
+            soil_id = row.id
+        else:
+            row = self.repo.get_water_source(farm_id=farm_id, source_id=payload.subject_id)
+            if row is None:
+                raise AppException("FARM_WATER_SOURCE_NOT_FOUND", "Water source not found", 404)
+            water_id = row.id
+        observation = self.repo.add(FarmLabObservation(
+            soil_profile_id=soil_id, water_source_id=water_id,
+            metric_code=payload.metric_code.value, value=payload.value,
+            unit_code=expected_unit, sampled_on=payload.sampled_on,
+            tested_on=payload.tested_on, laboratory_name=payload.laboratory_name,
+            notes=payload.notes
+        ))
+        self._commit(observation)
+        return self._observation_out(observation, payload.subject_type, payload.subject_id)
+
+    def list_observations(self, *, user, farm_id, subject_type, subject_id):
+        self.plot_service._farm(user.id, farm_id)
+        soil_id = water_id = None
+        if subject_type == LabSubjectType.SOIL:
+            soil = self.repo.get_soil_profile(subject_id)
+            if soil is None:
+                raise AppException("FARM_SOIL_PROFILE_NOT_FOUND", "Soil profile not found", 404)
+            self.plot_service._plot(user.id, farm_id, soil.plot_id)
+            soil_id = soil.id
+        else:
+            source = self.repo.get_water_source(farm_id=farm_id, source_id=subject_id)
+            if source is None:
+                raise AppException("FARM_WATER_SOURCE_NOT_FOUND", "Water source not found", 404)
+            water_id = source.id
+        return [
+            self._observation_out(row, subject_type, subject_id)
+            for row in self.repo.list_lab_observations(
+                soil_profile_id=soil_id, water_source_id=water_id
+            )
+        ]
+
+    def _active_plot(self, user_id, farm_id, plot_id):
+        farm = self.plot_service._farm_for_update(user_id, farm_id)
+        FarmService._require_active(farm)
+        plot = self.plot_service._plot(user_id, farm_id, plot_id, True)
+        FarmService._require_active(plot)
+
+    def _commit(self, row):
+        self.db.commit()
+        self.db.refresh(row)
+
+    @staticmethod
+    def _observation_out(row, subject_type, subject_id):
+        return LabObservationOut(
+            id=row.id, subject_type=subject_type, subject_id=subject_id,
+            metric_code=row.metric_code, value=row.value, unit_code=row.unit_code,
+            sampled_on=row.sampled_on, tested_on=row.tested_on,
+            laboratory_name=row.laboratory_name, notes=row.notes,
+            created_at=row.created_at, updated_at=row.updated_at
         )

@@ -1988,6 +1988,20 @@ model fields exist:
   no-drift, OpenAPI privacy contracts, and health passed.
 - Evidence: `docs/farms/phase-24-crop-catalog-cycle-lifecycle.md`.
 
+### Step 24.6 Soil, Water, Irrigation + Laboratory Observations
+
+- Added one owner-private soil and irrigation profile per Plot, retained Farm
+  water sources, and dated soil/water observations through revision
+  `07cbe3d85f46`.
+- Enforced soil texture/depth, water source lifecycle, irrigation efficiency,
+  exact-one observation subject, ordered dates, nonnegative values, and
+  metric-specific canonical units.
+- Kept laboratory values as observations without generating agricultural
+  prescriptions or AI conclusions.
+- Ruff/compileall, 28 focused tests, all 254 Backend tests, migration replay,
+  Alembic no-drift, OpenAPI privacy, and health passed.
+- Evidence: `docs/farms/phase-24-soil-water-irrigation-lab.md`.
+
 ## Progress Update Rule
 
 After every completed step:

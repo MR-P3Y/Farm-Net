@@ -9,7 +9,11 @@ from app.modules.farms.models import (
     FarmCropCategory,
     FarmCropCycle,
     FarmCropVariety,
+    FarmIrrigationProfile,
+    FarmLabObservation,
     FarmPlot,
+    FarmSoilProfile,
+    FarmWaterSource,
 )
 from app.modules.geo.models import (
     GeoCity,
@@ -25,7 +29,7 @@ class FarmRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def add(self, row: Farm) -> Farm:
+    def add(self, row):
         self.db.add(row)
         self.db.flush()
         return row
@@ -251,3 +255,30 @@ class FarmRepository:
         if exclude_cycle_id is not None:
             query = query.filter(FarmCropCycle.id != exclude_cycle_id)
         return query.with_for_update().all()
+
+    def get_soil_profile(self, plot_id: int) -> FarmSoilProfile | None:
+        return self.db.query(FarmSoilProfile).filter(FarmSoilProfile.plot_id == plot_id).one_or_none()
+
+    def get_irrigation_profile(self, plot_id: int) -> FarmIrrigationProfile | None:
+        return self.db.query(FarmIrrigationProfile).filter(FarmIrrigationProfile.plot_id == plot_id).one_or_none()
+
+    def list_water_sources(self, farm_id: int) -> list[FarmWaterSource]:
+        return self.db.query(FarmWaterSource).filter(FarmWaterSource.farm_id == farm_id).order_by(FarmWaterSource.id.desc()).all()
+
+    def get_water_source(self, *, farm_id: int, source_id: int, for_update: bool = False) -> FarmWaterSource | None:
+        query = self.db.query(FarmWaterSource).filter(
+            FarmWaterSource.id == source_id, FarmWaterSource.farm_id == farm_id
+        )
+        if for_update:
+            query = query.with_for_update()
+        return query.one_or_none()
+
+    def list_lab_observations(
+        self, *, soil_profile_id: int | None, water_source_id: int | None
+    ) -> list[FarmLabObservation]:
+        query = self.db.query(FarmLabObservation)
+        if soil_profile_id is not None:
+            query = query.filter(FarmLabObservation.soil_profile_id == soil_profile_id)
+        else:
+            query = query.filter(FarmLabObservation.water_source_id == water_source_id)
+        return query.order_by(FarmLabObservation.sampled_on.desc(), FarmLabObservation.id.desc()).all()

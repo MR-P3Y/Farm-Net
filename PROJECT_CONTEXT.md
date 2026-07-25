@@ -838,6 +838,16 @@ focused tests, all 250 Backend tests, OpenAPI privacy contracts, and
 app/database/Redis health passed. Step 24.6 Soil, Water, Irrigation +
 Laboratory Observations is next.
 
+Step 24.6 Soil, Water, Irrigation + Laboratory Observations is complete.
+Private owner-scoped soil and irrigation profiles, retained water sources, and
+dated lab observations now have explicit metric/subject/unit/date contracts.
+Water sources archive rather than delete; observations contain one exact soil
+or water subject and remain raw evidence rather than automatic agricultural
+prescriptions. Alembic revision `07cbe3d85f46`, rollback/upgrade replay,
+no-drift, Ruff, compileall, 28 focused tests, all 254 Backend tests, OpenAPI
+privacy contracts, and app/database/Redis health passed. Step 24.7 Operation
+Diary, Inputs, Harvest + Farm Media is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
