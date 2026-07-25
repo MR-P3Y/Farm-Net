@@ -89,6 +89,7 @@ Phase 20: Wallet / Settlement / Accounting
 Phase 21: AI / RAG Assistant Integration
 Phase 22: Production Hardening / Deployment
 Phase 23: Role-Based My Activity Center
+Phase 24: Farm Management / Digital Farm Profiles
 ```
 
 Phase 18 implementation began on 2026-07-20. Step 18.1 completed a read-only
@@ -101,6 +102,13 @@ marketplace Review/Rating engine exists; Social reports and Verification review
 logs are separate domains. The approved shared-engine sequence and completed-
 source eligibility boundary are recorded in
 `docs/reviews/phase-19-real-state-audit.md`.
+
+Phase 19 is complete and released as `v0.25.0-reviews-foundation`. Phase 22
+Production Hardening reached Step 22.10 and is blocked on external credentials.
+By owner decision, Phase 24 Farm Management is now the active product track
+and is the required farmer-data foundation before Phase 21 AI/RAG resumes.
+The approved Phase 24 sequence is recorded in
+`docs/farms/phase-24-real-state-audit.md`.
 
 ---
 
@@ -2131,6 +2139,7 @@ Phase 20: Wallet / Settlement / Accounting
 Phase 21: AI / RAG Assistant Integration
 Phase 22: Production Hardening / Deployment
 Phase 23: Role-Based My Activity Center
+Phase 24: Farm Management / Digital Farm Profiles
 ```
 
 ---

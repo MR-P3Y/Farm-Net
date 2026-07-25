@@ -1,0 +1,60 @@
+groups:
+  - name: farmnet-availability
+    rules:
+      - alert: FarmNetApiUnavailable
+        expr: up{job="farmnet-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Farm-Net API metrics target is unavailable
+          runbook: docs/production/observability-readiness-metrics-alerting.md
+
+      - alert: FarmNetDependencyNotReady
+        expr: farmnet_readiness_dependency == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Farm-Net required dependency is not ready
+          runbook: docs/production/observability-readiness-metrics-alerting.md
+
+      - alert: FarmNetAlertmanagerUnavailable
+        expr: up{job="alertmanager"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Farm-Net Alertmanager is unavailable
+          runbook: docs/production/observability-readiness-metrics-alerting.md
+
+  - name: farmnet-api-quality
+    rules:
+      - alert: FarmNetHighServerErrorRatio
+        expr: |
+          (
+            sum(rate(farmnet_http_requests_total{status=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(farmnet_http_requests_total[5m])), 0.001)
+          ) > 0.05
+          and
+          sum(rate(farmnet_http_requests_total[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Farm-Net API server error ratio exceeds 5 percent
+          runbook: docs/production/observability-readiness-metrics-alerting.md
+
+      - alert: FarmNetHighP95Latency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(farmnet_http_request_duration_seconds_bucket[5m]))
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Farm-Net API p95 latency exceeds 2 seconds
+          runbook: docs/production/observability-readiness-metrics-alerting.md

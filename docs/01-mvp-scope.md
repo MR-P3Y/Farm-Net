@@ -577,4 +577,5 @@ MVP v1 باید یک نسخه قابل اجرا از ستون فقرات پلت�
 9. Wallet / Settlement / Accounting
 10. AI / RAG Assistant Integration
 11. Production Hardening / Deployment
+12. Farm Management / Digital Farm Profiles
 ```

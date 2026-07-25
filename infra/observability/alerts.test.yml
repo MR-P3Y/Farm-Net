@@ -1,0 +1,36 @@
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="farmnet-api",instance="backend:8000"}'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: FarmNetApiUnavailable
+        exp_alerts:
+          - exp_labels:
+              instance: backend:8000
+              job: farmnet-api
+              severity: critical
+            exp_annotations:
+              summary: Farm-Net API metrics target is unavailable
+              runbook: docs/production/observability-readiness-metrics-alerting.md
+
+  - interval: 1m
+    input_series:
+      - series: 'farmnet_readiness_dependency{dependency="redis"}'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: FarmNetDependencyNotReady
+        exp_alerts:
+          - exp_labels:
+              dependency: redis
+              severity: critical
+            exp_annotations:
+              summary: Farm-Net required dependency is not ready
+              runbook: docs/production/observability-readiness-metrics-alerting.md

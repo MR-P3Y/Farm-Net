@@ -159,7 +159,21 @@ Phase 19.8 Admin Review/Report Moderation Panel: completed
 Phase 19.9 Cross-Domain Contract + Runtime Hardening: completed
 Phase 19.10 Docs, Postman + Runtime Regression: completed
 Phase 19.11 Reviews/Ratings/Reports Release Gate + Tag: completed (v0.25.0-reviews-foundation)
-Next roadmap phase: not selected
+Phase 21 AI/RAG: deferred by owner decision
+Phase 22.1 Production Readiness Real-State Audit: completed
+Phase 22.2 Release, Branch, Version + Documentation Governance: completed
+Phase 22.3 Production Configuration, Secret + Dev-Switch Safety: completed
+Phase 22.4 Database Drift, Migration + Backup/Restore Hardening: completed
+Phase 22.5 Typed OpenAPI Response Contract Hardening: completed
+Phase 22.6 Authentication, Session + Token Storage Hardening: completed
+Phase 22.7 Abuse Protection, Security Headers + Transport Hardening: completed
+Phase 22.8 Production Topology, Container + Worker Hardening: completed
+Phase 22.9 Observability, Readiness, Metrics + Alerting: completed
+Phase 22.10 Credentialed Staging Provider Verification: active/blocked on
+external provider credentials and owner-approved staging test targets
+Phase 24.1 Farm Management Real-State Audit + Domain/Privacy Boundary: completed
+Active product track: Phase 24 Farm Management / Digital Farm Profiles
+Next: Phase 24.2 Crop/Measurement References, Permissions + DB Contract
 ```
 
 Services means agricultural operational services, not equipment rental.

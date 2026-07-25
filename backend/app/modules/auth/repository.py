@@ -157,6 +157,44 @@ class AuthRepository:
             .one_or_none()
         )
 
+    def get_refresh_token_by_hash_for_update(
+        self,
+        token_hash: str,
+    ) -> AuthRefreshToken | None:
+        return (
+            self.db.query(AuthRefreshToken)
+            .filter(AuthRefreshToken.token_hash == token_hash)
+            .with_for_update()
+            .one_or_none()
+        )
+
+    def get_session_by_id(self, session_id: int) -> AuthSession | None:
+        return (
+            self.db.query(AuthSession)
+            .filter(AuthSession.id == session_id)
+            .one_or_none()
+        )
+
+    def revoke_active_refresh_tokens_for_session(
+        self,
+        session_id: int,
+        revoked_at: datetime,
+    ) -> None:
+        (
+            self.db.query(AuthRefreshToken)
+            .filter(
+                AuthRefreshToken.session_id == session_id,
+                AuthRefreshToken.status == "active",
+            )
+            .update(
+                {
+                    AuthRefreshToken.status: "revoked",
+                    AuthRefreshToken.revoked_at: revoked_at,
+                },
+                synchronize_session=False,
+            )
+        )
+
     def revoke_refresh_token(self, token: AuthRefreshToken, revoked_at: datetime) -> None:
         token.status = "revoked"
         token.revoked_at = revoked_at

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
+from app.core.config import get_settings
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.media.enums import MediaPurpose, MediaStorageDisk, MediaVisibility
 from app.modules.media.schemas import StoredMediaFile
@@ -252,5 +253,5 @@ class LocalMediaStorage:
 
 
 def get_local_media_storage() -> LocalMediaStorage:
-    base_dir = Path(os.getenv("MEDIA_STORAGE_DIR", "storage/media"))
+    base_dir = Path(get_settings().media_storage_dir)
     return LocalMediaStorage(config=LocalStorageConfig(base_dir=base_dir))

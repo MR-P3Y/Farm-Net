@@ -1,13 +1,16 @@
 # Farm-Net Project Progress
 
-Last verified: 2026-07-24
+Last verified: 2026-07-25
 Branch at verification: `develop`
 Verified HEAD before Phase 9.2 commit: `f2b96be`
 
 ## Current Position
 
-The Services foundation is released as `v0.17.0-services-foundation`. Phase 9
-completion has resumed; Steps 9.1 through 9.4 are complete.
+The latest completed development foundation is
+`v0.25.0-reviews-foundation`. Phase 22 Step 22.10 remains blocked on external
+provider credentials. By owner decision, Phase 24 Farm Management / Digital
+Farm Profiles is the active product track and prerequisite for farmer-focused
+Phase 21 AI/RAG.
 
 ## Completed Foundations
 
@@ -1687,6 +1690,236 @@ model fields exist:
 - The release candidate was clean and synchronized on `develop`; Phase 19 is
   released as `v0.25.0-reviews-foundation`.
 - Evidence: `docs/reviews/phase-19-release-gate.md`.
+
+## Phase 22 — Production Hardening / Deployment
+
+### Step 22.1 Production Readiness Real-State Audit
+
+- Recorded owner decision to defer Phase 21 AI/RAG and make Phase 22 the active
+  engineering track.
+- Reverified clean/synchronized `develop` at
+  `v0.25.0-reviews-foundation`, healthy Backend/MySQL/Redis Runtime, single
+  Alembic head, 98 tables, and the latest Backend/Mobile/Admin/Postman gates.
+- Confirmed production blockers: no CI/CD or production/staging topology,
+  placeholder Nginx/backup, no worker orchestration/observability/recovery
+  evidence, and disabled credentialed providers.
+- Identified governance/security/contract debt: `main` 122 commits behind,
+  inconsistent app versions, four Alembic index drifts, 281/303 operations
+  without useful typed success schemas, unsafe-default guard gaps, deferred
+  refresh rotation, non-secure Mobile token storage, and shallow E2E coverage.
+- Kept AI/RAG and new business modules outside Phase 22.
+- Defined a bounded Step 22.2–22.13 implementation and release sequence.
+- No application, API, database, client, provider, or infrastructure behavior
+  changed.
+- Evidence: `docs/production/phase-22-real-state-audit.md`.
+
+### Step 22.2 Release, Branch, Version + Documentation Governance
+
+- Defined authoritative roles for `develop`, `release/vX.Y.Z`, `main`, and
+  `hotfix/vX.Y.Z`, plus fast-forward/reviewed promotion and immutable annotated
+  tag rules.
+- Classified historical `*-foundation` tags as development milestones rather
+  than retroactive production-deployment claims.
+- Set the next shared product line to `0.26.0-dev.1`: PEP 440
+  `0.26.0.dev1` for Backend and build `+26` for both Flutter clients.
+- Updated the stale progress header and documented the difference between
+  roadmap phases, historical step numbers, and semantic release versions.
+- Selected `v0.25.0-reviews-foundation` as the safe stable `main` recovery
+  target; later Phase 22 commits remain on `develop`.
+- Promoted the exact stable-tag tree to `main` through non-force merge commit
+  `c6ac2f1`, preserving the newer remote PR ancestry, then merged that history
+  back into `develop` with zero file-tree change.
+- No application/API/database/client behavior or runtime secret changed.
+- Evidence: `docs/production/release-branch-version-governance.md`.
+
+### Step 22.3 Production Configuration, Secret + Dev-Switch Safety
+
+- Added startup fail-fast validation for staging/production debug, Dev OTP,
+  JWT/Super Admin defaults, HTTPS base URLs/CORS, rate limiting, database/Redis
+  credentials, absolute Media storage, and production payment sandbox.
+- Enabled Email/SMS/Push/Payment providers now require a complete supported and
+  transport-safe configuration instead of silently accepting partial config.
+- Removed the static OTP fallback when Dev OTP is disabled; codes now use a
+  six-digit cryptographic random source and are not returned to the client.
+- Aligned local Media storage with the documented `MEDIA_STORAGE_DIR` setting
+  and added a non-secret runtime configuration validation command.
+- Added seven focused safety contracts. Ruff/compileall and all 193 Backend
+  tests passed; unsafe production failed with stable codes and no secret echo.
+- Local Docker development app/database/Redis health remained `ok`.
+- Real OTP/provider delivery and credentialed network verification remain
+  explicitly deferred to Step 22.10.
+- Evidence: `docs/production/production-config-safety.md`.
+
+### Step 22.4 Database Drift, Migration + Backup/Restore Hardening
+
+- Added Alembic revision `b8d4f2c71e04` to remove four redundant unnamed
+  Consultant/Service unique indexes while preserving the canonical named
+  unique indexes and uniqueness contracts.
+- Downgrade, upgrade, and `alembic check` passed; reflected database metadata
+  now matches the SQLAlchemy model metadata.
+- Replaced the backup placeholder with atomic MySQL/Media backup, versioned
+  manifest, byte-size and SHA-256 verification, archive traversal/link
+  rejection, and explicit-confirmation restore tooling.
+- Created and verified a real local backup, then restored it to the isolated
+  `farmnet_restore_22_4` database; all 98 tables were present and the drill
+  database was removed afterward.
+- Backup safety tests: 8 passed. Backend Ruff/compileall and all 193 Backend
+  tests passed with 18 known warnings; app/database/Redis health remained `ok`.
+- Production off-host storage, scheduling, retention, alerting, and recovery
+  orchestration remain bounded infrastructure work for later Phase 22 steps.
+- Evidence: `docs/production/database-backup-restore-hardening.md`.
+
+### Step 22.5 Typed OpenAPI Response Contract Hardening
+
+- Added the `StandardSuccessEnvelope` OpenAPI component for legacy JSON routes
+  while preserving all 22 existing exact domain response models.
+- Every one of 303 operations across 264 paths now has a non-empty successful
+  response schema: 278 shared envelopes, 22 exact domain models, and three
+  binary Media download contracts.
+- Corrected the three Media access specifications to
+  `application/octet-stream` binary responses instead of empty JSON schemas.
+- Added regression tests for complete success-schema coverage, real envelope
+  compatibility, exact-model precedence, and binary response accuracy.
+- No runtime serialization, endpoint behavior, database, permission, Mobile,
+  or Admin behavior changed.
+- Backend Ruff/compileall passed; Backend tests reported 197 passed with 18
+  known warnings and backup-tool tests reported 8 passed.
+- Mobile analyze/all 54 tests and Admin analyze/all 20 tests passed. Runtime
+  app/database/Redis health remained `ok`.
+- Evidence: `docs/api/openapi-success-contract.md`.
+
+### Step 22.6 Authentication, Session + Token Storage Hardening
+
+- Bound every new access/refresh token to an existing database session through
+  `sid`; access tokens now also carry unique `jti` values.
+- Enforced active, unexpired, same-user session validation on every
+  authenticated Backend request, making logout invalidate access immediately.
+- Added transaction-locked, one-time refresh-token rotation without extending
+  the original session lifetime.
+- Added replay detection: reuse of a known revoked refresh token revokes the
+  complete session and all active tokens in its family.
+- Replaced plaintext Mobile/Admin `SharedPreferences` bearer storage with
+  `flutter_secure_storage`, including one-time legacy migration and erasure.
+- Corrected the broad Git `storage/` ignore rule that had hidden both client
+  token-storage source files; runtime storage remains ignored.
+- Added six Backend session/rotation tests and three secure-storage tests per
+  Flutter client.
+- Backend Ruff/compileall passed; 203 Backend and eight backup-tool tests
+  passed. Mobile analyze/57 tests/Web build and Admin analyze/23 tests/Web
+  build passed.
+- Real Runtime OTP/login/access/rotation/replay smoke passed, its fixture was
+  removed, and app/database/Redis health remained `ok`.
+- Documented the residual Web bearer/XSS boundary and mandatory HTTPS,
+  HSTS/CSP controls without introducing an unplanned cookie/CSRF API migration.
+- Evidence: `docs/production/auth-session-token-storage-hardening.md`.
+
+### Step 22.7 Abuse Protection, Security Headers + Transport Hardening
+
+- Added atomic Redis-backed distributed rate limiting for staging/production
+  while retaining bounded in-memory development behavior.
+- Added independent general, Search, and sensitive Auth limits; Redis failure
+  now fails closed with a stable HTTP 503 contract.
+- Hardened trusted-proxy parsing with IP/CIDR allowlists and right-to-left XFF
+  chain resolution to prevent spoofed-first-value bypasses.
+- Added global security headers, protected-response `no-store`, trusted HTTPS
+  HSTS, explicit CORS methods/headers, and exposed rate-limit/trace headers.
+- Production-like startup now requires Redis rate limiting and an explicit
+  trusted immediate proxy.
+- Replaced the Nginx placeholder with a TLS 1.2/1.3, HTTP redirect, edge-limit,
+  security-header, bounded-size/timeout, and canonical proxy-header template.
+- Focused regressions reported 19 passed; full Backend reported 212 passed
+  with 27 known warnings and eight backup-tool tests passed.
+- Real Redis atomic limiting, Runtime Auth 429/headers, CORS/security headers,
+  `nginx -t`, app/database/Redis health, and Alembic no-drift checks passed.
+- Mobile/Admin behavior did not change; their Step 22.6 gate remains the
+  applicable client baseline.
+- Evidence: `docs/production/abuse-security-transport-hardening.md`.
+
+### Step 22.8 Production Topology, Container + Worker Hardening
+
+- Added a production Compose topology for internal MySQL/Redis, one-shot
+  migration, non-root Backend, independent Email/SMS/Push workers, and the
+  Nginx TLS edge; only Nginx publishes host ports.
+- Added digest-pinned base/service images, a multi-stage read-only Backend
+  runtime, version-locked Python dependencies, strict Docker build exclusions,
+  persistent database/Redis/Media volumes, resource/log limits, and reduced
+  Linux privileges.
+- Added regular-file secret loading through `*_FILE` settings without secret
+  echo, plus ignored local production secret/config paths.
+- Replaced one-batch notification execution with supervised long-running
+  workers supporting graceful shutdown, structured logs, isolated database
+  sessions, atomic heartbeat state, and failure/staleness health contracts.
+- A complete isolated Production topology drill passed: migration exited `0`;
+  Backend, three workers, MySQL, Redis, and Nginx were healthy; HTTPS health
+  reported app/database/redis `ok`; Backend ran as `10001` with a read-only
+  root filesystem; MySQL/Redis had no host port bindings.
+- The drill's containers, networks, and volumes were removed afterward.
+- Backend Ruff/compileall passed and all 217 Backend tests passed with 27 known
+  deprecation warnings.
+- Real production deployment, certificate automation, immutable registry
+  publication/scanning, provider credentials, monitoring, and rollout remain
+  later Phase 22 work.
+- Evidence:
+  `docs/production/production-topology-container-worker-hardening.md`.
+
+### Step 22.9 Observability, Readiness, Metrics + Alerting
+
+- Separated dependency-free `/live` from dependency-aware `/ready`; readiness
+  returns 503 when MySQL or Redis is unavailable while legacy health contracts
+  remain unchanged.
+- Added JSON request logs with sanitized trace IDs, normalized routes, status,
+  and duration without query/body/header/credential capture.
+- Added low-cardinality HTTP, build-info, in-progress, latency, and dependency
+  readiness Prometheus metrics.
+- Added internal-only, digest-pinned, non-root Prometheus and Alertmanager
+  services with persistent data, retention, health, resource, and security
+  boundaries; Nginx blocks public `/metrics` and `/ready`.
+- Added five availability/readiness/error-ratio/latency alert rules and
+  deterministic firing tests.
+- A complete isolated Production drill passed all service health checks,
+  three live Prometheus targets, JSON log correlation, public probe isolation,
+  Prometheus/Alertmanager validation, and alert firing tests.
+- Ruff/compileall and all 222 Backend tests passed with 27 known warnings.
+- Real operator paging remains explicitly unconfigured pending an owner-chosen
+  incident channel and credentials; no delivery claim is made.
+- Evidence: `docs/production/observability-readiness-metrics-alerting.md`.
+
+### Step 22.10 Credentialed Staging Provider Verification — Active/Blocked
+
+- Added a redacted preflight/execute harness for SMTP Email, HTTP JSON SMS,
+  HTTP JSON Push, and Zarinpal sandbox.
+- Execute mode is fail-closed outside staging, requires an exact confirmation
+  phrase and external test destination, and never outputs secret, recipient,
+  token, URL, provider response, or exception-message data.
+- Added a non-secret staging provider template and four safety tests.
+- Thirty-one focused notification/payment/gate tests and all 226 Backend tests
+  passed.
+- Actual environment preflight safely returned `PROVIDER_DISABLED` for all
+  four providers; no credential or approved test destination exists and no
+  external request was attempted.
+- SMS/Push vendor compatibility must be confirmed against the generic
+  Bearer-auth HTTP JSON contract or implemented through a vendor adapter.
+- This step is not complete and must not be reported as credentialed success.
+- Evidence:
+  `docs/production/credentialed-staging-provider-verification.md`.
+
+## Phase 24 — Farm Management / Digital Farm Profiles
+
+### Step 24.1 Real-State Audit + Domain/Privacy Boundary
+
+- Confirmed no Farm, Plot, Crop Cycle, soil/water/irrigation, operation diary,
+  or farm-specific Mobile/Admin/API model currently exists.
+- Separated personal Profile, Geo, Weather, Activity, marketplace, and future
+  AI responsibilities from the new private Farm aggregate.
+- Defined multiple farms per user, nested plots/history, canonical square-metre
+  area, hierarchical Geo validation, archive-first lifecycle, and private
+  coordinates/boundaries.
+- Defined the crop-reference, cycle, soil/water, operation, Weather, Mobile,
+  Activity/Admin, documentation, regression, and release sequence.
+- Kept Phase 22.10 honestly open on external credentials and prohibited AI/RAG
+  from consuming incomplete farm data as if production-ready.
+- No application/API/database/client behavior changed.
+- Evidence: `docs/farms/phase-24-real-state-audit.md`.
 
 ## Progress Update Rule
 

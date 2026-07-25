@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import datetime
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -28,10 +29,21 @@ def get_current_user(
         payload = decode_token(token)
         ensure_token_type(payload, "access")
         user_id = int(payload["sub"])
+        session_id = int(payload["sid"])
     except (KeyError, TypeError, ValueError) as exc:
         raise TokenInvalidError() from exc
 
     repo = AuthRepository(db)
+    session = repo.get_session_by_id(session_id)
+    if (
+        session is None
+        or session.user_id != user_id
+        or session.status != "active"
+        or session.expires_at is None
+        or session.expires_at < datetime.utcnow()
+    ):
+        raise TokenInvalidError()
+
     user = repo.get_user_by_id(user_id)
 
     if user is None:

@@ -667,6 +667,136 @@ database/seed, Runtime/OpenAPI, Review regression, Mobile, Admin, Postman, and
 Git. Phase 19 Reviews / Ratings / Reports is complete and released as
 `v0.25.0-reviews-foundation`.
 
+Phase 21 AI/RAG is intentionally deferred by owner decision. Phase 22
+Production Hardening is active. Step 22.1 audited the real release baseline and
+confirmed healthy development Runtime/tests alongside production blockers:
+no CI/CD or production topology, placeholder Nginx/backup, `main` 122 commits
+behind `develop`, four Alembic index drifts, mostly untyped OpenAPI responses,
+auth/session hardening gaps, disabled external providers, and no production
+observability/E2E/recovery evidence. The approved sequence is 22.2 through
+22.13; Release/Branch/Version + Documentation Governance is next.
+
+Phase 22 Step 22.2 establishes `develop` integration, frozen release branches,
+stable `main`, hotfix back-merges, immutable annotated tags, and one cross-
+surface version line. Historical foundation tags remain non-production
+milestones. Development metadata now represents `0.26.0-dev.1` across runtime,
+Backend package, Mobile, and Admin. Stable `main` is recovered only to the
+tested `v0.25.0-reviews-foundation` tree through non-force history-preserving
+merge `c6ac2f1`; its history is merged back into `develop` without file
+changes. Step 22.3 Production Configuration, Secret + Dev-Switch Safety is next.
+
+Phase 22 Step 22.3 makes staging/production configuration fail closed for
+debug/Dev OTP, weak JWT or bootstrap identity, insecure URLs/CORS, disabled
+rate limiting, weak database/Redis credentials, relative Media paths,
+production payment sandbox, and incomplete enabled providers. Dev OTP off now
+uses cryptographic random codes rather than the configured static fallback.
+Ruff/compileall and all 193 Backend tests pass; local Docker health remains
+`ok`. Real OTP and credentialed provider delivery remain Step 22.10 work. Step
+22.4 Database Drift, Migration + Backup/Restore Hardening is next.
+
+Phase 22 Step 22.4 resolves all four known Alembic index drifts through
+revision `b8d4f2c71e04`, retaining the canonical uniqueness contracts. It adds
+atomic MySQL/Media backup, versioned SHA-256 manifests, safe archive
+validation, explicit-confirmation restore, and eight focused safety tests. A
+real backup restored successfully into an isolated 98-table database and was
+cleaned up afterward. Backend Ruff/compileall, all 193 Backend tests, Alembic
+downgrade/upgrade/check, and app/database/Redis health pass. Off-host
+scheduling, retention, and monitoring remain production infrastructure work.
+Step 22.5 Typed OpenAPI Response Contract Hardening is next.
+
+Phase 22 Step 22.5 gives every one of 303 operations across 264 OpenAPI paths
+a non-empty successful response schema. It preserves 22 exact domain response
+models, documents 278 legacy JSON operations through the shared
+`StandardSuccessEnvelope`, and correctly represents three Media downloads as
+binary rather than JSON. Four focused regressions protect coverage, envelope
+compatibility, exact-model precedence, and binary contracts. Runtime behavior
+did not change. Backend Ruff/compileall, 197 Backend tests plus eight backup
+tool tests, Mobile analyze/all 54 tests, Admin analyze/all 20 tests, and
+app/database/Redis health pass. Step 22.6 Authentication, Session + Token
+Storage Hardening is next.
+
+Phase 22 Step 22.6 binds access/refresh JWTs to database sessions, adds
+one-time transaction-locked refresh rotation, preserves the fixed session
+lifetime, makes logout invalidate access immediately, and treats reuse of a
+known revoked refresh token as family replay by closing the whole session.
+Mobile and Admin bearer tokens now use `flutter_secure_storage`; legacy
+`SharedPreferences` tokens migrate once and are erased. The overly broad
+`storage/` Git ignore rule that hid both client source files is restricted to
+runtime storage. Six Backend and three tests per client protect these
+contracts. Backend Ruff/compileall, 203 Backend plus eight backup-tool tests,
+Mobile analyze/57 tests/Web build, Admin analyze/23 tests/Web build, real
+OTP/rotation/replay Runtime smoke, Alembic check, and app/database/Redis health
+pass. Web bearer storage still requires HTTPS, HSTS, CSP, and strong XSS
+controls; a future HttpOnly-cookie migration would require an explicit
+CSRF/CORS contract change. Step 22.7 Abuse Protection, Security Headers +
+Transport Hardening is next.
+
+Phase 22 Step 22.7 adds atomic Redis distributed rate limiting with independent
+general/Search/Auth policies, fail-closed Redis outages, hashed client keys,
+and right-to-left trusted proxy chain resolution. It adds global security
+headers, protected-response no-store, trusted HTTPS HSTS, explicit CORS
+methods/headers, and production startup requirements for Redis limiting plus
+an immediate proxy allowlist. The Nginx placeholder is replaced by a validated
+TLS 1.2/1.3, redirect, edge-limit, security-header, size/timeout, and canonical
+forwarded-header template. Backend Ruff/compileall, 212 Backend plus eight
+backup-tool tests, real Redis limiting, Runtime Auth 429/header and CORS/header
+smokes, `nginx -t`, Alembic no-drift, and app/database/Redis health pass. The
+template is not a live deployment; real certificates/topology remain later
+Phase 22 work. Step 22.8 Production Topology, Container + Worker Hardening is
+next.
+
+Phase 22 Step 22.8 adds a deployable production Compose contract with
+internal-only authenticated MySQL/Redis, a one-shot migration gate, non-root
+read-only Backend, three independently supervised notification workers,
+persistent data/Media volumes, and an Nginx TLS edge as the only published
+service. Backend and service images are version/digest pinned as applicable;
+file-mounted secrets resolve through fail-closed `*_FILE` settings without
+secret echo. A full isolated topology drill passed migration, all service and
+worker health checks, and HTTPS app/database/Redis health; the Backend ran as
+UID/GID 10001 with no capabilities, and MySQL/Redis exposed no host ports.
+Ruff/compileall and all 217 Backend tests pass. This is verified deployment
+topology, not a claim of live production operation; registry/scanning,
+certificate automation, monitoring, external providers, and rollout remain
+later Phase 22 work. Step 22.9 Observability, Readiness, Metrics + Alerting is
+next.
+
+Phase 22 Step 22.9 separates dependency-free liveness from dependency-aware
+readiness, adds privacy-bounded JSON request logging and low-cardinality
+Prometheus HTTP/build/dependency metrics, and deploys internal-only,
+digest-pinned Prometheus plus Alertmanager services. Nginx blocks public
+metrics/readiness while the safe liveness probe remains available. Five rules
+cover API/Alertmanager availability, dependency readiness, server-error ratio,
+and p95 latency; config validation and deterministic alert firing tests pass.
+A full isolated Production drill showed all services healthy, all three scrape
+targets `up=1`, correct build metadata, correlated JSON logs, and edge results
+`/live=200`, `/metrics=404`, `/ready=404`. Ruff/compileall and all 222 Backend
+tests pass. External operator paging is honestly unconfigured until an owner
+selects the incident channel and provisions credentials. Step 22.10
+Credentialed Staging Provider Verification is next.
+
+Phase 22 Step 22.10 is active but not complete. A redacted, fail-closed staging
+verification harness now covers SMTP Email, generic HTTP JSON SMS/Push, and
+Zarinpal sandbox. It requires staging, explicit live-delivery confirmation,
+external test targets, and can require every selected provider to return
+external acceptance without printing secrets or personal destinations. The
+actual environment contains no enabled provider, credential, or approved test
+target; preflight correctly returned `PROVIDER_DISABLED` four times and made
+no external request. SMS/Push vendor compatibility also remains an explicit
+selection/adapter decision. Credentialed success cannot be claimed until
+external provisioning and execute-mode evidence exist.
+
+By owner decision on 2026-07-25, Phase 24 Farm Management / Digital Farm
+Profiles is the active product track and the required data foundation before
+farmer-focused Phase 21 AI/RAG resumes. Step 24.1 verified that no Farm, Plot,
+Crop Cycle, soil/water/irrigation, operation diary, or farm-specific client
+flow exists. Personal Profile, Geo, Weather, Activity Center, and marketplace
+domains are adjacent but not substitutes. Phase 24 defines multiple private
+farms per user, owner-derived access, nested plots and crop history, canonical
+area, hierarchical Geo, archive-first lifecycle, private coordinates, Weather
+linkage, and an explicit AI consent/audit boundary. Phase 22.10 remains open;
+starting Phase 24 does not claim Production provider verification succeeded.
+Step 24.2 Crop/Measurement References, Permissions + DB Contract is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

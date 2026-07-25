@@ -51,6 +51,7 @@ def create_access_token(
         "type": "access",
         "exp": expire,
         "iat": utc_now(),
+        "jti": generate_random_token(24),
     }
 
     if extra_claims:
