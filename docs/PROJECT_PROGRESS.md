@@ -2278,6 +2278,26 @@ model fields exist:
 - Evidence: `docs/subscriptions/phase-25-docs-postman-runtime.md`.
 - Next: Step 25.12 Subscription Release Gate + Tag.
 
+### Step 25.12 Unified Subscription Release Gate + Tag
+
+- Passed the final independent Backend, Runtime, Mobile, Admin, Postman, and
+  Git safety gates.
+- Stabilized the concurrent Mobile redesign in independent commit `03258c0`;
+  Mobile analyze reported no issues, 68 tests passed, and Web build passed.
+- Final Backend Ruff/compileall and all 316 tests passed.
+- Final Admin analyze, all 27 tests, and Web build passed.
+- Alembic remained at `e17c4b82a6d9` with no drift; two auth seeds retained 12
+  roles and 270 permissions.
+- Runtime reconciliation remained clean with zero issues and
+  app/database/Redis health all reported `ok`.
+- All 16 Postman collections parsed; Billing remained 22 OpenAPI paths, 23
+  operations, and 30 Subscription requests.
+- Released as `v0.27.0-subscriptions-foundation`.
+- Phase 25 Unified Subscription & Entitlement Platform: complete.
+- Next: resume Phase 21 farmer-focused AI/RAG under the official name
+  **Barzegar (برزگر)**.
+- Evidence: `docs/subscriptions/phase-25-release-gate.md`.
+
 ## Progress Update Rule
 
 After every completed step:

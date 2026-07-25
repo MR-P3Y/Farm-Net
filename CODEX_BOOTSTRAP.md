@@ -197,8 +197,9 @@ Phase 25.8 Mobile Plans, Current Subscription, Usage + Checkout: completed
 Phase 25.9 Admin Plans, Subscriptions, Usage + Manual Operations: completed
 Phase 25.10 Security, Concurrency, Audit + Reconciliation Hardening: completed
 Phase 25.11 Docs, Postman + Runtime Regression: completed
-Next: Phase 25.12 Subscription Release Gate + Tag
-After Phase 25 release: resume Phase 21 farmer-focused AI/RAG
+Phase 25.12 Subscription Release Gate + Tag: completed (v0.27.0-subscriptions-foundation)
+Phase 25 Unified Subscription & Entitlement Platform: completed
+Next: resume Phase 21 farmer-focused AI/RAG as Barzegar (برزگر)
 ```
 
 Services means agricultural operational services, not equipment rental.

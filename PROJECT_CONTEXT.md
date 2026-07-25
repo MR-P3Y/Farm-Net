@@ -1049,6 +1049,20 @@ intentionally reserved for an isolated synthetic environment; no client source
 changed and the owner's concurrent Mobile design work remained untouched.
 Step 25.12 Subscription Release Gate + Tag is next.
 
+Step 25.12 passed the independent release gate. Phase 25 Unified Subscription
+& Entitlement Platform is complete and released as
+`v0.27.0-subscriptions-foundation`. The final tree passed all 316 Backend, 68
+Mobile, and 27 Admin tests; Ruff/compileall; both Flutter analyzes and Web
+builds; Alembic head/no-drift; seed twice with 270 permissions; clean
+Subscription reconciliation; 22-path/23-operation OpenAPI verification; all
+16 Postman JSON collections; and app/database/Redis health. The stabilized
+concurrent Mobile redesign is recorded separately in commit `03258c0`.
+
+The next product track is Phase 21 farmer-focused AI/RAG. The official
+Farm-Net AI name is **Barzegar (برزگر)**, meaning farmer/cultivator. Barzegar
+must use the Phase 25 Entitlement and quota boundary rather than creating a
+separate subscription system.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
