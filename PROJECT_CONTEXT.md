@@ -827,6 +827,17 @@ compileall, 18 focused tests, all 244 Backend tests, OpenAPI privacy contracts,
 and app/database/Redis health passed. Step 24.5 Crop Catalog, Varieties +
 Crop-Cycle Lifecycle is next.
 
+Step 24.5 Crop Catalog, Varieties + Crop-Cycle Lifecycle is complete.
+Authenticated reference APIs expose active categories, crops, and curated
+varieties; no unverified varieties were seeded. Owner-scoped Plot cycles have
+planned/actual dates and planned, active, completed, or cancelled states.
+Crop/variety membership is mandatory, only planned cycles are editable, and
+overlap is rejected unless every involved cycle explicitly declares
+`intercrop`. Alembic revision `f6bad2c74e35`, no-drift, Ruff, compileall, 24
+focused tests, all 250 Backend tests, OpenAPI privacy contracts, and
+app/database/Redis health passed. Step 24.6 Soil, Water, Irrigation +
+Laboratory Observations is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

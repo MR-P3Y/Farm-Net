@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.modules.farms.enums import FarmStatus
+from app.modules.farms.enums import CropCycleStatus, CultivationMode, FarmStatus
 
 
 def _normalize_required(value: str) -> str:
@@ -182,3 +182,104 @@ class FarmPlotListResponse(BaseModel):
     data: list[FarmPlotOut]
     message: str
     meta: dict
+
+
+class CropCategoryOut(BaseModel):
+    id: int
+    code: str
+    title: str
+    description: str | None
+
+
+class CropOut(BaseModel):
+    id: int
+    category_id: int
+    code: str
+    title: str
+    scientific_name: str | None
+    default_cycle_type: str
+
+
+class CropVarietyOut(BaseModel):
+    id: int
+    crop_id: int
+    code: str
+    title: str
+    scientific_name: str | None
+
+
+class FarmCropCycleCreateIn(BaseModel):
+    crop_id: int = Field(ge=1)
+    variety_id: int | None = Field(default=None, ge=1)
+    title: str | None = Field(default=None, max_length=180)
+    cultivation_mode: CultivationMode = CultivationMode.SINGLE
+    planned_start_date: date
+    planned_end_date: date
+    notes: str | None = Field(default=None, max_length=5000)
+
+    _title = field_validator("title")(_normalize_optional)
+    _notes = field_validator("notes")(_normalize_optional)
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.planned_end_date < self.planned_start_date:
+            raise ValueError("planned_end_date cannot be before planned_start_date")
+        return self
+
+
+class FarmCropCycleUpdateIn(BaseModel):
+    crop_id: int | None = Field(default=None, ge=1)
+    variety_id: int | None = Field(default=None, ge=1)
+    title: str | None = Field(default=None, max_length=180)
+    cultivation_mode: CultivationMode | None = None
+    planned_start_date: date | None = None
+    planned_end_date: date | None = None
+    notes: str | None = Field(default=None, max_length=5000)
+
+    _title = field_validator("title")(_normalize_optional)
+    _notes = field_validator("notes")(_normalize_optional)
+
+    @model_validator(mode="after")
+    def require_field(self):
+        if not self.model_fields_set:
+            raise ValueError("At least one field must be provided")
+        return self
+
+
+class FarmCropCycleOut(BaseModel):
+    id: int
+    plot_id: int
+    crop_id: int
+    variety_id: int | None
+    title: str | None
+    cultivation_mode: CultivationMode
+    planned_start_date: date
+    planned_end_date: date
+    actual_start_date: date | None
+    actual_end_date: date | None
+    status: CropCycleStatus
+    notes: str | None
+    can_edit: bool
+    can_start: bool
+    can_complete: bool
+    can_cancel: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class FarmCropCycleDetailResponse(BaseModel):
+    success: bool
+    data: FarmCropCycleOut
+    message: str
+    meta: dict
+
+
+class FarmCropCycleListResponse(BaseModel):
+    success: bool
+    data: list[FarmCropCycleOut]
+    message: str
+    meta: dict
+
+
+class FarmCropCycleTransitionIn(BaseModel):
+    effective_date: date

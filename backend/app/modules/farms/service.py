@@ -5,11 +5,17 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppException
 from app.modules.auth.models import AuthUser
-from app.modules.farms.enums import FarmStatus
-from app.modules.farms.models import Farm
+from app.modules.farms.enums import CropCycleStatus, CultivationMode, FarmStatus
+from app.modules.farms.models import Farm, FarmCropCycle
 from app.modules.farms.repository import FarmRepository
 from app.modules.farms.schemas import (
     FarmArchiveIn,
+    CropCategoryOut,
+    CropOut,
+    CropVarietyOut,
+    FarmCropCycleCreateIn,
+    FarmCropCycleOut,
+    FarmCropCycleUpdateIn,
     FarmCreateIn,
     FarmOwnerOut,
     FarmPlotCreateIn,
@@ -426,4 +432,161 @@ class FarmPlotService:
             archive_reason=row.archive_reason,
             created_at=row.created_at,
             updated_at=row.updated_at,
+        )
+
+
+class FarmCropReferenceService:
+    def __init__(self, db: Session) -> None:
+        self.repo = FarmRepository(db)
+
+    def categories(self) -> list[CropCategoryOut]:
+        return [CropCategoryOut.model_validate(row, from_attributes=True) for row in self.repo.list_crop_categories()]
+
+    def crops(self, category_id: int | None) -> list[CropOut]:
+        return [CropOut.model_validate(row, from_attributes=True) for row in self.repo.list_crops(category_id)]
+
+    def varieties(self, crop_id: int) -> list[CropVarietyOut]:
+        if self.repo.get_crop(crop_id) is None:
+            raise AppException("FARM_CROP_NOT_FOUND", "Crop not found", 404)
+        return [CropVarietyOut.model_validate(row, from_attributes=True) for row in self.repo.list_varieties(crop_id)]
+
+
+class FarmCropCycleService:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+        self.repo = FarmRepository(db)
+        self.plot_service = FarmPlotService(db)
+        self.plot_service.repo = self.repo
+
+    def create(self, *, user: AuthUser, farm_id: int, plot_id: int, payload: FarmCropCycleCreateIn) -> FarmCropCycleOut:
+        farm = self.plot_service._farm_for_update(user.id, farm_id)
+        FarmService._require_active(farm)
+        plot = self.plot_service._plot(user.id, farm_id, plot_id, for_update=True)
+        FarmService._require_active(plot)
+        self._validate_reference(payload.crop_id, payload.variety_id)
+        self._validate_overlap(
+            plot_id=plot_id,
+            starts_on=payload.planned_start_date,
+            ends_on=payload.planned_end_date,
+            mode=payload.cultivation_mode.value,
+        )
+        row = self.repo.add_cycle(
+            FarmCropCycle(
+                plot_id=plot_id,
+                crop_id=payload.crop_id,
+                variety_id=payload.variety_id,
+                title=payload.title,
+                cultivation_mode=payload.cultivation_mode.value,
+                planned_start_date=payload.planned_start_date,
+                planned_end_date=payload.planned_end_date,
+                status=CropCycleStatus.PLANNED.value,
+                notes=payload.notes,
+            )
+        )
+        self.db.commit()
+        self.db.refresh(row)
+        return self._out(row)
+
+    def list_own(self, *, user: AuthUser, farm_id: int, plot_id: int) -> list[FarmCropCycleOut]:
+        self.plot_service._plot(user.id, farm_id, plot_id)
+        return [self._out(row) for row in self.repo.list_owned_cycles(
+            farm_id=farm_id, plot_id=plot_id, owner_user_id=user.id
+        )]
+
+    def get_own(self, *, user: AuthUser, farm_id: int, plot_id: int, cycle_id: int) -> FarmCropCycleOut:
+        return self._out(self._cycle(user.id, farm_id, plot_id, cycle_id))
+
+    def update(self, *, user: AuthUser, farm_id: int, plot_id: int, cycle_id: int, payload: FarmCropCycleUpdateIn) -> FarmCropCycleOut:
+        self.plot_service._farm_for_update(user.id, farm_id)
+        row = self._cycle(user.id, farm_id, plot_id, cycle_id, True)
+        if row.status != CropCycleStatus.PLANNED.value:
+            raise AppException("FARM_CROP_CYCLE_NOT_EDITABLE", "Only planned cycles can be edited", 409)
+        changes = payload.model_dump(exclude_unset=True)
+        crop_id = changes.get("crop_id", row.crop_id)
+        variety_id = changes.get("variety_id", row.variety_id)
+        starts_on = changes.get("planned_start_date", row.planned_start_date)
+        ends_on = changes.get("planned_end_date", row.planned_end_date)
+        mode = changes.get("cultivation_mode", row.cultivation_mode)
+        mode = mode.value if isinstance(mode, CultivationMode) else mode
+        if ends_on < starts_on:
+            raise AppException("FARM_CROP_CYCLE_DATES_INVALID", "Cycle end date cannot precede start date", 422)
+        self._validate_reference(crop_id, variety_id)
+        self._validate_overlap(
+            plot_id=plot_id, starts_on=starts_on, ends_on=ends_on,
+            mode=mode, exclude_cycle_id=row.id
+        )
+        for field, value in changes.items():
+            setattr(row, field, value.value if isinstance(value, CultivationMode) else value)
+        self.db.commit()
+        self.db.refresh(row)
+        return self._out(row)
+
+    def transition(self, *, user: AuthUser, farm_id: int, plot_id: int, cycle_id: int, action: str, effective_date) -> FarmCropCycleOut:
+        self.plot_service._farm_for_update(user.id, farm_id)
+        row = self._cycle(user.id, farm_id, plot_id, cycle_id, True)
+        if action == "start" and row.status == "planned":
+            row.status = "active"
+            row.actual_start_date = effective_date
+        elif action == "complete" and row.status == "active":
+            if effective_date < row.actual_start_date:
+                raise AppException("FARM_CROP_CYCLE_DATES_INVALID", "Completion date cannot precede start date", 422)
+            row.status = "completed"
+            row.actual_end_date = effective_date
+        elif action == "cancel" and row.status in ("planned", "active"):
+            row.status = "cancelled"
+        else:
+            raise AppException("FARM_CROP_CYCLE_TRANSITION_INVALID", "Invalid crop cycle transition", 409)
+        self.db.commit()
+        self.db.refresh(row)
+        return self._out(row)
+
+    def _cycle(self, user_id, farm_id, plot_id, cycle_id, for_update=False):
+        row = self.repo.get_owned_cycle(
+            farm_id=farm_id, plot_id=plot_id, cycle_id=cycle_id,
+            owner_user_id=user_id, for_update=for_update
+        )
+        if row is None:
+            raise AppException("FARM_CROP_CYCLE_NOT_FOUND", "Crop cycle not found", 404)
+        return row
+
+    def _validate_reference(self, crop_id: int, variety_id: int | None) -> None:
+        if self.repo.get_crop(crop_id) is None:
+            raise AppException("FARM_CROP_NOT_FOUND", "Crop not found", 422)
+        if variety_id is not None:
+            variety = self.repo.get_variety(variety_id)
+            if variety is None or variety.crop_id != crop_id:
+                raise AppException("FARM_CROP_VARIETY_MISMATCH", "Variety does not belong to crop", 422)
+
+    def _validate_overlap(self, *, plot_id, starts_on, ends_on, mode, exclude_cycle_id=None):
+        conflicts = self.repo.overlapping_cycles(
+            plot_id=plot_id, starts_on=starts_on, ends_on=ends_on,
+            exclude_cycle_id=exclude_cycle_id
+        )
+        if conflicts and (
+            mode != CultivationMode.INTERCROP.value
+            or any(row.cultivation_mode != CultivationMode.INTERCROP.value for row in conflicts)
+        ):
+            raise AppException(
+                "FARM_CROP_CYCLE_OVERLAP",
+                "Overlapping cycles require explicit intercrop mode on every cycle",
+                409,
+            )
+
+    @staticmethod
+    def _out(row) -> FarmCropCycleOut:
+        status = CropCycleStatus(row.status)
+        return FarmCropCycleOut(
+            id=row.id, plot_id=row.plot_id, crop_id=row.crop_id,
+            variety_id=row.variety_id, title=row.title,
+            cultivation_mode=CultivationMode(row.cultivation_mode),
+            planned_start_date=row.planned_start_date,
+            planned_end_date=row.planned_end_date,
+            actual_start_date=row.actual_start_date,
+            actual_end_date=row.actual_end_date,
+            status=status, notes=row.notes,
+            can_edit=status == CropCycleStatus.PLANNED,
+            can_start=status == CropCycleStatus.PLANNED,
+            can_complete=status == CropCycleStatus.ACTIVE,
+            can_cancel=status in (CropCycleStatus.PLANNED, CropCycleStatus.ACTIVE),
+            created_at=row.created_at, updated_at=row.updated_at,
         )

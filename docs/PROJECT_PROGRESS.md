@@ -1975,6 +1975,19 @@ model fields exist:
   Alembic no-drift, OpenAPI privacy contracts, and health passed.
 - Evidence: `docs/farms/phase-24-plot-geo-boundary-area.md`.
 
+### Step 24.5 Crop Catalog, Varieties + Crop-Cycle Lifecycle
+
+- Added authenticated read APIs for active crop categories, crops, and curated
+  varieties.
+- Added owner-scoped Plot crop cycles through Alembic revision
+  `f6bad2c74e35`, with planned/actual dates and explicit lifecycle transitions.
+- Enforced crop/variety membership and rejected overlaps unless every involved
+  cycle explicitly uses `intercrop`.
+- Allowed edits only while planned and retained completed/cancelled history.
+- Ruff/compileall, 24 focused tests, all 250 Backend tests, MySQL migration,
+  no-drift, OpenAPI privacy contracts, and health passed.
+- Evidence: `docs/farms/phase-24-crop-catalog-cycle-lifecycle.md`.
+
 ## Progress Update Rule
 
 After every completed step:

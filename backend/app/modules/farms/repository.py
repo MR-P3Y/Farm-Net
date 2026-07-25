@@ -3,7 +3,14 @@ from decimal import Decimal
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.modules.farms.models import Farm, FarmPlot
+from app.modules.farms.models import (
+    Farm,
+    FarmCrop,
+    FarmCropCategory,
+    FarmCropCycle,
+    FarmCropVariety,
+    FarmPlot,
+)
 from app.modules.geo.models import (
     GeoCity,
     GeoCounty,
@@ -139,3 +146,108 @@ class FarmRepository:
 
     def get_village(self, geo_id: int) -> GeoVillage | None:
         return self.get_geo(GeoVillage, geo_id)
+
+    def list_crop_categories(self) -> list[FarmCropCategory]:
+        return (
+            self.db.query(FarmCropCategory)
+            .filter(FarmCropCategory.is_active.is_(True))
+            .order_by(FarmCropCategory.sort_order, FarmCropCategory.id)
+            .all()
+        )
+
+    def list_crops(self, category_id: int | None = None) -> list[FarmCrop]:
+        query = self.db.query(FarmCrop).filter(FarmCrop.is_active.is_(True))
+        if category_id is not None:
+            query = query.filter(FarmCrop.category_id == category_id)
+        return query.order_by(FarmCrop.sort_order, FarmCrop.id).all()
+
+    def get_crop(self, crop_id: int) -> FarmCrop | None:
+        return (
+            self.db.query(FarmCrop)
+            .filter(FarmCrop.id == crop_id, FarmCrop.is_active.is_(True))
+            .one_or_none()
+        )
+
+    def list_varieties(self, crop_id: int) -> list[FarmCropVariety]:
+        return (
+            self.db.query(FarmCropVariety)
+            .filter(
+                FarmCropVariety.crop_id == crop_id,
+                FarmCropVariety.is_active.is_(True),
+            )
+            .order_by(FarmCropVariety.sort_order, FarmCropVariety.id)
+            .all()
+        )
+
+    def get_variety(self, variety_id: int) -> FarmCropVariety | None:
+        return (
+            self.db.query(FarmCropVariety)
+            .filter(
+                FarmCropVariety.id == variety_id,
+                FarmCropVariety.is_active.is_(True),
+            )
+            .one_or_none()
+        )
+
+    def add_cycle(self, row: FarmCropCycle) -> FarmCropCycle:
+        self.db.add(row)
+        self.db.flush()
+        return row
+
+    def get_owned_cycle(
+        self,
+        *,
+        farm_id: int,
+        plot_id: int,
+        cycle_id: int,
+        owner_user_id: int,
+        for_update: bool = False,
+    ) -> FarmCropCycle | None:
+        query = (
+            self.db.query(FarmCropCycle)
+            .join(FarmPlot, FarmPlot.id == FarmCropCycle.plot_id)
+            .join(Farm, Farm.id == FarmPlot.farm_id)
+            .filter(
+                FarmCropCycle.id == cycle_id,
+                FarmCropCycle.plot_id == plot_id,
+                FarmPlot.farm_id == farm_id,
+                Farm.owner_user_id == owner_user_id,
+            )
+        )
+        if for_update:
+            query = query.with_for_update()
+        return query.one_or_none()
+
+    def list_owned_cycles(
+        self, *, farm_id: int, plot_id: int, owner_user_id: int
+    ) -> list[FarmCropCycle]:
+        return (
+            self.db.query(FarmCropCycle)
+            .join(FarmPlot, FarmPlot.id == FarmCropCycle.plot_id)
+            .join(Farm, Farm.id == FarmPlot.farm_id)
+            .filter(
+                FarmCropCycle.plot_id == plot_id,
+                FarmPlot.farm_id == farm_id,
+                Farm.owner_user_id == owner_user_id,
+            )
+            .order_by(FarmCropCycle.planned_start_date.desc(), FarmCropCycle.id.desc())
+            .all()
+        )
+
+    def overlapping_cycles(
+        self,
+        *,
+        plot_id: int,
+        starts_on,
+        ends_on,
+        exclude_cycle_id: int | None = None,
+    ) -> list[FarmCropCycle]:
+        query = self.db.query(FarmCropCycle).filter(
+            FarmCropCycle.plot_id == plot_id,
+            FarmCropCycle.status.in_(("planned", "active")),
+            FarmCropCycle.planned_start_date <= ends_on,
+            FarmCropCycle.planned_end_date >= starts_on,
+        )
+        if exclude_cycle_id is not None:
+            query = query.filter(FarmCropCycle.id != exclude_cycle_id)
+        return query.with_for_update().all()

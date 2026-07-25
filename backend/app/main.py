@@ -16,6 +16,8 @@ from app.modules.consultants.router import router as consultants_router
 from app.modules.expert.admin_router import router as admin_expert_router
 from app.modules.expert.router import router as expert_router
 from app.modules.farms.router import router as farms_router
+from app.modules.farms.cycle_router import cycle_router as farm_cycle_router
+from app.modules.farms.cycle_router import reference_router as farm_reference_router
 from app.modules.geo.router import router as geo_router
 from app.modules.health.router import router as health_router
 from app.modules.health.observability_router import router as observability_router
@@ -148,6 +150,8 @@ def create_app() -> FastAPI:
     app.include_router(expert_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_expert_router, prefix=settings.api_v1_prefix)
     app.include_router(farms_router, prefix=settings.api_v1_prefix)
+    app.include_router(farm_cycle_router, prefix=settings.api_v1_prefix)
+    app.include_router(farm_reference_router, prefix=settings.api_v1_prefix)
 
     register_exception_handlers(app)
     install_typed_openapi(app)

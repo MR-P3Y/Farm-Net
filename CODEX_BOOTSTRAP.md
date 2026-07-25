@@ -175,8 +175,9 @@ Phase 24.1 Farm Management Real-State Audit + Domain/Privacy Boundary: completed
 Phase 24.2 Crop/Measurement References, Permissions + DB Contract: completed
 Phase 24.3 Owner-Scoped Farm CRUD + Archive Lifecycle: completed
 Phase 24.4 Plot, Geo Point/Boundary + Area Consistency: completed
+Phase 24.5 Crop Catalog, Varieties + Crop-Cycle Lifecycle: completed
 Active product track: Phase 24 Farm Management / Digital Farm Profiles
-Next: Phase 24.5 Crop Catalog, Varieties + Crop-Cycle Lifecycle
+Next: Phase 24.6 Soil, Water, Irrigation + Laboratory Observations
 ```
 
 Services means agricultural operational services, not equipment rental.

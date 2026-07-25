@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -6,6 +6,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
+    Date,
     ForeignKey,
     Index,
     Integer,
@@ -18,7 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.modules.farms.enums import FarmStatus
+from app.modules.farms.enums import CropCycleStatus, CultivationMode, FarmStatus
 
 
 class Farm(Base):
@@ -119,6 +120,7 @@ class FarmPlot(Base):
     )
 
     farm: Mapped["Farm"] = relationship(back_populates="plots")
+    crop_cycles: Mapped[list["FarmCropCycle"]] = relationship(back_populates="plot")
 
     __table_args__ = (
         CheckConstraint("area_sqm > 0", name="ck_farm_plots_area_positive"),
@@ -153,6 +155,87 @@ class FarmPlot(Base):
             "rural_district_id",
             "city_id",
             "village_id",
+        ),
+    )
+
+
+class FarmCropCycle(Base):
+    __tablename__ = "farm_crop_cycles"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    plot_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("farm_plots.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    crop_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("farm_crops.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    variety_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("farm_crop_varieties.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    title: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    cultivation_mode: Mapped[str] = mapped_column(
+        String(30), default=CultivationMode.SINGLE.value, nullable=False
+    )
+    planned_start_date: Mapped[date] = mapped_column(Date, nullable=False)
+    planned_end_date: Mapped[date] = mapped_column(Date, nullable=False)
+    actual_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    actual_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(30), default=CropCycleStatus.PLANNED.value, nullable=False
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    plot: Mapped["FarmPlot"] = relationship(back_populates="crop_cycles")
+    crop: Mapped["FarmCrop"] = relationship()
+    variety: Mapped["FarmCropVariety | None"] = relationship()
+
+    __table_args__ = (
+        CheckConstraint(
+            "planned_end_date >= planned_start_date",
+            name="ck_farm_crop_cycles_planned_dates",
+        ),
+        CheckConstraint(
+            "actual_end_date IS NULL OR actual_start_date IS NOT NULL",
+            name="ck_farm_crop_cycles_actual_end_requires_start",
+        ),
+        CheckConstraint(
+            "actual_end_date IS NULL OR actual_end_date >= actual_start_date",
+            name="ck_farm_crop_cycles_actual_dates",
+        ),
+        CheckConstraint(
+            "cultivation_mode in ('single', 'intercrop')",
+            name="ck_farm_crop_cycles_cultivation_mode",
+        ),
+        CheckConstraint(
+            "status in ('planned', 'active', 'completed', 'cancelled')",
+            name="ck_farm_crop_cycles_status",
+        ),
+        CheckConstraint(
+            "(status = 'planned' AND actual_start_date IS NULL AND actual_end_date IS NULL) OR "
+            "(status = 'active' AND actual_start_date IS NOT NULL AND actual_end_date IS NULL) OR "
+            "(status = 'completed' AND actual_start_date IS NOT NULL AND actual_end_date IS NOT NULL) OR "
+            "(status = 'cancelled' AND actual_end_date IS NULL)",
+            name="ck_farm_crop_cycles_lifecycle_dates",
+        ),
+        Index(
+            "ix_farm_crop_cycles_plot_status_dates",
+            "plot_id",
+            "status",
+            "planned_start_date",
+            "planned_end_date",
         ),
     )
 
