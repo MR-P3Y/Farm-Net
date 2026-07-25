@@ -774,6 +774,17 @@ tests pass. External operator paging is honestly unconfigured until an owner
 selects the incident channel and provisions credentials. Step 22.10
 Credentialed Staging Provider Verification is next.
 
+Phase 22 Step 22.10 is active but not complete. A redacted, fail-closed staging
+verification harness now covers SMTP Email, generic HTTP JSON SMS/Push, and
+Zarinpal sandbox. It requires staging, explicit live-delivery confirmation,
+external test targets, and can require every selected provider to return
+external acceptance without printing secrets or personal destinations. The
+actual environment contains no enabled provider, credential, or approved test
+target; preflight correctly returned `PROVIDER_DISABLED` four times and made
+no external request. SMS/Push vendor compatibility also remains an explicit
+selection/adapter decision. Credentialed success cannot be claimed until
+external provisioning and execute-mode evidence exist.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

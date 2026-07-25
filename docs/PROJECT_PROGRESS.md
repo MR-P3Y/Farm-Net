@@ -9,7 +9,8 @@ Verified HEAD before Phase 9.2 commit: `f2b96be`
 The latest completed development foundation is
 `v0.25.0-reviews-foundation`. Phase 21 AI/RAG is deferred by owner decision.
 Phase 22 Production Hardening is active. Steps 22.1 through 22.9 are complete;
-Step 22.10 Credentialed Staging Provider Verification is next.
+Step 22.10 Credentialed Staging Provider Verification is active but blocked on
+external provider selection, credentials, and owner-approved test targets.
 
 ## Completed Foundations
 
@@ -1882,6 +1883,25 @@ model fields exist:
 - Real operator paging remains explicitly unconfigured pending an owner-chosen
   incident channel and credentials; no delivery claim is made.
 - Evidence: `docs/production/observability-readiness-metrics-alerting.md`.
+
+### Step 22.10 Credentialed Staging Provider Verification — Active/Blocked
+
+- Added a redacted preflight/execute harness for SMTP Email, HTTP JSON SMS,
+  HTTP JSON Push, and Zarinpal sandbox.
+- Execute mode is fail-closed outside staging, requires an exact confirmation
+  phrase and external test destination, and never outputs secret, recipient,
+  token, URL, provider response, or exception-message data.
+- Added a non-secret staging provider template and four safety tests.
+- Thirty-one focused notification/payment/gate tests and all 226 Backend tests
+  passed.
+- Actual environment preflight safely returned `PROVIDER_DISABLED` for all
+  four providers; no credential or approved test destination exists and no
+  external request was attempted.
+- SMS/Push vendor compatibility must be confirmed against the generic
+  Bearer-auth HTTP JSON contract or implemented through a vendor adapter.
+- This step is not complete and must not be reported as credentialed success.
+- Evidence:
+  `docs/production/credentialed-staging-provider-verification.md`.
 
 ## Progress Update Rule
 
