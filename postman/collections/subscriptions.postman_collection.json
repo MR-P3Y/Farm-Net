@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "Farm Net - Unified Subscriptions",
+    "description": "Phase 25.11: all 23 real Billing operations plus authentication, permission, validation, privacy, idempotency, version-conflict, TOMAN, audit, and reconciliation regressions. Use only synthetic test users and non-production mock payments.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8000/api/v1"},
+    {"key": "user_token", "value": ""},
+    {"key": "admin_token", "value": ""},
+    {"key": "limited_token", "value": ""},
+    {"key": "plan_code", "value": "free"},
+    {"key": "paid_plan_code", "value": "farmer_plus"},
+    {"key": "plan_id", "value": "1"},
+    {"key": "subscription_id", "value": "1"},
+    {"key": "target_user_id", "value": "2"},
+    {"key": "expected_version", "value": "1"},
+    {"key": "payment_attempt_id", "value": "1"},
+    {"key": "provider_token", "value": "mock-approved"},
+    {"key": "checkout_key", "value": "postman-subscription-checkout-0001"},
+    {"key": "renewal_key", "value": "postman-subscription-renewal-0001"}
+  ],
+  "item": [
+    {
+      "name": "01 Public - List active plans",
+      "request": {"method": "GET", "url": "{{base_url}}/billing/plans"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('200 public TOMAN catalog', function () { pm.response.to.have.status(200); const rows=pm.response.json().data; pm.expect(rows).to.be.an('array'); rows.forEach(p => pm.expect(p.currency).to.eql('TOMAN')); });"
+      ]}}]
+    },
+    {
+      "name": "02 Public - Plan detail",
+      "request": {"method": "GET", "url": "{{base_url}}/billing/plans/{{plan_code}}"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('typed public plan', function () { pm.response.to.have.status(200); const p=pm.response.json().data; pm.expect(p.code).to.eql(pm.variables.get('plan_code')); pm.expect(p.features).to.be.an('array'); });"
+      ]}}]
+    },
+    {
+      "name": "03 Public - Missing plan is 404",
+      "request": {"method": "GET", "url": "{{base_url}}/billing/plans/does_not_exist"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('missing plan rejected', function () { pm.response.to.have.status(404); });"
+      ]}}]
+    },
+    {
+      "name": "04 Owner - Current subscription",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}], "url": "{{base_url}}/billing/subscription/me"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('owner-only privacy contract', function () { pm.response.to.have.status(200); const d=pm.response.json().data; if(d){ pm.expect(d).not.to.have.property('user_id'); pm.expect(d.plan.currency).to.eql('TOMAN'); } });"
+      ]}}]
+    },
+    {
+      "name": "05 Owner - Entitlements",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}], "url": "{{base_url}}/billing/entitlements/me"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('owner entitlement snapshots', function () { pm.response.to.have.status(200); pm.response.json().data.forEach(e => pm.expect(e).not.to.have.property('user_id')); });"
+      ]}}]
+    },
+    {
+      "name": "06 Owner - Usage",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}], "url": "{{base_url}}/billing/usage/me"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('used and reserved are explicit', function () { pm.response.to.have.status(200); pm.response.json().data.forEach(u => { pm.expect(u).to.have.property('used_value'); pm.expect(u).to.have.property('reserved_value'); }); });"
+      ]}}]
+    },
+    {
+      "name": "07 Owner - Estimate quota",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"feature_code\":\"ai.text_chat\",\"amount\":1}"}, "url": "{{base_url}}/billing/usage/estimate"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('estimate is read-only typed result', function () { pm.response.to.have.status(200); const d=pm.response.json().data; pm.expect(d.requested_value).to.exist; pm.expect(d.allowed).to.be.a('boolean'); });"
+      ]}}]
+    },
+    {
+      "name": "08 Owner - Activate Free",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}], "url": "{{base_url}}/billing/subscription/free"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('free activation is idempotent', function () { pm.expect([200,409]).to.include(pm.response.code); });"
+      ]}}]
+    },
+    {
+      "name": "09 Owner - Cancel",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"expected_version\":{{expected_version}},\"cancel_at_period_end\":true,\"reason\":\"Postman lifecycle regression\"}"}, "url": "{{base_url}}/billing/subscription/cancel"}
+    },
+    {
+      "name": "10 Owner - Resume",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"expected_version\":{{expected_version}}}"}, "url": "{{base_url}}/billing/subscription/resume"}
+    },
+    {
+      "name": "11 Owner - Paid checkout Mock",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"plan_code\":\"{{paid_plan_code}}\",\"provider\":\"mock\",\"idempotency_key\":\"{{checkout_key}}\"}"}, "url": "{{base_url}}/billing/checkout"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('checkout hides authority and key', function () { pm.expect([200,404,409]).to.include(pm.response.code); if(pm.response.code===200){ const d=pm.response.json().data; pm.expect(d.currency).to.eql('TOMAN'); pm.expect(d).not.to.have.property('provider_authority'); pm.expect(d).not.to.have.property('idempotency_key'); pm.collectionVariables.set('payment_attempt_id', d.payment_attempt_id); } });"
+      ]}}]
+    },
+    {
+      "name": "12 Owner - Paid checkout idempotent replay",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"plan_code\":\"{{paid_plan_code}}\",\"provider\":\"mock\",\"idempotency_key\":\"{{checkout_key}}\"}"}, "url": "{{base_url}}/billing/checkout"}
+    },
+    {
+      "name": "13 Owner - Renewal checkout",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"provider\":\"mock\",\"idempotency_key\":\"{{renewal_key}}\"}"}, "url": "{{base_url}}/billing/subscription/renew/checkout"}
+    },
+    {
+      "name": "14 Owner - Verify payment",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"payment_attempt_id\":{{payment_attempt_id}},\"provider_token\":\"{{provider_token}}\"}"}, "url": "{{base_url}}/billing/payments/verify"}
+    },
+    {
+      "name": "15 Gateway - Zarinpal callback",
+      "request": {"method": "GET", "url": "{{base_url}}/billing/payments/callback/zarinpal?Authority=synthetic-authority&Status=NOK"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('synthetic callback cannot activate', function () { pm.expect([400,404,409]).to.include(pm.response.code); });"
+      ]}}]
+    },
+    {
+      "name": "16 Admin - List plans",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}], "url": "{{base_url}}/admin/billing/plans?page=1&page_size=20"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('paginated admin plans', function () { pm.response.to.have.status(200); const j=pm.response.json(); pm.expect(j.meta).to.have.property('total'); });"
+      ]}}]
+    },
+    {
+      "name": "17 Admin - Create Draft plan",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"code\":\"postman_test_plan\",\"name\":\"Postman Test Plan\",\"description\":\"Synthetic non-production plan\",\"billing_period\":\"monthly\",\"price_toman\":250000,\"features\":[{\"feature_code\":\"ai.text_chat\",\"enabled\":true,\"unlimited\":false,\"numeric_value\":100}]}"}, "url": "{{base_url}}/admin/billing/plans"}
+    },
+    {
+      "name": "18 Admin - Update Draft plan",
+      "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"expected_version\":{{expected_version}},\"name\":\"Updated synthetic plan\"}"}, "url": "{{base_url}}/admin/billing/plans/{{plan_id}}"}
+    },
+    {
+      "name": "19 Admin - Change plan status",
+      "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"expected_version\":{{expected_version}},\"status\":\"active\"}"}, "url": "{{base_url}}/admin/billing/plans/{{plan_id}}/status"}
+    },
+    {
+      "name": "20 Admin - List subscriptions",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}], "url": "{{base_url}}/admin/billing/subscriptions?page=1&page_size=20"}
+    },
+    {
+      "name": "21 Admin - Subscription detail and usage",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}], "url": "{{base_url}}/admin/billing/subscriptions/{{subscription_id}}"}
+    },
+    {
+      "name": "22 Admin - Manual activation",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"user_id\":{{target_user_id}},\"plan_id\":{{plan_id}},\"reason\":\"Synthetic Postman support grant\"}"}, "url": "{{base_url}}/admin/billing/subscriptions/manual-activate"}
+    },
+    {
+      "name": "23 Admin - Cancel subscription",
+      "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"expected_version\":{{expected_version}},\"cancel_at_period_end\":true,\"reason\":\"Synthetic Postman cancellation\"}"}, "url": "{{base_url}}/admin/billing/subscriptions/{{subscription_id}}/cancel"}
+    },
+    {
+      "name": "24 Admin - Billing audit",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}], "url": "{{base_url}}/admin/billing/audit?page=1&page_size=20"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('immutable audit contract fields', function () { pm.response.to.have.status(200); pm.response.json().data.forEach(a => { pm.expect(a).to.have.property('event_key'); pm.expect(a).to.have.property('actor_type'); }); });"
+      ]}}]
+    },
+    {
+      "name": "25 Admin - Billing reconciliation",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}], "url": "{{base_url}}/admin/billing/reconciliation"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('read-only reconciliation contract', function () { pm.response.to.have.status(200); const d=pm.response.json().data; pm.expect(d.clean).to.be.a('boolean'); pm.expect(d.issues).to.be.an('array'); });"
+      ]}}]
+    },
+    {
+      "name": "26 Negative - Owner endpoint without token",
+      "request": {"method": "GET", "url": "{{base_url}}/billing/subscription/me"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('authentication required', function () { pm.response.to.have.status(401); });"
+      ]}}]
+    },
+    {
+      "name": "27 Negative - Admin endpoint with user token",
+      "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{limited_token}}"}], "url": "{{base_url}}/admin/billing/reconciliation"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('permission required', function () { pm.response.to.have.status(403); });"
+      ]}}]
+    },
+    {
+      "name": "28 Negative - Invalid quota amount",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"feature_code\":\"ai.text_chat\",\"amount\":0}"}, "url": "{{base_url}}/billing/usage/estimate"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('invalid amount rejected', function () { pm.response.to.have.status(422); });"
+      ]}}]
+    },
+    {
+      "name": "29 Negative - Non-TOMAN plan field forbidden",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"code\":\"invalid_currency\",\"name\":\"Invalid Currency\",\"billing_period\":\"monthly\",\"price_toman\":1,\"currency\":\"IRR\",\"features\":[{\"feature_code\":\"ai.text_chat\",\"numeric_value\":1}]}"}, "url": "{{base_url}}/admin/billing/plans"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('extra currency rejected', function () { pm.response.to.have.status(422); });"
+      ]}}]
+    },
+    {
+      "name": "30 Negative - Subscription version conflict",
+      "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"expected_version\":999999,\"cancel_at_period_end\":true,\"reason\":\"Synthetic stale version\"}"}, "url": "{{base_url}}/billing/subscription/cancel"},
+      "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+        "pm.test('stale version rejected', function () { pm.expect([404,409]).to.include(pm.response.code); });"
+      ]}}]
+    }
+  ]
+}

@@ -942,7 +942,11 @@ Audit log برای تصمیم ادمین ثبت شود.
 
 ---
 
-# 13. Legacy Module Note — Billing / Subscription
+# 13. Implemented Module — Billing / Subscription
+
+Implementation status: Phase 25.1 through 25.10 complete. The canonical
+contract is documented in `docs/api/billing.md`; the list below is a compact
+roadmap summary.
 
 ## هدف
 
@@ -961,18 +965,33 @@ Payment Core برای پرداخت آنلاین اشتراک
 
 ```text
 billing_plans
+billing_features
 billing_plan_features
 billing_subscriptions
+billing_subscription_periods
+billing_entitlements
 billing_feature_usage
+billing_usage_reservations
+billing_subscription_payment_attempts
+billing_audit_logs
 ```
 
 ## APIهای اصلی
 
 ```text
 GET /api/v1/billing/plans
+GET /api/v1/billing/plans/{plan_code}
 GET /api/v1/billing/subscription/me
-POST /api/v1/billing/subscriptions/checkout
+GET /api/v1/billing/entitlements/me
 GET /api/v1/billing/usage/me
+POST /api/v1/billing/usage/estimate
+POST /api/v1/billing/subscription/free
+POST /api/v1/billing/subscription/cancel
+POST /api/v1/billing/subscription/resume
+POST /api/v1/billing/checkout
+POST /api/v1/billing/subscription/renew/checkout
+POST /api/v1/billing/payments/verify
+GET /api/v1/billing/payments/callback/zarinpal
 ```
 
 ## Admin API
@@ -981,10 +1000,14 @@ GET /api/v1/billing/usage/me
 GET /api/v1/admin/billing/plans
 POST /api/v1/admin/billing/plans
 PATCH /api/v1/admin/billing/plans/{id}
+PATCH /api/v1/admin/billing/plans/{id}/status
 
 GET /api/v1/admin/billing/subscriptions
+GET /api/v1/admin/billing/subscriptions/{id}
 POST /api/v1/admin/billing/subscriptions/manual-activate
 PATCH /api/v1/admin/billing/subscriptions/{id}/cancel
+GET /api/v1/admin/billing/audit
+GET /api/v1/admin/billing/reconciliation
 ```
 
 ## Notification Events
@@ -1013,6 +1036,7 @@ Plans management
 Subscriptions list
 Manual activation
 Feature limits management
+Audit and reconciliation inspection
 ```
 
 ## Definition of Done

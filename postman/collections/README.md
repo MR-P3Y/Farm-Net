@@ -41,3 +41,8 @@ incomplete availability rejection.
 authenticated owner CRUD, public active-only Reviews and rating summaries,
 governed reporting, typed Admin Review/report moderation, and immutable
 moderation-log reads.
+## Unified Subscriptions
+
+`subscriptions.postman_collection.json` is the Phase 25 contract collection.
+It contains 30 requests covering all 23 OpenAPI Billing operations and seven
+negative/replay scenarios. Use only an isolated non-production environment.

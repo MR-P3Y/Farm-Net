@@ -2255,6 +2255,29 @@ model fields exist:
 - Evidence:
   `docs/subscriptions/phase-25-security-audit-reconciliation.md`.
 
+### Step 25.11 Docs, Postman + Runtime Regression
+
+- Added the canonical Billing API, lifecycle, privacy, permission, TOMAN,
+  payment, Audit, and reconciliation documentation for all 22 runtime paths
+  and 23 operations.
+- Added a 30-request Subscriptions Postman collection covering every runtime
+  operation and seven negative/replay contracts.
+- Added automated checks for complete OpenAPI operation coverage, parseable
+  variable-resolved JSON bodies, documentation path coverage, and obvious
+  secret exclusion.
+- Updated the roadmap, database, permissions, and Postman indexes to match the
+  deployed ten-table and 15-permission implementation.
+- Read-only runtime regression passed for public/owner/Admin reads, privacy,
+  callback failure, clean reconciliation, OpenAPI, and app/database/Redis
+  health.
+- Ruff, compileall, all 316 Backend tests, all collection JSON parses, Alembic
+  head/no-drift, and seed twice with 270 permissions passed.
+- State-changing Postman execution was reserved for an isolated synthetic
+  environment. No Mobile or Admin source changed; concurrent Mobile work was
+  not modified or included.
+- Evidence: `docs/subscriptions/phase-25-docs-postman-runtime.md`.
+- Next: Step 25.12 Subscription Release Gate + Tag.
+
 ## Progress Update Rule
 
 After every completed step:

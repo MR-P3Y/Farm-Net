@@ -606,6 +606,14 @@ billing.subscriptions.read
 billing.subscriptions.activate
 billing.subscriptions.cancel
 billing.usage.read
+
+billing.plans.public_read
+billing.subscription.read_own
+billing.subscription.manage_own
+billing.usage.read_own
+billing.entitlements.read
+billing.audit.read
+billing.reconciliation.read
 ```
 
 ---

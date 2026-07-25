@@ -969,10 +969,23 @@ created_at
 
 ```text
 billing_plans
+billing_features
 billing_plan_features
 billing_subscriptions
+billing_subscription_periods
+billing_entitlements
 billing_feature_usage
+billing_usage_reservations
+billing_subscription_payment_attempts
+billing_audit_logs
 ```
+
+The deployed Phase 25 schema uses immutable Plan/Entitlement/Period snapshots,
+atomic Usage reservations, payment-attempt idempotency, and append-only Audit.
+`billing_plans.active_code` and `billing_subscriptions.current_user_id` are
+generated unique slots that enforce one active plan version per code and one
+active/grace subscription per user. The authoritative contract and lifecycle
+rules are in `docs/api/billing.md`.
 
 ## billing_plans
 

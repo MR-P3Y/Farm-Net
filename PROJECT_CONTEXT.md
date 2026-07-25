@@ -1037,6 +1037,18 @@ Admin analyze/build, Alembic no-drift, 270-permission seed twice, nine-path
 runtime OpenAPI, authenticated audit/reconciliation, and app/database/Redis
 health passed. Step 25.11 Docs, Postman + Runtime Regression is next.
 
+Step 25.11 Docs, Postman + Runtime Regression is complete. The canonical
+Billing API document now covers all 22 paths and 23 operations, and the
+Subscriptions Postman collection contains all runtime operations plus seven
+negative/replay scenarios (30 requests total). Contract tests verify operation
+coverage, resolved JSON bodies, and absence of obvious secrets. All 316 Backend
+tests, Ruff/compileall, all collection JSON parses, Alembic head/no-drift,
+270-permission seed twice, clean reconciliation, OpenAPI counts, and
+app/database/Redis health passed. State-changing Postman execution was
+intentionally reserved for an isolated synthetic environment; no client source
+changed and the owner's concurrent Mobile design work remained untouched.
+Step 25.12 Subscription Release Gate + Tag is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad
@@ -1044,8 +1056,10 @@ health passed. Step 25.11 Docs, Postman + Runtime Regression is next.
 - The Zarinpal adapter is implemented but disabled; credentialed sandbox and
   production activation remain operational gaps.
 - SMS, email, and push providers are not connected for production delivery.
-- Contracts, paid subscription commerce, promotion, real payout integration,
-  AI/RAG, BI/data access, and production hardening remain future work.
+- Contracts, promotion, real payout integration, AI/RAG, BI/data access, and
+  production hardening remain future work. Subscription commerce is
+  implemented, but credentialed Zarinpal sandbox/production activation remains
+  an operational gate.
 
 ## Development Environment
 

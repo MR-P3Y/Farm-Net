@@ -13,6 +13,7 @@
 - finance
 - store
 - promotion
+- subscriptions
 
 هر collection باید شامل سناریوهای موفق، خطا، permission denied و validation error باشد.
 
@@ -55,3 +56,14 @@ Settlement/Reconciliation/Adjustment operations, and Zarinpal callback
 contracts. Set user/admin tokens and the product, cart, order, payment, invoice,
 attempt, refund, settlement, and wallet account IDs. Raw request templates are
 valid JSON after Postman variables are resolved.
+
+## Unified Subscription Flow
+
+`collections/subscriptions.postman_collection.json` covers all 23 real
+Public, owner, payment, and Admin Billing operations plus authentication,
+permission, privacy, validation, TOMAN, idempotency, version-conflict, Audit,
+and Reconciliation cases. Set only synthetic `user_token`, `admin_token`,
+`limited_token`, plan/subscription/user IDs, and mock payment variables.
+Never store real credentials, Zarinpal authority, or personal production data
+in the collection. State-changing requests are intended for an isolated
+non-production database.

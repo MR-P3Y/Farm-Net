@@ -196,7 +196,8 @@ Phase 25.7 Renewal, Expiry, Grace Period + Notifications: completed
 Phase 25.8 Mobile Plans, Current Subscription, Usage + Checkout: completed
 Phase 25.9 Admin Plans, Subscriptions, Usage + Manual Operations: completed
 Phase 25.10 Security, Concurrency, Audit + Reconciliation Hardening: completed
-Next: Phase 25.11 Docs, Postman + Runtime Regression
+Phase 25.11 Docs, Postman + Runtime Regression: completed
+Next: Phase 25.12 Subscription Release Gate + Tag
 After Phase 25 release: resume Phase 21 farmer-focused AI/RAG
 ```
 
