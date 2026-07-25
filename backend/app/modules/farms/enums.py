@@ -60,3 +60,21 @@ class LabMetric(str, Enum):
     POTASSIUM = "potassium"
     TDS = "tds"
     SAR = "sar"
+
+
+class FarmOperationType(str, Enum):
+    LAND_PREPARATION = "land_preparation"
+    PLANTING = "planting"
+    IRRIGATION = "irrigation"
+    FERTILIZING = "fertilizing"
+    SPRAYING = "spraying"
+    WEEDING = "weeding"
+    PRUNING = "pruning"
+    MONITORING = "monitoring"
+    OTHER = "other"
+
+
+class FarmRecordSubjectType(str, Enum):
+    CYCLE = "cycle"
+    OPERATION = "operation"
+    HARVEST = "harvest"

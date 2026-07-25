@@ -2002,6 +2002,25 @@ model fields exist:
   Alembic no-drift, OpenAPI privacy, and health passed.
 - Evidence: `docs/farms/phase-24-soil-water-irrigation-lab.md`.
 
+### Step 24.7 Operation Diary, Inputs, Harvest + Farm Media
+
+- Added operations, measured operation inputs, harvest observations, and
+  exact-one-subject media links through revision `18dcf4e96057`.
+- Limited new records to active owner-scoped cycles and rejected dates before
+  the actual cycle start.
+- Required positive active measurement units and limited harvest units to mass
+  or count.
+- Required attached media to be active, private, owned by the authenticated
+  user, and uploaded for `farm_record`; duplicate subject attachments are
+  rejected.
+- Added typed private APIs for operation/input, harvest, and media workflows;
+  no public Farm diary route or destructive history rewrite exists.
+- Ruff/compileall, 33 focused Farm tests, all 259 Backend tests, MySQL
+  migration/no-drift, fresh container build, OpenAPI contracts, and
+  app/database/Redis health passed.
+- Evidence:
+  `docs/farms/phase-24-operation-diary-inputs-harvest-media.md`.
+
 ## Progress Update Rule
 
 After every completed step:

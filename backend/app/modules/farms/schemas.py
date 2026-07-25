@@ -7,6 +7,8 @@ from app.modules.farms.enums import (
     CropCycleStatus,
     CultivationMode,
     FarmStatus,
+    FarmOperationType,
+    FarmRecordSubjectType,
     IrrigationMethod,
     LabMetric,
     LabSubjectType,
@@ -382,3 +384,121 @@ class LabObservationOut(BaseModel):
     notes: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class FarmOperationCreateIn(BaseModel):
+    operation_type: FarmOperationType
+    title: str = Field(min_length=1, max_length=180)
+    occurred_on: date
+    notes: str | None = Field(default=None, max_length=5000)
+
+    _title = field_validator("title")(_normalize_required)
+    _notes = field_validator("notes")(_normalize_optional)
+
+
+class FarmOperationInputCreateIn(BaseModel):
+    name: str = Field(min_length=1, max_length=180)
+    quantity: Decimal = Field(gt=0, max_digits=18, decimal_places=3)
+    measurement_unit_id: int = Field(ge=1)
+    notes: str | None = Field(default=None, max_length=5000)
+
+    _name = field_validator("name")(_normalize_required)
+    _notes = field_validator("notes")(_normalize_optional)
+
+
+class FarmOperationInputOut(FarmOperationInputCreateIn):
+    id: int
+    operation_id: int
+    unit_code: str
+    unit_symbol: str
+    created_at: datetime
+
+
+class FarmOperationOut(FarmOperationCreateIn):
+    id: int
+    cycle_id: int
+    inputs: list[FarmOperationInputOut] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+
+class FarmHarvestCreateIn(BaseModel):
+    harvested_on: date
+    quantity: Decimal = Field(gt=0, max_digits=18, decimal_places=3)
+    measurement_unit_id: int = Field(ge=1)
+    quality_grade: str | None = Field(default=None, max_length=80)
+    notes: str | None = Field(default=None, max_length=5000)
+
+    _quality = field_validator("quality_grade")(_normalize_optional)
+    _notes = field_validator("notes")(_normalize_optional)
+
+
+class FarmHarvestOut(FarmHarvestCreateIn):
+    id: int
+    cycle_id: int
+    unit_code: str
+    unit_symbol: str
+    created_at: datetime
+
+
+class FarmRecordMediaCreateIn(BaseModel):
+    subject_type: FarmRecordSubjectType
+    subject_id: int = Field(ge=1)
+    media_file_id: int = Field(ge=1)
+    caption: str | None = Field(default=None, max_length=500)
+
+    _caption = field_validator("caption")(_normalize_optional)
+
+
+class FarmRecordMediaOut(FarmRecordMediaCreateIn):
+    id: int
+    created_at: datetime
+
+
+class FarmOperationDetailResponse(BaseModel):
+    success: bool
+    data: FarmOperationOut
+    message: str
+    meta: dict
+
+
+class FarmOperationListResponse(BaseModel):
+    success: bool
+    data: list[FarmOperationOut]
+    message: str
+    meta: dict
+
+
+class FarmOperationInputDetailResponse(BaseModel):
+    success: bool
+    data: FarmOperationInputOut
+    message: str
+    meta: dict
+
+
+class FarmHarvestDetailResponse(BaseModel):
+    success: bool
+    data: FarmHarvestOut
+    message: str
+    meta: dict
+
+
+class FarmHarvestListResponse(BaseModel):
+    success: bool
+    data: list[FarmHarvestOut]
+    message: str
+    meta: dict
+
+
+class FarmRecordMediaDetailResponse(BaseModel):
+    success: bool
+    data: FarmRecordMediaOut
+    message: str
+    meta: dict
+
+
+class FarmRecordMediaListResponse(BaseModel):
+    success: bool
+    data: list[FarmRecordMediaOut]
+    message: str
+    meta: dict

@@ -848,6 +848,17 @@ no-drift, Ruff, compileall, 28 focused tests, all 254 Backend tests, OpenAPI
 privacy contracts, and app/database/Redis health passed. Step 24.7 Operation
 Diary, Inputs, Harvest + Farm Media is next.
 
+Step 24.7 Operation Diary, Inputs, Harvest + Farm Media is complete. Active,
+owner-scoped crop cycles now accept dated operations, positive measured
+operation inputs, mass/count harvest observations, and exact-one-subject
+private media links. Completed/cancelled histories are immutable; dates before
+cycle start, inactive units, invalid harvest dimensions, cross-owner or
+non-private media, wrong media purpose, and duplicate attachments are rejected.
+Alembic revision `18dcf4e96057`, no-drift, Ruff, compileall, 33 focused Farm
+tests, all 259 Backend tests, four OpenAPI path contracts, a fresh Backend
+image, and app/database/Redis runtime health passed. Step 24.8 Privacy,
+Concurrency, Audit + Retention Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

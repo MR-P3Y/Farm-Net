@@ -247,6 +247,111 @@ class FarmCropCycle(Base):
     )
 
 
+class FarmOperation(Base):
+    __tablename__ = "farm_operations"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    cycle_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_crop_cycles.id", ondelete="RESTRICT"),
+        nullable=False, index=True
+    )
+    operation_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    title: Mapped[str] = mapped_column(String(180), nullable=False)
+    occurred_on: Mapped[date] = mapped_column(Date, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+    __table_args__ = (
+        CheckConstraint(
+            "operation_type in "
+            "('land_preparation','planting','irrigation','fertilizing','spraying',"
+            "'weeding','pruning','monitoring','other')",
+            name="ck_farm_operations_type",
+        ),
+        Index("ix_farm_operations_cycle_occurred", "cycle_id", "occurred_on"),
+    )
+
+
+class FarmOperationInput(Base):
+    __tablename__ = "farm_operation_inputs"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    operation_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_operations.id", ondelete="RESTRICT"),
+        nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(180), nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 3), nullable=False)
+    measurement_unit_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_measurement_units.id", ondelete="RESTRICT"),
+        nullable=False, index=True
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_farm_operation_inputs_quantity_positive"),
+    )
+
+
+class FarmHarvestObservation(Base):
+    __tablename__ = "farm_harvest_observations"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    cycle_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_crop_cycles.id", ondelete="RESTRICT"),
+        nullable=False, index=True
+    )
+    harvested_on: Mapped[date] = mapped_column(Date, nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 3), nullable=False)
+    measurement_unit_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_measurement_units.id", ondelete="RESTRICT"),
+        nullable=False, index=True
+    )
+    quality_grade: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_farm_harvest_quantity_positive"),
+        Index("ix_farm_harvest_cycle_date", "cycle_id", "harvested_on"),
+    )
+
+
+class FarmRecordMedia(Base):
+    __tablename__ = "farm_record_media"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    cycle_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_crop_cycles.id", ondelete="RESTRICT"),
+        nullable=True, index=True
+    )
+    operation_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_operations.id", ondelete="RESTRICT"),
+        nullable=True, index=True
+    )
+    harvest_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_harvest_observations.id", ondelete="RESTRICT"),
+        nullable=True, index=True
+    )
+    media_file_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("media_files.id", ondelete="RESTRICT"),
+        nullable=False, index=True
+    )
+    caption: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (
+        CheckConstraint(
+            "(cycle_id IS NOT NULL) + (operation_id IS NOT NULL) + "
+            "(harvest_id IS NOT NULL) = 1",
+            name="ck_farm_record_media_exact_subject",
+        ),
+        UniqueConstraint("cycle_id", "media_file_id", name="uq_farm_record_media_cycle_file"),
+        UniqueConstraint("operation_id", "media_file_id", name="uq_farm_record_media_operation_file"),
+        UniqueConstraint("harvest_id", "media_file_id", name="uq_farm_record_media_harvest_file"),
+    )
+
+
 class FarmSoilProfile(Base):
     __tablename__ = "farm_soil_profiles"
 

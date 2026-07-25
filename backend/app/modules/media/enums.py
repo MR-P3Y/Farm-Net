@@ -19,6 +19,7 @@ class MediaPurpose(StrEnum):
     STORE_BANNER = "store_banner"
     PROFILE_DOCUMENT = "profile_document"
     VERIFICATION_DOCUMENT = "verification_document"
+    FARM_RECORD = "farm_record"
     GENERAL = "general"
 
 
