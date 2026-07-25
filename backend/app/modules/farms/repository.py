@@ -12,6 +12,7 @@ from app.modules.farms.models import (
     FarmCropVariety,
     FarmIrrigationProfile,
     FarmLabObservation,
+    FarmMeasurementUnit,
     FarmPlot,
     FarmSoilProfile,
     FarmWaterSource,
@@ -172,6 +173,20 @@ class FarmRepository:
             .order_by(FarmCropCategory.sort_order, FarmCropCategory.id)
             .all()
         )
+
+    def list_measurement_units(
+        self, dimension: str | None = None
+    ) -> list[FarmMeasurementUnit]:
+        query = self.db.query(FarmMeasurementUnit).filter(
+            FarmMeasurementUnit.is_active.is_(True)
+        )
+        if dimension is not None:
+            query = query.filter(FarmMeasurementUnit.dimension == dimension)
+        return query.order_by(
+            FarmMeasurementUnit.dimension,
+            FarmMeasurementUnit.sort_order,
+            FarmMeasurementUnit.id,
+        ).all()
 
     def list_crops(self, category_id: int | None = None) -> list[FarmCrop]:
         query = self.db.query(FarmCrop).filter(FarmCrop.is_active.is_(True))

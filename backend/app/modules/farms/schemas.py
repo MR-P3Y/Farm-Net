@@ -219,6 +219,15 @@ class CropVarietyOut(BaseModel):
     scientific_name: str | None
 
 
+class MeasurementUnitOut(BaseModel):
+    id: int
+    code: str
+    title: str
+    symbol: str
+    dimension: str
+    factor_to_base: Decimal
+
+
 class FarmCropCycleCreateIn(BaseModel):
     crop_id: int = Field(ge=1)
     variety_id: int | None = Field(default=None, ge=1)

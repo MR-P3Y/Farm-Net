@@ -883,6 +883,17 @@ compileall, 49 focused Farm tests, all 275 Backend tests, three OpenAPI paths,
 fresh container build, and app/database/Redis health passed. Step 24.10 Mobile
 My Farms, Plots, Cycles + Diary is next.
 
+Step 24.10 Mobile My Farms, Plots, Cycles + Diary is complete. Mobile now has
+typed authenticated Farm/Plot/Cycle/Diary/Harvest/Weather flows, protected
+routes, Home and permission-aware Activity Center entries, lifecycle actions,
+and loading/empty/error/refresh states. A missing Backend reference contract
+was closed with an authenticated active measurement-unit endpoint so harvest
+uses friendly mass/count choices rather than raw IDs. Backend Ruff/compileall,
+all 276 Backend tests, runtime health, 63 Mobile tests, and Mobile Web build
+passed. Farm Mobile code has no analyzer diagnostics; 7 non-fatal existing
+`withOpacity` infos remain outside this step, including concurrent Auth work.
+Step 24.11 Activity Center + Restricted Admin Support is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -107,6 +107,11 @@ class HomeScreen extends ConsumerWidget {
                               icon: Icons.wb_sunny_outlined,
                             ),
                             _HomeDestination(
+                              title: 'مزرعه‌های من',
+                              route: '/farms',
+                              icon: Icons.grass_outlined,
+                            ),
+                            _HomeDestination(
                               title: 'سبد خرید',
                               route: '/cart',
                               icon: Icons.shopping_cart_outlined,

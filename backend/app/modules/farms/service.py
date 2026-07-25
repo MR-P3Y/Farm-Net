@@ -37,6 +37,7 @@ from app.modules.farms.schemas import (
     IrrigationProfileOut,
     LabObservationCreateIn,
     LabObservationOut,
+    MeasurementUnitOut,
     SoilProfileIn,
     SoilProfileOut,
     WaterSourceIn,
@@ -495,6 +496,20 @@ class FarmCropReferenceService:
 
     def categories(self) -> list[CropCategoryOut]:
         return [CropCategoryOut.model_validate(row, from_attributes=True) for row in self.repo.list_crop_categories()]
+
+    def measurement_units(self, dimension: str | None) -> list[MeasurementUnitOut]:
+        if dimension is not None and dimension not in {
+            "area", "mass", "volume", "count", "length"
+        }:
+            raise AppException(
+                "FARM_MEASUREMENT_DIMENSION_INVALID",
+                "Unsupported measurement dimension",
+                422,
+            )
+        return [
+            MeasurementUnitOut.model_validate(row, from_attributes=True)
+            for row in self.repo.list_measurement_units(dimension)
+        ]
 
     def crops(self, category_id: int | None) -> list[CropOut]:
         return [CropOut.model_validate(row, from_attributes=True) for row in self.repo.list_crops(category_id)]

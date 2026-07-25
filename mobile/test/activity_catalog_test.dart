@@ -43,6 +43,16 @@ void main() {
     );
   });
 
+  test('farm center entry is permission backed', () {
+    final sections = ActivityCatalog.forUser(
+      user(permissions: const ['farms.read_own']),
+    );
+    final action = sections.single.actions.singleWhere(
+      (item) => item.id == ActivityActionId.farms,
+    );
+    expect(action.route, '/farms');
+  });
+
   test('base user sees provider setup without assigned workbench actions', () {
     final sections = ActivityCatalog.forUser(
       user(

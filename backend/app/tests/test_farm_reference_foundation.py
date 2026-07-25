@@ -1,5 +1,6 @@
 from sqlalchemy import CheckConstraint, UniqueConstraint
 
+from app.main import app
 from app.modules.auth.seed import BASE_PERMISSIONS
 from app.modules.farms.models import (
     FarmCrop,
@@ -66,3 +67,9 @@ def test_farm_permissions_are_seeded() -> None:
         "farm_references.read",
         "farm_references.manage",
     } <= codes
+
+
+def test_measurement_unit_reference_route_is_private_read_only() -> None:
+    path = "/api/v1/farm-references/measurement-units"
+    assert path in app.openapi()["paths"]
+    assert set(app.openapi()["paths"][path]) == {"get"}

@@ -13,6 +13,11 @@ import '../../features/consultants/presentation/my_consultant_profile_screen.dar
 import '../../features/consultants/presentation/my_consultation_requests_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/finance/presentation/finance_center_screen.dart';
+import '../../features/farms/data/farm_models.dart';
+import '../../features/farms/presentation/cycle_diary_screen.dart';
+import '../../features/farms/presentation/farm_detail_screen.dart';
+import '../../features/farms/presentation/my_farms_screen.dart';
+import '../../features/farms/presentation/plot_detail_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/notifications/presentation/notification_preferences_screen.dart';
 import '../../features/orders/presentation/cart_screen.dart';
@@ -81,6 +86,47 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => protectedRoute(const ActivityCenterScreen()),
     ),
     GoRoute(
+      path: '/farms',
+      name: 'my-farms',
+      builder: (context, state) => protectedRoute(const MyFarmsScreen()),
+    ),
+    GoRoute(
+      path: '/farms/:farmId',
+      name: 'farm-detail',
+      builder:
+          (context, state) => protectedRoute(
+            FarmDetailScreen(
+              farmId: int.tryParse(state.pathParameters['farmId'] ?? '') ?? 0,
+              farm: state.extra as FarmModel?,
+            ),
+          ),
+    ),
+    GoRoute(
+      path: '/farms/:farmId/plots/:plotId',
+      name: 'farm-plot-detail',
+      builder:
+          (context, state) => protectedRoute(
+            PlotDetailScreen(
+              farmId: int.tryParse(state.pathParameters['farmId'] ?? '') ?? 0,
+              plotId: int.tryParse(state.pathParameters['plotId'] ?? '') ?? 0,
+              plot: state.extra as FarmPlotModel?,
+            ),
+          ),
+    ),
+    GoRoute(
+      path: '/farms/:farmId/plots/:plotId/cycles/:cycleId',
+      name: 'farm-cycle-diary',
+      builder:
+          (context, state) => protectedRoute(
+            CycleDiaryScreen(
+              farmId: int.tryParse(state.pathParameters['farmId'] ?? '') ?? 0,
+              plotId: int.tryParse(state.pathParameters['plotId'] ?? '') ?? 0,
+              cycleId: int.tryParse(state.pathParameters['cycleId'] ?? '') ?? 0,
+              cycle: state.extra as CropCycleModel?,
+            ),
+          ),
+    ),
+    GoRoute(
       path: '/search',
       name: 'unified-search',
       builder: (context, state) => const UnifiedSearchScreen(),
@@ -110,9 +156,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/reviews/create',
       name: 'review-create',
-      builder: (context, state) => protectedRoute(
-        ReviewEditorScreen(target: state.extra! as ReviewCreateTarget),
-      ),
+      builder:
+          (context, state) => protectedRoute(
+            ReviewEditorScreen(target: state.extra! as ReviewCreateTarget),
+          ),
     ),
     GoRoute(
       path: '/weather',

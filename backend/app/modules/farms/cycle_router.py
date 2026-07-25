@@ -11,12 +11,30 @@ from app.modules.farms.schemas import (
     FarmCropCycleListResponse,
     FarmCropCycleTransitionIn,
     FarmCropCycleUpdateIn,
+    MeasurementUnitOut,
 )
 from app.modules.farms.service import FarmCropCycleService, FarmCropReferenceService
 
 
 reference_router = APIRouter(prefix="/farm-references", tags=["Farm References"])
 cycle_router = APIRouter(prefix="/farms", tags=["Farm Crop Cycles"])
+
+
+@reference_router.get("/measurement-units")
+def list_measurement_units(
+    request: Request,
+    dimension: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("farm_references.read")),
+):
+    items: list[MeasurementUnitOut] = FarmCropReferenceService(db).measurement_units(
+        dimension
+    )
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={"count": len(items), "trace_id": request.state.trace_id},
+    )
 
 
 @reference_router.get("/crop-categories")

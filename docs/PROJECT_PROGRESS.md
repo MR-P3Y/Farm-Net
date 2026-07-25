@@ -2057,6 +2057,24 @@ model fields exist:
   app/database/Redis health passed.
 - Evidence: `docs/farms/phase-24-farm-weather-contextual-alerts.md`.
 
+### Step 24.10 Mobile My Farms, Plots, Cycles + Diary
+
+- Added a typed authenticated Mobile Farms feature for Farm and Plot
+  create/list, crop-cycle create/list/transitions, operation diary, harvest,
+  and contextual Plot Weather.
+- Added protected nested routes plus Home and permission-aware Activity Center
+  navigation.
+- Added explicit loading, empty, error, refresh, inactive-cycle, and
+  missing-coordinate states.
+- Added an authenticated active measurement-unit reference endpoint so Mobile
+  harvest uses friendly mass/count choices instead of database IDs.
+- Backend Ruff/compileall, all 276 Backend tests, runtime health, 63 Mobile
+  tests, and Mobile Web build passed.
+- Farm Mobile code has no analyzer diagnostics. Seven non-fatal pre-existing
+  `withOpacity` deprecation infos remain in a shared card and concurrently
+  edited Auth UI and were not mixed into this commit.
+- Evidence: `docs/farms/phase-24-mobile-my-farms.md`.
+
 ## Progress Update Rule
 
 After every completed step:
