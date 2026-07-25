@@ -194,7 +194,8 @@ Phase 25.5 Atomic Quota Reservation, Usage + Idempotency: completed
 Phase 25.6 TOMAN Invoice, Wallet + Payment Integration: completed
 Phase 25.7 Renewal, Expiry, Grace Period + Notifications: completed
 Phase 25.8 Mobile Plans, Current Subscription, Usage + Checkout: completed
-Next: Phase 25.9 Admin Plans, Subscriptions, Usage + Manual Operations
+Phase 25.9 Admin Plans, Subscriptions, Usage + Manual Operations: completed
+Next: Phase 25.10 Security, Concurrency, Audit + Reconciliation Hardening
 After Phase 25 release: resume Phase 21 farmer-focused AI/RAG
 ```
 

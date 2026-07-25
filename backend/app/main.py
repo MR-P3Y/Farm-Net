@@ -54,6 +54,7 @@ from app.modules.reviews.admin_router import router as admin_reviews_router
 from app.modules.stores.public_router import router as public_stores_router
 from app.modules.stores.router import router as stores_router
 from app.modules.subscriptions.router import router as subscriptions_router
+from app.modules.subscriptions.admin_router import router as admin_subscriptions_router
 from app.modules.weather.admin_router import router as admin_weather_router
 from app.modules.weather.router import router as weather_router
 
@@ -162,6 +163,7 @@ def create_app() -> FastAPI:
     app.include_router(farm_weather_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_farms_router, prefix=settings.api_v1_prefix)
     app.include_router(subscriptions_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_subscriptions_router, prefix=settings.api_v1_prefix)
 
     register_exception_handlers(app)
     install_typed_openapi(app)

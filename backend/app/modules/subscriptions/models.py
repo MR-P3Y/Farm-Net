@@ -187,6 +187,13 @@ class BillingSubscription(Base):
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime)
     cancellation_reason: Mapped[str | None] = mapped_column(String(500))
+    activation_source: Mapped[str] = mapped_column(
+        String(20), default="self", nullable=False
+    )
+    activated_by_user_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="SET NULL"), nullable=True
+    )
+    activation_reason: Mapped[str | None] = mapped_column(String(500))
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -221,6 +228,10 @@ class BillingSubscription(Base):
         CheckConstraint(
             "cancelled_at IS NULL OR cancellation_reason IS NOT NULL",
             name="ck_billing_subscriptions_cancel_reason",
+        ),
+        CheckConstraint(
+            "activation_source IN ('self', 'checkout', 'admin')",
+            name="ck_billing_subscriptions_activation_source",
         ),
         Index("ix_billing_subscriptions_user_status", "user_id", "status"),
         Index("ix_billing_subscriptions_period_end", "status", "current_period_ends_at"),

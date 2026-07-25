@@ -2218,6 +2218,23 @@ model fields exist:
   files; those user changes were not modified or included.
 - Evidence: `docs/subscriptions/phase-25-mobile-subscriptions.md`.
 
+### Step 25.9 Admin Plans, Subscriptions, Usage + Manual Operations
+
+- Added seven permission-protected Admin Billing APIs for versioned plan
+  management, subscription list/detail/usage, manual activation, and
+  version-checked cancellation.
+- Kept active plans immutable and prevented retirement of the default Free
+  plan.
+- Manual activation records Admin actor/reason and Admin-sourced
+  Entitlements, while creating no fake payment or invoice.
+- Added a typed permission-aware Admin Panel with filters, pagination,
+  lifecycle operations, TOMAN prices, provenance, and usage visibility.
+- Migration `d8f3a9c21b74`, 31 focused and all 309 Backend tests,
+  Ruff/compileall, no-drift, seed twice, runtime OpenAPI/401/health, all 26
+  Admin tests, analyze, and web build passed.
+- Concurrent Mobile design changes were not modified or included.
+- Evidence: `docs/subscriptions/phase-25-admin-subscriptions.md`.
+
 ## Progress Update Rule
 
 After every completed step:

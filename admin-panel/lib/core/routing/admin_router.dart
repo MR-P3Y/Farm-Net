@@ -19,6 +19,7 @@ import '../../features/reviews/presentation/admin_reviews_page.dart';
 import '../../features/social/presentation/admin_social_page.dart';
 import '../../features/social/presentation/admin_social_categories_page.dart';
 import '../../features/stores/presentation/admin_stores_page.dart';
+import '../../features/subscriptions/presentation/admin_subscriptions_page.dart';
 import '../../features/taxonomies/presentation/admin_taxonomies_page.dart';
 import '../../features/verifications/presentation/admin_verifications_page.dart';
 import '../../features/weather/presentation/admin_weather_page.dart';
@@ -38,6 +39,15 @@ final GoRouter adminRouter = GoRouter(
         return AdminAuthGate(child: AdminAppShell(child: child));
       },
       routes: [
+        GoRoute(
+          path: '/subscriptions',
+          name: 'admin-subscriptions',
+          builder:
+              (context, state) => const AdminPermissionGuard(
+                permission: 'billing.subscriptions.read',
+                child: AdminSubscriptionsPage(),
+              ),
+        ),
         GoRoute(
           path: '/taxonomies',
           name: 'admin-taxonomies',

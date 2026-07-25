@@ -1011,6 +1011,18 @@ analyze has two unrelated concurrent warnings in Home and Social files which
 were preserved outside this step. Step 25.9 Admin Plans, Subscriptions, Usage +
 Manual Operations is next.
 
+Step 25.9 Admin Plans, Subscriptions, Usage + Manual Operations is complete.
+Seven permission-protected Admin Billing paths and a typed Admin Panel now
+manage immutable/versioned plan Drafts, activation/retirement, subscription
+search/detail, reserved/used quota visibility, manual activation, and
+version-checked cancellation. Manual grants record the Admin actor, reason,
+and `admin` Entitlement source without creating fake payments or invoices.
+Migration `d8f3a9c21b74`, 31 focused and all 309 Backend tests, Ruff/compileall,
+Alembic no-drift, idempotent seed, seven-path runtime OpenAPI, 401 boundary,
+health, all 26 Admin tests, analyze, and web build passed. Concurrent Mobile
+design work was preserved outside this step. Step 25.10 Security,
+Concurrency, Audit + Reconciliation Hardening is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

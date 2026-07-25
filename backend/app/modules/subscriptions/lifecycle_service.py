@@ -63,6 +63,7 @@ class SubscriptionLifecycleService:
             plan_id=plan.id,
             plan=plan,
             status="active",
+            activation_source="self",
             starts_at=now,
             current_period_starts_at=now,
             current_period_ends_at=ends_at,
@@ -154,6 +155,7 @@ class SubscriptionLifecycleService:
         subscription: BillingSubscription,
         period: BillingSubscriptionPeriod,
         values: list[BillingPlanFeature],
+        source: str = "plan",
     ) -> None:
         for value in values:
             feature = value.feature
@@ -176,7 +178,7 @@ class SubscriptionLifecycleService:
                 period_id=period.id,
                 feature_id=feature.id,
                 feature_code_snapshot=feature.code,
-                source="plan",
+                source=source,
                 is_enabled=enabled,
                 is_unlimited=value.is_unlimited,
                 limit_value=limit_value,

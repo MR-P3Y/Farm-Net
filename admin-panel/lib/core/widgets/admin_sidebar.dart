@@ -28,6 +28,9 @@ class AdminSidebar extends ConsumerWidget {
     final canReadFarms = ref
         .watch(adminAuthStateProvider)
         .hasPermission('farms.admin_read');
+    final canReadBilling = ref.watch(adminAuthStateProvider).hasAnyPermission(
+      const ['billing.plans.read', 'billing.subscriptions.read'],
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -96,6 +99,13 @@ class AdminSidebar extends ConsumerWidget {
                     label: 'پشتیبانی مزارع',
                     compact: isCompact,
                     onTap: () => context.go('/farms'),
+                  ),
+                if (canReadBilling)
+                  _SidebarItem(
+                    icon: Icons.workspace_premium_outlined,
+                    label: 'پلن‌ها و اشتراک‌ها',
+                    compact: isCompact,
+                    onTap: () => context.go('/subscriptions'),
                   ),
                 _SidebarItem(
                   icon: Icons.receipt_long_outlined,

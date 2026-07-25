@@ -111,6 +111,7 @@ class SubscriptionCommerceService:
             plan_id=plan.id,
             plan=plan,
             status="pending",
+            activation_source="checkout",
             auto_renew=True,
             cancel_at_period_end=False,
             version=1,
