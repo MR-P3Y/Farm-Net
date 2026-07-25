@@ -2128,6 +2128,18 @@ model fields exist:
 - Approved Steps 25.2 through 25.12.
 - Evidence: `docs/subscriptions/phase-25-real-state-audit.md`.
 
+### Step 25.2 Plan, Feature, Subscription + Entitlement DB Contract
+
+- Added eight normalized tables for plans, features, plan values,
+  subscriptions, periods, entitlement snapshots, usage, and reservations.
+- Enforced TOMAN-only plan/period money, free-plan price, typed feature,
+  validity-range, non-negative usage, and idempotent reservation constraints.
+- Added five owner-facing permissions without changing existing Admin
+  permissions.
+- Alembic `96f4165b43fe`, no drift, seed 12 roles / 268 permissions, 3 focused
+  and all 281 Backend tests, Ruff/compileall, and runtime health passed.
+- Evidence: `docs/subscriptions/phase-25-db-contract.md`.
+
 ## Progress Update Rule
 
 After every completed step:

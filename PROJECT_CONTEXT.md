@@ -934,6 +934,16 @@ but marketplace provider-split invoices cannot be reused unchanged for
 platform-owned subscriptions. Step 25.2 Plan, Feature, Subscription +
 Entitlement DB Contract is next.
 
+Step 25.2 Plan, Feature, Subscription + Entitlement DB Contract is complete.
+Eight separate tables now preserve plan definitions, typed feature values,
+subscription periods, resolved entitlement snapshots, commercial usage, and
+idempotent reservation foundations. TOMAN money remains separate from quota,
+safety-exempt features cannot be metered, and historical periods snapshot plan
+version/price. Alembic `96f4165b43fe`, no drift, twice-idempotent seed at 12
+roles / 268 permissions, Ruff/compileall, all 281 Backend tests, and runtime
+app/database/Redis health passed. Step 25.3 Plan Catalog + Public/User Read
+APIs is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

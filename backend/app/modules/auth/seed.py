@@ -146,6 +146,11 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("billing.subscriptions.activate", "Activate subscriptions", "billing", "Activate subscriptions"),
     PermissionSeed("billing.subscriptions.cancel", "Cancel subscriptions", "billing", "Cancel subscriptions"),
     PermissionSeed("billing.usage.read", "Read billing usage", "billing", "View feature usage"),
+    PermissionSeed("billing.plans.public_read", "Read active plans", "billing", "View active plans"),
+    PermissionSeed("billing.subscription.read_own", "Read own subscription", "billing", "View own subscription"),
+    PermissionSeed("billing.subscription.manage_own", "Manage own subscription", "billing", "Manage own subscription"),
+    PermissionSeed("billing.usage.read_own", "Read own usage", "billing", "View own feature usage"),
+    PermissionSeed("billing.entitlements.read", "Read entitlements", "billing", "View resolved entitlements"),
 
     PermissionSeed("cart.read", "Read cart", "cart", "Read current user's cart"),
     PermissionSeed("cart.update", "Update cart", "cart", "Add, update or remove cart items"),
@@ -586,6 +591,11 @@ def assign_default_permissions(
 ) -> None:
     role_permissions: dict[str, list[str]] = {
         "user": [
+            "billing.plans.public_read",
+            "billing.subscription.read_own",
+            "billing.subscription.manage_own",
+            "billing.usage.read_own",
+            "billing.entitlements.read",
             "farms.read_own",
             "farms.manage_own",
             "farm_references.read",

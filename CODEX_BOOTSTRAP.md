@@ -187,7 +187,8 @@ Phase 24.13 Farm Management Release Gate + Tag: completed
 Phase 24 Farm Management / Digital Farm Profiles: completed
 Active product track: Phase 25 Unified Subscription & Entitlement Platform
 Phase 25.1 Real-State Audit + AI Entitlement Boundary: completed
-Next: Phase 25.2 Plan, Feature, Subscription + Entitlement DB Contract
+Phase 25.2 Plan, Feature, Subscription + Entitlement DB Contract: completed
+Next: Phase 25.3 Plan Catalog + Public/User Read APIs
 After Phase 25 release: resume Phase 21 farmer-focused AI/RAG
 ```
 
