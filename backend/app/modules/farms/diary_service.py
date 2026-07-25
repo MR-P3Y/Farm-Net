@@ -55,7 +55,7 @@ class FarmDiaryService:
             occurred_on=payload.occurred_on,
             notes=payload.notes,
         ))
-        self._commit(row)
+        self._commit(row, user.id, farm_id, "operation.created", "operation")
         return self._operation_out(row)
 
     def list_operations(
@@ -84,7 +84,7 @@ class FarmDiaryService:
             measurement_unit_id=unit.id,
             notes=payload.notes,
         ))
-        self._commit(row)
+        self._commit(row, user.id, farm_id, "operation_input.created", "operation_input")
         return self._input_out(row, unit)
 
     def create_harvest(
@@ -113,7 +113,7 @@ class FarmDiaryService:
             quality_grade=payload.quality_grade,
             notes=payload.notes,
         ))
-        self._commit(row)
+        self._commit(row, user.id, farm_id, "harvest.created", "harvest")
         return self._harvest_out(row, unit)
 
     def list_harvests(
@@ -168,7 +168,7 @@ class FarmDiaryService:
         row = self.repo.add(FarmRecordMedia(
             media_file_id=media.id, caption=payload.caption, **subject_fields
         ))
-        self._commit(row)
+        self._commit(row, user.id, farm_id, "record_media.attached", "record_media")
         return self._media_out(row)
 
     def list_media(
@@ -268,6 +268,12 @@ class FarmDiaryService:
             media_file_id=row.media_file_id, caption=row.caption, created_at=row.created_at,
         )
 
-    def _commit(self, row) -> None:
+    def _commit(
+        self, row, actor_user_id: int, farm_id: int, action: str, target_type: str
+    ) -> None:
+        self.repo.add_audit(
+            farm_id=farm_id, actor_user_id=actor_user_id, action=action,
+            target_type=target_type, target_id=row.id,
+        )
         self.db.commit()
         self.db.refresh(row)

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.farms.models import (
     Farm,
+    FarmAuditLog,
     FarmCrop,
     FarmCropCategory,
     FarmCropCycle,
@@ -33,6 +34,19 @@ class FarmRepository:
         self.db.add(row)
         self.db.flush()
         return row
+
+    def add_audit(
+        self, *, farm_id: int, actor_user_id: int, action: str,
+        target_type: str, target_id: int, details: dict | None = None,
+    ) -> FarmAuditLog:
+        return self.add(FarmAuditLog(
+            farm_id=farm_id,
+            actor_user_id=actor_user_id,
+            action=action,
+            target_type=target_type,
+            target_id=target_id,
+            details=details,
+        ))
 
     def get_owned(
         self,

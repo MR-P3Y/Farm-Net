@@ -60,6 +60,10 @@ class FarmService:
                 status=FarmStatus.ACTIVE.value,
             )
         )
+        self.repo.add_audit(
+            farm_id=row.id, actor_user_id=user.id, action="farm.created",
+            target_type="farm", target_id=row.id,
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._owner_out(row)
@@ -104,6 +108,11 @@ class FarmService:
                 )
         for field, value in changes.items():
             setattr(row, field, value)
+        self.repo.add_audit(
+            farm_id=row.id, actor_user_id=user.id, action="farm.updated",
+            target_type="farm", target_id=row.id,
+            details={"fields": sorted(changes)},
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._owner_out(row)
@@ -120,6 +129,10 @@ class FarmService:
         row.status = FarmStatus.ARCHIVED.value
         row.archived_at = datetime.now(UTC).replace(tzinfo=None)
         row.archive_reason = payload.reason
+        self.repo.add_audit(
+            farm_id=row.id, actor_user_id=user.id, action="farm.archived",
+            target_type="farm", target_id=row.id,
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._owner_out(row)
@@ -135,6 +148,10 @@ class FarmService:
         row.status = FarmStatus.ACTIVE.value
         row.archived_at = None
         row.archive_reason = None
+        self.repo.add_audit(
+            farm_id=row.id, actor_user_id=user.id, action="farm.restored",
+            target_type="farm", target_id=row.id,
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._owner_out(row)
@@ -218,6 +235,10 @@ class FarmPlotService:
                 status=FarmStatus.ACTIVE.value,
             )
         )
+        self.repo.add_audit(
+            farm_id=farm.id, actor_user_id=user.id, action="plot.created",
+            target_type="plot", target_id=row.id,
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._out(row)
@@ -267,6 +288,11 @@ class FarmPlotService:
             setattr(row, field, value)
         if "boundary" in payload.model_fields_set:
             row.boundary = self._boundary_json(payload.boundary)
+        self.repo.add_audit(
+            farm_id=farm.id, actor_user_id=user.id, action="plot.updated",
+            target_type="plot", target_id=row.id,
+            details={"fields": sorted(payload.model_fields_set)},
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._out(row)
@@ -281,6 +307,10 @@ class FarmPlotService:
         row.status = FarmStatus.ARCHIVED.value
         row.archived_at = datetime.now(UTC).replace(tzinfo=None)
         row.archive_reason = reason
+        self.repo.add_audit(
+            farm_id=farm.id, actor_user_id=user.id, action="plot.archived",
+            target_type="plot", target_id=row.id,
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._out(row)
@@ -295,6 +325,10 @@ class FarmPlotService:
         row.status = FarmStatus.ACTIVE.value
         row.archived_at = None
         row.archive_reason = None
+        self.repo.add_audit(
+            farm_id=farm.id, actor_user_id=user.id, action="plot.restored",
+            target_type="plot", target_id=row.id,
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._out(row)
@@ -503,6 +537,10 @@ class FarmCropCycleService:
                 notes=payload.notes,
             )
         )
+        self.repo.add_audit(
+            farm_id=farm_id, actor_user_id=user.id, action="cycle.created",
+            target_type="crop_cycle", target_id=row.id,
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._out(row)
@@ -537,6 +575,11 @@ class FarmCropCycleService:
         )
         for field, value in changes.items():
             setattr(row, field, value.value if isinstance(value, CultivationMode) else value)
+        self.repo.add_audit(
+            farm_id=farm_id, actor_user_id=user.id, action="cycle.updated",
+            target_type="crop_cycle", target_id=row.id,
+            details={"fields": sorted(changes)},
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._out(row)
@@ -556,6 +599,11 @@ class FarmCropCycleService:
             row.status = "cancelled"
         else:
             raise AppException("FARM_CROP_CYCLE_TRANSITION_INVALID", "Invalid crop cycle transition", 409)
+        self.repo.add_audit(
+            farm_id=farm_id, actor_user_id=user.id, action=f"cycle.{action}",
+            target_type="crop_cycle", target_id=row.id,
+            details={"effective_date": effective_date.isoformat()},
+        )
         self.db.commit()
         self.db.refresh(row)
         return self._out(row)
@@ -639,7 +687,7 @@ class FarmEnvironmentService:
             row = self.repo.add(FarmSoilProfile(plot_id=plot_id))
         for field, value in payload.model_dump().items():
             setattr(row, field, value.value if hasattr(value, "value") else value)
-        self._commit(row)
+        self._commit(row, user.id, farm_id, "soil_profile.upserted", "soil_profile")
         return SoilProfileOut.model_validate(row, from_attributes=True)
 
     def get_soil(self, *, user, farm_id, plot_id):
@@ -662,7 +710,9 @@ class FarmEnvironmentService:
             row = self.repo.add(FarmIrrigationProfile(plot_id=plot_id))
         for field, value in payload.model_dump().items():
             setattr(row, field, value.value if hasattr(value, "value") else value)
-        self._commit(row)
+        self._commit(
+            row, user.id, farm_id, "irrigation_profile.upserted", "irrigation_profile"
+        )
         return IrrigationProfileOut.model_validate(row, from_attributes=True)
 
     def get_irrigation(self, *, user, farm_id, plot_id):
@@ -679,7 +729,7 @@ class FarmEnvironmentService:
             farm_id=farm_id, name=payload.name, source_type=payload.source_type.value,
             notes=payload.notes, status=FarmStatus.ACTIVE.value
         ))
-        self._commit(row)
+        self._commit(row, user.id, farm_id, "water_source.created", "water_source")
         return WaterSourceOut.model_validate(row, from_attributes=True)
 
     def list_water(self, *, user, farm_id):
@@ -695,7 +745,7 @@ class FarmEnvironmentService:
             raise AppException("FARM_WATER_SOURCE_ARCHIVED", "Water source is already archived", 409)
         row.status = FarmStatus.ARCHIVED.value
         row.archived_at = datetime.now(UTC).replace(tzinfo=None)
-        self._commit(row)
+        self._commit(row, user.id, farm_id, "water_source.archived", "water_source")
         return WaterSourceOut.model_validate(row, from_attributes=True)
 
     def create_observation(self, *, user, farm_id, payload: LabObservationCreateIn):
@@ -728,7 +778,9 @@ class FarmEnvironmentService:
             tested_on=payload.tested_on, laboratory_name=payload.laboratory_name,
             notes=payload.notes
         ))
-        self._commit(observation)
+        self._commit(
+            observation, user.id, farm_id, "lab_observation.created", "lab_observation"
+        )
         return self._observation_out(observation, payload.subject_type, payload.subject_id)
 
     def list_observations(self, *, user, farm_id, subject_type, subject_id):
@@ -758,7 +810,11 @@ class FarmEnvironmentService:
         plot = self.plot_service._plot(user_id, farm_id, plot_id, True)
         FarmService._require_active(plot)
 
-    def _commit(self, row):
+    def _commit(self, row, actor_user_id, farm_id, action, target_type):
+        self.repo.add_audit(
+            farm_id=farm_id, actor_user_id=actor_user_id, action=action,
+            target_type=target_type, target_id=row.id,
+        )
         self.db.commit()
         self.db.refresh(row)
 

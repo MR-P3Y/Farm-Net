@@ -859,6 +859,18 @@ tests, all 259 Backend tests, four OpenAPI path contracts, a fresh Backend
 image, and app/database/Redis runtime health passed. Step 24.8 Privacy,
 Concurrency, Audit + Retention Hardening is next.
 
+Step 24.8 Privacy, Concurrency, Audit + Retention Hardening is complete.
+Owner-scoped mutation paths keep stable row-locking boundaries and append a
+minimal `farm_audit_logs` event in the same transaction. Audit records retain
+actor/action/target identity without copying private Farm content. ORM guards
+now prevent update/delete of operation, input, harvest, laboratory, Farm-media,
+and audit history; completed/cancelled crop cycles cannot be reopened or
+deleted. Archive-first retention remains in force and no speculative purge or
+account-erasure policy was added. Alembic revision `29edf5a07168`, no-drift,
+Ruff, compileall, 43 focused Farm tests, all 269 Backend tests, fresh container
+build, and app/database/Redis health passed. Step 24.9 Farm Weather Linking +
+Contextual Alerts is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

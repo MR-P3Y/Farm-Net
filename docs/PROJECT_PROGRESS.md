@@ -2021,6 +2021,24 @@ model fields exist:
 - Evidence:
   `docs/farms/phase-24-operation-diary-inputs-harvest-media.md`.
 
+### Step 24.8 Privacy, Concurrency, Audit + Retention Hardening
+
+- Added append-only, owner-attributed Farm audit events through revision
+  `29edf5a07168`; events commit atomically with each Farm-domain mutation.
+- Kept audit payloads minimal and excluded Farm names, descriptions,
+  coordinates, boundaries, observations, notes, and captions.
+- Confirmed stable Farm/Plot/Cycle row-lock boundaries for conflicting
+  mutations.
+- Added ORM update/delete guards for diary, harvest, lab, Farm-media, and audit
+  records, plus closed-cycle update and all-cycle delete protection.
+- Retained archive-first lifecycle with no automatic purge or destructive owner
+  endpoint; account-erasure policy remains an explicit future governance task.
+- Ruff/compileall, 10 audit/retention tests, 43 focused Farm tests, all 269
+  Backend tests, MySQL migration/no-drift, fresh container build, and
+  app/database/Redis health passed.
+- Evidence:
+  `docs/farms/phase-24-privacy-concurrency-audit-retention.md`.
+
 ## Progress Update Rule
 
 After every completed step:

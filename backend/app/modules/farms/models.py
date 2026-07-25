@@ -15,6 +15,8 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event,
+    inspect,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -352,6 +354,28 @@ class FarmRecordMedia(Base):
     )
 
 
+class FarmAuditLog(Base):
+    __tablename__ = "farm_audit_logs"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    farm_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farms.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    actor_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"),
+        nullable=False, index=True
+    )
+    action: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    target_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    target_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (
+        Index("ix_farm_audit_logs_farm_created", "farm_id", "created_at"),
+        Index("ix_farm_audit_logs_target", "target_type", "target_id"),
+    )
+
+
 class FarmSoilProfile(Base):
     __tablename__ = "farm_soil_profiles"
 
@@ -607,3 +631,30 @@ class FarmCropVariety(Base):
         UniqueConstraint("crop_id", "code", name="uq_farm_crop_varieties_crop_code"),
         Index("ix_farm_crop_varieties_crop_active_sort", "crop_id", "is_active", "sort_order"),
     )
+
+
+def _reject_retained_farm_record_mutation(_mapper, _connection, target) -> None:
+    raise RuntimeError(f"Retained farm record {target.__class__.__name__} is immutable")
+
+
+def _protect_closed_cycle_update(_mapper, _connection, target) -> None:
+    state = inspect(target)
+    status_history = state.attrs.status.history
+    previous_status = status_history.deleted[0] if status_history.deleted else target.status
+    if previous_status in (CropCycleStatus.COMPLETED.value, CropCycleStatus.CANCELLED.value):
+        raise RuntimeError("Closed farm crop cycle history is immutable")
+
+
+for _retained_model in (
+    FarmOperation,
+    FarmOperationInput,
+    FarmHarvestObservation,
+    FarmRecordMedia,
+    FarmLabObservation,
+    FarmAuditLog,
+):
+    event.listen(_retained_model, "before_update", _reject_retained_farm_record_mutation)
+    event.listen(_retained_model, "before_delete", _reject_retained_farm_record_mutation)
+
+event.listen(FarmCropCycle, "before_update", _protect_closed_cycle_update)
+event.listen(FarmCropCycle, "before_delete", _reject_retained_farm_record_mutation)
