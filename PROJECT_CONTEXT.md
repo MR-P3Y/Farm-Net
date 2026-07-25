@@ -911,6 +911,12 @@ seed, app/database/Redis health, six 401 privacy checks, all 278 Backend tests,
 63 Mobile tests/build, 24 Admin tests/build, and all 16 Postman collections
 (398 requests) passed. Step 24.13 Release Gate + Tag is next.
 
+Before the Phase 24 release gate, the concurrent Mobile authentication UI was
+reconciled as a separate change: responsive Web/Tablet/Mobile backgrounds,
+glass-card login presentation, and matching OTP screens. Mobile analyze, all
+63 tests, and Web/Wasm build passed; generated platform registrants and local
+Flutter migration settings remain outside that focused change.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

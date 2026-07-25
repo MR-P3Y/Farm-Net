@@ -2098,6 +2098,14 @@ model fields exist:
   build. All 16 Postman collections / 398 requests parse.
 - Evidence: `docs/farms/phase-24-docs-postman-runtime-regression.md`.
 
+### Pre-release Mobile Auth UI Reconciliation
+
+- Added responsive login backgrounds, a reusable glass card, and visually
+  aligned email/OTP authentication screens without changing Auth contracts.
+- Mobile analyze is clean; all 63 tests and Web/Wasm build passed.
+- Generated platform registrants and local Flutter migration output were not
+  included.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -39,56 +39,86 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     final auth = ref.watch(authControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('تأیید کد'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Padding(
-                padding: r.pagePadding(),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('کد ارسال‌شده برای ${widget.phone} را وارد کنید'),
-                    if (auth.devOtpCode != null) ...[
-                      SizedBox(height: r.v(8)),
-                      Text(
-                        'کد توسعه: ${auth.devOtpCode}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                    SizedBox(height: r.v(16)),
-                    FarmTextField(
-                      controller: _codeController,
-                      label: 'کد تأیید',
-                      keyboardType: TextInputType.number,
-                    ),
-                    if (auth.errorMessage != null) ...[
-                      SizedBox(height: r.v(12)),
-                      Text(
-                        auth.errorMessage!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ],
-                    SizedBox(height: r.v(20)),
-                    FarmButton(
-                      label: 'تأیید و ورود',
-                      isLoading: auth.isLoading,
-                      onPressed: auth.isLoading ? null : _verifyOtp,
-                    ),
-                  ],
+          final bgImage =
+              r.isDesktop
+                  ? 'assets/images/login_bg_web.webp'
+                  : r.isTablet
+                  ? 'assets/images/login_bg_tablet.webp'
+                  : 'assets/images/login_bg_mobile.webp';
+
+          return Stack(
+            children: [
+              Positioned.fill(child: Image.asset(bgImage, fit: BoxFit.cover)),
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
-            ),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: SingleChildScrollView(
+                    padding: r.pagePadding(),
+                    child: Card(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surface.withAlpha(220),
+                      elevation: 8,
+                      child: Padding(
+                        padding: EdgeInsets.all(r.s(20)),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'تأیید کد',
+                              style: Theme.of(context).textTheme.headlineSmall,
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: r.v(16)),
+                            Text(
+                              'کد ارسال‌شده برای ${widget.phone} را وارد کنید',
+                            ),
+                            if (auth.devOtpCode != null) ...[
+                              SizedBox(height: r.v(8)),
+                              Text(
+                                'کد توسعه: ${auth.devOtpCode}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                            SizedBox(height: r.v(16)),
+                            FarmTextField(
+                              controller: _codeController,
+                              label: 'کد تأیید',
+                              keyboardType: TextInputType.number,
+                            ),
+                            if (auth.errorMessage != null) ...[
+                              SizedBox(height: r.v(12)),
+                              Text(
+                                auth.errorMessage!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ],
+                            SizedBox(height: r.v(20)),
+                            FarmButton(
+                              label: 'تأیید و ورود',
+                              isLoading: auth.isLoading,
+                              onPressed: auth.isLoading ? null : _verifyOtp,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
