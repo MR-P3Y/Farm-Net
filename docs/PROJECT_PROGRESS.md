@@ -1941,6 +1941,24 @@ model fields exist:
 - Evidence:
   `docs/farms/phase-24-reference-permission-db-contract.md`.
 
+### Step 24.3 Owner-Scoped Farm CRUD + Archive Lifecycle
+
+- Added the private `farms` aggregate with an authenticated owner, normalized
+  name/description, active/archive lifecycle, consistent archive metadata, and
+  owner-scoped indexes through Alembic revision `d4f8b0a52c13`.
+- Added typed create/list/detail/update/archive/restore APIs; list pagination
+  excludes archived farms by default.
+- Owner identity is never accepted from client data. Every lookup includes the
+  authenticated owner, and cross-owner requests return the same 404 contract
+  as nonexistent records.
+- No destructive Farm delete or public Farm discovery route exists.
+- Archived farms are immutable until explicitly restored.
+- Ruff/compileall, 10 focused tests, all 236 Backend tests, MySQL migration and
+  no-drift checks, typed OpenAPI contracts, and app/database/Redis health
+  passed.
+- Mobile/Admin were unchanged in this Backend-only step.
+- Evidence: `docs/farms/phase-24-owner-farm-crud-archive.md`.
+
 ## Progress Update Rule
 
 After every completed step:

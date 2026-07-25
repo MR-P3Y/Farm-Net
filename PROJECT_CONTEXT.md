@@ -804,6 +804,17 @@ privilege. Alembic upgrade/no-drift, twice-run Auth/Farm seeds, app/database/
 Redis health, Ruff, compileall, 4 focused tests, and all 230 Backend tests
 passed. Step 24.3 Owner-Scoped Farm CRUD + Archive Lifecycle is next.
 
+Step 24.3 Owner-Scoped Farm CRUD + Archive Lifecycle is complete. Authenticated
+users can create multiple private farms and use typed paginated list, detail,
+update, archive, and restore APIs. Owner IDs are derived only from the current
+session; all repository lookups bind record ID and owner ID, making cross-user
+access indistinguishable from a missing record. Archived farms cannot be
+edited until restored, no destructive delete exists, and there is no public
+Farm route. Alembic revision `d4f8b0a52c13`, no-drift verification, Ruff,
+compileall, 10 focused tests, all 236 Backend tests, OpenAPI contracts, and
+app/database/Redis health passed. Step 24.4 Plot, Geo Point/Boundary + Area
+Consistency is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

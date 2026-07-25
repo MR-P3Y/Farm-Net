@@ -17,6 +17,49 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.modules.farms.enums import FarmStatus
+
+
+class Farm(Base):
+    __tablename__ = "farms"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    owner_user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(180), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(30),
+        default=FarmStatus.ACTIVE.value,
+        nullable=False,
+        index=True,
+    )
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    archive_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "(status = 'active' AND archived_at IS NULL AND archive_reason IS NULL) OR "
+            "(status = 'archived' AND archived_at IS NOT NULL)",
+            name="ck_farms_archive_state",
+        ),
+        CheckConstraint(
+            "status in ('active', 'archived')",
+            name="ck_farms_status",
+        ),
+        Index("ix_farms_owner_status_updated", "owner_user_id", "status", "updated_at"),
+    )
 
 
 class FarmMeasurementUnit(Base):
