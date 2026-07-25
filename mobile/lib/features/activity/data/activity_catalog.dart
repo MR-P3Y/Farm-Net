@@ -7,6 +7,7 @@ enum ActivityActionId {
   verifications,
   notifications,
   finance,
+  subscription,
   farms,
   buyerOrders,
   serviceRequests,
@@ -102,6 +103,12 @@ class ActivityCatalog {
               id: ActivityActionId.finance,
               title: 'مرکز مالی من',
               route: '/finance',
+            ),
+          if (_has(permissions, 'billing.subscription.read_own'))
+            const ActivityAction(
+              id: ActivityActionId.subscription,
+              title: 'اشتراک و امکانات من',
+              route: '/subscription',
             ),
           if (_has(permissions, 'farms.read_own'))
             const ActivityAction(

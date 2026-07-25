@@ -999,6 +999,18 @@ focused and all 305 Backend tests, Ruff/compileall, no-drift, rolled-back real
 MySQL renewal/expiry, empty worker execution, and app/database/Redis health
 passed. Step 25.8 Mobile Plans, Current Subscription, Usage + Checkout is next.
 
+Step 25.8 Mobile Plans, Current Subscription, Usage + Checkout is complete.
+Mobile now has typed billing contracts, a protected and permission-backed
+Subscription Center, current lifecycle/grace/cancellation rendering, metered
+usage including reservations, TOMAN plan catalog, Free activation, paid
+checkout/renewal, cancel/resume actions, and complete loading/empty/error
+states. Local development uses the non-production mock payment path; non-local
+checkout delegates to Zarinpal and keeps activation server-authoritative.
+Focused analyze, all 68 Mobile tests, web build, and Wasm dry-run passed. Full
+analyze has two unrelated concurrent warnings in Home and Social files which
+were preserved outside this step. Step 25.9 Admin Plans, Subscriptions, Usage +
+Manual Operations is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

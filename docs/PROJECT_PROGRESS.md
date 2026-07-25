@@ -2204,6 +2204,20 @@ model fields exist:
   worker execution, and app/database/Redis health passed.
 - Evidence: `docs/subscriptions/phase-25-renewal-grace-notifications.md`.
 
+### Step 25.8 Mobile Plans, Current Subscription, Usage + Checkout
+
+- Added typed Mobile plan, subscription, entitlement, usage, checkout, and
+  verification contracts over the real Billing APIs.
+- Added a protected, permission-backed Subscription Center with TOMAN plan
+  selection, Free activation, paid checkout/renewal, cancellation/resume,
+  lifecycle/grace state, and metered usage including reservations.
+- Kept payment activation server-authoritative: local development uses the
+  Backend mock flow and non-local checkout delegates to Zarinpal.
+- Focused analyze, all 68 Mobile tests, web build, and Wasm dry-run passed.
+- Full analyze retains two unrelated concurrent warnings in Home and Social
+  files; those user changes were not modified or included.
+- Evidence: `docs/subscriptions/phase-25-mobile-subscriptions.md`.
+
 ## Progress Update Rule
 
 After every completed step:

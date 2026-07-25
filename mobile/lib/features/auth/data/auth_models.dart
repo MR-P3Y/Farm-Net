@@ -19,6 +19,8 @@ class AuthUser {
   final List<String> roles;
   final List<String> permissions;
 
+  String get displayName => email ?? phone ?? 'کاربر فارم‌نت';
+
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
       id: (json['id'] as num).toInt(),

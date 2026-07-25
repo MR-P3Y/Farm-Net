@@ -64,6 +64,7 @@ import '../../features/splash/splash_screen.dart';
 import '../../features/stores/presentation/my_store_screen.dart';
 import '../../features/stores/presentation/public_store_detail_screen.dart';
 import '../../features/stores/presentation/public_stores_screen.dart';
+import '../../features/subscriptions/presentation/subscription_center_screen.dart';
 import '../../features/verification/presentation/verification_requests_screen.dart';
 import '../../features/weather/presentation/weather_screen.dart';
 
@@ -135,6 +136,12 @@ final GoRouter appRouter = GoRouter(
       path: '/finance',
       name: 'finance-center',
       builder: (context, state) => protectedRoute(const FinanceCenterScreen()),
+    ),
+    GoRoute(
+      path: '/subscription',
+      name: 'subscription-center',
+      builder:
+          (context, state) => protectedRoute(const SubscriptionCenterScreen()),
     ),
     GoRoute(
       path: '/notifications',

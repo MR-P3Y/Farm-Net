@@ -53,6 +53,20 @@ void main() {
     expect(action.route, '/farms');
   });
 
+  test('subscription center entry is permission backed', () {
+    final account = user(permissions: const ['billing.subscription.read_own']);
+    final personal = ActivityCatalog.forUser(account).first;
+
+    expect(
+      personal.actions.any(
+        (action) =>
+            action.id == ActivityActionId.subscription &&
+            action.route == '/subscription',
+      ),
+      isTrue,
+    );
+  });
+
   test('base user sees provider setup without assigned workbench actions', () {
     final sections = ActivityCatalog.forUser(
       user(
