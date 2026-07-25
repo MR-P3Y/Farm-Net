@@ -18,6 +18,8 @@ from app.modules.finance.models import (
     WalletAccount,
 )
 from app.modules.orders.payment_gateway import PaymentGatewayError, ZarinpalGateway
+from app.modules.notifications.enums import NotificationEventType
+from app.modules.notifications.service import NotificationService
 from app.modules.subscriptions.lifecycle_service import SubscriptionLifecycleService
 from app.modules.subscriptions.models import (
     BillingPlan,
@@ -236,6 +238,164 @@ class SubscriptionCommerceService:
             provider_token=authority,
         )
 
+    def renewal_checkout(
+        self,
+        *,
+        user_id: int,
+        provider: str,
+        idempotency_key: str,
+    ) -> SubscriptionCheckoutOut:
+        key = idempotency_key.strip()
+        provider = provider.strip().lower()
+        if provider not in {"mock", "zarinpal"}:
+            raise AppException(
+                "BILLING_PAYMENT_PROVIDER_UNAVAILABLE",
+                "Payment provider is unavailable",
+                422,
+            )
+        if provider == "mock" and get_settings().app_env.lower() == "production":
+            raise AppException(
+                "BILLING_PAYMENT_PROVIDER_UNAVAILABLE",
+                "Mock payment is disabled in production",
+                403,
+            )
+        now = _utcnow()
+        self._lock_user(user_id)
+        subscription = (
+            self.db.query(BillingSubscription)
+            .options(
+                joinedload(BillingSubscription.plan)
+                .joinedload(BillingPlan.features)
+                .joinedload(BillingPlanFeature.feature)
+            )
+            .filter(
+                BillingSubscription.user_id == user_id,
+                BillingSubscription.status == "grace",
+                BillingSubscription.grace_ends_at > now,
+            )
+            .with_for_update()
+            .one_or_none()
+        )
+        if subscription is None:
+            raise AppException(
+                "BILLING_RENEWAL_NOT_AVAILABLE",
+                "Paid subscription is not in its renewal grace period",
+                409,
+            )
+        existing = (
+            self.db.query(BillingSubscriptionPaymentAttempt)
+            .filter(BillingSubscriptionPaymentAttempt.idempotency_key == key)
+            .one_or_none()
+        )
+        if existing is not None:
+            if (
+                existing.user_id != user_id
+                or existing.subscription_id != subscription.id
+                or existing.provider != provider
+            ):
+                raise AppException(
+                    "BILLING_PAYMENT_IDEMPOTENCY_CONFLICT",
+                    "Idempotency key was used for a different checkout",
+                    409,
+                )
+            return self._output(existing)
+
+        plan = subscription.plan
+        if (
+            plan.billing_period == "free"
+            or plan.price_toman <= 0
+            or plan.currency != CurrencyCode.TOMAN.value
+        ):
+            raise AppException(
+                "BILLING_RENEWAL_PLAN_INVALID",
+                "Subscription plan cannot be renewed with payment",
+                409,
+            )
+        latest_sequence = max((item.sequence for item in subscription.periods), default=0)
+        planned_end = now + timedelta(days=self._duration_days(plan))
+        period = BillingSubscriptionPeriod(
+            subscription_id=subscription.id,
+            sequence=latest_sequence + 1,
+            status="pending",
+            starts_at=now,
+            ends_at=planned_end,
+            plan_code_snapshot=plan.code,
+            plan_version_snapshot=plan.version,
+            price_toman_snapshot=plan.price_toman,
+            currency=CurrencyCode.TOMAN.value,
+        )
+        self.db.add(period)
+        self.db.flush()
+        invoice = BillingInvoice(
+            invoice_number=f"SUB-REN-{now:%Y%m%d}-{uuid4().hex[:16].upper()}",
+            source_type=BillableSourceType.PLATFORM_SUBSCRIPTION_RENEWAL.value,
+            source_id=period.id,
+            payer_user_id=user_id,
+            provider_user_id=None,
+            status="payment_pending",
+            currency=CurrencyCode.TOMAN.value,
+            subtotal_amount=plan.price_toman,
+            discount_amount=Decimal("0"),
+            surcharge_amount=Decimal("0"),
+            total_amount=plan.price_toman,
+            platform_amount=plan.price_toman,
+            provider_amount=Decimal("0"),
+            issued_at=now,
+        )
+        self.db.add(invoice)
+        self.db.flush()
+        period.invoice_id = invoice.id
+        self.db.add(
+            BillingInvoiceItem(
+                invoice_id=invoice.id,
+                sequence=1,
+                source_item_type="subscription_renewal",
+                source_item_id=plan.id,
+                title_snapshot=f"{plan.name} renewal v{plan.version}",
+                description_snapshot=plan.description,
+                quantity=Decimal("1"),
+                unit_snapshot="subscription_period",
+                unit_price=plan.price_toman,
+                line_total=plan.price_toman,
+            )
+        )
+        attempt = BillingSubscriptionPaymentAttempt(
+            subscription_id=subscription.id,
+            invoice_id=invoice.id,
+            user_id=user_id,
+            provider=provider,
+            status="pending",
+            amount_toman=plan.price_toman,
+            currency=CurrencyCode.TOMAN.value,
+            idempotency_key=key,
+            expires_at=min(subscription.grace_ends_at, now + timedelta(minutes=30)),
+        )
+        self.db.add(attempt)
+        self.db.flush()
+        if provider == "mock":
+            attempt.status = "redirected"
+            attempt.redirect_url = f"farmnet://billing/mock/{attempt.id}"
+        else:
+            try:
+                settings = get_settings()
+                gateway = ZarinpalGateway().request_payment(
+                    amount=attempt.amount_toman,
+                    invoice_id=invoice.id,
+                    description=f"Farm Net renewal invoice {invoice.invoice_number}",
+                    callback_url=(
+                        f"{settings.public_base_url.rstrip('/')}"
+                        "/api/v1/billing/payments/callback/zarinpal"
+                    ),
+                )
+            except PaymentGatewayError as exc:
+                self.db.rollback()
+                raise AppException(exc.code, exc.message, 503) from exc
+            attempt.status = "redirected"
+            attempt.provider_authority = gateway.authority
+            attempt.redirect_url = gateway.redirect_url
+        self.db.commit()
+        return self._output(attempt)
+
     def verify(
         self, *, user_id: int, attempt_id: int, provider_token: str
     ) -> SubscriptionCheckoutOut:
@@ -317,8 +477,19 @@ class SubscriptionCommerceService:
             .with_for_update()
             .one()
         )
+        is_initial = (
+            subscription.status == "pending"
+            and invoice.source_type == BillableSourceType.PLATFORM_SUBSCRIPTION.value
+        )
+        is_renewal = (
+            subscription.status == "grace"
+            and subscription.grace_ends_at is not None
+            and subscription.grace_ends_at > now
+            and invoice.source_type
+            == BillableSourceType.PLATFORM_SUBSCRIPTION_RENEWAL.value
+        )
         if (
-            subscription.status != "pending"
+            not (is_initial or is_renewal)
             or invoice.status != "payment_pending"
             or invoice.currency != CurrencyCode.TOMAN.value
             or invoice.total_amount != attempt.amount_toman
@@ -328,7 +499,7 @@ class SubscriptionCommerceService:
                 "Payment contract is inconsistent",
                 409,
             )
-        current = self._current(user_id, now)
+        current = self._current(user_id, now) if is_initial else None
         if current is not None:
             if current.plan.billing_period != "free":
                 raise AppException(
@@ -349,6 +520,7 @@ class SubscriptionCommerceService:
             .filter(
                 BillingSubscriptionPeriod.subscription_id == subscription.id,
                 BillingSubscriptionPeriod.status == "pending",
+                BillingSubscriptionPeriod.invoice_id == invoice.id,
             )
             .with_for_update()
             .one()
@@ -358,6 +530,7 @@ class SubscriptionCommerceService:
         subscription.starts_at = now
         subscription.current_period_starts_at = now
         subscription.current_period_ends_at = ends_at
+        subscription.grace_ends_at = None
         subscription.auto_renew = True
         subscription.version += 1
         period.status = "active"
@@ -374,6 +547,35 @@ class SubscriptionCommerceService:
             subscription=subscription,
             period=period,
             values=subscription.plan.features,
+        )
+        event_type = (
+            NotificationEventType.SUBSCRIPTION_ACTIVATED.value
+            if is_initial
+            else NotificationEventType.SUBSCRIPTION_RENEWED.value
+        )
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=event_type,
+            recipient_user_id=user_id,
+            title="اشتراک فعال شد" if is_initial else "اشتراک تمدید شد",
+            body=(
+                "اشتراک پولی شما با موفقیت فعال شد."
+                if is_initial
+                else "پرداخت تمدید تأیید و دوره جدید اشتراک فعال شد."
+            ),
+            source_type="billing_subscription",
+            source_id=str(subscription.id),
+            payload_json={
+                "subscription_id": subscription.id,
+                "plan_code": subscription.plan.code,
+                "period_sequence": period.sequence,
+                "status": subscription.status,
+            },
+            action_url="/subscription",
+            event_key=(
+                f"subscription:{subscription.id}:period:{period.sequence}:{event_type}"
+            ),
+            allow_self_notification=True,
+            commit=False,
         )
         self.db.commit()
         return self._output(attempt)

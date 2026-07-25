@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.modules.subscriptions.models import (
@@ -54,8 +54,17 @@ class SubscriptionReadRepository:
             .filter(
                 BillingSubscription.user_id == user_id,
                 BillingSubscription.status.in_(("active", "grace")),
-                BillingSubscription.current_period_starts_at <= now,
-                BillingSubscription.current_period_ends_at > now,
+                or_(
+                    and_(
+                        BillingSubscription.status == "active",
+                        BillingSubscription.current_period_starts_at <= now,
+                        BillingSubscription.current_period_ends_at > now,
+                    ),
+                    and_(
+                        BillingSubscription.status == "grace",
+                        BillingSubscription.grace_ends_at > now,
+                    ),
+                ),
             )
             .order_by(BillingSubscription.id.desc())
             .first()

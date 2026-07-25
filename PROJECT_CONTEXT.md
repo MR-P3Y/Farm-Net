@@ -987,6 +987,18 @@ Ruff/compileall, no-drift, rolled-back real MySQL commerce regression, and
 app/database/Redis health passed. Step 25.7 Renewal, Expiry, Grace Period +
 Notifications is next.
 
+Step 25.7 Renewal, Expiry, Grace Period + Notifications is complete. Free
+periods renew automatically with fresh Entitlement/usage snapshots;
+end-period cancellation terminates without Grace; due paid periods retain
+access through a three-day Grace; verified renewal creates a distinct TOMAN
+Period/Invoice and exact-once Entitlements; unpaid Grace expires at one
+effective boundary. Five deterministic Notification event types prevent
+duplicates across retries/workers. A bounded row-locked `SKIP LOCKED`
+lifecycle CLI is ready for scheduler execution. Alembic `bc620ec4f128`, 27
+focused and all 305 Backend tests, Ruff/compileall, no-drift, rolled-back real
+MySQL renewal/expiry, empty worker execution, and app/database/Redis health
+passed. Step 25.8 Mobile Plans, Current Subscription, Usage + Checkout is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

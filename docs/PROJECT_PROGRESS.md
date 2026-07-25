@@ -2190,6 +2190,20 @@ model fields exist:
   app/database/Redis health passed.
 - Evidence: `docs/subscriptions/phase-25-toman-commerce.md`.
 
+### Step 25.7 Renewal, Expiry, Grace Period + Notifications
+
+- Added automatic Free renewal, end-period cancellation, three-day paid
+  Grace, paid renewal Checkout/Verify, and terminal expiry with matching
+  Entitlement boundaries.
+- Renewal uses its own platform-owned TOMAN Period/Invoice/Payment contract
+  and exact-once Entitlement snapshot.
+- Added five deterministic lifecycle events and a bounded row-locked
+  `SKIP LOCKED` processor/CLI for scheduler execution.
+- Alembic `bc620ec4f128`, 27 focused and all 305 Backend tests,
+  Ruff/compileall, no-drift, real rolled-back MySQL renewal/expiry, empty
+  worker execution, and app/database/Redis health passed.
+- Evidence: `docs/subscriptions/phase-25-renewal-grace-notifications.md`.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -67,6 +67,13 @@ class SubscriptionPaymentVerifyIn(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+class SubscriptionRenewalCheckoutIn(BaseModel):
+    provider: str = Field(pattern="^(mock|zarinpal)$")
+    idempotency_key: str = Field(min_length=8, max_length=180)
+
+    model_config = {"extra": "forbid"}
+
+
 class SubscriptionCheckoutOut(BaseModel):
     payment_attempt_id: int
     subscription_id: int

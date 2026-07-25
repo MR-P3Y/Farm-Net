@@ -17,6 +17,7 @@ from app.modules.subscriptions.schemas import (
     SubscriptionCheckoutIn,
     SubscriptionCheckoutResponse,
     SubscriptionPaymentVerifyIn,
+    SubscriptionRenewalCheckoutIn,
     SubscriptionResumeIn,
 )
 from app.modules.subscriptions.commerce_service import SubscriptionCommerceService
@@ -173,6 +174,25 @@ def checkout_subscription(
     return success_response(
         data=item.model_dump(mode="json"),
         message="Subscription checkout created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/subscription/renew/checkout", response_model=SubscriptionCheckoutResponse)
+def checkout_subscription_renewal(
+    payload: SubscriptionRenewalCheckoutIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("billing.subscription.manage_own")),
+):
+    item = SubscriptionCommerceService(db).renewal_checkout(
+        user_id=user.id,
+        provider=payload.provider,
+        idempotency_key=payload.idempotency_key,
+    )
+    return success_response(
+        data=item.model_dump(mode="json"),
+        message="Subscription renewal checkout created",
         meta={"trace_id": request.state.trace_id},
     )
 

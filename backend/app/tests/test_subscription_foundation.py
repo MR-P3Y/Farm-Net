@@ -98,6 +98,7 @@ def test_subscription_read_routes_match_public_and_owner_boundaries() -> None:
         "/api/v1/billing/subscription/cancel": {"post"},
         "/api/v1/billing/subscription/resume": {"post"},
         "/api/v1/billing/checkout": {"post"},
+        "/api/v1/billing/subscription/renew/checkout": {"post"},
         "/api/v1/billing/payments/verify": {"post"},
         "/api/v1/billing/payments/callback/zarinpal": {"get"},
     }

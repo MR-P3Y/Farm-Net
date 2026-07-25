@@ -281,9 +281,11 @@ class BillingInvoice(Base):
             name="ck_billing_invoice_split_total",
         ),
         CheckConstraint(
-            "(source_type = 'platform_subscription' AND provider_user_id IS NULL "
+            "(source_type IN ('platform_subscription', 'platform_subscription_renewal') "
+            "AND provider_user_id IS NULL "
             "AND provider_amount = 0 AND platform_amount = total_amount) OR "
-            "(source_type <> 'platform_subscription' AND provider_user_id IS NOT NULL)",
+            "(source_type NOT IN ('platform_subscription', 'platform_subscription_renewal') "
+            "AND provider_user_id IS NOT NULL)",
             name="ck_billing_invoice_platform_owner",
         ),
         Index("ix_billing_invoice_payer_status", "payer_user_id", "status"),

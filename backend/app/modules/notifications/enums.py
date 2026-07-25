@@ -17,6 +17,12 @@ class NotificationEventType(str, Enum):
     SETTLEMENT_SIMULATED = "finance.settlement_simulated"
     WALLET_ADJUSTED = "finance.wallet_adjusted"
 
+    SUBSCRIPTION_ACTIVATED = "subscription.activated"
+    SUBSCRIPTION_RENEWED = "subscription.renewed"
+    SUBSCRIPTION_GRACE_STARTED = "subscription.grace_started"
+    SUBSCRIPTION_CANCELLED = "subscription.cancelled"
+    SUBSCRIPTION_EXPIRED = "subscription.expired"
+
     VERIFICATION_SUBMITTED = "verification.submitted"
     VERIFICATION_APPROVED = "verification.approved"
     VERIFICATION_REJECTED = "verification.rejected"

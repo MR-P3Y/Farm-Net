@@ -192,7 +192,8 @@ Phase 25.3 Plan Catalog + Public/User Read APIs: completed
 Phase 25.4 Subscription Lifecycle, Periods + Cancellation: completed
 Phase 25.5 Atomic Quota Reservation, Usage + Idempotency: completed
 Phase 25.6 TOMAN Invoice, Wallet + Payment Integration: completed
-Next: Phase 25.7 Renewal, Expiry, Grace Period + Notifications
+Phase 25.7 Renewal, Expiry, Grace Period + Notifications: completed
+Next: Phase 25.8 Mobile Plans, Current Subscription, Usage + Checkout
 After Phase 25 release: resume Phase 21 farmer-focused AI/RAG
 ```
 

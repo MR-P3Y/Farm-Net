@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.exceptions import AppException
@@ -219,8 +220,17 @@ class SubscriptionLifecycleService:
             .filter(
                 BillingSubscription.user_id == user_id,
                 BillingSubscription.status.in_(("active", "grace")),
-                BillingSubscription.current_period_starts_at <= now,
-                BillingSubscription.current_period_ends_at > now,
+                or_(
+                    and_(
+                        BillingSubscription.status == "active",
+                        BillingSubscription.current_period_starts_at <= now,
+                        BillingSubscription.current_period_ends_at > now,
+                    ),
+                    and_(
+                        BillingSubscription.status == "grace",
+                        BillingSubscription.grace_ends_at > now,
+                    ),
+                ),
             )
             .with_for_update()
             .order_by(BillingSubscription.id.desc())
