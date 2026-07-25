@@ -944,6 +944,16 @@ roles / 268 permissions, Ruff/compileall, all 281 Backend tests, and runtime
 app/database/Redis health passed. Step 25.3 Plan Catalog + Public/User Read
 APIs is next.
 
+Step 25.3 Plan Catalog + Public/User Read APIs is complete. An idempotent
+catalog now seeds 15 typed features and one active default Free plan with
+TOMAN 0 and 15 values. Public list/detail expose only active/effective plans;
+owner subscription, entitlement, and usage reads are permission-protected and
+never create state. Two seed runs were stable, runtime returned the Free plan
+and 15 features, unauthenticated owner reads returned 401, Alembic remained
+drift-free at `96f4165b43fe`, all 283 Backend tests passed, and
+app/database/Redis health was OK. Step 25.4 Subscription Lifecycle, Periods +
+Cancellation is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

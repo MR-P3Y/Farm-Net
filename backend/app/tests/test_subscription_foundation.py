@@ -1,5 +1,6 @@
 from sqlalchemy import CheckConstraint, UniqueConstraint
 
+from app.main import app
 from app.modules.auth.seed import BASE_PERMISSIONS
 from app.modules.subscriptions.models import (
     BillingEntitlement,
@@ -11,6 +12,7 @@ from app.modules.subscriptions.models import (
     BillingSubscriptionPeriod,
     BillingUsageReservation,
 )
+from app.modules.subscriptions.seed import FEATURES, FREE_VALUES
 
 
 def test_subscription_foundation_has_eight_separate_tables() -> None:
@@ -73,3 +75,28 @@ def test_subscription_user_permissions_are_seeded() -> None:
         "billing.usage.read_own",
         "billing.entitlements.read",
     }.issubset(codes)
+
+
+def test_subscription_read_routes_match_public_and_owner_boundaries() -> None:
+    operations = {
+        path: set(value)
+        for path, value in app.openapi()["paths"].items()
+        if path.startswith("/api/v1/billing/")
+    }
+
+    assert operations == {
+        "/api/v1/billing/plans": {"get"},
+        "/api/v1/billing/plans/{plan_code}": {"get"},
+        "/api/v1/billing/subscription/me": {"get"},
+        "/api/v1/billing/entitlements/me": {"get"},
+        "/api/v1/billing/usage/me": {"get"},
+    }
+
+
+def test_free_catalog_defines_every_registered_feature_once() -> None:
+    codes = [feature.code for feature in FEATURES]
+
+    assert len(codes) == len(set(codes)) == 15
+    assert set(FREE_VALUES) == set(codes)
+    assert FREE_VALUES["ai.image_analysis"] == 1
+    assert FREE_VALUES["farms.max_count"] == 1

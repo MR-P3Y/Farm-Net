@@ -2140,6 +2140,18 @@ model fields exist:
   and all 281 Backend tests, Ruff/compileall, and runtime health passed.
 - Evidence: `docs/subscriptions/phase-25-db-contract.md`.
 
+### Step 25.3 Plan Catalog + Public/User Read APIs
+
+- Added an idempotent 15-feature registry and active Free v1 plan with 15 typed
+  values and TOMAN 0.
+- Added public active-plan list/detail plus authenticated own subscription,
+  entitlement, and usage reads.
+- Owner reads are non-mutating and return an explicit empty state before
+  lifecycle provisioning.
+- Seed twice, 5 focused and all 283 Backend tests, no drift, runtime catalog,
+  three 401 owner boundaries, Ruff/compileall, and health passed.
+- Evidence: `docs/subscriptions/phase-25-plan-catalog-read-apis.md`.
+
 ## Progress Update Rule
 
 After every completed step:
