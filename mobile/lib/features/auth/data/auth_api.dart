@@ -29,7 +29,7 @@ class AuthApi {
     required String password,
   }) async {
     final json = await _post(
-      '/auth/register/email',
+      'auth/register/email',
       data: {'email': email, 'password': password},
     );
 
@@ -41,7 +41,7 @@ class AuthApi {
     required String password,
   }) async {
     final json = await _post(
-      '/auth/login/email',
+      'auth/login/email',
       data: {'email': email, 'password': password},
     );
 
@@ -53,7 +53,7 @@ class AuthApi {
     String purpose = 'login',
   }) async {
     final json = await _post(
-      '/auth/otp/request',
+      'auth/otp/request',
       data: {'phone': phone, 'purpose': purpose},
     );
 
@@ -66,7 +66,7 @@ class AuthApi {
     String purpose = 'login',
   }) async {
     final json = await _post(
-      '/auth/otp/verify',
+      'auth/otp/verify',
       data: {'phone': phone, 'code': code, 'purpose': purpose},
     );
 
@@ -74,14 +74,14 @@ class AuthApi {
   }
 
   Future<AuthUser> me() async {
-    final json = await _get('/auth/me');
+    final json = await _get('auth/me');
 
     return AuthUser.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   Future<AuthTokenPair> refresh({required String refreshToken}) async {
     final json = await _post(
-      '/auth/refresh',
+      'auth/refresh',
       data: {'refresh_token': refreshToken},
     );
 
@@ -89,13 +89,13 @@ class AuthApi {
   }
 
   Future<void> logout({required String? refreshToken}) async {
-    await _post('/auth/logout', data: {'refresh_token': refreshToken});
+    await _post('auth/logout', data: {'refresh_token': refreshToken});
   }
 
-  Future<Map<String, dynamic>> _get(String path) async {
+  Future<Map<String, dynamic>> _get(String path, {Map<String, dynamic>? queryParameters}) async {
     try {
-      final response = await _client.dio.get<Map<String, dynamic>>(path);
-      return response.data ?? {};
+      final response = await _client.get(path, queryParameters: queryParameters);
+      return (response.data as Map?)?.cast<String, dynamic>() ?? {};
     } on DioException catch (error) {
       throw AuthApiException(_mapDioError(error));
     }
@@ -104,14 +104,16 @@ class AuthApi {
   Future<Map<String, dynamic>> _post(
     String path, {
     required Map<String, dynamic> data,
+    Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      final response = await _client.dio.post<Map<String, dynamic>>(
+      final response = await _client.post(
         path,
         data: data,
+        queryParameters: queryParameters,
       );
 
-      return response.data ?? {};
+      return (response.data as Map?)?.cast<String, dynamic>() ?? {};
     } on DioException catch (error) {
       throw AuthApiException(_mapDioError(error));
     }

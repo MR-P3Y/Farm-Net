@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/dates.dart';
 import '../data/rental_models.dart';
 import '../data/rental_repository.dart';
 
@@ -122,7 +123,7 @@ class _State extends ConsumerState<RentalCommercialScreen> {
                         onTap: () => _editBlock(b),
                         title: Text(_blockLabel(b.blockType)),
                         subtitle: Text(
-                          '${_date(b.startsAt)} تا ${_date(b.endsAt)}',
+                          '${b.startsAt.format(context)} تا ${b.endsAt.format(context)}',
                         ),
                         trailing: IconButton(
                           onPressed: () => _delete(b),
@@ -312,7 +313,6 @@ class _State extends ConsumerState<RentalCommercialScreen> {
     }
   }
 
-  String _date(DateTime d) => '${d.year}/${d.month}/${d.day}';
   String _blockLabel(String v) =>
       const {
         'unavailable': 'غیردردسترس',

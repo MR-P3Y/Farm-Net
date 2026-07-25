@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
@@ -8,31 +7,18 @@ import 'social_models.dart';
 
 class SocialApiException implements Exception {
   const SocialApiException(this.error);
-
   final ApiError error;
-
   @override
-  String toString() => '${error.code}: ${error.message}';
+  String toString() => error.message;
 }
 
 class SocialApi {
-  SocialApi({ApiClient? client, TokenStorage? tokenStorage})
+  SocialApi({ApiClient? client, TokenStorage? storage})
     : _client = client ?? ApiClient(baseUrl: AppConfig.apiBaseUrl),
-      _tokenStorage = tokenStorage ?? TokenStorage();
+      _storage = storage ?? TokenStorage();
 
   final ApiClient _client;
-  final TokenStorage _tokenStorage;
-
-  Future<List<SocialCategoryModel>> categories() async {
-    final json = await _get('/social/categories');
-    final rows = json['data'] as List? ?? [];
-
-    return rows
-        .map(
-          (item) => SocialCategoryModel.fromJson(item as Map<String, dynamic>),
-        )
-        .toList();
-  }
+  final TokenStorage _storage;
 
   Future<List<SocialPostModel>> posts({
     int? categoryId,
@@ -42,31 +28,40 @@ class SocialApi {
     int? cityId,
     String? sort,
   }) async {
-    final params = <String, String>{'page': '1', 'page_size': '30'};
+    final params = <String, dynamic>{};
+    if (categoryId != null) params['category_id'] = categoryId;
+    if (postType != null) params['post_type'] = postType;
+    if (query != null && query.isNotEmpty) params['q'] = query;
+    if (provinceId != null) params['province_id'] = provinceId;
+    if (cityId != null) params['city_id'] = cityId;
+    if (sort != null) params['sort'] = sort;
 
-    if (categoryId != null) params['category_id'] = categoryId.toString();
-    if (postType != null && postType.isNotEmpty) {
-      params['post_type'] = postType;
+    try {
+      final response = await _client.get('social/posts', queryParameters: params);
+      final rows = response.data?['data'] as List? ?? [];
+      return rows.map((item) => SocialPostModel.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw SocialApiException(_error(e));
     }
-    if (query != null && query.trim().isNotEmpty) {
-      params['q'] = query.trim();
-    }
-    if (provinceId != null) params['province_id'] = provinceId.toString();
-    if (cityId != null) params['city_id'] = cityId.toString();
-    if (sort?.isNotEmpty ?? false) params['sort'] = sort!;
-
-    final uri = Uri(path: '/social/posts', queryParameters: params);
-    final json = await _get(uri.toString());
-    final rows = json['data'] as List? ?? [];
-
-    return rows
-        .map((item) => SocialPostModel.fromJson(item as Map<String, dynamic>))
-        .toList();
   }
 
-  Future<SocialPostModel> postDetail(int postId) async {
-    final json = await _get('/social/posts/$postId');
-    return SocialPostModel.fromJson(json['data'] as Map<String, dynamic>);
+  Future<SocialPostModel> postDetail(int id) async {
+    try {
+      final response = await _client.get('social/posts/$id');
+      return SocialPostModel.fromJson(response.data?['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw SocialApiException(_error(e));
+    }
+  }
+
+  Future<List<SocialCategoryModel>> categories() async {
+    try {
+      final response = await _client.get('social/categories');
+      final rows = response.data?['data'] as List? ?? [];
+      return rows.map((item) => SocialCategoryModel.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw SocialApiException(_error(e));
+    }
   }
 
   Future<SocialPostModel> createPost({
@@ -76,34 +71,29 @@ class SocialApi {
     required String postType,
     int? mediaFileId,
   }) async {
-    await _setStoredToken();
-
-    final json = await _post(
-      '/social/posts',
-      data: {
+    await _auth();
+    try {
+      final response = await _client.post('social/posts', data: {
         'category_id': categoryId,
         'title': title,
         'body': body,
         'post_type': postType,
-        'visibility': 'public',
         'media_file_id': mediaFileId,
-      },
-    );
-
-    return SocialPostModel.fromJson(json['data'] as Map<String, dynamic>);
+      });
+      return SocialPostModel.fromJson(response.data?['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw SocialApiException(_error(e));
+    }
   }
 
   Future<List<SocialCommentModel>> comments(int postId) async {
-    final json = await _get(
-      '/social/posts/$postId/comments?page=1&page_size=100',
-    );
-    final rows = json['data'] as List? ?? [];
-
-    return rows
-        .map(
-          (item) => SocialCommentModel.fromJson(item as Map<String, dynamic>),
-        )
-        .toList();
+    try {
+      final response = await _client.get('social/posts/$postId/comments');
+      final rows = response.data?['data'] as List? ?? [];
+      return rows.map((item) => SocialCommentModel.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw SocialApiException(_error(e));
+    }
   }
 
   Future<SocialCommentModel> createComment({
@@ -111,86 +101,55 @@ class SocialApi {
     required String body,
     int? parentCommentId,
   }) async {
-    await _setStoredToken();
-
-    final json = await _post(
-      '/social/posts/$postId/comments',
-      data: {'body': body, 'parent_comment_id': parentCommentId},
-    );
-
-    return SocialCommentModel.fromJson(json['data'] as Map<String, dynamic>);
+    await _auth();
+    try {
+      final response = await _client.post('social/posts/$postId/comments', data: {
+        'body': body,
+        'parent_comment_id': parentCommentId,
+      });
+      return SocialCommentModel.fromJson(response.data?['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw SocialApiException(_error(e));
+    }
   }
 
-  Future<void> reactToPost({
-    required int postId,
-    String reactionType = 'like',
-  }) async {
-    await _setStoredToken();
-
-    await _post(
-      '/social/posts/$postId/reactions',
-      data: {'reaction_type': reactionType},
-    );
+  Future<void> reactToPost({required int postId, String reactionType = 'like'}) async {
+    await _auth();
+    try {
+      await _client.post('social/posts/$postId/react', data: {'reaction_type': reactionType});
+    } on DioException catch (e) {
+      throw SocialApiException(_error(e));
+    }
   }
 
   Future<void> bookmarkPost(int postId) async {
-    await _setStoredToken();
-    await _post('/social/posts/$postId/bookmark');
-  }
-
-  Future<void> reportPost({
-    required int postId,
-    required String reason,
-    String? description,
-  }) async {
-    await _setStoredToken();
-
-    await _post(
-      '/social/posts/$postId/report',
-      data: {'reason': reason, 'description': description},
-    );
-  }
-
-  Future<void> _setStoredToken() async {
-    final token = await _tokenStorage.getAccessToken();
-    _client.setToken(token);
-  }
-
-  Future<Map<String, dynamic>> _get(String path) async {
+    await _auth();
     try {
-      final response = await _client.dio.get<Map<String, dynamic>>(path);
-      return response.data ?? {};
+      await _client.post('social/posts/$postId/bookmark', data: {});
     } on DioException catch (e) {
-      throw SocialApiException(_mapDioError(e));
+      throw SocialApiException(_error(e));
     }
   }
 
-  Future<Map<String, dynamic>> _post(
-    String path, {
-    Map<String, dynamic>? data,
-  }) async {
+  Future<void> reportPost({required int postId, required String reason, String? description}) async {
+    await _auth();
     try {
-      final response = await _client.dio.post<Map<String, dynamic>>(
-        path,
-        data: data,
-      );
-      return response.data ?? {};
+      await _client.post('social/posts/$postId/report', data: {
+        'reason': reason,
+        'description': description,
+      });
     } on DioException catch (e) {
-      throw SocialApiException(_mapDioError(e));
+      throw SocialApiException(_error(e));
     }
   }
 
-  ApiError _mapDioError(DioException e) {
-    final data = e.response?.data;
+  Future<void> _auth() async {
+    _client.setToken(await _storage.getAccessToken());
+  }
 
-    if (data is Map<String, dynamic>) {
-      return ApiError.fromJson(data);
-    }
-
-    return ApiError(
-      code: 'NETWORK_ERROR',
-      message: e.message ?? 'Network error',
-      traceId: e.response?.headers.value('x-trace-id'),
-    );
+  ApiError _error(DioException error) {
+    final data = error.response?.data;
+    if (data is Map<String, dynamic>) return ApiError.fromJson(data);
+    return ApiError(code: 'NETWORK_ERROR', message: error.message ?? 'خطا در عملیات شبکه اجتماعی');
   }
 }

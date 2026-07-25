@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/utils/dates.dart';
 import '../../../core/widgets/farm_empty_view.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/rental_models.dart';
@@ -61,7 +62,7 @@ class _State extends ConsumerState<MyRentalRequestsScreen> {
                                 () => context.push('/rentals/requests/${r.id}'),
                             title: Text(r.equipmentTitle),
                             subtitle: Text(
-                              '${rentalRequestStatusLabel(r.status)} • ${_date(r.startsAt)} تا ${_date(r.endsAt)}',
+                              '${rentalRequestStatusLabel(r.status)} • ${r.startsAt.format(context)} تا ${r.endsAt.format(context)}',
                             ),
                             trailing: const Icon(Icons.chevron_left),
                           ),
@@ -72,6 +73,4 @@ class _State extends ConsumerState<MyRentalRequestsScreen> {
               ),
     );
   }
-
-  String _date(DateTime value) => '${value.year}/${value.month}/${value.day}';
 }

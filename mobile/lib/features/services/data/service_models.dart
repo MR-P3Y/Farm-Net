@@ -185,6 +185,13 @@ class ServiceOffer {
   }
 }
 
+class ServiceOfferDetail {
+  const ServiceOfferDetail({required this.offer});
+  final ServiceOffer offer;
+  factory ServiceOfferDetail.fromJson(Map<String, dynamic> json) =>
+      ServiceOfferDetail(offer: ServiceOffer.fromJson(json));
+}
+
 double? _toDouble(Object? value) {
   if (value is num) return value.toDouble();
   return double.tryParse(value?.toString() ?? '');

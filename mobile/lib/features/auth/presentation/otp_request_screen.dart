@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_button.dart';
+import '../../../core/widgets/farm_glass_card.dart';
 import '../../../core/widgets/farm_text_field.dart';
 import '../state/auth_controller.dart';
 import 'otp_verify_screen.dart';
@@ -44,6 +45,7 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
     return Scaffold(
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {
+          final isWide = r.width > 900;
           final bgImage =
               r.isDesktop
                   ? 'assets/images/login_bg_web.webp'
@@ -53,53 +55,90 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
 
           return Stack(
             children: [
-              Positioned.fill(child: Image.asset(bgImage, fit: BoxFit.cover)),
-              AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context),
+              // پس‌زمینه
+              Positioned.fill(
+                child: Image.asset(
+                  bgImage,
+                  fit: BoxFit.cover,
+                  alignment: isWide ? Alignment.centerLeft : Alignment.center,
                 ),
               ),
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 440),
-                  child: SingleChildScrollView(
-                    padding: r.pagePadding(),
-                    child: Card(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surface.withAlpha(220),
-                      elevation: 8,
-                      child: Padding(
-                        padding: EdgeInsets.all(r.s(20)),
+              // لایه تیره کننده ملایم
+              Positioned.fill(
+                child: Container(color: Colors.black.withValues(alpha: 0.15)),
+              ),
+              // محتوا
+              Align(
+                alignment: isWide ? AlignmentDirectional.centerStart : const Alignment(0, -0.6),
+                child: Padding(
+                  padding: isWide
+                      ? EdgeInsetsDirectional.only(start: r.width * 0.08)
+                      : EdgeInsets.symmetric(horizontal: r.s(40)),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: isWide ? 400 : 330),
+                    child: SingleChildScrollView(
+                      child: FarmGlassCard(
+                        borderRadius: 28,
+                        opacity: 0.1,
+                        blur: 16,
+                        padding: const EdgeInsetsDirectional.fromSTEB(24, 12, 24, 32),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              'ورود با موبایل',
-                              style: Theme.of(context).textTheme.headlineSmall,
+                            // دکمه برگشت داخل باکس (سمت راست برای RTL)
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: IconButton(
+                                icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 20),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ),
+                            const Icon(Icons.phone_android_rounded, color: Colors.white, size: 48),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'ورود با شماره موبایل',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                               textAlign: TextAlign.center,
                             ),
-                            SizedBox(height: r.v(24)),
-                            FarmTextField(
-                              controller: _phoneController,
-                              label: 'شماره موبایل',
-                              keyboardType: TextInputType.phone,
-                            ),
-                            if (auth.errorMessage != null) ...[
-                              SizedBox(height: r.v(12)),
-                              Text(
-                                auth.errorMessage!,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
+                            const SizedBox(height: 32),
+                            Theme(
+                              data: Theme.of(context).copyWith(
+                                inputDecorationTheme: InputDecorationTheme(
+                                  filled: true,
+                                  fillColor: Colors.white.withValues(alpha: 0.05),
+                                  labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Colors.white),
+                                  ),
                                 ),
                               ),
+                              child: FarmTextField(
+                                controller: _phoneController,
+                                label: 'شماره موبایل',
+                                keyboardType: TextInputType.phone,
+                              ),
+                            ),
+                            if (auth.errorMessage != null) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                auth.errorMessage!,
+                                style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                                textAlign: TextAlign.center,
+                              ),
                             ],
-                            SizedBox(height: r.v(20)),
+                            const SizedBox(height: 32),
                             FarmButton(
-                              label: 'دریافت کد',
+                              label: 'دریافت کد تایید',
                               isLoading: auth.isLoading,
                               onPressed: auth.isLoading ? null : _requestOtp,
                             ),

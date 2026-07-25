@@ -67,7 +67,7 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
                         (row) => Card(
                           child: ListTile(
                             leading: const Icon(Icons.account_balance_outlined),
-                            title: Text(formatToman(row.amount)),
+                            title: Text(formatToman(context, row.amount)),
                             subtitle: Text('وضعیت: ${row.status}'),
                           ),
                         ),
@@ -89,7 +89,7 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
                             leading: const Icon(Icons.receipt_long_outlined),
                             title: Text(row.number),
                             subtitle: Text('${row.sourceType} • ${row.status}'),
-                            trailing: Text(formatToman(row.total)),
+                            trailing: Text(formatToman(context, row.total)),
                           ),
                         ),
                       ),
@@ -120,9 +120,9 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            _amount('قابل تسویه', wallet.available),
-            _amount('در انتظار آزادسازی', wallet.pending),
-            _amount('رزروشده برای تسویه', wallet.reserved),
+            _amount(context, 'قابل تسویه', wallet.available),
+            _amount(context, 'در انتظار آزادسازی', wallet.pending),
+            _amount(context, 'رزروشده برای تسویه', wallet.reserved),
             const SizedBox(height: 8),
             const Text('تمام مبالغ به تومان ایران هستند.'),
           ],
@@ -131,11 +131,11 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
     );
   }
 
-  Widget _amount(String label, double value) => Padding(
+  Widget _amount(BuildContext context, String label, double value) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [Text(label), Text(formatToman(value))],
+      children: [Text(label), Text(formatToman(context, value))],
     ),
   );
 

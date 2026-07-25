@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
+import '../../../core/widgets/farm_circular_glass_button.dart';
 import '../../../core/widgets/farm_empty_view.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../../core/widgets/farm_search_field.dart';
 import '../data/service_models.dart';
 import '../state/service_discovery_controller.dart';
 
@@ -58,21 +60,16 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: TextField(
+                      child: FarmSearchField(
                         controller: _search,
-                        decoration: const InputDecoration(
-                          hintText: 'جست‌وجوی خدمات',
-                          prefixIcon: Icon(Icons.search),
-                          border: OutlineInputBorder(),
-                        ),
-                        onSubmitted: (value) => controller.apply(query: value),
+                        hint: 'جست‌وجوی خدمات',
+                        onChanged: (value) => controller.apply(query: value),
                       ),
                     ),
-                    SizedBox(width: r.s(8)),
-                    IconButton.filledTonal(
-                      tooltip: 'فیلترها',
-                      icon: const Icon(Icons.tune),
-                      onPressed: () => _showFilters(context),
+                    SizedBox(width: r.s(12)),
+                    FarmCircularGlassButton(
+                      icon: Icons.tune_rounded,
+                      onTap: () => _showFilters(context),
                     ),
                   ],
                 ),

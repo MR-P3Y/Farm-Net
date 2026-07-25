@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/dates.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/farm_models.dart';
@@ -121,7 +122,7 @@ class _PlotDetailScreenState extends ConsumerState<PlotDetailScreen> {
                       ),
                       ListTile(
                         title: const Text('شروع برنامه‌ریزی‌شده'),
-                        subtitle: Text(_date(starts)),
+                        subtitle: Text(starts.format(context)),
                         onTap: () async {
                           final value = await showDatePicker(
                             context: context,
@@ -136,7 +137,7 @@ class _PlotDetailScreenState extends ConsumerState<PlotDetailScreen> {
                       ),
                       ListTile(
                         title: const Text('پایان برنامه‌ریزی‌شده'),
-                        subtitle: Text(_date(ends)),
+                        subtitle: Text(ends.format(context)),
                         onTap: () async {
                           final value = await showDatePicker(
                             context: context,
@@ -239,7 +240,7 @@ class _PlotDetailScreenState extends ConsumerState<PlotDetailScreen> {
                           cycle.title ?? 'چرخه محصول ${cycle.cropId}',
                         ),
                         subtitle: Text(
-                          '${_status(cycle.status)} • ${_date(cycle.plannedStartDate)} تا ${_date(cycle.plannedEndDate)}',
+                          '${_status(cycle.status)} • ${cycle.plannedStartDate.format(context)} تا ${cycle.plannedEndDate.format(context)}',
                         ),
                         trailing: const Icon(Icons.chevron_left),
                         onTap:

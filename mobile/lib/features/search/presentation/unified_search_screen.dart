@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_price_text.dart';
+import '../../../core/widgets/farm_search_field.dart';
 import '../data/search_models.dart';
 import '../state/search_controller.dart';
 
@@ -38,18 +39,12 @@ class _UnifiedSearchScreenState extends ConsumerState<UnifiedSearchScreen> {
                 child: ListView(
                   padding: r.pagePadding(),
                   children: [
-                    SearchBar(
+                    FarmSearchField(
                       controller: _queryController,
-                      hintText: 'محصول، خدمت، تجهیزات، مشاور یا مطلب...',
-                      leading: const Icon(Icons.search),
-                      trailing: [
-                        IconButton(
-                          tooltip: 'جستجو',
-                          onPressed: state.isLoading ? null : _search,
-                          icon: const Icon(Icons.arrow_back),
-                        ),
-                      ],
-                      onSubmitted: (_) => _search(),
+                      hint: 'محصول، خدمت، تجهیزات، مشاور یا مطلب...',
+                      onChanged: (value) {
+                        if (value.length > 2) _search();
+                      },
                     ),
                     const SizedBox(height: 16),
                     Text(

@@ -13,7 +13,7 @@ class FarmPriceText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      formatToman(amountToman),
+      formatToman(context, amountToman),
       style: Theme.of(context).textTheme.titleMedium,
     );
   }

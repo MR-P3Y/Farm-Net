@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/utils/dates.dart';
 import '../../geo/data/geo_models.dart';
 import '../../geo/data/geo_repository.dart';
 import '../data/service_models.dart';
@@ -199,7 +200,7 @@ class _ServiceRequestCreateScreenState
                         label: Text(
                           _scheduledAt == null
                               ? 'انتخاب زمان پیشنهادی'
-                              : '${_scheduledAt!.year}/${_scheduledAt!.month}/${_scheduledAt!.day}',
+                              : _scheduledAt!.format(context),
                         ),
                       ),
                       if (requestState.errorMessage != null)

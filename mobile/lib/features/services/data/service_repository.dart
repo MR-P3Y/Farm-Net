@@ -31,14 +31,14 @@ class ServiceRepository {
     maxPrice: maxPrice,
     sort: sort,
   );
-  Future<ServiceOffer> detail(int id) => _api.detail(id);
+  Future<ServiceOffer> detail(int id) async => (await _api.detail(id)).offer;
   Future<ServiceRequest> createRequest(ServiceRequestInput input) =>
       _api.createRequest(input);
   Future<List<ServiceRequest>> myRequests({String? status}) =>
       _api.myRequests(status: status);
   Future<ServiceRequest> requestDetail(int id) => _api.requestDetail(id);
   Future<ServiceRequest> cancelRequest(int id, {String? reason}) =>
-      _api.cancelRequest(id, reason: reason);
+      _api.cancelRequest(id, reason: reason ?? '');
   Future<ServiceProviderProfileOwner?> myProviderProfile() =>
       _api.myProviderProfile();
   Future<ServiceProviderProfileOwner> saveProviderProfile(

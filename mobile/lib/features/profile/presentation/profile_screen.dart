@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/locale_controller.dart';
 import '../../../core/responsive/responsive.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../state/profile_controller.dart';
 import 'edit_profile_screen.dart';
@@ -124,6 +126,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           },
                           icon: const Icon(Icons.verified_user_outlined),
                           label: const Text('درخواست‌های تأیید من'),
+                        ),
+                        const Divider(height: 40),
+                        Text(
+                          'تنظیمات اپلیکیشن',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        SwitchListTile(
+                          title: const Text('حالت تیره (Dark Mode)'),
+                          value: Theme.of(context).brightness == Brightness.dark,
+                          onChanged: (_) {
+                            ref.read(themeControllerProvider.notifier).toggle();
+                          },
+                        ),
+                        ListTile(
+                          title: const Text('زبان (Language)'),
+                          subtitle: Text(
+                            Localizations.localeOf(context).languageCode == 'fa'
+                                ? 'فارسی'
+                                : 'English',
+                          ),
+                          trailing: const Icon(Icons.language),
+                          onTap: () {
+                            ref.read(localeControllerProvider.notifier).toggle();
+                          },
                         ),
                       ],
                     ),

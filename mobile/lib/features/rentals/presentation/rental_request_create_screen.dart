@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/utils/dates.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/rental_models.dart';
 import '../state/rental_discovery_controller.dart';
@@ -95,7 +96,7 @@ class _State extends ConsumerState<RentalRequestCreateScreen> {
                         onPressed: () => _pick(true),
                         icon: const Icon(Icons.event),
                         label: Text(
-                          _start == null ? 'زمان شروع' : _date(_start!),
+                          _start == null ? 'زمان شروع' : _start!.format(context, showTime: true),
                         ),
                       ),
                     ),
@@ -104,7 +105,7 @@ class _State extends ConsumerState<RentalRequestCreateScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => _pick(false),
                         icon: const Icon(Icons.event_available),
-                        label: Text(_end == null ? 'زمان پایان' : _date(_end!)),
+                        label: Text(_end == null ? 'زمان پایان' : _end!.format(context, showTime: true)),
                       ),
                     ),
                   ],
@@ -238,6 +239,4 @@ class _State extends ConsumerState<RentalRequestCreateScreen> {
   void _message(String value) => ScaffoldMessenger.of(
     context,
   ).showSnackBar(SnackBar(content: Text(value)));
-  String _date(DateTime value) =>
-      '${value.year}/${value.month}/${value.day} ${value.hour}:${value.minute.toString().padLeft(2, '0')}';
 }

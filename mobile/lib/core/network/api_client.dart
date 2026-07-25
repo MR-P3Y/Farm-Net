@@ -5,18 +5,22 @@ import '../storage/token_storage.dart';
 
 class ApiClient {
   ApiClient({String? baseUrl, Dio? dio, TokenStorage? tokenStorage})
-    : _dio =
+    : _tokenStorage = tokenStorage ?? TokenStorage(),
+      _dio =
           dio ??
           Dio(
             BaseOptions(
-              baseUrl: baseUrl ?? AppConfig.apiBaseUrl,
+              // اطمینان از وجود اسلش در پایان baseUrl برای جلوگیری از اختلال در مسیرها
+              baseUrl:
+                  (baseUrl ?? AppConfig.apiBaseUrl).endsWith('/')
+                      ? (baseUrl ?? AppConfig.apiBaseUrl)
+                      : '${baseUrl ?? AppConfig.apiBaseUrl}/',
               connectTimeout: AppConfig.requestTimeout,
               receiveTimeout: AppConfig.requestTimeout,
               sendTimeout: AppConfig.requestTimeout,
               headers: {'Accept': 'application/json'},
             ),
-          ),
-      _tokenStorage = tokenStorage ?? TokenStorage() {
+          ) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -48,7 +52,8 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
   }) {
-    return _dio.get(path, queryParameters: queryParameters);
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return _dio.get(cleanPath, queryParameters: queryParameters);
   }
 
   Future<Response<dynamic>> post(
@@ -56,7 +61,17 @@ class ApiClient {
     Object? data,
     Map<String, dynamic>? queryParameters,
   }) {
-    return _dio.post(path, data: data, queryParameters: queryParameters);
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return _dio.post(cleanPath, data: data, queryParameters: queryParameters);
+  }
+
+  Future<Response<dynamic>> put(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+  }) {
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return _dio.put(cleanPath, data: data, queryParameters: queryParameters);
   }
 
   Future<Response<dynamic>> patch(
@@ -64,7 +79,8 @@ class ApiClient {
     Object? data,
     Map<String, dynamic>? queryParameters,
   }) {
-    return _dio.patch(path, data: data, queryParameters: queryParameters);
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return _dio.patch(cleanPath, data: data, queryParameters: queryParameters);
   }
 
   Future<Response<dynamic>> delete(
@@ -72,6 +88,7 @@ class ApiClient {
     Object? data,
     Map<String, dynamic>? queryParameters,
   }) {
-    return _dio.delete(path, data: data, queryParameters: queryParameters);
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return _dio.delete(cleanPath, data: data, queryParameters: queryParameters);
   }
 }

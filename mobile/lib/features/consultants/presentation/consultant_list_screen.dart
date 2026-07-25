@@ -8,6 +8,7 @@ import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_empty_view.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../../core/widgets/farm_search_field.dart';
 import '../data/consultant_models.dart';
 import '../state/consultant_list_controller.dart';
 
@@ -62,10 +63,16 @@ class _ConsultantListScreenState extends ConsumerState<ConsultantListScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _SearchBox(
+                      FarmSearchField(
                         controller: _searchController,
-                        onSearch: _search,
-                        onClear: _clearFilters,
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            _clearFilters();
+                          } else {
+                            _search();
+                          }
+                        },
+                        hint: 'جست‌وجوی نام، تخصص یا شهر',
                       ),
                       SizedBox(height: r.v(12)),
                       _SpecialtyChips(
@@ -145,51 +152,6 @@ class _ConsultantListScreenState extends ConsumerState<ConsultantListScreen> {
   void _clearFilters() {
     _searchController.clear();
     ref.read(consultantListControllerProvider.notifier).clearFilters();
-  }
-}
-
-class _SearchBox extends StatelessWidget {
-  const _SearchBox({
-    required this.controller,
-    required this.onSearch,
-    required this.onClear,
-  });
-
-  final TextEditingController controller;
-  final VoidCallback onSearch;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      textInputAction: TextInputAction.search,
-      onSubmitted: (_) => onSearch(),
-      decoration: InputDecoration(
-        hintText: 'جست‌وجوی نام، تخصص یا شهر',
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon: SizedBox(
-          width: 96,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                tooltip: 'پاک کردن',
-                onPressed: onClear,
-                icon: const Icon(Icons.close),
-              ),
-              IconButton(
-                tooltip: 'جست‌وجو',
-                onPressed: onSearch,
-                icon: const Icon(Icons.arrow_forward),
-              ),
-            ],
-          ),
-        ),
-        border: const OutlineInputBorder(),
-      ),
-    );
   }
 }
 

@@ -302,3 +302,46 @@ class SocialCommentModel {
     );
   }
 }
+
+class SocialFeedResponse {
+  const SocialFeedResponse({
+    required this.items,
+    required this.total,
+    required this.page,
+    required this.pageSize,
+  });
+  final List<SocialPostModel> items;
+  final int total;
+  final int page;
+  final int pageSize;
+
+  factory SocialFeedResponse.fromJson(Map<String, dynamic> json) => SocialFeedResponse(
+    items: (json['items'] as List? ?? []).map((i) => SocialPostModel.fromJson(i as Map<String, dynamic>)).toList(),
+    total: (json['total'] as num?)?.toInt() ?? 0,
+    page: (json['page'] as num?)?.toInt() ?? 1,
+    pageSize: (json['page_size'] as num?)?.toInt() ?? 10,
+  );
+}
+
+class SocialCreatePostInput {
+  const SocialCreatePostInput({
+    required this.title,
+    required this.body,
+    required this.postType,
+    this.categoryId,
+    this.mediaFileId,
+  });
+  final String title;
+  final String body;
+  final String postType;
+  final int? categoryId;
+  final int? mediaFileId;
+
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'body': body,
+    'post_type': postType,
+    'category_id': categoryId,
+    'media_file_id': mediaFileId,
+  };
+}

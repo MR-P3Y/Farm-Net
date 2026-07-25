@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_button.dart';
 import '../../../core/widgets/farm_glass_card.dart';
@@ -47,6 +48,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: ResponsiveBuilder(
@@ -78,46 +80,53 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // محتوای لاگین
               Align(
                 alignment:
-                    isWide ? AlignmentDirectional.centerEnd : Alignment.center,
+                    isWide ? Alignment.centerRight : const Alignment(0, -0.6),
                 child: Padding(
                   padding:
                       isWide
-                          ? EdgeInsetsDirectional.only(end: r.width * 0.08)
-                          : EdgeInsets.symmetric(horizontal: r.s(20)),
+                          ? EdgeInsets.only(right: r.width * 0.08)
+                          : EdgeInsets.symmetric(horizontal: r.s(40)),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 400),
+                    constraints: BoxConstraints(maxWidth: isWide ? 400 : 330),
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       child: FarmGlassCard(
-                        borderRadius: 32,
-                        opacity: 0.05, // بسیار شفاف برای دیده شدن بک‌گراند
-                        blur: 8, // تاری ملایم‌تر (Lighter Blur)
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 32,
-                          horizontal: 28,
+                        borderRadius: 28,
+                        opacity: 0.1, // افزایش شفافیت برای ایجاد حس ۵۰٪ شیشه‌ای
+                        blur: 16,    // تاری بیشتر برای افکت شیشه‌ای قوی‌تر
+                        padding: EdgeInsets.symmetric(
+                          vertical: isWide ? 36 : 24,
+                          horizontal: isWide ? 32 : 24,
                         ),
                         child: Column(
-                          mainAxisSize: MainAxisSize.min, // جلوگیری از Overflow
+                          mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.eco_rounded,
                               color: Colors.white,
-                              size: 48,
+                              size: isWide ? 52 : 40,
                             ),
                             SizedBox(height: r.v(8)),
                             Text(
-                              'فارم نت',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.headlineMedium?.copyWith(
+                              l10n.appName,
+                              style: (isWide
+                                      ? Theme.of(context).textTheme.headlineMedium
+                                      : Theme.of(context).textTheme.headlineSmall)
+                                  ?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
+                                letterSpacing: 2,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    blurRadius: 10,
+                                  ),
+                                ],
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            SizedBox(height: r.v(32)),
+                            SizedBox(height: isWide ? r.v(40) : r.v(24)),
                             Theme(
                               data: Theme.of(context).copyWith(
                                 inputDecorationTheme: InputDecorationTheme(
@@ -126,15 +135,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     alpha: 0.05,
                                   ),
                                   labelStyle: const TextStyle(
-                                    color: Colors.white60,
+                                    color: Colors.white70,
                                     fontSize: 13,
                                   ),
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
-                                    vertical: 16,
+                                    vertical: 14,
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(14),
                                     borderSide: BorderSide(
                                       color: Colors.white.withValues(
                                         alpha: 0.15,
@@ -142,9 +151,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(14),
                                     borderSide: const BorderSide(
-                                      color: Colors.white54,
+                                      color: Colors.white,
+                                      width: 1,
                                     ),
                                   ),
                                 ),
@@ -153,13 +163,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 children: [
                                   FarmTextField(
                                     controller: _emailController,
-                                    label: 'ایمیل یا نام کاربری',
+                                    label: l10n.emailOrUsername,
                                     keyboardType: TextInputType.emailAddress,
                                   ),
                                   SizedBox(height: r.v(16)),
                                   FarmTextField(
                                     controller: _passwordController,
-                                    label: 'رمز عبور',
+                                    label: l10n.password,
                                     obscureText: true,
                                   ),
                                 ],
@@ -167,26 +177,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             if (auth.errorMessage != null) ...[
                               SizedBox(height: r.v(12)),
-                              Text(
-                                auth.errorMessage!,
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 12,
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.redAccent.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                textAlign: TextAlign.center,
+                                child: Text(
+                                  auth.errorMessage!,
+                                  style: const TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 11,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ],
-                            SizedBox(height: r.v(32)),
+                            SizedBox(height: isWide ? r.v(40) : r.v(28)),
                             FarmButton(
-                              label: 'ورود به سیستم',
+                              label: l10n.login,
                               isLoading: auth.isLoading,
                               onPressed: auth.isLoading ? null : _login,
                             ),
-                            SizedBox(height: r.v(24)),
+                            SizedBox(height: isWide ? r.v(24) : r.v(16)),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                TextButton(
+                                _SecondaryButton(
                                   onPressed:
                                       auth.isLoading
                                           ? null
@@ -199,25 +218,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                               ),
                                             );
                                           },
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.white70,
-                                    textStyle: const TextStyle(fontSize: 13),
-                                  ),
-                                  child: const Text('ورود با موبایل'),
+                                  label: l10n.loginWithMobile,
                                 ),
-                                Text(
-                                  '|',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.2),
+                                Container(
+                                  height: 10,
+                                  width: 1,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 8,
                                   ),
+                                  color: Colors.white.withValues(alpha: 0.1),
                                 ),
-                                TextButton(
+                                _SecondaryButton(
                                   onPressed: auth.isLoading ? null : _register,
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.white70,
-                                    textStyle: const TextStyle(fontSize: 13),
-                                  ),
-                                  child: const Text('ثبت‌نام'),
+                                  label: l10n.register,
                                 ),
                               ],
                             ),
@@ -231,6 +244,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _SecondaryButton extends StatelessWidget {
+  const _SecondaryButton({required this.onPressed, required this.label});
+
+  final VoidCallback? onPressed;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }

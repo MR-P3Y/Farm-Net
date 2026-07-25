@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
@@ -21,44 +20,46 @@ class FarmApi {
   final ApiClient _client;
   final TokenStorage _storage;
 
-  Future<List<FarmModel>> farms() async => _list('/farms', FarmModel.fromJson);
+  Future<List<FarmModel>> farms() async => _list('farms', FarmModel.fromJson);
 
   Future<FarmModel> createFarm(Map<String, dynamic> payload) async =>
-      FarmModel.fromJson(await _write('/farms', payload));
+      FarmModel.fromJson(await _write('farms', payload));
 
   Future<List<FarmPlotModel>> plots(int farmId) async =>
-      _list('/farms/$farmId/plots', FarmPlotModel.fromJson);
+      _list('farms/$farmId/plots', FarmPlotModel.fromJson);
 
   Future<FarmPlotModel> createPlot(
     int farmId,
     Map<String, dynamic> payload,
   ) async =>
-      FarmPlotModel.fromJson(await _write('/farms/$farmId/plots', payload));
+      FarmPlotModel.fromJson(await _write('farms/$farmId/plots', payload));
 
   Future<List<CropReference>> crops() async =>
-      _list('/farm-references/crops', CropReference.fromJson);
+      _list('farm-references/crops', CropReference.fromJson);
 
   Future<List<MeasurementUnitModel>> harvestUnits() async {
     final mass = await _list(
-      '/farm-references/measurement-units?dimension=mass',
+      'farm-references/measurement-units',
       MeasurementUnitModel.fromJson,
+      queryParameters: {'dimension': 'mass'},
     );
     final count = await _list(
-      '/farm-references/measurement-units?dimension=count',
+      'farm-references/measurement-units',
       MeasurementUnitModel.fromJson,
+      queryParameters: {'dimension': 'count'},
     );
     return [...mass, ...count];
   }
 
   Future<List<CropCycleModel>> cycles(int farmId, int plotId) async =>
-      _list('/farms/$farmId/plots/$plotId/cycles', CropCycleModel.fromJson);
+      _list('farms/$farmId/plots/$plotId/cycles', CropCycleModel.fromJson);
 
   Future<CropCycleModel> createCycle(
     int farmId,
     int plotId,
     Map<String, dynamic> payload,
   ) async => CropCycleModel.fromJson(
-    await _write('/farms/$farmId/plots/$plotId/cycles', payload),
+    await _write('farms/$farmId/plots/$plotId/cycles', payload),
   );
 
   Future<CropCycleModel> transitionCycle(
@@ -67,7 +68,7 @@ class FarmApi {
     int cycleId,
     String action,
   ) async => CropCycleModel.fromJson(
-    await _write('/farms/$farmId/plots/$plotId/cycles/$cycleId/$action', {
+    await _write('farms/$farmId/plots/$plotId/cycles/$cycleId/$action', {
       'effective_date': _today(),
     }),
   );
@@ -77,7 +78,7 @@ class FarmApi {
     int plotId,
     int cycleId,
   ) async => _list(
-    '/farms/$farmId/plots/$plotId/cycles/$cycleId/operations',
+    'farms/$farmId/plots/$plotId/cycles/$cycleId/operations',
     FarmOperationModel.fromJson,
   );
 
@@ -88,7 +89,7 @@ class FarmApi {
     Map<String, dynamic> payload,
   ) async {
     await _write(
-      '/farms/$farmId/plots/$plotId/cycles/$cycleId/operations',
+      'farms/$farmId/plots/$plotId/cycles/$cycleId/operations',
       payload,
     );
   }
@@ -98,7 +99,7 @@ class FarmApi {
     int plotId,
     int cycleId,
   ) async => _list(
-    '/farms/$farmId/plots/$plotId/cycles/$cycleId/harvests',
+    'farms/$farmId/plots/$plotId/cycles/$cycleId/harvests',
     FarmHarvestModel.fromJson,
   );
 
@@ -109,7 +110,7 @@ class FarmApi {
     Map<String, dynamic> payload,
   ) async {
     await _write(
-      '/farms/$farmId/plots/$plotId/cycles/$cycleId/harvests',
+      'farms/$farmId/plots/$plotId/cycles/$cycleId/harvests',
       payload,
     );
   }
@@ -120,13 +121,12 @@ class FarmApi {
     bool refresh = false,
   }) async {
     await _auth();
-    final path =
-        '/farms/$farmId/plots/$plotId/weather${refresh ? '/refresh' : ''}';
+    final path = 'farms/$farmId/plots/$plotId/weather${refresh ? '/refresh' : ''}';
     try {
       final response =
           refresh
-              ? await _client.dio.post<Map<String, dynamic>>(path)
-              : await _client.dio.get<Map<String, dynamic>>(path);
+              ? await _client.post(path)
+              : await _client.get(path);
       return FarmWeatherModel.fromJson(
         response.data?['data'] as Map<String, dynamic>,
       );
@@ -137,11 +137,12 @@ class FarmApi {
 
   Future<List<T>> _list<T>(
     String path,
-    T Function(Map<String, dynamic>) parse,
-  ) async {
+    T Function(Map<String, dynamic>) parse, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     await _auth();
     try {
-      final response = await _client.dio.get<Map<String, dynamic>>(path);
+      final response = await _client.get(path, queryParameters: queryParameters);
       return (response.data?['data'] as List? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(parse)
@@ -157,7 +158,7 @@ class FarmApi {
   ) async {
     await _auth();
     try {
-      final response = await _client.dio.post<Map<String, dynamic>>(
+      final response = await _client.post(
         path,
         data: payload,
       );

@@ -21,7 +21,7 @@ class GeoApi {
   final ApiClient _client;
 
   Future<List<GeoProvince>> getProvinces() async {
-    final json = await _get('/geo/provinces');
+    final json = await _get('geo/provinces');
     final data = json['data'] as List? ?? [];
 
     return data
@@ -30,7 +30,7 @@ class GeoApi {
   }
 
   Future<List<GeoCounty>> getCounties({required int provinceId}) async {
-    final json = await _get('/geo/counties?province_id=$provinceId');
+    final json = await _get('geo/counties', queryParameters: {'province_id': provinceId});
     final data = json['data'] as List? ?? [];
 
     return data
@@ -43,35 +43,22 @@ class GeoApi {
     int? countyId,
     String? q,
   }) async {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
 
-    if (provinceId != null) {
-      query['province_id'] = provinceId.toString();
-    }
+    if (provinceId != null) query['province_id'] = provinceId;
+    if (countyId != null) query['county_id'] = countyId;
+    if (q != null && q.trim().isNotEmpty) query['q'] = q.trim();
 
-    if (countyId != null) {
-      query['county_id'] = countyId.toString();
-    }
-
-    if (q != null && q.trim().isNotEmpty) {
-      query['q'] = q.trim();
-    }
-
-    final uri = Uri(
-      path: '/geo/cities',
-      queryParameters: query.isEmpty ? null : query,
-    );
-
-    final json = await _get(uri.toString());
+    final json = await _get('geo/cities', queryParameters: query);
     final data = json['data'] as List? ?? [];
 
     return data.map((item) => GeoCity.fromJson((item as Map).cast())).toList();
   }
 
-  Future<Map<String, dynamic>> _get(String path) async {
+  Future<Map<String, dynamic>> _get(String path, {Map<String, dynamic>? queryParameters}) async {
     try {
-      final response = await _client.dio.get<Map<String, dynamic>>(path);
-      return response.data ?? {};
+      final response = await _client.get(path, queryParameters: queryParameters);
+      return (response.data as Map?)?.cast<String, dynamic>() ?? {};
     } on DioException catch (error) {
       throw GeoApiException(_mapDioError(error));
     }

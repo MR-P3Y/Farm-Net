@@ -105,8 +105,8 @@ class _State extends ConsumerState<SellerOrderDetailScreen> {
                   children: [
                     _Info('وضعیت', orderStatusLabelFa(order.status)),
                     _Info('پرداخت', orderStatusLabelFa(order.paymentStatus)),
-                    _Info('مبلغ کل', formatToman(order.totalAmount)),
-                    _Info('سهم فروشنده', formatToman(order.sellerAmount)),
+                    _Info('مبلغ کل', formatToman(context, order.totalAmount)),
+                    _Info('سهم فروشنده', formatToman(context, order.sellerAmount)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -138,7 +138,7 @@ class _State extends ConsumerState<SellerOrderDetailScreen> {
                                   subtitle: Text(
                                     '${item.quantity} ${item.unitSnapshot}',
                                   ),
-                                  trailing: Text(formatToman(item.lineTotal)),
+                                  trailing: Text(formatToman(context, item.lineTotal)),
                                 ),
                               )
                               .toList(),

@@ -6,6 +6,7 @@ import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_empty_view.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../../core/widgets/farm_search_field.dart';
 import '../data/rental_models.dart';
 import '../state/rental_discovery_controller.dart';
 
@@ -47,31 +48,16 @@ class _RentalEquipmentListScreenState
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    TextField(
+                    FarmSearchField(
                       controller: _search,
-                      decoration: InputDecoration(
-                        labelText: 'جست‌وجوی تجهیزات',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: IconButton(
-                          onPressed:
-                              () => controller.apply(
-                                query: _search.text,
-                                categoryId: state.categoryId,
-                                provinceId: state.provinceId,
-                                cityId: state.cityId,
-                                operatorMode: state.operatorMode,
-                              ),
-                          icon: const Icon(Icons.arrow_forward),
-                        ),
+                      hint: 'جست‌وجوی تجهیزات',
+                      onChanged: (value) => controller.apply(
+                        query: value,
+                        categoryId: state.categoryId,
+                        provinceId: state.provinceId,
+                        cityId: state.cityId,
+                        operatorMode: state.operatorMode,
                       ),
-                      onSubmitted:
-                          (value) => controller.apply(
-                            query: value,
-                            categoryId: state.categoryId,
-                            provinceId: state.provinceId,
-                            cityId: state.cityId,
-                            operatorMode: state.operatorMode,
-                          ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(

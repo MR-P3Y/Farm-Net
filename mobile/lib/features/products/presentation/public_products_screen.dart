@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../../core/widgets/farm_search_field.dart';
 import '../data/product_models.dart';
 import '../state/product_controller.dart';
 
@@ -67,25 +68,12 @@ class _PublicProductsScreenState extends ConsumerState<PublicProductsScreen> {
             child: ListView(
               padding: r.pagePadding(),
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: const InputDecoration(
-                          labelText: 'جستجوی محصول',
-                          border: OutlineInputBorder(),
-                        ),
-                        onSubmitted: (_) => _search(),
-                      ),
-                    ),
-                    SizedBox(width: r.s(8)),
-                    FilledButton.icon(
-                      onPressed: _search,
-                      icon: const Icon(Icons.search),
-                      label: const Text('جستجو'),
-                    ),
-                  ],
+                FarmSearchField(
+                  controller: _searchController,
+                  hint: 'جستجوی محصول...',
+                  onChanged: (value) {
+                    if (value.length > 2 || value.isEmpty) _search();
+                  },
                 ),
                 if (state.errorMessage != null) ...[
                   SizedBox(height: r.v(12)),

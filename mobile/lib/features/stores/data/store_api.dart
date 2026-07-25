@@ -41,7 +41,7 @@ class StoreApi {
     }
 
     final uri = Uri(
-      path: '/public/stores',
+      path: 'public/stores',
       queryParameters: query.isEmpty ? null : query,
     );
 
@@ -54,14 +54,14 @@ class StoreApi {
   }
 
   Future<Store> getPublicStoreBySlug(String slug) async {
-    final json = await _get('/public/stores/$slug');
+    final json = await _get('public/stores/$slug');
     return Store.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   Future<Store?> getMyStore() async {
     await _setStoredToken();
 
-    final json = await _get('/stores/me');
+    final json = await _get('stores/me');
     final data = json['data'];
 
     if (data == null) return null;
@@ -72,7 +72,7 @@ class StoreApi {
   Future<Store> createStore(StoreCreateInput input) async {
     await _setStoredToken();
 
-    final json = await _post('/stores', data: input.toJson());
+    final json = await _post('stores', data: input.toJson());
     return Store.fromJson(json['data'] as Map<String, dynamic>);
   }
 
@@ -82,14 +82,14 @@ class StoreApi {
   }) async {
     await _setStoredToken();
 
-    final json = await _put('/stores/$storeId', data: input.toJson());
+    final json = await _put('stores/$storeId', data: input.toJson());
     return Store.fromJson(json['data'] as Map<String, dynamic>);
   }
 
   Future<Store> submitStore(int storeId) async {
     await _setStoredToken();
 
-    final json = await _post('/stores/$storeId/submit', data: {});
+    final json = await _post('stores/$storeId/submit', data: {});
     return Store.fromJson(json['data'] as Map<String, dynamic>);
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/utils/dates.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/rental_models.dart';
 import '../state/rental_request_controller.dart';
@@ -86,8 +87,8 @@ class _State extends ConsumerState<RentalRequestDetailScreen> {
                               ),
                               const Divider(),
                               _Info('موجر', row.lessorDisplayName ?? '-'),
-                              _Info('شروع', _date(row.startsAt)),
-                              _Info('پایان', _date(row.endsAt)),
+                              _Info('شروع', row.startsAt.format(context, showTime: true)),
+                              _Info('پایان', row.endsAt.format(context, showTime: true)),
                               _Info('تعداد واحد', '${row.requestedUnits}'),
                               _Info(
                                 'اپراتور',
@@ -218,9 +219,6 @@ class _State extends ConsumerState<RentalRequestDetailScreen> {
     }
     reason.dispose();
   }
-
-  String _date(DateTime value) =>
-      '${value.year}/${value.month}/${value.day} ${value.hour}:${value.minute.toString().padLeft(2, '0')}';
 }
 
 class _Info extends StatelessWidget {

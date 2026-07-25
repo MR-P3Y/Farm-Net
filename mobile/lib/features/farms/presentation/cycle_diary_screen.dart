@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/utils/dates.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/farm_models.dart';
@@ -302,7 +303,7 @@ class _CycleDiaryScreenState extends ConsumerState<CycleDiaryScreen> {
                         leading: const Icon(Icons.task_alt_outlined),
                         title: Text(item.title),
                         subtitle: Text(
-                          '${item.type} • ${item.occurredOn.toLocal().toString().split(' ').first}',
+                          '${item.type} • ${item.occurredOn.format(context)}',
                         ),
                       ),
                     ),

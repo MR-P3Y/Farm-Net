@@ -7,6 +7,7 @@ import 'core/localization/app_localizations.dart';
 import 'core/localization/locale_controller.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
 
 class FarmNetApp extends ConsumerWidget {
   const FarmNetApp({super.key});
@@ -14,6 +15,7 @@ class FarmNetApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeControllerProvider);
+    final themeMode = ref.watch(themeControllerProvider);
 
     return ScreenUtilInit(
       designSize: const Size(390, 844),
@@ -25,7 +27,7 @@ class FarmNetApp extends ConsumerWidget {
           title: 'Farm Net',
           theme: AppTheme.light(locale),
           darkTheme: AppTheme.dark(locale),
-          themeMode: ThemeMode.system,
+          themeMode: themeMode,
           locale: locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [

@@ -1,70 +1,52 @@
 import 'package:dio/dio.dart';
-
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../core/storage/token_storage.dart';
 import 'profile_models.dart';
 
 class ProfileApiException implements Exception {
   const ProfileApiException(this.error);
-
   final ApiError error;
-
   @override
-  String toString() => '${error.code}: ${error.message}';
+  String toString() => error.message;
 }
 
 class ProfileApi {
-  ProfileApi({ApiClient? client})
-    : _client = client ?? ApiClient(baseUrl: AppConfig.apiBaseUrl);
+  ProfileApi({ApiClient? client, TokenStorage? storage})
+    : _client = client ?? ApiClient(baseUrl: AppConfig.apiBaseUrl),
+      _storage = storage ?? TokenStorage();
 
   final ApiClient _client;
+  final TokenStorage _storage;
 
   Future<UserProfile> getMe() async {
-    final json = await _get('/profile/me');
-    return UserProfile.fromJson((json['data'] as Map).cast());
+    await _auth();
+    try {
+      final response = await _client.get('profiles/me');
+      return UserProfile.fromJson(response.data?['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ProfileApiException(_error(e));
+    }
   }
 
   Future<UserProfile> updateMe(ProfileUpdateInput input) async {
-    final json = await _put('/profile/me', data: input.toJson());
-    return UserProfile.fromJson((json['data'] as Map).cast());
-  }
-
-  Future<Map<String, dynamic>> _get(String path) async {
+    await _auth();
     try {
-      final response = await _client.dio.get<Map<String, dynamic>>(path);
-      return response.data ?? {};
-    } on DioException catch (error) {
-      throw ProfileApiException(_mapDioError(error));
+      final response = await _client.patch('profiles/me', data: input.toJson());
+      return UserProfile.fromJson(response.data?['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ProfileApiException(_error(e));
     }
   }
 
-  Future<Map<String, dynamic>> _put(
-    String path, {
-    required Map<String, dynamic> data,
-  }) async {
-    try {
-      final response = await _client.dio.put<Map<String, dynamic>>(
-        path,
-        data: data,
-      );
-      return response.data ?? {};
-    } on DioException catch (error) {
-      throw ProfileApiException(_mapDioError(error));
-    }
+  Future<void> _auth() async {
+    _client.setToken(await _storage.getAccessToken());
   }
 
-  ApiError _mapDioError(DioException error) {
+  ApiError _error(DioException error) {
     final data = error.response?.data;
-
-    if (data is Map) {
-      return ApiError.fromJson(data.cast<String, dynamic>());
-    }
-
-    return ApiError(
-      code: 'NETWORK_ERROR',
-      message: error.message ?? 'Network error',
-      traceId: error.response?.headers.value('x-trace-id'),
-    );
+    if (data is Map<String, dynamic>) return ApiError.fromJson(data);
+    return ApiError(code: 'NETWORK_ERROR', message: error.message ?? 'خطا در عملیات پروفایل');
   }
 }

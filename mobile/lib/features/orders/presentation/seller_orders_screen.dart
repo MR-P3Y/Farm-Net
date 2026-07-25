@@ -117,7 +117,7 @@ class _SellerOrdersScreenState extends ConsumerState<SellerOrdersScreen> {
                         title: Text(order.orderNumber),
                         subtitle: Text(
                           '${orderStatusLabelFa(order.status)} • '
-                          '${formatToman(order.sellerAmount)}',
+                          '${formatToman(context, order.sellerAmount)}',
                         ),
                         trailing: const Icon(Icons.chevron_right),
                       ),

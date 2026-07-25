@@ -359,7 +359,10 @@ class _ExpertAnswerCard extends StatelessWidget {
                 ),
                 Chip(
                   avatar: const Icon(Icons.schedule_outlined, size: 18),
-                  label: Text(_formatIsoDate(answer.createdAt)),
+                  label: Text(
+                    (DateTime.tryParse(answer.createdAt) ?? DateTime.now())
+                        .format(context),
+                  ),
                   visualDensity: VisualDensity.compact,
                 ),
               ],
@@ -620,13 +623,6 @@ class _CommentInput extends StatelessWidget {
       ],
     );
   }
-}
-
-String _formatIsoDate(String value) {
-  final date = DateTime.tryParse(value);
-  if (date == null) return 'تاریخ نامشخص';
-
-  return formatJalaliDate(date.toLocal());
 }
 
 class _ErrorBox extends StatelessWidget {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/dates.dart';
 import '../data/rental_models.dart';
 import '../state/rental_management_controller.dart';
 
@@ -73,7 +74,7 @@ class _State extends ConsumerState<RentalWorkbenchDetailScreen> {
                               ),
                               const Divider(),
                               Text(
-                                'بازه: ${_date(request.startsAt)} تا ${_date(request.endsAt)}',
+                                'بازه: ${request.startsAt.format(context)} تا ${request.endsAt.format(context)}',
                               ),
                               Text('واحد: ${request.requestedUnits}'),
                               if ((request.deliveryAddress ?? '').isNotEmpty)
@@ -153,7 +154,6 @@ class _State extends ConsumerState<RentalWorkbenchDetailScreen> {
     note.dispose();
   }
 
-  String _date(DateTime value) => '${value.year}/${value.month}/${value.day}';
   String _action(String status) =>
       const {
         'accepted': 'پذیرش درخواست',

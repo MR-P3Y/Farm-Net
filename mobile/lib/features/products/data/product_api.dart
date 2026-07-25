@@ -53,7 +53,7 @@ class ProductApi {
     }
 
     final uri = Uri(
-      path: '/public/products',
+      path: 'public/products',
       queryParameters: query.isEmpty ? null : query,
     );
 
@@ -66,7 +66,7 @@ class ProductApi {
   }
 
   Future<Product> getPublicProductById(int productId) async {
-    final json = await _get('/public/products/$productId');
+    final json = await _get('public/products/$productId');
     return Product.fromJson(json['data'] as Map<String, dynamic>);
   }
 
@@ -81,7 +81,7 @@ class ProductApi {
     if (categoryId != null) query['category_id'] = categoryId.toString();
 
     final uri = Uri(
-      path: '/public/stores/$storeSlug/products',
+      path: 'public/stores/$storeSlug/products',
       queryParameters: query.isEmpty ? null : query,
     );
 
@@ -97,7 +97,7 @@ class ProductApi {
     required String storeSlug,
     required String productSlug,
   }) async {
-    final json = await _get('/public/stores/$storeSlug/products/$productSlug');
+    final json = await _get('public/stores/$storeSlug/products/$productSlug');
     return Product.fromJson(json['data'] as Map<String, dynamic>);
   }
 
@@ -116,7 +116,7 @@ class ProductApi {
     if (q != null && q.trim().isNotEmpty) query['q'] = q.trim();
 
     final uri = Uri(
-      path: '/stores/$storeId/products/me',
+      path: 'stores/$storeId/products/me',
       queryParameters: query.isEmpty ? null : query,
     );
 
@@ -134,7 +134,7 @@ class ProductApi {
   }) async {
     await _setStoredToken();
 
-    final json = await _get('/stores/$storeId/products/$productId');
+    final json = await _get('stores/$storeId/products/$productId');
     return Product.fromJson(json['data'] as Map<String, dynamic>);
   }
 
@@ -144,7 +144,7 @@ class ProductApi {
   }) async {
     await _setStoredToken();
 
-    final json = await _post('/stores/$storeId/products', data: input.toJson());
+    final json = await _post('stores/$storeId/products', data: input.toJson());
 
     return Product.fromJson(json['data'] as Map<String, dynamic>);
   }
@@ -157,7 +157,7 @@ class ProductApi {
     await _setStoredToken();
 
     final json = await _put(
-      '/stores/$storeId/products/$productId',
+      'stores/$storeId/products/$productId',
       data: input.toJson(),
     );
 
@@ -171,7 +171,7 @@ class ProductApi {
     await _setStoredToken();
 
     final json = await _post(
-      '/stores/$storeId/products/$productId/publish',
+      'stores/$storeId/products/$productId/publish',
       data: {},
     );
 
@@ -185,7 +185,7 @@ class ProductApi {
     await _setStoredToken();
 
     final json = await _post(
-      '/stores/$storeId/products/$productId/unpublish',
+      'stores/$storeId/products/$productId/unpublish',
       data: {},
     );
 
@@ -198,7 +198,7 @@ class ProductApi {
   }) async {
     await _setStoredToken();
 
-    final json = await _delete('/stores/$storeId/products/$productId');
+    final json = await _delete('stores/$storeId/products/$productId');
     return Product.fromJson(json['data'] as Map<String, dynamic>);
   }
 
@@ -210,7 +210,7 @@ class ProductApi {
     await _setStoredToken();
 
     final json = await _post(
-      '/stores/$storeId/products/$productId/images',
+      'stores/$storeId/products/$productId/images',
       data: input.toJson(),
     );
 

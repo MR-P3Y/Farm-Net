@@ -28,6 +28,26 @@ class AppLocalizations {
   String get error => isFa ? 'خطایی رخ داد' : 'Something went wrong';
   String get forbidden => isFa ? 'دسترسی غیرمجاز است' : 'Access denied';
   String get notFound => isFa ? 'مورد پیدا نشد' : 'Not found';
+
+  // Auth
+  String get login => isFa ? 'ورود به سیستم' : 'Login';
+  String get register => isFa ? 'ثبت‌نام' : 'Register';
+  String get emailOrUsername => isFa ? 'ایمیل یا نام کاربری' : 'Email or Username';
+  String get password => isFa ? 'رمز عبور' : 'Password';
+  String get loginWithMobile => isFa ? 'ورود با موبایل' : 'Login with Mobile';
+  String get mobileNumber => isFa ? 'شماره موبایل' : 'Mobile Number';
+  String get getOtpCode => isFa ? 'دریافت کد تایید' : 'Get Verification Code';
+  String get verifyCode => isFa ? 'تأیید کد' : 'Verify Code';
+  String get enterOtpSentTo => isFa ? 'کد ارسال‌شده برای $mobileNumber را وارد کنید' : 'Enter the code sent to $mobileNumber';
+  String get verifyAndLogin => isFa ? 'تأیید و ورود' : 'Verify and Login';
+  String get verificationCode => isFa ? 'کد تأیید' : 'Verification Code';
+
+  // Profile
+  String get profile => isFa ? 'پروفایل' : 'Profile';
+  String get settings => isFa ? 'تنظیمات' : 'Settings';
+  String get darkMode => isFa ? 'حالت تیره' : 'Dark Mode';
+  String get language => isFa ? 'زبان' : 'Language';
+  String get logout => isFa ? 'خروج از حساب' : 'Logout';
 }
 
 class _AppLocalizationsDelegate
