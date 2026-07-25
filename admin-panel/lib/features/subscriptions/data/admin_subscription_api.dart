@@ -109,6 +109,31 @@ class AdminSubscriptionApi {
     return AdminBillingSubscription.fromJson((json['data'] as Map).cast());
   }
 
+  Future<AdminBillingPage<AdminBillingAudit>> audit({
+    String? action,
+    String? targetType,
+    int page = 1,
+  }) async {
+    final json = await _request(
+      'GET',
+      '/admin/billing/audit',
+      query: {
+        if (action?.isNotEmpty == true) 'action': action,
+        if (targetType?.isNotEmpty == true) 'target_type': targetType,
+        'page': page,
+        'page_size': 20,
+      },
+    );
+    return _page(json, AdminBillingAudit.fromJson);
+  }
+
+  Future<AdminBillingReconciliation> reconciliation() async {
+    final json = await _request('GET', '/admin/billing/reconciliation');
+    return AdminBillingReconciliation.fromJson(
+      (json['data'] as Map).cast<String, dynamic>(),
+    );
+  }
+
   Future<Map<String, dynamic>> _request(
     String method,
     String path, {

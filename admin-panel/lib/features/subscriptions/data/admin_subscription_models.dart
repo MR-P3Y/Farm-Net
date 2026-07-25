@@ -237,3 +237,113 @@ class AdminBillingPage<T> {
   final int total;
   final int totalPages;
 }
+
+class AdminBillingAudit {
+  const AdminBillingAudit({
+    required this.id,
+    required this.eventKey,
+    required this.action,
+    required this.targetType,
+    required this.targetId,
+    required this.actorType,
+    required this.createdAt,
+    this.actorUserId,
+    this.reason,
+    this.traceId,
+  });
+
+  final int id;
+  final String eventKey;
+  final String action;
+  final String targetType;
+  final int targetId;
+  final String actorType;
+  final int? actorUserId;
+  final String? reason;
+  final String? traceId;
+  final DateTime createdAt;
+
+  factory AdminBillingAudit.fromJson(Map<String, dynamic> json) =>
+      AdminBillingAudit(
+        id: (json['id'] as num).toInt(),
+        eventKey: json['event_key'] as String,
+        action: json['action'] as String,
+        targetType: json['target_type'] as String,
+        targetId: (json['target_id'] as num).toInt(),
+        actorType: json['actor_type'] as String,
+        actorUserId: (json['actor_user_id'] as num?)?.toInt(),
+        reason: json['reason'] as String?,
+        traceId: json['trace_id'] as String?,
+        createdAt: DateTime.parse(json['created_at'] as String),
+      );
+}
+
+class AdminBillingReconciliationIssue {
+  const AdminBillingReconciliationIssue({
+    required this.code,
+    required this.severity,
+    required this.entityType,
+    required this.entityId,
+    required this.detail,
+  });
+
+  final String code;
+  final String severity;
+  final String entityType;
+  final int entityId;
+  final String detail;
+
+  factory AdminBillingReconciliationIssue.fromJson(Map<String, dynamic> json) =>
+      AdminBillingReconciliationIssue(
+        code: json['code'] as String,
+        severity: json['severity'] as String,
+        entityType: json['entity_type'] as String,
+        entityId: (json['entity_id'] as num).toInt(),
+        detail: json['detail'] as String,
+      );
+}
+
+class AdminBillingReconciliation {
+  const AdminBillingReconciliation({
+    required this.clean,
+    required this.checkedSubscriptions,
+    required this.checkedPeriods,
+    required this.checkedEntitlements,
+    required this.checkedUsage,
+    required this.checkedPaymentAttempts,
+    required this.issueCount,
+    required this.truncated,
+    required this.issues,
+  });
+
+  final bool clean;
+  final int checkedSubscriptions;
+  final int checkedPeriods;
+  final int checkedEntitlements;
+  final int checkedUsage;
+  final int checkedPaymentAttempts;
+  final int issueCount;
+  final bool truncated;
+  final List<AdminBillingReconciliationIssue> issues;
+
+  factory AdminBillingReconciliation.fromJson(Map<String, dynamic> json) =>
+      AdminBillingReconciliation(
+        clean: json['clean'] == true,
+        checkedSubscriptions: (json['checked_subscriptions'] as num).toInt(),
+        checkedPeriods: (json['checked_periods'] as num).toInt(),
+        checkedEntitlements: (json['checked_entitlements'] as num).toInt(),
+        checkedUsage: (json['checked_usage'] as num).toInt(),
+        checkedPaymentAttempts:
+            (json['checked_payment_attempts'] as num).toInt(),
+        issueCount: (json['issue_count'] as num).toInt(),
+        truncated: json['truncated'] == true,
+        issues:
+            (json['issues'] as List)
+                .map(
+                  (item) => AdminBillingReconciliationIssue.fromJson(
+                    (item as Map).cast<String, dynamic>(),
+                  ),
+                )
+                .toList(),
+      );
+}

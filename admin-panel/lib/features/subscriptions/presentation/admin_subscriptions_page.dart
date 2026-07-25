@@ -24,6 +24,8 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
   late final TabController _tabs;
   AdminBillingPage<AdminBillingPlan>? _plans;
   AdminBillingPage<AdminBillingSubscription>? _subscriptions;
+  AdminBillingPage<AdminBillingAudit>? _audit;
+  AdminBillingReconciliation? _reconciliation;
   String? _status;
   String? _error;
   bool _loading = true;
@@ -31,7 +33,7 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this)..addListener(() {
+    _tabs = TabController(length: 3, vsync: this)..addListener(() {
       if (!_tabs.indexIsChanging) {
         _status = null;
         _search.clear();
@@ -60,12 +62,23 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
           status: _status,
           page: page,
         );
-      } else {
+      } else if (_tabs.index == 1) {
         _subscriptions = await _repository.subscriptions(
           query: _search.text.trim(),
           status: _status,
           page: page,
         );
+      } else {
+        final results = await Future.wait<Object>([
+          _repository.audit(
+            action: _search.text.trim(),
+            targetType: _status,
+            page: page,
+          ),
+          _repository.reconciliation(),
+        ]);
+        _audit = results[0] as AdminBillingPage<AdminBillingAudit>;
+        _reconciliation = results[1] as AdminBillingReconciliation;
       }
     } on AdminSubscriptionApiException catch (error) {
       _error = error.error.message;
@@ -185,7 +198,11 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
         title: const Text('پلن‌ها و اشتراک‌ها'),
         bottom: TabBar(
           controller: _tabs,
-          tabs: const [Tab(text: 'پلن‌ها'), Tab(text: 'اشتراک کاربران')],
+          tabs: const [
+            Tab(text: 'پلن‌ها'),
+            Tab(text: 'اشتراک کاربران'),
+            Tab(text: 'ممیزی و تطبیق'),
+          ],
         ),
         actions: [
           if (_tabs.index == 0 && _can('billing.plans.create'))
@@ -213,7 +230,9 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
                     ? AdminErrorView(message: _error!, onRetry: () => _load(1))
                     : _tabs.index == 0
                     ? _planTable()
-                    : _subscriptionTable(),
+                    : _tabs.index == 1
+                    ? _subscriptionTable()
+                    : _auditView(),
           ),
         ],
       ),
@@ -224,7 +243,9 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
     final statuses =
         _tabs.index == 0
             ? const ['draft', 'active', 'retired']
-            : const ['pending', 'active', 'grace', 'cancelled', 'expired'];
+            : _tabs.index == 1
+            ? const ['pending', 'active', 'grace', 'cancelled', 'expired']
+            : const ['plan', 'subscription', 'payment', 'quota'];
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Wrap(
@@ -240,7 +261,9 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
                 labelText:
                     _tabs.index == 0
                         ? 'جستجوی نام یا کد پلن'
-                        : 'ایمیل یا موبایل کاربر',
+                        : _tabs.index == 1
+                        ? 'ایمیل یا موبایل کاربر'
+                        : 'کد رویداد ممیزی',
                 prefixIcon: const Icon(Icons.search),
               ),
               onSubmitted: (_) => _load(1),
@@ -381,6 +404,114 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _auditView() {
+    final result = _audit;
+    final reconciliation = _reconciliation;
+    if (result == null || reconciliation == null) {
+      return const AdminEmptyView(message: 'اطلاعات ممیزی در دسترس نیست.');
+    }
+    return Column(
+      children: [
+        Card(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          color:
+              reconciliation.clean
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : Colors.orange.withValues(alpha: 0.12),
+          child: ListTile(
+            leading: Icon(
+              reconciliation.clean
+                  ? Icons.verified_outlined
+                  : Icons.warning_amber_outlined,
+              color: reconciliation.clean ? Colors.green : Colors.orange,
+            ),
+            title: Text(
+              reconciliation.clean
+                  ? 'تطبیق اشتراک سالم است'
+                  : '${reconciliation.issueCount} مغایرت نیازمند بررسی است',
+            ),
+            subtitle: Text(
+              'اشتراک: ${reconciliation.checkedSubscriptions}، '
+              'دوره: ${reconciliation.checkedPeriods}، '
+              'دسترسی: ${reconciliation.checkedEntitlements}، '
+              'مصرف: ${reconciliation.checkedUsage}، '
+              'پرداخت: ${reconciliation.checkedPaymentAttempts}'
+              '${reconciliation.truncated ? ' — نتیجه محدود شده است' : ''}',
+            ),
+            trailing: IconButton(
+              onPressed: () => _load(result.page),
+              icon: const Icon(Icons.refresh),
+              tooltip: 'اجرای مجدد تطبیق فقط‌خواندنی',
+            ),
+          ),
+        ),
+        if (reconciliation.issues.isNotEmpty)
+          SizedBox(
+            height: 150,
+            child: ListView.builder(
+              itemCount: reconciliation.issues.length,
+              itemBuilder: (context, index) {
+                final issue = reconciliation.issues[index];
+                return ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.error_outline, color: Colors.red),
+                  title: Text(
+                    '${issue.code} — ${issue.entityType} #${issue.entityId}',
+                  ),
+                  subtitle: Text(issue.detail),
+                );
+              },
+            ),
+          ),
+        Expanded(
+          child:
+              result.items.isEmpty
+                  ? const AdminEmptyView(
+                    message: 'رویداد ممیزی ثبت‌شده‌ای وجود ندارد.',
+                  )
+                  : _paged(
+                    result.page,
+                    result.totalPages,
+                    result.total,
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        columns: const [
+                          DataColumn(label: Text('رویداد')),
+                          DataColumn(label: Text('هدف')),
+                          DataColumn(label: Text('عامل')),
+                          DataColumn(label: Text('دلیل')),
+                          DataColumn(label: Text('Trace')),
+                          DataColumn(label: Text('زمان')),
+                        ],
+                        rows: [
+                          for (final item in result.items)
+                            DataRow(
+                              cells: [
+                                DataCell(Text(item.action)),
+                                DataCell(
+                                  Text('${item.targetType} #${item.targetId}'),
+                                ),
+                                DataCell(
+                                  Text(
+                                    '${item.actorType}'
+                                    '${item.actorUserId == null ? '' : ' #${item.actorUserId}'}',
+                                  ),
+                                ),
+                                DataCell(Text(item.reason ?? '-')),
+                                DataCell(Text(item.traceId ?? '-')),
+                                DataCell(Text(_date(item.createdAt))),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+        ),
+      ],
     );
   }
 

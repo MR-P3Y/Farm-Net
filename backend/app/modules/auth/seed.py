@@ -151,6 +151,8 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("billing.subscription.manage_own", "Manage own subscription", "billing", "Manage own subscription"),
     PermissionSeed("billing.usage.read_own", "Read own usage", "billing", "View own feature usage"),
     PermissionSeed("billing.entitlements.read", "Read entitlements", "billing", "View resolved entitlements"),
+    PermissionSeed("billing.audit.read", "Read billing audit", "billing", "View billing audit history"),
+    PermissionSeed("billing.reconciliation.read", "Reconcile billing", "billing", "Inspect billing consistency"),
 
     PermissionSeed("cart.read", "Read cart", "cart", "Read current user's cart"),
     PermissionSeed("cart.update", "Update cart", "cart", "Add, update or remove cart items"),
@@ -890,6 +892,8 @@ def assign_default_permissions(
             "finance.settlements.manage",
             "finance.adjustments.create",
             "billing.subscriptions.read",
+            "billing.audit.read",
+            "billing.reconciliation.read",
             "commission.read",
         ],
         "content_manager": [

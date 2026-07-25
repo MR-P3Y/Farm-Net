@@ -5,6 +5,10 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.modules.notifications.enums import NotificationEventType
 from app.modules.notifications.service import NotificationService
+from app.modules.subscriptions.audit_service import (
+    BillingAuditService,
+    subscription_snapshot,
+)
 from app.modules.subscriptions.lifecycle_service import (
     FREE_PERIOD_DAYS,
     SubscriptionLifecycleService,
@@ -22,9 +26,15 @@ PAID_GRACE_DAYS = 3
 
 
 class SubscriptionRenewalService:
-    def __init__(self, db: Session, notifier: NotificationService | None = None) -> None:
+    def __init__(
+        self,
+        db: Session,
+        notifier: NotificationService | None = None,
+        auditor: BillingAuditService | None = None,
+    ) -> None:
         self.db = db
         self.notifier = notifier or NotificationService(db)
+        self.auditor = auditor or BillingAuditService(db)
         self.lifecycle = SubscriptionLifecycleService(db)
 
     def process_due(self, *, now: datetime | None = None, limit: int = 100) -> dict[str, int]:
@@ -217,6 +227,20 @@ class SubscriptionRenewalService:
         body: str,
         priority: str = "normal",
     ) -> None:
+        self.auditor.record(
+            event_key=(
+                f"billing-subscription:{subscription.id}:period:"
+                f"{period_sequence}:system:{event_type}"
+            ),
+            action=event_type,
+            target_type="subscription",
+            target_id=subscription.id,
+            subscription_id=subscription.id,
+            plan_id=subscription.plan_id,
+            actor_type="system",
+            actor_user_id=None,
+            new_value=subscription_snapshot(subscription),
+        )
         self.notifier.create_event_and_notify_user(
             event_type=event_type,
             recipient_user_id=subscription.user_id,

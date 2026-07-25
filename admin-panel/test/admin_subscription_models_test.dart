@@ -75,4 +75,43 @@ void main() {
     expect(subscription.usage.single.reserved, 1);
     expect(subscription.usage.single.remaining, 97);
   });
+
+  test('admin audit and reconciliation stay typed', () {
+    final audit = AdminBillingAudit.fromJson({
+      'id': 3,
+      'event_key': 'billing-subscription:8:manual-activated',
+      'action': 'BILLING_SUBSCRIPTION_MANUAL_ACTIVATED',
+      'target_type': 'subscription',
+      'target_id': 8,
+      'actor_type': 'admin',
+      'actor_user_id': 1,
+      'reason': 'Support grant',
+      'trace_id': 'trace-3',
+      'created_at': '2026-07-26T12:00:00',
+    });
+    final reconciliation = AdminBillingReconciliation.fromJson({
+      'clean': false,
+      'checked_subscriptions': 10,
+      'checked_periods': 11,
+      'checked_entitlements': 150,
+      'checked_usage': 50,
+      'checked_payment_attempts': 4,
+      'issue_count': 1,
+      'truncated': false,
+      'issues': [
+        {
+          'code': 'PAYMENT_LEDGER_MISSING',
+          'severity': 'critical',
+          'entity_type': 'payment',
+          'entity_id': 5,
+          'detail': 'Missing journal',
+        },
+      ],
+    });
+
+    expect(audit.actorType, 'admin');
+    expect(audit.reason, 'Support grant');
+    expect(reconciliation.clean, isFalse);
+    expect(reconciliation.issues.single.entityId, 5);
+  });
 }

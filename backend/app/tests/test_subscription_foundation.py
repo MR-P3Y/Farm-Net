@@ -9,6 +9,7 @@ from app.modules.subscriptions.models import (
     BillingPlan,
     BillingPlanFeature,
     BillingSubscription,
+    BillingAuditLog,
     BillingSubscriptionPaymentAttempt,
     BillingSubscriptionPeriod,
     BillingUsageReservation,
@@ -16,7 +17,7 @@ from app.modules.subscriptions.models import (
 from app.modules.subscriptions.seed import FEATURES, FREE_VALUES
 
 
-def test_subscription_foundation_has_nine_separate_tables() -> None:
+def test_subscription_foundation_has_ten_separate_tables() -> None:
     assert {
         BillingPlan.__tablename__,
         BillingFeature.__tablename__,
@@ -27,6 +28,7 @@ def test_subscription_foundation_has_nine_separate_tables() -> None:
         BillingFeatureUsage.__tablename__,
         BillingUsageReservation.__tablename__,
         BillingSubscriptionPaymentAttempt.__tablename__,
+        BillingAuditLog.__tablename__,
     } == {
         "billing_plans",
         "billing_features",
@@ -37,6 +39,7 @@ def test_subscription_foundation_has_nine_separate_tables() -> None:
         "billing_feature_usage",
         "billing_usage_reservations",
         "billing_subscription_payment_attempts",
+        "billing_audit_logs",
     }
 
 

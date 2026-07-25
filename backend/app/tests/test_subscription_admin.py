@@ -30,6 +30,8 @@ def test_admin_subscription_routes_are_explicit_and_typed() -> None:
         "/api/v1/admin/billing/subscriptions/{subscription_id}": {"get"},
         "/api/v1/admin/billing/subscriptions/manual-activate": {"post"},
         "/api/v1/admin/billing/subscriptions/{subscription_id}/cancel": {"patch"},
+        "/api/v1/admin/billing/audit": {"get"},
+        "/api/v1/admin/billing/reconciliation": {"get"},
     }
 
 

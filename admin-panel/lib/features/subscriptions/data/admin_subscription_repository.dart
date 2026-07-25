@@ -45,4 +45,12 @@ class AdminSubscriptionRepository {
     reason: reason,
     atPeriodEnd: atPeriodEnd,
   );
+
+  Future<AdminBillingPage<AdminBillingAudit>> audit({
+    String? action,
+    String? targetType,
+    int page = 1,
+  }) => _api.audit(action: action, targetType: targetType, page: page);
+
+  Future<AdminBillingReconciliation> reconciliation() => _api.reconciliation();
 }

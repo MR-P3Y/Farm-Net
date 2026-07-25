@@ -2235,6 +2235,26 @@ model fields exist:
 - Concurrent Mobile design changes were not modified or included.
 - Evidence: `docs/subscriptions/phase-25-admin-subscriptions.md`.
 
+### Step 25.10 Security, Concurrency, Audit + Reconciliation Hardening
+
+- Added MySQL Generated unique slots for one active plan version per code and
+  one active/grace subscription per user.
+- Added immutable exact-once Billing Audit for Admin, user, checkout/payment,
+  and Worker lifecycle changes from migration time forward.
+- Added dedicated audit/reconciliation permissions and a typed Admin
+  Audit/Reconciliation view.
+- Added a read-only API and CLI that reconcile Subscription, Period,
+  Entitlement, Usage, Invoice, Payment, and Ledger without automatic repair.
+- Real runtime reconciliation was clean across 2 subscriptions, 2 periods, 30
+  Entitlements, 10 Usage rows, and zero issues.
+- Migration `e17c4b82a6d9`, all 314 Backend and 27 Admin tests,
+  Ruff/compileall, Admin analyze/build, no-drift, seed twice with 270
+  permissions, nine runtime paths, authenticated audit/reconciliation, and
+  health passed.
+- Concurrent Mobile design changes were not modified or included.
+- Evidence:
+  `docs/subscriptions/phase-25-security-audit-reconciliation.md`.
+
 ## Progress Update Rule
 
 After every completed step:

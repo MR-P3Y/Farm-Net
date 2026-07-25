@@ -1023,6 +1023,20 @@ health, all 26 Admin tests, analyze, and web build passed. Concurrent Mobile
 design work was preserved outside this step. Step 25.10 Security,
 Concurrency, Audit + Reconciliation Hardening is next.
 
+Step 25.10 Security, Concurrency, Audit + Reconciliation Hardening is
+complete. MySQL Generated unique slots now enforce one active plan version per
+code and one active/grace subscription per user under real concurrency.
+Immutable exact-once Billing Audit covers Admin, user, payment, and Worker
+lifecycle transitions from migration `e17c4b82a6d9` forward; no fictional
+historical backfill was made. Permission-protected reconciliation compares
+Subscription, Period, Entitlement, Usage, Invoice, Payment, and Ledger through
+an API, CLI, and typed Admin view without repairing data. Two real
+subscriptions reconciled cleanly with 2 periods, 30 Entitlements, 10 Usage
+rows, and zero issues. All 314 Backend and 27 Admin tests, Ruff/compileall,
+Admin analyze/build, Alembic no-drift, 270-permission seed twice, nine-path
+runtime OpenAPI, authenticated audit/reconciliation, and app/database/Redis
+health passed. Step 25.11 Docs, Postman + Runtime Regression is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

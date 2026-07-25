@@ -21,6 +21,10 @@ from app.modules.orders.payment_gateway import PaymentGatewayError, ZarinpalGate
 from app.modules.notifications.enums import NotificationEventType
 from app.modules.notifications.service import NotificationService
 from app.modules.subscriptions.lifecycle_service import SubscriptionLifecycleService
+from app.modules.subscriptions.audit_service import (
+    BillingAuditService,
+    subscription_snapshot,
+)
 from app.modules.subscriptions.models import (
     BillingPlan,
     BillingPlanFeature,
@@ -198,6 +202,25 @@ class SubscriptionCommerceService:
             attempt.status = "redirected"
             attempt.provider_authority = gateway.authority
             attempt.redirect_url = gateway.redirect_url
+        BillingAuditService(self.db).record(
+            event_key=f"billing-payment:{attempt.id}:checkout-created",
+            action="BILLING_SUBSCRIPTION_CHECKOUT_CREATED",
+            target_type="payment",
+            target_id=attempt.id,
+            subscription_id=subscription.id,
+            plan_id=plan.id,
+            actor_type="user",
+            actor_user_id=user_id,
+            new_value={
+                "payment_attempt_id": attempt.id,
+                "subscription_id": subscription.id,
+                "invoice_id": invoice.id,
+                "provider": attempt.provider,
+                "status": attempt.status,
+                "amount_toman": str(attempt.amount_toman),
+                "currency": attempt.currency,
+            },
+        )
         try:
             self.db.commit()
         except IntegrityError:
@@ -394,6 +417,25 @@ class SubscriptionCommerceService:
             attempt.status = "redirected"
             attempt.provider_authority = gateway.authority
             attempt.redirect_url = gateway.redirect_url
+        BillingAuditService(self.db).record(
+            event_key=f"billing-payment:{attempt.id}:renewal-checkout-created",
+            action="BILLING_SUBSCRIPTION_RENEWAL_CHECKOUT_CREATED",
+            target_type="payment",
+            target_id=attempt.id,
+            subscription_id=subscription.id,
+            plan_id=plan.id,
+            actor_type="user",
+            actor_user_id=user_id,
+            new_value={
+                "payment_attempt_id": attempt.id,
+                "subscription_id": subscription.id,
+                "invoice_id": invoice.id,
+                "provider": attempt.provider,
+                "status": attempt.status,
+                "amount_toman": str(attempt.amount_toman),
+                "currency": attempt.currency,
+            },
+        )
         self.db.commit()
         return self._output(attempt)
 
@@ -577,6 +619,29 @@ class SubscriptionCommerceService:
             ),
             allow_self_notification=True,
             commit=False,
+        )
+        BillingAuditService(self.db).record(
+            event_key=f"billing-payment:{attempt.id}:verified",
+            action=(
+                "BILLING_SUBSCRIPTION_PAYMENT_VERIFIED"
+                if is_initial
+                else "BILLING_SUBSCRIPTION_RENEWAL_PAYMENT_VERIFIED"
+            ),
+            target_type="payment",
+            target_id=attempt.id,
+            subscription_id=subscription.id,
+            plan_id=subscription.plan_id,
+            actor_type="user",
+            actor_user_id=user_id,
+            new_value={
+                "payment_attempt_id": attempt.id,
+                "invoice_id": invoice.id,
+                "provider": attempt.provider,
+                "status": attempt.status,
+                "amount_toman": str(attempt.amount_toman),
+                "currency": attempt.currency,
+                "subscription": subscription_snapshot(subscription),
+            },
         )
         self.db.commit()
         return self._output(attempt)

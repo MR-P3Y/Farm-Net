@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core.exceptions import AppException
 from app.modules.auth.models import AuthUser
+from app.modules.subscriptions.audit_service import (
+    BillingAuditService,
+    subscription_snapshot,
+)
 from app.modules.subscriptions.models import (
     BillingEntitlement,
     BillingFeatureUsage,
@@ -92,6 +96,18 @@ class SubscriptionLifecycleService:
             period=period,
             values=plan.features,
         )
+        self.db.flush()
+        BillingAuditService(self.db).record(
+            event_key=f"billing-subscription:{subscription.id}:free-activated",
+            action="BILLING_SUBSCRIPTION_FREE_ACTIVATED",
+            target_type="subscription",
+            target_id=subscription.id,
+            subscription_id=subscription.id,
+            plan_id=plan.id,
+            actor_type="user",
+            actor_user_id=user_id,
+            new_value=subscription_snapshot(subscription),
+        )
         self.db.commit()
         return SubscriptionReadService.subscription_output(subscription)
 
@@ -107,6 +123,7 @@ class SubscriptionLifecycleService:
         self._lock_user(user_id)
         subscription = self._require_current_locked(user_id, now)
         self._check_version(subscription, expected_version)
+        before = subscription_snapshot(subscription)
 
         if cancel_at_period_end:
             subscription.cancel_at_period_end = True
@@ -127,6 +144,22 @@ class SubscriptionLifecycleService:
             subscription.auto_renew = False
             self._close_current_period(subscription.id, now)
         subscription.version += 1
+        BillingAuditService(self.db).record(
+            event_key=(
+                f"billing-subscription:{subscription.id}:user-cancel:"
+                f"version:{expected_version}"
+            ),
+            action="BILLING_SUBSCRIPTION_USER_CANCELLED",
+            target_type="subscription",
+            target_id=subscription.id,
+            subscription_id=subscription.id,
+            plan_id=subscription.plan_id,
+            actor_type="user",
+            actor_user_id=user_id,
+            reason=reason,
+            old_value=before,
+            new_value=subscription_snapshot(subscription),
+        )
         self.db.commit()
         return SubscriptionReadService.subscription_output(subscription)
 
@@ -135,6 +168,7 @@ class SubscriptionLifecycleService:
         self._lock_user(user_id)
         subscription = self._require_current_locked(user_id, now)
         self._check_version(subscription, expected_version)
+        before = subscription_snapshot(subscription)
         if not subscription.cancel_at_period_end:
             raise AppException(
                 "BILLING_SUBSCRIPTION_NOT_PENDING_CANCEL",
@@ -145,6 +179,21 @@ class SubscriptionLifecycleService:
         subscription.cancellation_reason = None
         subscription.auto_renew = subscription.plan.billing_period != "free"
         subscription.version += 1
+        BillingAuditService(self.db).record(
+            event_key=(
+                f"billing-subscription:{subscription.id}:user-resume:"
+                f"version:{expected_version}"
+            ),
+            action="BILLING_SUBSCRIPTION_USER_RESUMED",
+            target_type="subscription",
+            target_id=subscription.id,
+            subscription_id=subscription.id,
+            plan_id=subscription.plan_id,
+            actor_type="user",
+            actor_user_id=user_id,
+            old_value=before,
+            new_value=subscription_snapshot(subscription),
+        )
         self.db.commit()
         return SubscriptionReadService.subscription_output(subscription)
 

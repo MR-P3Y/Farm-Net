@@ -5,6 +5,7 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     CheckConstraint,
+    Computed,
     DateTime,
     ForeignKey,
     Index,
@@ -14,6 +15,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -54,12 +56,17 @@ class BillingPlan(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
+    active_code: Mapped[str | None] = mapped_column(
+        String(80),
+        Computed("CASE WHEN status = 'active' THEN code ELSE NULL END", persisted=True),
+    )
 
     features: Mapped[list["BillingPlanFeature"]] = relationship(back_populates="plan")
     subscriptions: Mapped[list["BillingSubscription"]] = relationship(back_populates="plan")
 
     __table_args__ = (
         UniqueConstraint("code", "version", name="uq_billing_plan_code_version"),
+        UniqueConstraint("active_code", name="uq_billing_plan_one_active_code"),
         CheckConstraint("status IN ('draft', 'active', 'retired')", name="ck_billing_plans_status"),
         CheckConstraint(
             "billing_period IN ('free', 'monthly', 'yearly', 'custom')",
@@ -199,6 +206,13 @@ class BillingSubscription(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
+    current_user_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        Computed(
+            "CASE WHEN status IN ('active', 'grace') THEN user_id ELSE NULL END",
+            persisted=True,
+        ),
+    )
 
     plan: Mapped[BillingPlan] = relationship(back_populates="subscriptions")
     periods: Mapped[list["BillingSubscriptionPeriod"]] = relationship(back_populates="subscription")
@@ -232,6 +246,9 @@ class BillingSubscription(Base):
         CheckConstraint(
             "activation_source IN ('self', 'checkout', 'admin')",
             name="ck_billing_subscriptions_activation_source",
+        ),
+        UniqueConstraint(
+            "current_user_id", name="uq_billing_subscription_one_current_user"
         ),
         Index("ix_billing_subscriptions_user_status", "user_id", "status"),
         Index("ix_billing_subscriptions_period_end", "status", "current_period_ends_at"),
@@ -500,3 +517,59 @@ class BillingSubscriptionPaymentAttempt(Base):
         CheckConstraint("currency = 'TOMAN'", name="ck_subscription_payment_currency"),
         Index("ix_subscription_payment_user_status", "user_id", "status"),
     )
+
+
+class BillingAuditLog(Base):
+    __tablename__ = "billing_audit_logs"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    event_key: Mapped[str] = mapped_column(String(180), nullable=False, unique=True)
+    action: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    target_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    target_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+    subscription_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("billing_subscriptions.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    plan_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("billing_plans.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    actor_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    actor_user_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    reason: Mapped[str | None] = mapped_column(String(500))
+    old_value: Mapped[dict | list | None] = mapped_column(JSON)
+    new_value: Mapped[dict | list | None] = mapped_column(JSON)
+    trace_id: Mapped[str | None] = mapped_column(String(100), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "actor_type IN ('user', 'admin', 'system')",
+            name="ck_billing_audit_actor_type",
+        ),
+        CheckConstraint(
+            "target_type IN ('plan', 'subscription', 'payment', 'quota')",
+            name="ck_billing_audit_target_type",
+        ),
+        Index("ix_billing_audit_target_created", "target_type", "target_id", "created_at"),
+    )
+
+
+def _reject_billing_audit_mutation(_mapper, _connection, target) -> None:
+    raise RuntimeError(f"Billing audit record {target.id} is immutable")
+
+
+event.listen(BillingAuditLog, "before_update", _reject_billing_audit_mutation)
+event.listen(BillingAuditLog, "before_delete", _reject_billing_audit_mutation)

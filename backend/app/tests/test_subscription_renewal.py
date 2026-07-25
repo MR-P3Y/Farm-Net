@@ -51,6 +51,7 @@ def _subscription(*, period: str, status: str = "active"):
     return SimpleNamespace(
         id=10,
         user_id=7,
+        plan_id=1,
         plan=plan,
         status=status,
         current_period_starts_at=None,
@@ -60,6 +61,7 @@ def _subscription(*, period: str, status: str = "active"):
         cancelled_at=None,
         ended_at=None,
         auto_renew=True,
+        activation_source="self",
         version=1,
     )
 
@@ -77,7 +79,10 @@ def _period(now: datetime):
 def _service():
     db = _Db()
     notifier = Mock()
-    service = SubscriptionRenewalService(db, notifier=notifier)  # type: ignore[arg-type]
+    auditor = Mock()
+    service = SubscriptionRenewalService(  # type: ignore[arg-type]
+        db, notifier=notifier, auditor=auditor
+    )
     return service, db, notifier
 
 

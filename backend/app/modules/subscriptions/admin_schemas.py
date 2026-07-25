@@ -147,3 +147,56 @@ class AdminSubscriptionResponse(BaseModel):
     data: AdminSubscriptionDetailOut
     message: str
     meta: dict
+
+
+class BillingAuditOut(BaseModel):
+    id: int
+    event_key: str
+    action: str
+    target_type: str
+    target_id: int
+    subscription_id: int | None
+    plan_id: int | None
+    actor_type: str
+    actor_user_id: int | None
+    reason: str | None
+    old_value: dict | list | None
+    new_value: dict | list | None
+    trace_id: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class BillingAuditListResponse(BaseModel):
+    success: bool
+    data: list[BillingAuditOut]
+    message: str
+    meta: AdminPageMeta
+
+
+class BillingReconciliationIssueOut(BaseModel):
+    code: str
+    severity: str
+    entity_type: str
+    entity_id: int
+    detail: str
+
+
+class BillingReconciliationOut(BaseModel):
+    clean: bool
+    checked_subscriptions: int
+    checked_periods: int
+    checked_entitlements: int
+    checked_usage: int
+    checked_payment_attempts: int
+    issue_count: int
+    truncated: bool
+    issues: list[BillingReconciliationIssueOut]
+
+
+class BillingReconciliationResponse(BaseModel):
+    success: bool
+    data: BillingReconciliationOut
+    message: str
+    meta: dict

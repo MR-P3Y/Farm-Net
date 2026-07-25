@@ -15,11 +15,16 @@ from app.modules.subscriptions.admin_schemas import (
     AdminSubscriptionCancelIn,
     AdminSubscriptionListResponse,
     AdminSubscriptionResponse,
+    BillingAuditListResponse,
+    BillingAuditOut,
+    BillingReconciliationResponse,
 )
 from app.modules.subscriptions.admin_service import (
     AdminSubscriptionService,
     page_meta,
 )
+from app.modules.subscriptions.audit_service import BillingAuditService
+from app.modules.subscriptions.reconciliation_service import BillingReconciliationService
 
 
 router = APIRouter(prefix="/admin/billing", tags=["Admin Billing Subscriptions"])
@@ -55,9 +60,11 @@ def create_plan(
     payload: AdminPlanCreateIn,
     request: Request,
     db: Session = Depends(get_db),
-    _: AuthUser = Depends(require_permission("billing.plans.create")),
+    admin: AuthUser = Depends(require_permission("billing.plans.create")),
 ):
-    item = AdminSubscriptionService(db).create_plan(payload)
+    item = AdminSubscriptionService(db).create_plan(
+        payload, admin_user_id=admin.id, trace_id=request.state.trace_id
+    )
     return success_response(
         data=item.model_dump(mode="json"),
         message="Billing plan draft created",
@@ -71,9 +78,14 @@ def update_plan(
     payload: AdminPlanUpdateIn,
     request: Request,
     db: Session = Depends(get_db),
-    _: AuthUser = Depends(require_permission("billing.plans.update")),
+    admin: AuthUser = Depends(require_permission("billing.plans.update")),
 ):
-    item = AdminSubscriptionService(db).update_plan(plan_id, payload)
+    item = AdminSubscriptionService(db).update_plan(
+        plan_id,
+        payload,
+        admin_user_id=admin.id,
+        trace_id=request.state.trace_id,
+    )
     return success_response(
         data=item.model_dump(mode="json"),
         message="Billing plan draft updated",
@@ -87,10 +99,14 @@ def update_plan_status(
     payload: AdminPlanStatusIn,
     request: Request,
     db: Session = Depends(get_db),
-    _: AuthUser = Depends(require_permission("billing.plans.update")),
+    admin: AuthUser = Depends(require_permission("billing.plans.update")),
 ):
     item = AdminSubscriptionService(db).set_plan_status(
-        plan_id, expected_version=payload.expected_version, status=payload.status
+        plan_id,
+        expected_version=payload.expected_version,
+        status=payload.status,
+        admin_user_id=admin.id,
+        trace_id=request.state.trace_id,
     )
     return success_response(
         data=item.model_dump(mode="json"),
@@ -159,7 +175,11 @@ def manual_activate(
     db: Session = Depends(get_db),
     admin: AuthUser = Depends(require_permission("billing.subscriptions.activate")),
 ):
-    item = AdminSubscriptionService(db).manual_activate(admin_user_id=admin.id, payload=payload)
+    item = AdminSubscriptionService(db).manual_activate(
+        admin_user_id=admin.id,
+        payload=payload,
+        trace_id=request.state.trace_id,
+    )
     return success_response(
         data=item.model_dump(mode="json"),
         message="Subscription manually activated",
@@ -176,11 +196,67 @@ def cancel_subscription(
     payload: AdminSubscriptionCancelIn,
     request: Request,
     db: Session = Depends(get_db),
-    _: AuthUser = Depends(require_permission("billing.subscriptions.cancel")),
+    admin: AuthUser = Depends(require_permission("billing.subscriptions.cancel")),
 ):
-    item = AdminSubscriptionService(db).cancel_subscription(subscription_id, payload)
+    item = AdminSubscriptionService(db).cancel_subscription(
+        subscription_id,
+        payload,
+        admin_user_id=admin.id,
+        trace_id=request.state.trace_id,
+    )
     return success_response(
         data=item.model_dump(mode="json"),
         message="Subscription cancelled",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/audit", response_model=BillingAuditListResponse)
+def list_billing_audit(
+    request: Request,
+    action: str | None = Query(default=None, max_length=100),
+    target_type: str | None = Query(
+        default=None, pattern="^(plan|subscription|payment|quota)$"
+    ),
+    target_id: int | None = Query(default=None, ge=1),
+    actor_user_id: int | None = Query(default=None, ge=1),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("billing.audit.read")),
+):
+    rows, total = BillingAuditService(db).list(
+        action=action,
+        target_type=target_type,
+        target_id=target_id,
+        actor_user_id=actor_user_id,
+        page=page,
+        page_size=page_size,
+    )
+    return success_response(
+        data=[
+            BillingAuditOut.model_validate(row).model_dump(mode="json")
+            for row in rows
+        ],
+        message="OK",
+        meta=page_meta(
+            page=page,
+            page_size=page_size,
+            total=total,
+            trace_id=request.state.trace_id,
+        ),
+    )
+
+
+@router.get("/reconciliation", response_model=BillingReconciliationResponse)
+def reconcile_billing(
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("billing.reconciliation.read")),
+):
+    result = BillingReconciliationService(db).run()
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="OK",
         meta={"trace_id": request.state.trace_id},
     )

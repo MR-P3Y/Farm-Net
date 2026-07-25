@@ -3,6 +3,7 @@ from decimal import Decimal
 from math import ceil
 
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.exceptions import AppException
@@ -16,6 +17,10 @@ from app.modules.subscriptions.admin_schemas import (
     AdminSubscriptionCancelIn,
     AdminSubscriptionDetailOut,
     AdminSubscriptionSummaryOut,
+)
+from app.modules.subscriptions.audit_service import (
+    BillingAuditService,
+    subscription_snapshot,
 )
 from app.modules.subscriptions.lifecycle_service import SubscriptionLifecycleService
 from app.modules.subscriptions.models import (
@@ -53,7 +58,9 @@ class AdminSubscriptionService:
         )
         return [self._plan_out(row) for row in rows], total
 
-    def create_plan(self, payload: AdminPlanCreateIn) -> AdminPlanOut:
+    def create_plan(
+        self, payload: AdminPlanCreateIn, *, admin_user_id: int, trace_id: str
+    ) -> AdminPlanOut:
         self._validate_period(payload.billing_period, payload.duration_days, payload.price_toman)
         latest_version = (
             self.db.query(BillingPlan.version)
@@ -81,11 +88,34 @@ class AdminSubscriptionService:
         self.db.add(row)
         self.db.flush()
         self._replace_features(row, payload.features)
-        self.db.commit()
-        return self._plan_out(row)
+        output = self._plan_out(row)
+        BillingAuditService(self.db).record(
+            event_key=f"billing-plan:{row.id}:created",
+            action="BILLING_PLAN_CREATED",
+            target_type="plan",
+            target_id=row.id,
+            plan_id=row.id,
+            actor_type="admin",
+            actor_user_id=admin_user_id,
+            new_value=output.model_dump(mode="json"),
+            trace_id=trace_id,
+        )
+        self._commit(
+            "BILLING_PLAN_VERSION_CONFLICT",
+            "A concurrent request created the same plan version",
+        )
+        return output
 
-    def update_plan(self, plan_id: int, payload: AdminPlanUpdateIn) -> AdminPlanOut:
+    def update_plan(
+        self,
+        plan_id: int,
+        payload: AdminPlanUpdateIn,
+        *,
+        admin_user_id: int,
+        trace_id: str,
+    ) -> AdminPlanOut:
         row = self._plan(plan_id, lock=True)
+        before = self._plan_out(row).model_dump(mode="json")
         if row.status != "draft":
             raise AppException(
                 "BILLING_PLAN_IMMUTABLE",
@@ -115,11 +145,36 @@ class AdminSubscriptionService:
         self._validate_range(row.effective_from, row.effective_until)
         if payload.features is not None:
             self._replace_features(row, payload.features)
-        self.db.commit()
-        return self._plan_out(row)
+        output = self._plan_out(row)
+        BillingAuditService(self.db).record(
+            event_key=f"billing-plan:{row.id}:updated:{trace_id}",
+            action="BILLING_PLAN_UPDATED",
+            target_type="plan",
+            target_id=row.id,
+            plan_id=row.id,
+            actor_type="admin",
+            actor_user_id=admin_user_id,
+            old_value=before,
+            new_value=output.model_dump(mode="json"),
+            trace_id=trace_id,
+        )
+        self._commit(
+            "BILLING_PLAN_UPDATE_CONFLICT",
+            "A concurrent request changed the plan",
+        )
+        return output
 
-    def set_plan_status(self, plan_id: int, *, expected_version: int, status: str) -> AdminPlanOut:
+    def set_plan_status(
+        self,
+        plan_id: int,
+        *,
+        expected_version: int,
+        status: str,
+        admin_user_id: int,
+        trace_id: str,
+    ) -> AdminPlanOut:
         row = self._plan(plan_id, lock=True)
+        before = self._plan_out(row).model_dump(mode="json")
         if row.version != expected_version:
             raise AppException("BILLING_PLAN_VERSION_CONFLICT", "Plan version conflict", 409)
         if status == "active":
@@ -155,8 +210,25 @@ class AdminSubscriptionService:
             if row.status == "retired":
                 return self._plan_out(row)
             row.status = "retired"
-        self.db.commit()
-        return self._plan_out(row)
+        self.db.flush()
+        output = self._plan_out(row)
+        BillingAuditService(self.db).record(
+            event_key=f"billing-plan:{row.id}:status:{status}:{trace_id}",
+            action="BILLING_PLAN_STATUS_CHANGED",
+            target_type="plan",
+            target_id=row.id,
+            plan_id=row.id,
+            actor_type="admin",
+            actor_user_id=admin_user_id,
+            old_value=before,
+            new_value=output.model_dump(mode="json"),
+            trace_id=trace_id,
+        )
+        self._commit(
+            "BILLING_PLAN_ACTIVE_CONFLICT",
+            "Another plan version became active concurrently",
+        )
+        return output
 
     def list_subscriptions(
         self,
@@ -220,7 +292,11 @@ class AdminSubscriptionService:
         )
 
     def manual_activate(
-        self, *, admin_user_id: int, payload: AdminManualActivateIn
+        self,
+        *,
+        admin_user_id: int,
+        payload: AdminManualActivateIn,
+        trace_id: str,
     ) -> AdminSubscriptionDetailOut:
         now = _utcnow()
         user = (
@@ -287,13 +363,36 @@ class AdminSubscriptionService:
             values=plan.features,
             source="admin",
         )
-        self.db.commit()
+        self.db.flush()
+        BillingAuditService(self.db).record(
+            event_key=f"billing-subscription:{subscription.id}:manual-activated",
+            action="BILLING_SUBSCRIPTION_MANUAL_ACTIVATED",
+            target_type="subscription",
+            target_id=subscription.id,
+            subscription_id=subscription.id,
+            plan_id=plan.id,
+            actor_type="admin",
+            actor_user_id=admin_user_id,
+            reason=payload.reason,
+            new_value=subscription_snapshot(subscription),
+            trace_id=trace_id,
+        )
+        self._commit(
+            "BILLING_ACTIVE_SUBSCRIPTION_EXISTS",
+            "User already has an active subscription",
+        )
         return self.subscription_detail(subscription.id)
 
     def cancel_subscription(
-        self, subscription_id: int, payload: AdminSubscriptionCancelIn
+        self,
+        subscription_id: int,
+        payload: AdminSubscriptionCancelIn,
+        *,
+        admin_user_id: int,
+        trace_id: str,
     ) -> AdminSubscriptionDetailOut:
         row = self._subscription(subscription_id, lock=True)
+        before = subscription_snapshot(row)
         if row.version != payload.expected_version:
             raise AppException(
                 "BILLING_SUBSCRIPTION_VERSION_CONFLICT",
@@ -332,7 +431,27 @@ class AdminSubscriptionService:
                 for entitlement in row.entitlements:
                     entitlement.ends_at = effective_end
         row.version += 1
-        self.db.commit()
+        BillingAuditService(self.db).record(
+            event_key=(
+                f"billing-subscription:{row.id}:admin-cancel:"
+                f"version:{payload.expected_version}"
+            ),
+            action="BILLING_SUBSCRIPTION_ADMIN_CANCELLED",
+            target_type="subscription",
+            target_id=row.id,
+            subscription_id=row.id,
+            plan_id=row.plan_id,
+            actor_type="admin",
+            actor_user_id=admin_user_id,
+            reason=payload.reason,
+            old_value=before,
+            new_value=subscription_snapshot(row),
+            trace_id=trace_id,
+        )
+        self._commit(
+            "BILLING_SUBSCRIPTION_UPDATE_CONFLICT",
+            "A concurrent request changed the subscription",
+        )
         return self.subscription_detail(row.id)
 
     def _plan(self, plan_id: int, *, lock: bool = False) -> BillingPlan:
@@ -505,6 +624,12 @@ class AdminSubscriptionService:
             for row in self.db.query(AuthUser).filter(AuthUser.id.in_(user_ids)).all()
         }
 
+    def _commit(self, code: str, message: str) -> None:
+        try:
+            self.db.commit()
+        except IntegrityError as exc:
+            self.db.rollback()
+            raise AppException(code, message, 409) from exc
 
 def page_meta(*, page: int, page_size: int, total: int, trace_id: str) -> dict[str, int | str]:
     return {
