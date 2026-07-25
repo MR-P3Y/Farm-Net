@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.responses import success_response
@@ -14,8 +14,12 @@ from app.modules.subscriptions.schemas import (
     QuotaEstimateIn,
     QuotaEstimateResponse,
     SubscriptionCancelIn,
+    SubscriptionCheckoutIn,
+    SubscriptionCheckoutResponse,
+    SubscriptionPaymentVerifyIn,
     SubscriptionResumeIn,
 )
+from app.modules.subscriptions.commerce_service import SubscriptionCommerceService
 from app.modules.subscriptions.lifecycle_service import SubscriptionLifecycleService
 from app.modules.subscriptions.quota_service import QuotaService
 from app.modules.subscriptions.service import SubscriptionReadService
@@ -149,5 +153,66 @@ def resume_subscription(
     return success_response(
         data=item.model_dump(mode="json"),
         message="Subscription cancellation removed",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/checkout", response_model=SubscriptionCheckoutResponse)
+def checkout_subscription(
+    payload: SubscriptionCheckoutIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("billing.subscription.manage_own")),
+):
+    item = SubscriptionCommerceService(db).checkout(
+        user_id=user.id,
+        plan_code=payload.plan_code,
+        provider=payload.provider,
+        idempotency_key=payload.idempotency_key,
+    )
+    return success_response(
+        data=item.model_dump(mode="json"),
+        message="Subscription checkout created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/payments/verify", response_model=SubscriptionCheckoutResponse)
+def verify_subscription_payment(
+    payload: SubscriptionPaymentVerifyIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("billing.subscription.manage_own")),
+):
+    item = SubscriptionCommerceService(db).verify(
+        user_id=user.id,
+        attempt_id=payload.payment_attempt_id,
+        provider_token=payload.provider_token,
+    )
+    return success_response(
+        data=item.model_dump(mode="json"),
+        message="Subscription payment verified",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get(
+    "/payments/callback/zarinpal",
+    response_model=SubscriptionCheckoutResponse,
+    include_in_schema=True,
+)
+def subscription_zarinpal_callback(
+    request: Request,
+    authority: str = Query(alias="Authority", min_length=1, max_length=255),
+    status: str = Query(alias="Status", min_length=1, max_length=30),
+    db: Session = Depends(get_db),
+):
+    item = SubscriptionCommerceService(db).handle_zarinpal_callback(
+        authority=authority,
+        status=status,
+    )
+    return success_response(
+        data=item.model_dump(mode="json"),
+        message="Subscription payment callback processed",
         meta={"trace_id": request.state.trace_id},
     )

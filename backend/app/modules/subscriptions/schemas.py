@@ -52,6 +52,34 @@ class SubscriptionResumeIn(BaseModel):
     expected_version: int = Field(ge=1)
 
 
+class SubscriptionCheckoutIn(BaseModel):
+    plan_code: str = Field(min_length=1, max_length=80)
+    provider: str = Field(pattern="^(mock|zarinpal)$")
+    idempotency_key: str = Field(min_length=8, max_length=180)
+
+    model_config = {"extra": "forbid"}
+
+
+class SubscriptionPaymentVerifyIn(BaseModel):
+    payment_attempt_id: int = Field(ge=1)
+    provider_token: str = Field(min_length=1, max_length=255)
+
+    model_config = {"extra": "forbid"}
+
+
+class SubscriptionCheckoutOut(BaseModel):
+    payment_attempt_id: int
+    subscription_id: int
+    invoice_id: int
+    provider: str
+    status: str
+    amount_toman: Decimal
+    currency: str
+    redirect_url: str | None
+    expires_at: datetime
+    verified_at: datetime | None
+
+
 class EntitlementOut(BaseModel):
     code: str
     enabled: bool
@@ -138,5 +166,12 @@ class UsageListResponse(BaseModel):
 class QuotaEstimateResponse(BaseModel):
     success: bool
     data: QuotaEstimateOut
+    message: str
+    meta: dict
+
+
+class SubscriptionCheckoutResponse(BaseModel):
+    success: bool
+    data: SubscriptionCheckoutOut
     message: str
     meta: dict

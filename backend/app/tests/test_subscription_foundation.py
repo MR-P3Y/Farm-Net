@@ -9,13 +9,14 @@ from app.modules.subscriptions.models import (
     BillingPlan,
     BillingPlanFeature,
     BillingSubscription,
+    BillingSubscriptionPaymentAttempt,
     BillingSubscriptionPeriod,
     BillingUsageReservation,
 )
 from app.modules.subscriptions.seed import FEATURES, FREE_VALUES
 
 
-def test_subscription_foundation_has_eight_separate_tables() -> None:
+def test_subscription_foundation_has_nine_separate_tables() -> None:
     assert {
         BillingPlan.__tablename__,
         BillingFeature.__tablename__,
@@ -25,6 +26,7 @@ def test_subscription_foundation_has_eight_separate_tables() -> None:
         BillingEntitlement.__tablename__,
         BillingFeatureUsage.__tablename__,
         BillingUsageReservation.__tablename__,
+        BillingSubscriptionPaymentAttempt.__tablename__,
     } == {
         "billing_plans",
         "billing_features",
@@ -34,6 +36,7 @@ def test_subscription_foundation_has_eight_separate_tables() -> None:
         "billing_entitlements",
         "billing_feature_usage",
         "billing_usage_reservations",
+        "billing_subscription_payment_attempts",
     }
 
 
@@ -94,6 +97,9 @@ def test_subscription_read_routes_match_public_and_owner_boundaries() -> None:
         "/api/v1/billing/subscription/free": {"post"},
         "/api/v1/billing/subscription/cancel": {"post"},
         "/api/v1/billing/subscription/resume": {"post"},
+        "/api/v1/billing/checkout": {"post"},
+        "/api/v1/billing/payments/verify": {"post"},
+        "/api/v1/billing/payments/callback/zarinpal": {"get"},
     }
 
 

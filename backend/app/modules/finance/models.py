@@ -238,8 +238,8 @@ class BillingInvoice(Base):
     payer_user_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False, index=True
     )
-    provider_user_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    provider_user_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=True, index=True
     )
     status: Mapped[str] = mapped_column(
         String(30), default=BillingInvoiceStatus.PAYMENT_PENDING.value, nullable=False, index=True
@@ -279,6 +279,12 @@ class BillingInvoice(Base):
         CheckConstraint(
             "platform_amount + provider_amount = total_amount",
             name="ck_billing_invoice_split_total",
+        ),
+        CheckConstraint(
+            "(source_type = 'platform_subscription' AND provider_user_id IS NULL "
+            "AND provider_amount = 0 AND platform_amount = total_amount) OR "
+            "(source_type <> 'platform_subscription' AND provider_user_id IS NOT NULL)",
+            name="ck_billing_invoice_platform_owner",
         ),
         Index("ix_billing_invoice_payer_status", "payer_user_id", "status"),
         Index("ix_billing_invoice_provider_status", "provider_user_id", "status"),

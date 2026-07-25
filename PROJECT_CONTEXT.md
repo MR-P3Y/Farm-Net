@@ -973,6 +973,20 @@ the original reserved total. Fourteen focused and all 292 Backend tests, Ruff,
 compileall, Alembic no-drift, and app/database/Redis health passed. Step 25.6
 TOMAN Invoice, Wallet + Payment Integration is next.
 
+Step 25.6 TOMAN Invoice, Wallet + Payment Integration is complete. Universal
+Invoice now has an explicit platform-owned Subscription contract: no fake
+provider, zero provider share, and the complete TOMAN total assigned to the
+platform, while marketplace Invoices still require providers. Idempotent
+Checkout creates pending financial/subscription state and Verify activates
+access and snapshots Entitlements only after verified payment. Zarinpal reuses
+the existing server-to-server adapter; mock verification is non-production
+only. Verified payment posts one balanced platform-cash/platform-revenue
+journal, and replay cannot duplicate Invoice, activation, ledger, or
+Entitlements. Alembic `7b98f2da6a10`, 22 focused and all 300 Backend tests,
+Ruff/compileall, no-drift, rolled-back real MySQL commerce regression, and
+app/database/Redis health passed. Step 25.7 Renewal, Expiry, Grace Period +
+Notifications is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

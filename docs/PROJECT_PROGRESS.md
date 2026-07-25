@@ -2176,6 +2176,20 @@ model fields exist:
   Backend tests, Ruff/compileall, Alembic no-drift, and health passed.
 - Evidence: `docs/subscriptions/phase-25-atomic-quota.md`.
 
+### Step 25.6 TOMAN Invoice, Wallet + Payment Integration
+
+- Added an explicit platform-owned Subscription Invoice contract without a
+  fake provider while preserving all marketplace provider requirements.
+- Added idempotent Checkout and Verify, pending-before-payment lifecycle,
+  Zarinpal reuse, non-production-only mock verification, TOMAN snapshots, and
+  one exact-once balanced platform cash/revenue journal.
+- Entitlements are created only after verified payment; a Free upgrade closes
+  only at that point, and concurrent active paid access is rejected.
+- Alembic `7b98f2da6a10`, 22 focused and all 300 Backend tests,
+  Ruff/compileall, no-drift, transaction-rolled-back real MySQL commerce, and
+  app/database/Redis health passed.
+- Evidence: `docs/subscriptions/phase-25-toman-commerce.md`.
+
 ## Progress Update Rule
 
 After every completed step:

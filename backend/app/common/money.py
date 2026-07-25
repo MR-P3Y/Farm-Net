@@ -12,6 +12,7 @@ class BillableSourceType(StrEnum):
     SERVICE_REQUEST = "service_request"
     RENTAL_REQUEST = "rental_request"
     CONSULTATION_REQUEST = "consultation_request"
+    PLATFORM_SUBSCRIPTION = "platform_subscription"
 
 
 class FinancialEventType(StrEnum):

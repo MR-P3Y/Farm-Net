@@ -54,7 +54,12 @@ class ZarinpalGateway:
             )
 
     def request_payment(
-        self, *, amount: Decimal, invoice_id: int, description: str
+        self,
+        *,
+        amount: Decimal,
+        invoice_id: int,
+        description: str,
+        callback_url: str | None = None,
     ) -> GatewayRequestResult:
         self.ensure_configured()
         if amount != amount.to_integral_value() or amount <= 0:
@@ -62,12 +67,18 @@ class ZarinpalGateway:
                 "INVALID_TOMAN_AMOUNT", "Gateway amount must be a positive whole toman value",
                 terminal=True,
             )
+        resolved_callback = callback_url or self.settings.payment_callback_base_url
+        if not resolved_callback.startswith("https://") and not (
+            self.settings.app_env == "development"
+            and resolved_callback.startswith("http://localhost")
+        ):
+            raise PaymentGatewayError("CALLBACK_URL_INVALID", "Payment callback must use HTTPS")
         payload = self._post("/pg/v4/payment/request.json", {
             "merchant_id": self.settings.payment_merchant_id,
             "amount": int(amount),
             "currency": "IRT",
             "description": description,
-            "callback_url": self.settings.payment_callback_base_url,
+            "callback_url": resolved_callback,
             "metadata": {"order_id": str(invoice_id), "auto_verify": False},
         })
         data = payload.get("data") or {}

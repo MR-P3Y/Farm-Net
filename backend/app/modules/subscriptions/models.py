@@ -19,6 +19,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.modules.auth import models as auth_models  # noqa: F401
+from app.modules.orders import models as order_models  # noqa: F401
+from app.modules.rentals import models as rental_models  # noqa: F401
 from app.modules.finance import models as finance_models  # noqa: F401
 from app.modules.subscriptions.enums import (
     EntitlementSource,
@@ -434,4 +436,56 @@ class BillingUsageReservation(Base):
             name="ck_billing_usage_reservation_terminal_state",
         ),
         Index("ix_billing_usage_reservations_expiry", "status", "expires_at"),
+    )
+
+
+class BillingSubscriptionPaymentAttempt(Base):
+    __tablename__ = "billing_subscription_payment_attempts"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    subscription_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("billing_subscriptions.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    invoice_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("finance_billing_invoices.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    provider: Mapped[str] = mapped_column(String(30), nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    amount_toman: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), default="TOMAN", nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(180), nullable=False, unique=True)
+    provider_authority: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, unique=True
+    )
+    provider_reference: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, unique=True
+    )
+    redirect_url: Mapped[str | None] = mapped_column(Text)
+    failure_code: Mapped[str | None] = mapped_column(String(100))
+    failure_message: Mapped[str | None] = mapped_column(Text)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint("provider IN ('mock', 'zarinpal')", name="ck_subscription_payment_provider"),
+        CheckConstraint(
+            "status IN ('pending', 'redirected', 'verifying', 'succeeded', 'failed', 'cancelled')",
+            name="ck_subscription_payment_status",
+        ),
+        CheckConstraint("amount_toman > 0", name="ck_subscription_payment_amount"),
+        CheckConstraint("currency = 'TOMAN'", name="ck_subscription_payment_currency"),
+        Index("ix_subscription_payment_user_status", "user_id", "status"),
     )
