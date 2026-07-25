@@ -17,3 +17,4 @@
 - [Expert Answers and Consultants](expert-consultants.md)
 - [Stores](stores.md)
 - [Weather](weather.md)
+- [Farm Management](farms.md)

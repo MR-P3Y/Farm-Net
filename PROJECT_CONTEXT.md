@@ -903,6 +903,14 @@ mutation or ownership-transfer action. Backend Ruff/compileall, 2 focused
 tests, all 278 Backend tests, Admin analyze, 24 Admin tests, and Admin Web build
 passed. Step 24.12 Docs/Postman + Runtime Regression is next.
 
+Step 24.12 Docs/Postman + Runtime Regression is complete. Farm API
+documentation, a 42-request collection covering all 41 Farm/Admin Farm
+operations plus measurement units, deterministic collection generation, and a
+read-only Runtime regression are present. Alembic head, twice-idempotent auth
+seed, app/database/Redis health, six 401 privacy checks, all 278 Backend tests,
+63 Mobile tests/build, 24 Admin tests/build, and all 16 Postman collections
+(398 requests) passed. Step 24.13 Release Gate + Tag is next.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

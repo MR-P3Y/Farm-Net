@@ -2087,6 +2087,17 @@ model fields exist:
   analyze, 24 Admin tests, and Admin Web build passed.
 - Evidence: `docs/farms/phase-24-activity-admin-support.md`.
 
+### Step 24.12 Docs, Postman + Runtime Regression
+
+- Added the Farm API overview, complete 42-request Postman collection, its
+  deterministic generator, and a read-only Runtime regression.
+- Verified 41 Farm/Admin Farm OpenAPI operations, six private 401 boundaries,
+  Alembic `3af106b82c79 (head)`, twice-idempotent seed, and healthy
+  app/database/Redis.
+- Backend: 278 tests; Mobile: 63 tests and Web build; Admin: 24 tests and Web
+  build. All 16 Postman collections / 398 requests parse.
+- Evidence: `docs/farms/phase-24-docs-postman-runtime-regression.md`.
+
 ## Progress Update Rule
 
 After every completed step:

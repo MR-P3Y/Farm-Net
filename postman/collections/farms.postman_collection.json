@@ -1,0 +1,819 @@
+{
+  "info": {
+    "name": "Farm Net - Farm Management",
+    "description": "Phase 24 private Farm contracts. Owner and Admin tokens are separate; replace empty mutation bodies using the linked OpenAPI schema.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "farm_id",
+      "value": "1"
+    },
+    {
+      "key": "plot_id",
+      "value": "1"
+    },
+    {
+      "key": "cycle_id",
+      "value": "1"
+    },
+    {
+      "key": "operation_id",
+      "value": "1"
+    },
+    {
+      "key": "source_id",
+      "value": "1"
+    },
+    {
+      "key": "subject_type",
+      "value": "soil"
+    },
+    {
+      "key": "subject_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create farm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "List my farms",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Farm detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Update farm",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Archive farm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/archive",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Restore farm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/restore",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Create plot",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "List plots",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Plot detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Update plot",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Archive plot",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/archive",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Restore plot",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/restore",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Create crop cycle",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "List crop cycles",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Cycle detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Update cycle",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Start cycle",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/start",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Complete cycle",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/complete",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Cancel cycle",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/cancel",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Upsert soil profile",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/soil-profile",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Get soil profile",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/soil-profile",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Upsert irrigation",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/irrigation-profile",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Get irrigation",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/irrigation-profile",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Create water source",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/water-sources",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "List water sources",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/water-sources",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Archive water source",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/water-sources/:source_id/archive",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Create lab observation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/lab-observations",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "List lab observations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/lab-observations/:subject_type/:subject_id",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Create operation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/operations",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "List operations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/operations",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Add operation input",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/operations/:operation_id/inputs",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Create harvest",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/harvests",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "List harvests",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/harvests",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Attach farm media",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/media",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "List farm media",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/cycles/:cycle_id/media",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Plot weather",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/weather",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Refresh plot weather",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/weather/refresh",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "Plot weather alerts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/weather/alerts",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Measurement units",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/farm-references/measurement-units?is_active=true",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Admin farm support list",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/farms",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Admin farm support detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/farms/:farm_id",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    },
+    {
+      "name": "Admin farm audit",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/admin/farms/:farm_id/audit",
+        "description": "Contract is defined by the live Farm Net OpenAPI schema."
+      }
+    }
+  ]
+}
