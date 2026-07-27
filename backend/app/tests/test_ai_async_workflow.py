@@ -56,7 +56,8 @@ def test_request_fingerprint_is_deterministic_and_payload_sensitive() -> None:
             (
                 '{"content":"سلام برزگر","conversation_id":1,'
                 '"feature_code":"ai.text_chat","prompt_policy_version":'
-                '"barzegar-v1","request_kind":"text"}'
+                '"barzegar-v1","request_kind":"text",'
+                '"routing_policy_version":"routing-v1"}'
             ).encode()
         ).hexdigest()
     )

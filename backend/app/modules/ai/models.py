@@ -162,6 +162,7 @@ class AIRequest(Base):
     )
     processing_priority: Mapped[str] = mapped_column(String(20), nullable=False)
     prompt_policy_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    routing_policy_version: Mapped[str] = mapped_column(String(80), nullable=False)
     retrieval_version: Mapped[str | None] = mapped_column(String(80))
     context_manifest: Mapped[dict | None] = mapped_column(JSON)
     context_captured_at: Mapped[datetime | None] = mapped_column(DateTime)
@@ -289,6 +290,10 @@ class AIExecutionAttempt(Base):
     attempt_no: Mapped[int] = mapped_column(Integer, nullable=False)
     provider_key: Mapped[str] = mapped_column(String(80), nullable=False)
     model_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    model_configuration_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("ai_model_configurations.id", ondelete="RESTRICT")
+    )
+    routing_policy_version: Mapped[str | None] = mapped_column(String(80))
     provider_request_id: Mapped[str | None] = mapped_column(String(180))
     status: Mapped[str] = mapped_column(
         String(20), default=AIExecutionStatus.PENDING.value, nullable=False, index=True
@@ -365,6 +370,120 @@ class AIUsageRecord(Base):
             name="ck_ai_usage_cost_pair",
         ),
         Index("ix_ai_usage_user_recorded", "user_id", "recorded_at"),
+    )
+
+
+class AIPromptPolicyVersion(Base):
+    __tablename__ = "ai_prompt_policy_versions"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    policy_key: Mapped[str] = mapped_column(String(80), nullable=False)
+    version: Mapped[str] = mapped_column(String(80), nullable=False)
+    request_kind: Mapped[str] = mapped_column(String(30), nullable=False)
+    system_prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    output_contract: Mapped[dict] = mapped_column(JSON, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
+    active_scope: Mapped[str | None] = mapped_column(String(120), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime)
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+    __table_args__ = (
+        UniqueConstraint("policy_key", "version", name="uq_ai_prompt_policy_version"),
+        CheckConstraint(
+            "request_kind IN ('text','farm_context','deep_analysis','image_analysis',"
+            "'smart_diary','report')",
+            name="ck_ai_prompt_policy_kind",
+        ),
+        CheckConstraint("status IN ('draft','active','retired')", name="ck_ai_prompt_policy_status"),
+        CheckConstraint(
+            "(status = 'active' AND active_scope IS NOT NULL AND activated_at IS NOT NULL "
+            "AND retired_at IS NULL) OR "
+            "(status = 'draft' AND active_scope IS NULL AND activated_at IS NULL "
+            "AND retired_at IS NULL) OR "
+            "(status = 'retired' AND active_scope IS NULL AND activated_at IS NOT NULL "
+            "AND retired_at IS NOT NULL)",
+            name="ck_ai_prompt_policy_lifecycle",
+        ),
+    )
+
+
+class AIModelConfiguration(Base):
+    __tablename__ = "ai_model_configurations"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    provider_key: Mapped[str] = mapped_column(String(80), nullable=False)
+    model_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    endpoint_family: Mapped[str] = mapped_column(String(40), nullable=False)
+    capabilities: Mapped[dict] = mapped_column(JSON, nullable=False)
+    timeout_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    max_output_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    reasoning_effort: Mapped[str] = mapped_column(String(20), nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "provider_key", "model_key", "model_version",
+            name="uq_ai_model_configuration_version",
+        ),
+        CheckConstraint("endpoint_family IN ('responses')", name="ck_ai_model_configuration_endpoint"),
+        CheckConstraint(
+            "timeout_seconds BETWEEN 1 AND 600 AND max_output_tokens BETWEEN 1 AND 128000",
+            name="ck_ai_model_configuration_limits",
+        ),
+        CheckConstraint(
+            "reasoning_effort IN ('none','low','medium','high','xhigh','max')",
+            name="ck_ai_model_configuration_reasoning",
+        ),
+    )
+
+
+class AIRoutingPolicyVersion(Base):
+    __tablename__ = "ai_routing_policy_versions"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    route_key: Mapped[str] = mapped_column(String(80), nullable=False)
+    version: Mapped[str] = mapped_column(String(80), nullable=False)
+    feature_code: Mapped[str] = mapped_column(String(120), nullable=False)
+    request_kind: Mapped[str] = mapped_column(String(30), nullable=False)
+    prompt_policy_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_prompt_policy_versions.id", ondelete="RESTRICT"), nullable=False
+    )
+    primary_model_configuration_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_model_configurations.id", ondelete="RESTRICT"), nullable=False
+    )
+    fallback_model_configuration_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("ai_model_configurations.id", ondelete="RESTRICT")
+    )
+    max_provider_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
+    active_scope: Mapped[str | None] = mapped_column(String(120), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime)
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+    __table_args__ = (
+        UniqueConstraint("route_key", "version", name="uq_ai_routing_policy_version"),
+        CheckConstraint("status IN ('draft','active','retired')", name="ck_ai_routing_policy_status"),
+        CheckConstraint(
+            "max_provider_attempts BETWEEN 1 AND 2", name="ck_ai_routing_policy_attempts"
+        ),
+        CheckConstraint(
+            "(fallback_model_configuration_id IS NULL AND max_provider_attempts = 1) OR "
+            "(fallback_model_configuration_id IS NOT NULL AND max_provider_attempts = 2)",
+            name="ck_ai_routing_policy_fallback",
+        ),
+        CheckConstraint(
+            "(status = 'active' AND active_scope IS NOT NULL AND activated_at IS NOT NULL "
+            "AND retired_at IS NULL) OR "
+            "(status = 'draft' AND active_scope IS NULL AND activated_at IS NULL "
+            "AND retired_at IS NULL) OR "
+            "(status = 'retired' AND active_scope IS NULL AND activated_at IS NOT NULL "
+            "AND retired_at IS NOT NULL)",
+            name="ck_ai_routing_policy_lifecycle",
+        ),
     )
 
 

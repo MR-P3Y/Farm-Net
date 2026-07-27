@@ -1134,6 +1134,18 @@ Prompt/Policy Registry + Routing is next. Evidence:
 consent/request/revoke/stale-block/cleanup, seven-path/nine-operation OpenAPI,
 MySQL no-drift, and health passed.
 
+Phase 21.7 is completed. Provider-neutral
+gateway, OpenAI Responses adapter, six versioned prompt policies, three model
+configurations, six cost-aware routes, pinned request/attempt versions, and
+bounded transient-only fallback are implemented at Alembic head
+`g21c4a18d6e5`. Ruff, compileall, all 353 Backend tests, migration, registry
+inspection, and app/database/Redis health pass. The real OpenAI path reaches the
+API but returns `429 insufficient_quota`; the owner approved deferring Billing
+activation because an international payment card is unavailable. Provider
+activation remains disabled until a successful credentialed smoke can be run.
+Step 21.8 Subscription Quota, Technical Usage/Cost + Reconciliation is next. Evidence:
+`docs/ai/phase-21-model-gateway-routing.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

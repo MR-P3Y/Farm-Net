@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     qdrant_timeout_seconds: int = 10
     media_storage_dir: str = "storage/media"
 
+    ai_provider_enabled: bool = False
+    ai_provider: str = "openai"
+    openai_api_key: str = ""
+    openai_api_key_file: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
+    openai_timeout_seconds: int = 60
+
     auth_dev_otp_enabled: bool = True
     auth_dev_otp_code: str = "111111"
     otp_expire_minutes: int = 2
@@ -113,6 +120,7 @@ class Settings(BaseSettings):
             ("push_api_key", "push_api_key_file"),
             ("payment_merchant_id", "payment_merchant_id_file"),
             ("qdrant_api_key", "qdrant_api_key_file"),
+            ("openai_api_key", "openai_api_key_file"),
         )
         for value_field, file_field in secret_fields:
             secret_file = getattr(self, file_field).strip()
@@ -180,6 +188,15 @@ class Settings(BaseSettings):
                 errors.append("PAYMENT_MERCHANT_INVALID")
             if not self._is_https_url(self.payment_callback_base_url):
                 errors.append("PAYMENT_CALLBACK_INSECURE")
+        if self.ai_provider_enabled:
+            if self.ai_provider != "openai":
+                errors.append("AI_PROVIDER_UNSUPPORTED")
+            if not self.openai_api_key.strip():
+                errors.append("OPENAI_API_KEY_MISSING")
+            if not self._is_https_url(self.openai_base_url):
+                errors.append("OPENAI_BASE_URL_INSECURE")
+            if not 1 <= self.openai_timeout_seconds <= 600:
+                errors.append("OPENAI_TIMEOUT_INVALID")
         return errors
 
     def _production_like_errors(self, *, environment: str) -> list[str]:

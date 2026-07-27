@@ -16,6 +16,8 @@ class AIProviderRequest:
     prompt_policy_version: str
     timeout_seconds: int
     metadata: Mapping[str, str]
+    max_output_tokens: int = 1200
+    reasoning_effort: str = "low"
 
 
 @dataclass(frozen=True)
@@ -23,6 +25,7 @@ class AIProviderUsage:
     input_tokens: int
     output_tokens: int
     cached_input_tokens: int = 0
+    reasoning_tokens: int = 0
 
 
 @dataclass(frozen=True)
@@ -42,3 +45,13 @@ class AIModelProvider(Protocol):
     def provider_key(self) -> str: ...
 
     def generate(self, request: AIProviderRequest) -> AIProviderResult: ...
+
+
+class AIProviderError(RuntimeError):
+    """Sanitized Provider failure suitable for retry routing and audit."""
+
+    def __init__(self, code: str, *, retryable: bool, status_code: int | None = None) -> None:
+        super().__init__(code)
+        self.code = code
+        self.retryable = retryable
+        self.status_code = status_code

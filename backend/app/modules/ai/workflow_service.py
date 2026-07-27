@@ -13,6 +13,7 @@ from app.modules.ai.models import (
     AIRequest,
 )
 from app.modules.ai.context_service import AIContextService
+from app.modules.ai.policy_registry import AIPolicyRegistry
 from app.modules.ai.schemas import AIRequestCreateIn
 from app.modules.auth.models import AuthUser
 
@@ -87,12 +88,18 @@ class AIWorkflowService:
                 422,
             )
         content = payload.content.strip()
+        route = AIPolicyRegistry(self.db).resolve(
+            feature_code=payload.feature_code,
+            request_kind=payload.request_kind,
+        )
         fingerprint = self._fingerprint(
             conversation_id=conversation_id,
             feature_code=payload.feature_code,
             request_kind=payload.request_kind,
             content=content,
             context_consent_id=payload.context_consent_id,
+            prompt_policy_version=route.prompt_policy.version,
+            routing_policy_version=route.route_version,
         )
         existing = self.db.scalar(
             select(AIRequest).where(
@@ -132,7 +139,8 @@ class AIWorkflowService:
             request_kind=payload.request_kind,
             status="queued",
             processing_priority="standard",
-            prompt_policy_version="barzegar-v1",
+            prompt_policy_version=route.prompt_policy.version,
+            routing_policy_version=route.route_version,
             next_attempt_at=now,
             attempt_count=0,
             max_attempts=3,
@@ -193,13 +201,16 @@ class AIWorkflowService:
         request_kind: str,
         content: str,
         context_consent_id: int | None = None,
+        prompt_policy_version: str = "barzegar-v1",
+        routing_policy_version: str = "routing-v1",
     ) -> str:
         values = {
             "conversation_id": conversation_id,
             "feature_code": feature_code,
             "request_kind": request_kind,
             "content": content,
-            "prompt_policy_version": "barzegar-v1",
+            "prompt_policy_version": prompt_policy_version,
+            "routing_policy_version": routing_policy_version,
         }
         if context_consent_id is not None:
             values["context_consent_id"] = context_consent_id
@@ -220,8 +231,8 @@ class AIWorkerService:
         self,
         *,
         worker_id: str,
-        provider_key: str,
-        model_key: str,
+        provider_key: str | None = None,
+        model_key: str | None = None,
         lease_seconds: int = 300,
     ) -> tuple[AIRequest, AIExecutionAttempt] | None:
         now = datetime.utcnow()
@@ -304,6 +315,25 @@ class AIWorkerService:
                 stale_attempt.failure_code = "WORKER_LEASE_EXPIRED"
                 stale_attempt.completed_at = now
 
+        model_configuration_id = None
+        if provider_key is None and model_key is None:
+            route = AIPolicyRegistry(self.db).resolve_version(
+                feature_code=row.feature_code,
+                request_kind=row.request_kind,
+                route_version=row.routing_policy_version,
+                prompt_policy_version=row.prompt_policy_version,
+            )
+            primary_model = route.models[0]
+            provider_key = primary_model.provider_key
+            model_key = primary_model.model_key
+            model_configuration_id = primary_model.id
+        elif provider_key is None or model_key is None:
+            raise AppException(
+                "AI_PROVIDER_ROUTE_INCOMPLETE",
+                "Provider and model must be supplied together",
+                500,
+            )
+
         row.attempt_count += 1
         row.status = "running"
         row.started_at = row.started_at or now
@@ -314,6 +344,8 @@ class AIWorkerService:
             attempt_no=row.attempt_count,
             provider_key=provider_key,
             model_key=model_key,
+            model_configuration_id=model_configuration_id,
+            routing_policy_version=row.routing_policy_version,
             status="running",
             timeout_seconds=min(max(lease_seconds, 30), 600),
             started_at=now,

@@ -2419,6 +2419,27 @@ assistant.
 - Next: Step 21.7 Model Gateway, Prompt/Policy Registry + Routing.
 - Evidence: `docs/ai/phase-21-selected-farm-context.md`.
 
+### Step 21.7 Model Gateway, Prompt/Policy Registry + Routing
+
+- Implemented Provider-neutral gateway and OpenAI Responses adapter.
+- Added 3 versioned model configurations, 6 prompt policies, and 6 active
+  feature/request routes with a cost-aware Luna/Terra/Sol hierarchy.
+- Pinned prompt and route versions on requests and model configuration/route on
+  execution attempts.
+- Limited fallback to one alternate model and transient failures only;
+  insufficient quota, invalid credentials, invalid input, and missing models do
+  not retry.
+- Ruff, compileall, all 353 Backend tests, Alembic head `g21c4a18d6e5`,
+  registry inspection, and app/database/Redis health passed.
+- Live OpenAI Responses reached the Provider but returned
+  `429 insufficient_quota`. The owner approved deferring Billing activation
+  because an international payment card is unavailable.
+- Provider activation remains disabled. Deterministic HTTP mocks cover success,
+  parsing, usage, failure classification, and fallback behavior.
+- Status: completed. Next: Step 21.8 Subscription Quota, Technical Usage/Cost +
+  Reconciliation.
+- Evidence: `docs/ai/phase-21-model-gateway-routing.md`.
+
 ## Progress Update Rule
 
 After every completed step:

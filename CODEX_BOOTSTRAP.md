@@ -205,7 +205,12 @@ Phase 25.11 Docs, Postman + Runtime Regression: completed
 Phase 25.12 Subscription Release Gate + Tag: completed (v0.27.0-subscriptions-foundation)
 Phase 25 Unified Subscription & Entitlement Platform: completed
 Active product track: Phase 21 farmer-focused AI/RAG as Barzegar (برزگر)
-Next: Phase 21.7 Model Gateway, Prompt/Policy Registry + Routing
+Phase 21.7 Model Gateway, Prompt/Policy Registry + Routing: completed.
+Credentialed OpenAI activation is deferred because the Provider returned
+`429 insufficient_quota` and the owner currently has no international payment
+card. Keep `AI_PROVIDER_ENABLED=false` until quota exists and a live smoke
+succeeds. Next: Phase 21.8 Subscription Quota, Technical Usage/Cost +
+Reconciliation. Evidence: `docs/ai/phase-21-model-gateway-routing.md`.
 ```
 
 Services means agricultural operational services, not equipment rental.
