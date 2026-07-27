@@ -10,6 +10,7 @@ from app.core.openapi import install_typed_openapi
 from app.core.rate_limit import create_rate_limit_middleware
 from app.core.security_headers import create_security_headers_middleware
 from app.modules.admin.router import router as admin_router
+from app.modules.ai.router import router as ai_router
 from app.modules.auth.router import router as auth_router
 from app.modules.consultants.admin_router import router as admin_consultants_router
 from app.modules.consultants.router import router as consultants_router
@@ -164,6 +165,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_farms_router, prefix=settings.api_v1_prefix)
     app.include_router(subscriptions_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_subscriptions_router, prefix=settings.api_v1_prefix)
+    app.include_router(ai_router, prefix=settings.api_v1_prefix)
 
     register_exception_handlers(app)
     install_typed_openapi(app)

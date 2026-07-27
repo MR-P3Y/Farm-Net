@@ -140,6 +140,7 @@ class AIRequest(Base):
         BigInteger, ForeignKey("ai_context_consents.id", ondelete="RESTRICT"), index=True
     )
     idempotency_key: Mapped[str] = mapped_column(String(180), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     feature_code: Mapped[str] = mapped_column(String(120), nullable=False)
     request_kind: Mapped[str] = mapped_column(String(30), nullable=False)
     status: Mapped[str] = mapped_column(
@@ -162,6 +163,13 @@ class AIRequest(Base):
     )
     started_at: Mapped[datetime | None] = mapped_column(DateTime)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    next_attempt_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False, index=True
+    )
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    locked_by: Mapped[str | None] = mapped_column(String(120))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime, index=True)
 
     conversation: Mapped["AIConversation"] = relationship(back_populates="requests")
     attempts: Mapped[list["AIExecutionAttempt"]] = relationship(back_populates="request")
@@ -200,7 +208,19 @@ class AIRequest(Base):
             "AND completed_at IS NOT NULL)",
             name="ck_ai_requests_lifecycle",
         ),
+        CheckConstraint(
+            "attempt_count >= 0 AND max_attempts BETWEEN 1 AND 10 "
+            "AND attempt_count <= max_attempts",
+            name="ck_ai_requests_attempts",
+        ),
+        CheckConstraint(
+            "(status = 'running' AND locked_by IS NOT NULL "
+            "AND lease_expires_at IS NOT NULL) OR "
+            "(status <> 'running' AND locked_by IS NULL AND lease_expires_at IS NULL)",
+            name="ck_ai_requests_lease",
+        ),
         Index("ix_ai_requests_user_status_requested", "user_id", "status", "requested_at"),
+        Index("ix_ai_requests_queue", "status", "next_attempt_at", "processing_priority"),
     )
 
 
@@ -218,6 +238,7 @@ class AIMessage(Base):
         BigInteger, ForeignKey("ai_requests.id", ondelete="RESTRICT"), index=True
     )
     role: Mapped[str] = mapped_column(String(20), nullable=False)
+    request_message_kind: Mapped[str | None] = mapped_column(String(20))
     content: Mapped[str] = mapped_column(Text, nullable=False)
     content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     safety_label: Mapped[str | None] = mapped_column(String(80))
@@ -227,11 +248,19 @@ class AIMessage(Base):
     conversation: Mapped["AIConversation"] = relationship(back_populates="messages")
 
     __table_args__ = (
+        UniqueConstraint("request_id", "request_message_kind", name="uq_ai_message_request_kind"),
         CheckConstraint(
             "role IN ('user','assistant','tool')",
             name="ck_ai_messages_role",
         ),
         CheckConstraint("CHAR_LENGTH(content) > 0", name="ck_ai_messages_content_nonempty"),
+        CheckConstraint(
+            "(request_message_kind IS NULL) OR "
+            "(request_message_kind = 'input' AND role = 'user' AND request_id IS NOT NULL) OR "
+            "(request_message_kind = 'output' AND role = 'assistant' "
+            "AND request_id IS NOT NULL)",
+            name="ck_ai_messages_request_kind",
+        ),
         Index("ix_ai_messages_conversation_created", "conversation_id", "created_at"),
     )
 

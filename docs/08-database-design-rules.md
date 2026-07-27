@@ -1337,6 +1337,12 @@ lineage، checksum، model version، point identity و lifecycle را نگه م�
 Qdrant مخزن برداری خارجی است. retrieval فقط از source/version تأییدشده مجاز
 است و citation باید به chunk و صفحهٔ تغییرناپذیر برگردد.
 
+در Phase 21.5، `ai_requests` دارای fingerprint، زمان آماده‌بودن، شمارنده و سقف
+attempt، worker lease و index صف شد. `ai_messages.request_message_kind` ورودی
+و خروجی هر request را exact-once می‌کند. claim باید با row lock و
+`SKIP LOCKED` باشد؛ lease منقضی باید attempt قبلی را ببندد و سقف retry نباید
+request را در وضعیت running رها کند.
+
 ---
 
 # 33. جدول‌های Social

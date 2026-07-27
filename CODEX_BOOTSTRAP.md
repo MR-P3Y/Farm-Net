@@ -163,6 +163,7 @@ Phase 21.1 Barzegar AI/RAG Real-State Audit + Product/Privacy Boundary: complete
 Phase 21.2 AI Core DB, Permissions, Retention + Provider-Neutral Contracts: completed (a21c4b82a6e0)
 Phase 21.3 Knowledge Source Governance, Ingestion + Persian Extraction: completed (b21d5c93b7f1)
 Phase 21.4 Retrieval Store, Chunking, Embeddings + Citation Contracts: completed (c21e6d04c8a2)
+Phase 21.5 Conversation, Request/Run + Idempotent Async Workflow: completed (d21f7e15d9b3)
 Phase 22.1 Production Readiness Real-State Audit: completed
 Phase 22.2 Release, Branch, Version + Documentation Governance: completed
 Phase 22.3 Production Configuration, Secret + Dev-Switch Safety: completed
@@ -203,7 +204,7 @@ Phase 25.11 Docs, Postman + Runtime Regression: completed
 Phase 25.12 Subscription Release Gate + Tag: completed (v0.27.0-subscriptions-foundation)
 Phase 25 Unified Subscription & Entitlement Platform: completed
 Active product track: Phase 21 farmer-focused AI/RAG as Barzegar (برزگر)
-Next: Phase 21.5 Conversation, Request/Run + Idempotent Async Workflow
+Next: Phase 21.6 Selected Farm Context, Consent, Freshness + Privacy Hardening
 ```
 
 Services means agricultural operational services, not equipment rental.

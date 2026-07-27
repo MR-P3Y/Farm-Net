@@ -1112,6 +1112,17 @@ next. All 338 Backend tests, Ruff/compileall, MySQL no-drift, Qdrant CRUD/query
 smoke and both application and Qdrant health passed. Evidence:
 `docs/ai/phase-21-retrieval-foundation.md`.
 
+Phase 21.5 added six typed owner-scoped Barzegar conversation/request APIs and
+hardened the database-backed async queue at Alembic head `d21f7e15d9b3`.
+Canonical request fingerprints enforce exact idempotent replay; queue claims
+use `SKIP LOCKED`, bounded leases/retries, monotonic attempts, stale-worker
+recovery, terminal exhaustion, and exact-once input/output messages. Provider,
+Farm context, and quota execution remain deliberately disconnected until Steps
+21.6–21.8. Step 21.6 Selected Farm Context, Consent, Freshness + Privacy
+Hardening is next. All 344 Backend tests, MySQL migration/no-drift, real
+create/replay/cancel/cleanup, five-path/six-operation OpenAPI inspection, and
+health passed. Evidence: `docs/ai/phase-21-async-workflow.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

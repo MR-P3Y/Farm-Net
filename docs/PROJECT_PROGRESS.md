@@ -2381,6 +2381,27 @@ assistant.
 - Next: Step 21.5 Conversation, Request/Run + Idempotent Async Workflow.
 - Evidence: `docs/ai/phase-21-retrieval-foundation.md`.
 
+### Step 21.5 Conversation, Request/Run + Idempotent Async Workflow
+
+- Added six typed owner-scoped APIs for conversation create/list/detail,
+  request submit/status, and queued cancellation.
+- Added canonical request fingerprints; exact replays return the original row
+  and changed payload reuse returns a stable conflict.
+- Added database queue availability, priority, attempt bounds, worker identity,
+  lease expiry, queue indexes, and exact-once input/output message kinds.
+- Worker claims use row locks with `SKIP LOCKED`; stale leases close their
+  running attempt before bounded retry and terminal exhaustion cannot remain
+  stuck in `running`.
+- Owner contracts hide idempotency, fingerprint, worker, lease, attempt, and
+  Provider internals.
+- Provider, selected-Farm context, and Subscription quota execution remain
+  explicitly reserved for Steps 21.6, 21.7, and 21.8.
+- All 344 Backend tests, Ruff/compileall, MySQL migration/no-drift, runtime
+  create/replay/cancel/cleanup, five-path/six-operation OpenAPI inspection, and
+  app/database/Redis health passed.
+- Next: Step 21.6 Selected Farm Context, Consent, Freshness + Privacy Hardening.
+- Evidence: `docs/ai/phase-21-async-workflow.md`.
+
 ## Progress Update Rule
 
 After every completed step:
