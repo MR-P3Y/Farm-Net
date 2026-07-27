@@ -1203,6 +1203,18 @@ rendered. Flutter analyze, all 72 tests, and Web build/Wasm dry run passed;
 generated build output was not staged. Step 21.13 Admin Barzegar Governance is
 next. Evidence: `docs/ai/phase-21-mobile-barzegar.md`.
 
+Phase 21.13 Admin Knowledge, Runs, Feedback + Safety Operations is completed.
+Ten permission-scoped `/api/v1/admin/ai/*` paths provide overview,
+privacy-safe run metadata, usage/TOMAN cost, feedback, governed knowledge source
+lifecycle, safe audit, prompt policies, and model registry metadata. Admin
+contracts exclude conversation content, selected-Farm context, fingerprints,
+idempotency keys, and Provider credentials. The Admin Flutter `/ai` page
+provides overview, run, knowledge, usage, and policy views with audited
+draft→review→approve/reject operations. Ruff/compileall, 372 Backend tests,
+Admin analyze, 30 Admin tests, Web build/Wasm dry run, health, and all 10
+OpenAPI paths passed. Step 21.14 Evaluation, Observability, Abuse + Concurrency
+Hardening is next. Evidence: `docs/ai/phase-21-admin-governance.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

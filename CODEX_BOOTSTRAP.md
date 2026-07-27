@@ -241,6 +241,15 @@ diary suggestions, and snapshot-backed reports. Permission, subscription/quota,
 safety, Provider-disabled, loading, empty, and error states are rendered.
 Flutter analyze, 72 tests, and Web build/Wasm dry run passed. Next: Phase 21.13
 Admin Barzegar Governance. Evidence: `docs/ai/phase-21-mobile-barzegar.md`.
+Phase 21.13 Admin Knowledge, Runs, Feedback + Safety Operations: completed.
+Ten permission-scoped Admin AI paths and the Admin Flutter `/ai` page cover
+privacy-safe run metadata, usage/TOMAN cost, feedback, knowledge source
+governance, safe audit, policy and model registry views. Private prompt/context
+and credentials are excluded. Knowledge review is lifecycle-guarded and
+audited. Verification: Ruff/compileall, 372 Backend tests, Admin analyze,
+30 Admin tests, Web build/Wasm dry run, health, and 10 OpenAPI paths passed.
+Next: Phase 21.14 Evaluation, Observability, Abuse + Concurrency Hardening.
+Evidence: `docs/ai/phase-21-admin-governance.md`.
 ```
 
 Services means agricultural operational services, not equipment rental.

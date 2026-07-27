@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/admin_auth_gate.dart';
 import '../../features/auth/admin_login_page.dart';
+import '../../features/ai/presentation/admin_ai_page.dart';
 import '../../features/commission/presentation/admin_commission_page.dart';
 import '../../features/consultants/presentation/admin_consultants_page.dart';
 import '../../features/dashboard/admin_dashboard_page.dart';
@@ -39,6 +40,15 @@ final GoRouter adminRouter = GoRouter(
         return AdminAuthGate(child: AdminAppShell(child: child));
       },
       routes: [
+        GoRoute(
+          path: '/ai',
+          name: 'admin-ai',
+          builder:
+              (context, state) => const AdminPermissionGuard(
+                permission: 'ai.requests.read',
+                child: AdminAIPage(),
+              ),
+        ),
         GoRoute(
           path: '/subscriptions',
           name: 'admin-subscriptions',

@@ -31,6 +31,9 @@ class AdminSidebar extends ConsumerWidget {
     final canReadBilling = ref.watch(adminAuthStateProvider).hasAnyPermission(
       const ['billing.plans.read', 'billing.subscriptions.read'],
     );
+    final canReadAI = ref
+        .watch(adminAuthStateProvider)
+        .hasPermission('ai.requests.read');
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -106,6 +109,13 @@ class AdminSidebar extends ConsumerWidget {
                     label: 'پلن‌ها و اشتراک‌ها',
                     compact: isCompact,
                     onTap: () => context.go('/subscriptions'),
+                  ),
+                if (canReadAI)
+                  _SidebarItem(
+                    icon: Icons.auto_awesome_outlined,
+                    label: 'حاکمیت برزگر',
+                    compact: isCompact,
+                    onTap: () => context.go('/ai'),
                   ),
                 _SidebarItem(
                   icon: Icons.receipt_long_outlined,

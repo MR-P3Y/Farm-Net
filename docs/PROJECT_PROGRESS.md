@@ -2526,6 +2526,32 @@ Status: completed
 - Next: Step 21.13 Admin Barzegar Governance.
 - Evidence: `docs/ai/phase-21-mobile-barzegar.md`.
 
+### Step 21.13 Admin Knowledge, Runs, Feedback + Safety Operations
+
+Status: completed
+
+- Added 10 permission-scoped Admin Barzegar API paths.
+- Added privacy-safe request/run monitoring without conversation text,
+  selected-Farm context, fingerprints, or idempotency keys.
+- Added usage/token/latency/Provider model and TOMAN cost monitoring.
+- Added feedback, safe audit, prompt-policy, and model registry reads without
+  Provider credentials.
+- Added governed knowledge source create, submit, approve, and reject actions.
+- Enforced `draft -> in_review -> approved|rejected` with reason, reviewer, and
+  audit event.
+- Added permission-protected Admin Flutter `/ai` navigation and five typed
+  operational views.
+- Backend Ruff/compileall: OK.
+- Backend tests: 372 passed.
+- Admin analyze: OK.
+- Admin tests: 30 passed.
+- Admin Web build and Wasm dry run: OK.
+- Runtime app/database/Redis health: OK.
+- OpenAPI Admin Barzegar paths: 10.
+- No migration required.
+- Next: Step 21.14 Evaluation, Observability, Abuse + Concurrency Hardening.
+- Evidence: `docs/ai/phase-21-admin-governance.md`.
+
 ## Progress Update Rule
 
 After every completed step:
