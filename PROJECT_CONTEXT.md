@@ -1179,7 +1179,18 @@ visible evidence, uncertainty, and human review rather than claim certain
 diagnosis. All 363 Backend tests passed. Real owner-image runtime was skipped
 because no qualifying owner image exists in development; no artificial user
 Media was created. Step 21.11 Smart Diary Suggestions + Farmer Reports is next.
-Evidence: `docs/ai/phase-21-image-analysis.md`.
+
+Phase 21.11 is completed at Alembic head `k21g8e5c1029`. Smart-diary and report
+requests now require purpose-matched selected-Farm consent. Barzegar creates a
+typed pending diary suggestion and never changes the Farm diary automatically;
+only the owner accept endpoint can create one audited real Farm operation, while
+reject and repeat decisions remain idempotent. Farmer reports are owner-private,
+exact-once per AI request, and retain an immutable source snapshot with the
+selected Farm/Plot/Cycle, context freshness hash, and real operation/input/
+harvest counts. Ruff, compileall, 368 backend tests, migration, and database/
+Redis health passed. Live Provider generation remains disabled pending OpenAI
+billing. Step 21.12 Mobile Barzegar Assistant is next.
+Evidence: `docs/ai/phase-21-smart-diary-reports.md`.
 
 ## Known Gaps
 

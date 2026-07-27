@@ -324,6 +324,78 @@ class AIRequestMedia(Base):
     )
 
 
+class AIDiarySuggestion(Base):
+    __tablename__ = "ai_diary_suggestions"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    request_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_requests.id", ondelete="RESTRICT"), nullable=False, unique=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False
+    )
+    farm_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farms.id", ondelete="RESTRICT"), nullable=False
+    )
+    plot_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_plots.id", ondelete="RESTRICT"), nullable=False
+    )
+    crop_cycle_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farm_crop_cycles.id", ondelete="RESTRICT"), nullable=False
+    )
+    proposed_operation: Mapped[dict] = mapped_column(JSON, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
+    farm_operation_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_operations.id", ondelete="RESTRICT"), unique=True
+    )
+    rejection_reason: Mapped[str | None] = mapped_column(String(500))
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending','accepted','rejected')",
+            name="ck_ai_diary_suggestions_status",
+        ),
+        CheckConstraint(
+            "(status = 'pending' AND decided_at IS NULL AND farm_operation_id IS NULL) OR "
+            "(status = 'accepted' AND decided_at IS NOT NULL AND farm_operation_id IS NOT NULL) OR "
+            "(status = 'rejected' AND decided_at IS NOT NULL AND farm_operation_id IS NULL)",
+            name="ck_ai_diary_suggestions_decision",
+        ),
+        Index("ix_ai_diary_suggestions_owner_status", "user_id", "status", "created_at"),
+    )
+
+
+class AIFarmerReport(Base):
+    __tablename__ = "ai_farmer_reports"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    request_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_requests.id", ondelete="RESTRICT"), nullable=False, unique=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False
+    )
+    farm_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farms.id", ondelete="RESTRICT"), nullable=False
+    )
+    plot_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_plots.id", ondelete="RESTRICT")
+    )
+    crop_cycle_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_crop_cycles.id", ondelete="RESTRICT")
+    )
+    source_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
+    narrative: Mapped[str] = mapped_column(Text, nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("CHAR_LENGTH(narrative) > 0", name="ck_ai_farmer_reports_narrative"),
+        Index("ix_ai_farmer_reports_owner_generated", "user_id", "generated_at"),
+    )
+
+
 class AIExecutionAttempt(Base):
     __tablename__ = "ai_execution_attempts"
 

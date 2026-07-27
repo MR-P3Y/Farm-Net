@@ -224,7 +224,16 @@ Next: Phase 21.10 Image Analysis Boundary + Evidence-Gated Diagnosis.
 Phase 21.10 Image Analysis Boundary + Evidence-Gated Diagnosis: completed.
 Owner-scoped Media evidence is bounded and immutable; image conclusions require
 visible evidence, uncertainty, and human review. Next: Phase 21.11 Smart Diary
-Suggestions + Farmer Reports. Evidence: `docs/ai/phase-21-image-analysis.md`.
+Suggestions + Farmer Reports.
+Phase 21.11 Smart Diary Suggestions + Farmer Reports: completed at Alembic head
+`k21g8e5c1029`. Context is mandatory; smart-diary output becomes a typed,
+owner-private pending suggestion and is written to the real audited Farm diary
+only after explicit owner acceptance. Reports are exact-once owner artifacts
+with real operation/input/harvest count snapshots. Verification: Ruff,
+compileall, 368 backend tests, migration and database/Redis health passed.
+OpenAI live generation remains disabled until billing is activated. Next:
+Phase 21.12 Mobile Barzegar Assistant.
+Evidence: `docs/ai/phase-21-smart-diary-reports.md`.
 ```
 
 Services means agricultural operational services, not equipment rental.

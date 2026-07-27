@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
+from app.modules.farms.enums import FarmOperationType
 
 
 class AIConversationCreateIn(BaseModel):
@@ -33,6 +34,50 @@ class AIHumanEscalationCreateIn(BaseModel):
     note: str | None = Field(default=None, max_length=2000)
 
     model_config = {"extra": "forbid"}
+
+
+class AIDiaryOperationProposal(BaseModel):
+    operation_type: FarmOperationType
+    title: str = Field(min_length=1, max_length=180)
+    occurred_on: date
+    notes: str | None = Field(default=None, max_length=5000)
+
+    model_config = {"extra": "forbid"}
+
+
+class AIDiaryDecisionIn(BaseModel):
+    reason: str | None = Field(default=None, max_length=500)
+
+    model_config = {"extra": "forbid"}
+
+
+class AIDiarySuggestionOut(BaseModel):
+    id: int
+    request_id: int
+    farm_id: int
+    plot_id: int
+    crop_cycle_id: int
+    proposed_operation: dict
+    status: str
+    farm_operation_id: int | None
+    rejection_reason: str | None
+    decided_at: datetime | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AIFarmerReportOut(BaseModel):
+    id: int
+    request_id: int
+    farm_id: int
+    plot_id: int | None
+    crop_cycle_id: int | None
+    source_snapshot: dict
+    narrative: str
+    generated_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class AIContextConsentCreateIn(BaseModel):

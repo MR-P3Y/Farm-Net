@@ -7,6 +7,9 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.ai.schemas import (
     AIHumanEscalationCreateIn,
+    AIDiaryDecisionIn,
+    AIDiarySuggestionOut,
+    AIFarmerReportOut,
     AIContextConsentCreateIn,
     AIContextConsentListResponse,
     AIContextConsentOut,
@@ -23,6 +26,7 @@ from app.modules.ai.schemas import (
     AIRequestResponse,
 )
 from app.modules.ai.context_service import AIContextService
+from app.modules.ai.farmer_tools import AIFarmerToolsService
 from app.modules.ai.workflow_service import AIWorkflowService
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
@@ -209,5 +213,67 @@ def escalate_request(
     return success_response(
         data=AIRequestOut.model_validate(row).model_dump(mode="json"),
         message="Consult request created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/diary-suggestions")
+def list_diary_suggestions(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("ai.requests.read_own")),
+):
+    rows = AIFarmerToolsService(db).list_suggestions(user=user)
+    return success_response(
+        data=[AIDiarySuggestionOut.model_validate(row).model_dump(mode="json") for row in rows],
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/diary-suggestions/{suggestion_id}/accept")
+def accept_diary_suggestion(
+    suggestion_id: int,
+    payload: AIDiaryDecisionIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("farms.manage_own")),
+):
+    row = AIFarmerToolsService(db).decide(
+        user=user, suggestion_id=suggestion_id, accept=True, payload=payload
+    )
+    return success_response(
+        data=AIDiarySuggestionOut.model_validate(row).model_dump(mode="json"),
+        message="Diary suggestion accepted",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/diary-suggestions/{suggestion_id}/reject")
+def reject_diary_suggestion(
+    suggestion_id: int,
+    payload: AIDiaryDecisionIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("ai.requests.read_own")),
+):
+    row = AIFarmerToolsService(db).decide(
+        user=user, suggestion_id=suggestion_id, accept=False, payload=payload
+    )
+    return success_response(
+        data=AIDiarySuggestionOut.model_validate(row).model_dump(mode="json"),
+        message="Diary suggestion rejected",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/farmer-reports")
+def list_farmer_reports(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("ai.requests.read_own")),
+):
+    rows = AIFarmerToolsService(db).list_reports(user=user)
+    return success_response(
+        data=[AIFarmerReportOut.model_validate(row).model_dump(mode="json") for row in rows],
         meta={"trace_id": request.state.trace_id},
     )

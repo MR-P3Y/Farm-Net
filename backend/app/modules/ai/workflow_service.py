@@ -17,6 +17,7 @@ from app.modules.ai.models import (
     AIUsageRecord,
 )
 from app.modules.ai.image_analysis import AIImageAnalysisService
+from app.modules.ai.farmer_tools import AIFarmerToolsService
 from app.modules.ai.context_service import AIContextService
 from app.modules.ai.policy_registry import AIPolicyRegistry
 from app.modules.ai.quota_bridge import AIQuotaBridge
@@ -196,6 +197,12 @@ class AIWorkflowService:
                 user_id=user.id,
                 consent_id=payload.context_consent_id,
                 request_kind=payload.request_kind,
+            )
+        if payload.request_kind in {"smart_diary", "report"} and context_manifest is None:
+            raise AppException(
+                "AI_CONTEXT_REQUIRED",
+                "Smart diary and farmer reports require selected Farm context consent",
+                422,
             )
         reservation_id = None
         try:
@@ -538,6 +545,27 @@ class AIWorkerService:
                 user_id=row.user_id,
                 reservation_id=row.billing_reservation_id,
                 reason=validation.failure_code or "ai_output_validation_failed",
+            )
+            self.db.refresh(row)
+            return row
+        try:
+            AIFarmerToolsService(self.db).materialize_success(
+                request=row,
+                content=output,
+            )
+        except AppException as exc:
+            attempt.status = "failed"
+            attempt.failure_code = exc.code
+            attempt.completed_at = now
+            row.status = "blocked"
+            row.failure_code = exc.code
+            row.completed_at = now
+            row.locked_by = None
+            row.lease_expires_at = None
+            AIQuotaBridge(self.db).release(
+                user_id=row.user_id,
+                reservation_id=row.billing_reservation_id,
+                reason=exc.code,
             )
             self.db.refresh(row)
             return row

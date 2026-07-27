@@ -2484,7 +2484,25 @@ assistant.
 - Ruff/compileall, 363 Backend tests, migration/no-drift, and health passed.
 - Real owner-image smoke skipped: no qualifying owner image exists locally.
 - Next: Step 21.11 Smart Diary Suggestions + Farmer Reports.
-- Evidence: `docs/ai/phase-21-image-analysis.md`.
+
+### Step 21.11 Smart Diary Suggestions + Farmer Reports
+
+Status: completed
+
+- Added exact-once, owner-scoped `ai_diary_suggestions` and
+  `ai_farmer_reports` artifacts at Alembic head `k21g8e5c1029`.
+- Smart diary and report requests now require matching selected-Farm consent.
+- Smart diary output is a typed pending proposal; it never auto-writes Farm
+  data. Explicit owner acceptance creates one real audited Farm operation using
+  the active-cycle, date, ownership, and operation-type contracts.
+- Owner rejection and repeated terminal decisions are idempotent.
+- Farmer reports retain a source snapshot with the selected Farm/Plot/Cycle,
+  context freshness hash, and real operation/input/harvest counts.
+- Added owner list/accept/reject/report APIs and contract tests.
+- Ruff, compileall, 368 backend tests, migration, database and Redis health: OK.
+- Live Provider generation remains disabled until OpenAI billing is activated.
+- Next: Step 21.12 Mobile Barzegar Assistant.
+- Evidence: `docs/ai/phase-21-smart-diary-reports.md`.
 
 ## Progress Update Rule
 
