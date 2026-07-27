@@ -159,7 +159,7 @@ Phase 19.8 Admin Review/Report Moderation Panel: completed
 Phase 19.9 Cross-Domain Contract + Runtime Hardening: completed
 Phase 19.10 Docs, Postman + Runtime Regression: completed
 Phase 19.11 Reviews/Ratings/Reports Release Gate + Tag: completed (v0.25.0-reviews-foundation)
-Phase 21 AI/RAG: deferred by owner decision
+Phase 21.1 Barzegar AI/RAG Real-State Audit + Product/Privacy Boundary: completed
 Phase 22.1 Production Readiness Real-State Audit: completed
 Phase 22.2 Release, Branch, Version + Documentation Governance: completed
 Phase 22.3 Production Configuration, Secret + Dev-Switch Safety: completed
@@ -199,7 +199,8 @@ Phase 25.10 Security, Concurrency, Audit + Reconciliation Hardening: completed
 Phase 25.11 Docs, Postman + Runtime Regression: completed
 Phase 25.12 Subscription Release Gate + Tag: completed (v0.27.0-subscriptions-foundation)
 Phase 25 Unified Subscription & Entitlement Platform: completed
-Next: resume Phase 21 farmer-focused AI/RAG as Barzegar (برزگر)
+Active product track: Phase 21 farmer-focused AI/RAG as Barzegar (برزگر)
+Next: Phase 21.2 AI Core DB, Permissions, Retention + Provider-Neutral Contracts
 ```
 
 Services means agricultural operational services, not equipment rental.

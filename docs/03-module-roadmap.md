@@ -1756,7 +1756,12 @@ DUST_WARNING
 
 ---
 
-# 23. Legacy Module Note — AI / RAG Core
+# 23. Active Module — Barzegar AI / RAG Core
+
+Official product name: **Barzegar (برزگر)**. Phase 21 is farmer-focused and
+resumed after the Phase 24 Farm Management and Phase 25 Subscription releases.
+The authoritative real-state boundary and 16-step implementation sequence are
+in `docs/ai/phase-21-barzegar-real-state-audit.md`.
 
 ## هدف
 

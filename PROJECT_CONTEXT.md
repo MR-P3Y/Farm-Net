@@ -667,8 +667,9 @@ database/seed, Runtime/OpenAPI, Review regression, Mobile, Admin, Postman, and
 Git. Phase 19 Reviews / Ratings / Reports is complete and released as
 `v0.25.0-reviews-foundation`.
 
-Phase 21 AI/RAG is intentionally deferred by owner decision. Phase 22
-Production Hardening is active. Step 22.1 audited the real release baseline and
+At that milestone, Phase 21 AI/RAG was intentionally deferred by owner
+decision while Phase 22 Production Hardening became active. Step 22.1 audited
+the real release baseline and
 confirmed healthy development Runtime/tests alongside production blockers:
 no CI/CD or production topology, placeholder Nginx/backup, `main` 122 commits
 behind `develop`, four Alembic index drifts, mostly untyped OpenAPI responses,
@@ -1062,6 +1063,18 @@ The next product track is Phase 21 farmer-focused AI/RAG. The official
 Farm-Net AI name is **Barzegar (برزگر)**, meaning farmer/cultivator. Barzegar
 must use the Phase 25 Entitlement and quota boundary rather than creating a
 separate subscription system.
+
+Phase 21.1 completed the real-state audit and Barzegar product/privacy
+boundary. There is no implemented AI runtime, Provider, RAG index, AI database
+schema, Mobile/Admin AI surface, or trusted knowledge registry yet. The
+implemented prerequisites are Phase 24 private multi-Farm context and Phase 25
+atomic Entitlement/quota with seven typed AI features. Thirty PDFs under
+`docs/FARMER` remain unapproved candidate sources, not trusted RAG knowledge.
+Barzegar is provider-neutral, farmer-focused, citation-bearing, consent-scoped,
+and safety-gated; it does not autonomously prescribe or mutate Farm records.
+The approved implementation has 16 steps. Step 21.2 AI Core DB, Permissions,
+Retention + Provider-Neutral Contracts is next. Evidence:
+`docs/ai/phase-21-barzegar-real-state-audit.md`.
 
 ## Known Gaps
 

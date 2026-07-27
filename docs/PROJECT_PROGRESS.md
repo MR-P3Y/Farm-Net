@@ -2298,6 +2298,31 @@ model fields exist:
   **Barzegar (برزگر)**.
 - Evidence: `docs/subscriptions/phase-25-release-gate.md`.
 
+## Phase 21 — Barzegar Farmer AI/RAG
+
+Official product name: **Barzegar (برزگر)** — Farm-Net agricultural AI
+assistant.
+
+### Step 21.1 Real-State Audit + Product/Privacy Boundary
+
+- Verified that no AI runtime, Provider adapter, RAG index, AI tables/routes,
+  Mobile/Admin AI feature, or approved knowledge registry exists yet.
+- Confirmed Phase 24 provides explicit owner-selected multi-Farm context and
+  Phase 25 provides atomic quota for seven typed AI capabilities.
+- Classified all 30 `docs/FARMER` PDFs as unapproved candidate sources until
+  provenance, licensing, version, extraction, approval, and revocation are
+  governed.
+- Defined Barzegar as farmer-focused, Provider-neutral, cited,
+  privacy/consent-scoped, safety-gated, and integrated with the existing
+  Subscription quota boundary.
+- Explicitly excluded autonomous prescriptions, silent access to all Farms,
+  production Provider enablement, ungoverned web/document ingestion, and
+  assumed self-hosted GPU infrastructure.
+- Approved the 16-step Phase 21 sequence.
+- Next: Step 21.2 AI Core DB, Permissions, Retention + Provider-Neutral
+  Contracts.
+- Evidence: `docs/ai/phase-21-barzegar-real-state-audit.md`.
+
 ## Progress Update Rule
 
 After every completed step:
