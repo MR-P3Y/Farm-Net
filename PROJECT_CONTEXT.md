@@ -1146,6 +1146,19 @@ activation remains disabled until a successful credentialed smoke can be run.
 Step 21.8 Subscription Quota, Technical Usage/Cost + Reconciliation is next. Evidence:
 `docs/ai/phase-21-model-gateway-routing.md`.
 
+Phase 21.8 is completed at Alembic head `h21d5b29e7f6`. Barzegar now consumes
+the existing Phase 25 Entitlements and exact-once quota reservations; metered
+requests reserve one unit, boolean features require enabled access, and queue
+priority comes from `ai.processing_priority`. Usable success finalizes quota
+and writes exact-once technical usage; cancellation, stale context, exhausted
+attempts, and terminal failures release it. Versioned model pricing accepts
+only product-approved TOMAN rates and leaves cost null instead of guessing
+currency conversion. Read-only reconciliation detects commercial/technical
+drift. All 357 Backend tests, migration/no-drift, real reserve-release and
+reserve-finalize-cleanup flows, and health passed. Step 21.9 Agricultural
+Safety, Output Validation + Human Escalation is next. Evidence:
+`docs/ai/phase-21-subscription-quota-usage.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

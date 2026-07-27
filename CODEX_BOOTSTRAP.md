@@ -211,6 +211,12 @@ Credentialed OpenAI activation is deferred because the Provider returned
 card. Keep `AI_PROVIDER_ENABLED=false` until quota exists and a live smoke
 succeeds. Next: Phase 21.8 Subscription Quota, Technical Usage/Cost +
 Reconciliation. Evidence: `docs/ai/phase-21-model-gateway-routing.md`.
+Phase 21.8 Subscription Quota, Technical Usage/Cost + Reconciliation:
+completed. Barzegar uses Phase 25 Entitlements/reservations, finalizes only
+usable success, releases terminal failure/cancellation, records exact-once
+technical usage, and permits only configured TOMAN cost rates. Next: Phase
+21.9 Agricultural Safety, Output Validation + Human Escalation. Evidence:
+`docs/ai/phase-21-subscription-quota-usage.md`.
 ```
 
 Services means agricultural operational services, not equipment rental.

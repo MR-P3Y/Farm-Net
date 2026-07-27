@@ -1,6 +1,7 @@
 import hashlib
 import json
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from sqlalchemy import case, or_, select
 from sqlalchemy.orm import Session
@@ -10,10 +11,14 @@ from app.modules.ai.models import (
     AIConversation,
     AIExecutionAttempt,
     AIMessage,
+    AIModelConfiguration,
     AIRequest,
+    AIUsageRecord,
 )
 from app.modules.ai.context_service import AIContextService
 from app.modules.ai.policy_registry import AIPolicyRegistry
+from app.modules.ai.quota_bridge import AIQuotaBridge
+from app.modules.ai.contracts import AIProviderUsage
 from app.modules.ai.schemas import AIRequestCreateIn
 from app.modules.auth.models import AuthUser
 
@@ -130,6 +135,16 @@ class AIWorkflowService:
                 consent_id=payload.context_consent_id,
                 request_kind=payload.request_kind,
             )
+        reservation_id = None
+        try:
+            reservation_id, processing_priority = AIQuotaBridge(self.db).authorize(
+                user_id=user.id,
+                feature_code=payload.feature_code,
+                request_idempotency_key=payload.idempotency_key,
+            )
+        except Exception:
+            self.db.rollback()
+            raise
         row = AIRequest(
             conversation_id=conversation_id,
             user_id=user.id,
@@ -138,7 +153,7 @@ class AIWorkflowService:
             feature_code=payload.feature_code,
             request_kind=payload.request_kind,
             status="queued",
-            processing_priority="standard",
+            processing_priority=processing_priority,
             prompt_policy_version=route.prompt_policy.version,
             routing_policy_version=route.route_version,
             next_attempt_at=now,
@@ -147,21 +162,31 @@ class AIWorkflowService:
             context_consent_id=context_consent.id if context_consent else None,
             context_manifest=context_manifest,
             context_captured_at=context_captured_at,
+            billing_reservation_id=reservation_id,
         )
-        self.db.add(row)
-        self.db.flush()
-        self.db.add(
-            AIMessage(
-                conversation_id=conversation_id,
-                request_id=row.id,
-                role="user",
-                request_message_kind="input",
-                content=content,
-                content_sha256=hashlib.sha256(content.encode()).hexdigest(),
+        try:
+            self.db.add(row)
+            self.db.flush()
+            self.db.add(
+                AIMessage(
+                    conversation_id=conversation_id,
+                    request_id=row.id,
+                    role="user",
+                    request_message_kind="input",
+                    content=content,
+                    content_sha256=hashlib.sha256(content.encode()).hexdigest(),
+                )
             )
-        )
-        conversation.updated_at = now
-        self.db.commit()
+            conversation.updated_at = now
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            AIQuotaBridge(self.db).release(
+                user_id=user.id,
+                reservation_id=reservation_id,
+                reason="ai_request_create_failed",
+            )
+            raise
         self.db.refresh(row)
         return row
 
@@ -189,7 +214,11 @@ class AIWorkflowService:
             )
         row.status = "cancelled"
         row.completed_at = datetime.utcnow()
-        self.db.commit()
+        AIQuotaBridge(self.db).release(
+            user_id=row.user_id,
+            reservation_id=row.billing_reservation_id,
+            reason="ai_request_cancelled",
+        )
         self.db.refresh(row)
         return row
 
@@ -265,6 +294,11 @@ class AIWorkerService:
             exhausted.completed_at = now
             exhausted.locked_by = None
             exhausted.lease_expires_at = None
+            AIQuotaBridge(self.db).release(
+                user_id=exhausted.user_id,
+                reservation_id=exhausted.billing_reservation_id,
+                reason="ai_attempts_exhausted",
+            )
 
         row = self.db.scalar(
             select(AIRequest)
@@ -297,7 +331,11 @@ class AIWorkerService:
             row.completed_at = now
             row.locked_by = None
             row.lease_expires_at = None
-            self.db.commit()
+            AIQuotaBridge(self.db).release(
+                user_id=row.user_id,
+                reservation_id=row.billing_reservation_id,
+                reason="ai_context_stale",
+            )
             return None
 
         if row.status == "running":
@@ -356,7 +394,16 @@ class AIWorkerService:
         self.db.refresh(attempt)
         return row, attempt
 
-    def record_success(self, *, request_id: int, attempt_id: int, content: str) -> AIRequest:
+    def record_success(
+        self,
+        *,
+        request_id: int,
+        attempt_id: int,
+        content: str,
+        usage: AIProviderUsage | None = None,
+        latency_ms: int = 0,
+        provider_request_id: str | None = None,
+    ) -> AIRequest:
         row, attempt = self._locked_run(request_id=request_id, attempt_id=attempt_id)
         now = datetime.utcnow()
         output = content.strip()
@@ -380,14 +427,67 @@ class AIWorkerService:
                 )
             )
         attempt.status = "succeeded"
+        attempt.provider_request_id = provider_request_id
         attempt.completed_at = now
         row.status = "succeeded"
         row.completed_at = now
         row.locked_by = None
         row.lease_expires_at = None
-        self.db.commit()
+        if usage is not None:
+            existing_usage = self.db.scalar(
+                select(AIUsageRecord).where(AIUsageRecord.request_id == row.id)
+            )
+            if existing_usage is None:
+                cost = self._provider_cost_toman(
+                    model_configuration_id=attempt.model_configuration_id,
+                    usage=usage,
+                )
+                self.db.add(
+                    AIUsageRecord(
+                        request_id=row.id,
+                        attempt_id=attempt.id,
+                        user_id=row.user_id,
+                        provider_key=attempt.provider_key,
+                        model_key=attempt.model_key,
+                        input_tokens=usage.input_tokens,
+                        output_tokens=usage.output_tokens,
+                        cached_input_tokens=usage.cached_input_tokens,
+                        provider_cost_amount=cost,
+                        provider_cost_currency="TOMAN" if cost is not None else None,
+                        latency_ms=max(0, latency_ms),
+                    )
+                )
+        AIQuotaBridge(self.db).finalize(
+            user_id=row.user_id,
+            reservation_id=row.billing_reservation_id,
+        )
         self.db.refresh(row)
         return row
+
+    def _provider_cost_toman(
+        self,
+        *,
+        model_configuration_id: int | None,
+        usage: AIProviderUsage,
+    ) -> Decimal | None:
+        if model_configuration_id is None:
+            return None
+        model = self.db.get(AIModelConfiguration, model_configuration_id)
+        if (
+            model is None
+            or model.input_cost_per_million_toman is None
+            or model.cached_input_cost_per_million_toman is None
+            or model.output_cost_per_million_toman is None
+        ):
+            return None
+        cached = min(usage.cached_input_tokens, usage.input_tokens)
+        uncached = usage.input_tokens - cached
+        cost = (
+            Decimal(uncached) * model.input_cost_per_million_toman
+            + Decimal(cached) * model.cached_input_cost_per_million_toman
+            + Decimal(usage.output_tokens) * model.output_cost_per_million_toman
+        ) / Decimal(1_000_000)
+        return cost.quantize(Decimal("0.00000001"))
 
     def record_failure(
         self,
@@ -414,7 +514,14 @@ class AIWorkerService:
             row.status = "failed"
             row.failure_code = failure_code
             row.completed_at = now
-        self.db.commit()
+        if row.status == "failed":
+            AIQuotaBridge(self.db).release(
+                user_id=row.user_id,
+                reservation_id=row.billing_reservation_id,
+                reason=failure_code,
+            )
+        else:
+            self.db.commit()
         self.db.refresh(row)
         return row
 

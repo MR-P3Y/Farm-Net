@@ -164,7 +164,7 @@ class AIRequest(Base):
     prompt_policy_version: Mapped[str] = mapped_column(String(80), nullable=False)
     routing_policy_version: Mapped[str] = mapped_column(String(80), nullable=False)
     retrieval_version: Mapped[str | None] = mapped_column(String(80))
-    context_manifest: Mapped[dict | None] = mapped_column(JSON)
+    context_manifest: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
     context_captured_at: Mapped[datetime | None] = mapped_column(DateTime)
     billing_reservation_id: Mapped[int | None] = mapped_column(
         BigInteger,
@@ -352,7 +352,7 @@ class AIUsageRecord(Base):
     output_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     cached_input_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     provider_cost_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 8))
-    provider_cost_currency: Mapped[str | None] = mapped_column(String(3))
+    provider_cost_currency: Mapped[str | None] = mapped_column(String(5))
     latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
     recorded_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False, index=True
@@ -366,7 +366,7 @@ class AIUsageRecord(Base):
         CheckConstraint("latency_ms >= 0", name="ck_ai_usage_latency_nonnegative"),
         CheckConstraint(
             "(provider_cost_amount IS NULL AND provider_cost_currency IS NULL) OR "
-            "(provider_cost_amount >= 0 AND CHAR_LENGTH(provider_cost_currency) = 3)",
+            "(provider_cost_amount >= 0 AND provider_cost_currency = 'TOMAN')",
             name="ck_ai_usage_cost_pair",
         ),
         Index("ix_ai_usage_user_recorded", "user_id", "recorded_at"),
@@ -420,6 +420,9 @@ class AIModelConfiguration(Base):
     timeout_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
     max_output_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
     reasoning_effort: Mapped[str] = mapped_column(String(20), nullable=False)
+    input_cost_per_million_toman: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    cached_input_cost_per_million_toman: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    output_cost_per_million_toman: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -436,6 +439,15 @@ class AIModelConfiguration(Base):
         CheckConstraint(
             "reasoning_effort IN ('none','low','medium','high','xhigh','max')",
             name="ck_ai_model_configuration_reasoning",
+        ),
+        CheckConstraint(
+            "(input_cost_per_million_toman IS NULL "
+            "AND cached_input_cost_per_million_toman IS NULL "
+            "AND output_cost_per_million_toman IS NULL) OR "
+            "(input_cost_per_million_toman >= 0 "
+            "AND cached_input_cost_per_million_toman >= 0 "
+            "AND output_cost_per_million_toman >= 0)",
+            name="ck_ai_model_configuration_toman_rates",
         ),
     )
 

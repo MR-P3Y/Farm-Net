@@ -2440,6 +2440,26 @@ assistant.
   Reconciliation.
 - Evidence: `docs/ai/phase-21-model-gateway-routing.md`.
 
+### Step 21.8 Subscription Quota, Technical Usage/Cost + Reconciliation
+
+- Reused Phase 25 Billing Entitlements and reservations; no parallel
+  Subscription or quota tables were added.
+- Metered AI requests reserve one unit exactly once before queue insertion;
+  boolean AI features require enabled access without fake numeric usage.
+- Resolved processing priority from the active Subscription Entitlement.
+- Finalized only usable successful answers and released cancellation, stale
+  context, terminal failure, and exhausted-attempt reservations.
+- Added exact-once Provider/model/token/latency usage and optional versioned
+  TOMAN-only cost calculation; no exchange rate is guessed.
+- Added read-only reconciliation across request, commercial reservation, and
+  technical usage states.
+- Fixed optional context JSON to persist SQL `NULL` and added compensation for
+  request flush/commit failure discovered by real runtime regression.
+- Ruff/compileall, all 357 Backend tests, Alembic head/no-drift, two real MySQL
+  quota lifecycle flows, and app/database/Redis health passed.
+- Next: Step 21.9 Agricultural Safety, Output Validation + Human Escalation.
+- Evidence: `docs/ai/phase-21-subscription-quota-usage.md`.
+
 ## Progress Update Rule
 
 After every completed step:
