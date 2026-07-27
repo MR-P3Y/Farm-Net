@@ -1215,6 +1215,19 @@ Admin analyze, 30 Admin tests, Web build/Wasm dry run, health, and all 10
 OpenAPI paths passed. Step 21.14 Evaluation, Observability, Abuse + Concurrency
 Hardening is next. Evidence: `docs/ai/phase-21-admin-governance.md`.
 
+Phase 21.14 Evaluation, Observability, Abuse + Concurrency Hardening is
+completed. Versioned draft-first evaluation suites now provide transactional
+activation/retirement, deterministic safety and quality scoring, exact-once
+runs, release thresholds, and digest-only candidate retention. A dedicated
+Admin-only permission protects the three evaluation APIs. Six bounded
+Prometheus metric families expose AI outcomes without private/high-cardinality
+labels. Per-user locking and a five-active-request ceiling close concurrent
+submission bypasses while preserving worker `SKIP LOCKED`, leases, and
+idempotency. Ruff/compileall, 379 Backend tests, Alembic head/no-drift,
+idempotent seed, runtime health, metrics, and OpenAPI passed. Step 21.15 AI
+Docs/Postman + Runtime Regression is next. Evidence:
+`docs/ai/phase-21-evaluation-observability.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

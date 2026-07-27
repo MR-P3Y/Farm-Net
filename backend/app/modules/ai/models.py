@@ -1079,3 +1079,106 @@ class AIResponseCitation(Base):
             name="ck_ai_citation_score",
         ),
     )
+
+
+class AIEvaluationSuite(Base):
+    __tablename__ = "ai_evaluation_suites"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    suite_key: Mapped[str] = mapped_column(String(100), nullable=False)
+    version: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(250), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="draft", nullable=False)
+    active_scope: Mapped[str | None] = mapped_column(String(100), unique=True)
+    minimum_pass_rate: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    created_by_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("suite_key", "version", name="uq_ai_eval_suite_version"),
+        CheckConstraint("status IN ('draft','active','retired')", name="ck_ai_eval_suite_status"),
+        CheckConstraint(
+            "minimum_pass_rate BETWEEN 0.5 AND 1", name="ck_ai_eval_suite_minimum_rate"
+        ),
+        CheckConstraint(
+            "(status = 'active' AND active_scope IS NOT NULL) OR "
+            "(status <> 'active' AND active_scope IS NULL)",
+            name="ck_ai_eval_suite_active_scope",
+        ),
+    )
+
+
+class AIEvaluationCase(Base):
+    __tablename__ = "ai_evaluation_cases"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    suite_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_evaluation_suites.id", ondelete="RESTRICT"), nullable=False
+    )
+    case_key: Mapped[str] = mapped_column(String(100), nullable=False)
+    request_kind: Mapped[str] = mapped_column(String(30), nullable=False)
+    prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    required_terms: Mapped[list] = mapped_column(JSON, nullable=False)
+    forbidden_terms: Mapped[list] = mapped_column(JSON, nullable=False)
+    requires_uncertainty: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    requires_human_review: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("suite_id", "case_key", name="uq_ai_eval_case_suite_key"),
+        CheckConstraint(
+            "request_kind IN ('text','farm_context','deep_analysis','image_analysis',"
+            "'smart_diary','report')",
+            name="ck_ai_eval_case_kind",
+        ),
+    )
+
+
+class AIEvaluationRun(Base):
+    __tablename__ = "ai_evaluation_runs"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    suite_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_evaluation_suites.id", ondelete="RESTRICT"), nullable=False
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(180), nullable=False, unique=True)
+    model_configuration_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("ai_model_configurations.id", ondelete="RESTRICT")
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    total_cases: Mapped[int] = mapped_column(Integer, nullable=False)
+    passed_cases: Mapped[int] = mapped_column(Integer, nullable=False)
+    pass_rate: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    release_passed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    completed_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('completed')", name="ck_ai_eval_run_status"),
+        CheckConstraint(
+            "total_cases > 0 AND passed_cases BETWEEN 0 AND total_cases",
+            name="ck_ai_eval_run_counts",
+        ),
+        CheckConstraint("pass_rate BETWEEN 0 AND 1", name="ck_ai_eval_run_rate"),
+    )
+
+
+class AIEvaluationResult(Base):
+    __tablename__ = "ai_evaluation_results"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    run_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_evaluation_runs.id", ondelete="RESTRICT"), nullable=False
+    )
+    case_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_evaluation_cases.id", ondelete="RESTRICT"), nullable=False
+    )
+    passed: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    failure_codes: Mapped[list] = mapped_column(JSON, nullable=False)
+    output_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("run_id", "case_id", name="uq_ai_eval_result_run_case"),
+    )

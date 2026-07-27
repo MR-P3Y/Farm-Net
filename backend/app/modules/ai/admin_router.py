@@ -15,8 +15,12 @@ from app.modules.ai.admin_schemas import (
     AIAdminPolicyOut,
     AIAdminRequestOut,
     AIAdminUsageOut,
+    AIEvaluationRunIn,
+    AIEvaluationRunOut,
+    AIEvaluationSuiteCreateIn,
 )
 from app.modules.ai.admin_service import AIAdminService
+from app.modules.ai.evaluation import AIEvaluationService, EvaluationCandidate
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
 
@@ -197,5 +201,69 @@ def list_models(
             AIAdminModelOut.model_validate(row).model_dump(mode="json")
             for row in AIAdminService(db).models()
         ],
+        meta=_meta(request),
+    )
+
+
+@router.post("/evaluation/suites", status_code=status.HTTP_201_CREATED)
+def create_evaluation_suite(
+    payload: AIEvaluationSuiteCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("ai.evaluation.manage")),
+):
+    row = AIEvaluationService(db).create_suite(actor=user, payload=payload)
+    return success_response(
+        data={
+            "id": row.id,
+            "suite_key": row.suite_key,
+            "version": row.version,
+            "title": row.title,
+            "status": row.status,
+            "minimum_pass_rate": str(row.minimum_pass_rate),
+        },
+        meta=_meta(request),
+    )
+
+
+@router.post("/evaluation/suites/{suite_id}/activate")
+def activate_evaluation_suite(
+    suite_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("ai.evaluation.manage")),
+):
+    row = AIEvaluationService(db).activate_suite(suite_id=suite_id)
+    return success_response(
+        data={
+            "id": row.id,
+            "suite_key": row.suite_key,
+            "version": row.version,
+            "title": row.title,
+            "status": row.status,
+            "minimum_pass_rate": str(row.minimum_pass_rate),
+        },
+        meta=_meta(request),
+    )
+
+
+@router.post("/evaluation/runs")
+def run_evaluation(
+    payload: AIEvaluationRunIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("ai.evaluation.manage")),
+):
+    row = AIEvaluationService(db).run(
+        suite_id=payload.suite_id,
+        idempotency_key=payload.idempotency_key,
+        model_configuration_id=payload.model_configuration_id,
+        candidates=[
+            EvaluationCandidate(case_key=item.case_key, output=item.output)
+            for item in payload.candidates
+        ],
+    )
+    return success_response(
+        data=AIEvaluationRunOut.model_validate(row).model_dump(mode="json"),
         meta=_meta(request),
     )

@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import case, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppException
@@ -24,6 +24,14 @@ from app.modules.ai.quota_bridge import AIQuotaBridge
 from app.modules.ai.contracts import AIProviderUsage
 from app.modules.ai.schemas import AIHumanEscalationCreateIn, AIRequestCreateIn
 from app.modules.ai.safety import AgriculturalSafetyService
+from app.modules.ai.observability import (
+    AI_ABUSE_REJECTIONS,
+    AI_ATTEMPTS,
+    AI_PROVIDER_LATENCY,
+    AI_REQUESTS,
+    AI_SAFETY_BLOCKS,
+    sync_active_requests,
+)
 from app.modules.auth.models import AuthUser
 from app.modules.consultants.schemas import ConsultRequestCreateIn
 from app.modules.consultants.service import ConsultantService
@@ -81,6 +89,9 @@ class AIWorkflowService:
         conversation_id: int,
         payload: AIRequestCreateIn,
     ) -> AIRequest:
+        self.db.scalar(
+            select(AuthUser.id).where(AuthUser.id == user.id).with_for_update()
+        )
         conversation = self.get_conversation(user=user, conversation_id=conversation_id)
         if conversation.status != "active":
             raise AppException("AI_CONVERSATION_NOT_ACTIVE", "Conversation is not active", 409)
@@ -141,6 +152,19 @@ class AIWorkflowService:
                     409,
                 )
             return existing
+        active_count = self.db.scalar(
+            select(func.count(AIRequest.id)).where(
+                AIRequest.user_id == user.id,
+                AIRequest.status.in_(("queued", "running")),
+            )
+        ) or 0
+        if active_count >= 5:
+            AI_ABUSE_REJECTIONS.labels(reason="user_active_limit").inc()
+            raise AppException(
+                "AI_ACTIVE_REQUEST_LIMIT",
+                "Too many active Barzegar requests",
+                429,
+            )
 
         now = datetime.utcnow()
         safety = AgriculturalSafetyService.triage(content)
@@ -182,6 +206,8 @@ class AIWorkflowService:
                 )
             conversation.updated_at = now
             self.db.commit()
+            AI_REQUESTS.labels(request_kind=row.request_kind, status="blocked").inc()
+            AI_SAFETY_BLOCKS.labels(code=safety.code or "EMERGENCY").inc()
             self.db.refresh(row)
             return row
 
@@ -260,6 +286,8 @@ class AIWorkflowService:
             )
             raise
         self.db.refresh(row)
+        AI_REQUESTS.labels(request_kind=row.request_kind, status="queued").inc()
+        sync_active_requests(self.db)
         return row
 
     def get_request(self, *, user: AuthUser, request_id: int) -> AIRequest:
@@ -291,6 +319,8 @@ class AIWorkflowService:
             reservation_id=row.billing_reservation_id,
             reason="ai_request_cancelled",
         )
+        AI_REQUESTS.labels(request_kind=row.request_kind, status="cancelled").inc()
+        sync_active_requests(self.db)
         self.db.refresh(row)
         return row
 
@@ -416,6 +446,10 @@ class AIWorkerService:
                 reservation_id=exhausted.billing_reservation_id,
                 reason="ai_attempts_exhausted",
             )
+            AI_REQUESTS.labels(
+                request_kind=exhausted.request_kind, status="failed"
+            ).inc()
+            sync_active_requests(self.db)
 
         row = self.db.scalar(
             select(AIRequest)
@@ -453,6 +487,9 @@ class AIWorkerService:
                 reservation_id=row.billing_reservation_id,
                 reason="ai_context_stale",
             )
+            AI_REQUESTS.labels(request_kind=row.request_kind, status="blocked").inc()
+            AI_SAFETY_BLOCKS.labels(code="AI_CONTEXT_STALE").inc()
+            sync_active_requests(self.db)
             return None
 
         if row.status == "running":
@@ -546,6 +583,14 @@ class AIWorkerService:
                 reservation_id=row.billing_reservation_id,
                 reason=validation.failure_code or "ai_output_validation_failed",
             )
+            AI_ATTEMPTS.labels(
+                provider=attempt.provider_key, model=attempt.model_key, status="blocked"
+            ).inc()
+            AI_SAFETY_BLOCKS.labels(
+                code=validation.failure_code or "OUTPUT_VALIDATION"
+            ).inc()
+            AI_REQUESTS.labels(request_kind=row.request_kind, status="blocked").inc()
+            sync_active_requests(self.db)
             self.db.refresh(row)
             return row
         try:
@@ -567,6 +612,11 @@ class AIWorkerService:
                 reservation_id=row.billing_reservation_id,
                 reason=exc.code,
             )
+            AI_ATTEMPTS.labels(
+                provider=attempt.provider_key, model=attempt.model_key, status="blocked"
+            ).inc()
+            AI_REQUESTS.labels(request_kind=row.request_kind, status="blocked").inc()
+            sync_active_requests(self.db)
             self.db.refresh(row)
             return row
         existing = self.db.scalar(
@@ -621,6 +671,14 @@ class AIWorkerService:
             user_id=row.user_id,
             reservation_id=row.billing_reservation_id,
         )
+        AI_ATTEMPTS.labels(
+            provider=attempt.provider_key, model=attempt.model_key, status="succeeded"
+        ).inc()
+        AI_PROVIDER_LATENCY.labels(
+            provider=attempt.provider_key, model=attempt.model_key
+        ).observe(max(0, latency_ms) / 1000)
+        AI_REQUESTS.labels(request_kind=row.request_kind, status="succeeded").inc()
+        sync_active_requests(self.db)
         self.db.refresh(row)
         return row
 
@@ -680,8 +738,13 @@ class AIWorkerService:
                 reservation_id=row.billing_reservation_id,
                 reason=failure_code,
             )
+            AI_REQUESTS.labels(request_kind=row.request_kind, status="failed").inc()
+            sync_active_requests(self.db)
         else:
             self.db.commit()
+        AI_ATTEMPTS.labels(
+            provider=attempt.provider_key, model=attempt.model_key, status="failed"
+        ).inc()
         self.db.refresh(row)
         return row
 

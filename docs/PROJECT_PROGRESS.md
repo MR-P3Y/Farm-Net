@@ -2552,6 +2552,31 @@ Status: completed
 - Next: Step 21.14 Evaluation, Observability, Abuse + Concurrency Hardening.
 - Evidence: `docs/ai/phase-21-admin-governance.md`.
 
+### Step 21.14 Evaluation, Observability, Abuse + Concurrency Hardening
+
+Status: completed
+
+- Added four versioned evaluation tables at Alembic head `l21h9f6d2130`.
+- Added draft-first, transactionally activated suites that retire the previous
+  active version of the same suite.
+- Added deterministic quality/safety scoring and exact-once release-gate runs.
+- Stored only output SHA-256 and bounded failure codes, never candidate text.
+- Added dedicated Admin-only `ai.evaluation.manage`.
+- Added three Admin evaluation API paths.
+- Added six bounded Prometheus metric families without private or
+  high-cardinality labels.
+- Serialized submissions per user and capped queued/running requests at five.
+- Preserved worker `SKIP LOCKED`, leases, idempotency, and terminal accounting.
+- Backend Ruff/compileall: OK.
+- Backend tests: 379 passed.
+- Alembic current/head/no-drift: OK.
+- Auth seed idempotency: 12 roles, 285 permissions on repeated execution.
+- Runtime app/database/Redis health: OK.
+- OpenAPI evaluation paths: 3; expected AI metrics: 6/6.
+- Live Provider generation remains disabled pending OpenAI billing.
+- Next: Step 21.15 AI Docs/Postman + Runtime Regression.
+- Evidence: `docs/ai/phase-21-evaluation-observability.md`.
+
 ## Progress Update Rule
 
 After every completed step:

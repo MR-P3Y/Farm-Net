@@ -142,3 +142,53 @@ class AIAdminModelOut(BaseModel):
     enabled: bool
 
     model_config = {"from_attributes": True}
+
+
+class AIEvaluationCaseIn(BaseModel):
+    case_key: str = Field(min_length=3, max_length=100)
+    request_kind: str = Field(
+        pattern="^(text|farm_context|deep_analysis|image_analysis|smart_diary|report)$"
+    )
+    prompt: str = Field(min_length=3, max_length=12000)
+    required_terms: list[str] = Field(default_factory=list, max_length=20)
+    forbidden_terms: list[str] = Field(default_factory=list, max_length=20)
+    requires_uncertainty: bool = False
+    requires_human_review: bool = False
+
+
+class AIEvaluationSuiteCreateIn(BaseModel):
+    suite_key: str = Field(min_length=3, max_length=100)
+    version: str = Field(min_length=1, max_length=80)
+    title: str = Field(min_length=3, max_length=250)
+    minimum_pass_rate: Decimal = Field(ge=Decimal("0.5"), le=Decimal("1"))
+    cases: list[AIEvaluationCaseIn] = Field(min_length=1, max_length=200)
+
+    model_config = {"extra": "forbid"}
+
+
+class AIEvaluationCandidateIn(BaseModel):
+    case_key: str = Field(min_length=3, max_length=100)
+    output: str = Field(min_length=1, max_length=30000)
+
+
+class AIEvaluationRunIn(BaseModel):
+    suite_id: int = Field(ge=1)
+    idempotency_key: str = Field(min_length=8, max_length=180)
+    model_configuration_id: int | None = Field(default=None, ge=1)
+    candidates: list[AIEvaluationCandidateIn] = Field(min_length=1, max_length=200)
+
+    model_config = {"extra": "forbid"}
+
+
+class AIEvaluationRunOut(BaseModel):
+    id: int
+    suite_id: int
+    status: str
+    total_cases: int
+    passed_cases: int
+    pass_rate: Decimal
+    release_passed: bool
+    started_at: datetime
+    completed_at: datetime
+
+    model_config = {"from_attributes": True}

@@ -350,6 +350,7 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("ai.feedback.create_own", "Create own AI feedback", "ai", "Rate own AI answers"),
     PermissionSeed("ai.data.delete_own", "Delete own AI data", "ai", "Request deletion of own AI data"),
     PermissionSeed("ai.audit.read", "Read AI audit", "ai", "View safe AI audit events"),
+    PermissionSeed("ai.evaluation.manage", "Manage AI evaluation", "ai", "Manage versioned AI quality and safety release gates"),
     PermissionSeed("ai.retention.manage", "Manage AI retention", "ai", "Process AI retention and deletion work"),
 
     PermissionSeed("social.public_read", "Public read social", "social", "Allows public users to read published public social posts."),
@@ -960,6 +961,7 @@ def assign_default_permissions(
             "ai.retrieval.manage",
             "ai.usage.read",
             "ai.audit.read",
+            "ai.evaluation.manage",
             "ai.retention.manage",
             "farms.admin_read",
             "farms.admin_manage",

@@ -250,6 +250,16 @@ audited. Verification: Ruff/compileall, 372 Backend tests, Admin analyze,
 30 Admin tests, Web build/Wasm dry run, health, and 10 OpenAPI paths passed.
 Next: Phase 21.14 Evaluation, Observability, Abuse + Concurrency Hardening.
 Evidence: `docs/ai/phase-21-admin-governance.md`.
+Phase 21.14 Evaluation, Observability, Abuse + Concurrency Hardening: completed
+at Alembic head `l21h9f6d2130`. Versioned evaluation suites are draft-first,
+transactionally activated, and retire the prior active version. Deterministic
+exact-once release scoring stores only candidate digests. Three APIs require
+the Admin-only `ai.evaluation.manage` permission. Six bounded Prometheus metric
+families and per-user submission locking/five-active-request protection are in
+place. Ruff/compileall, 379 Backend tests, no-drift, repeated seed, runtime
+health, metrics, and OpenAPI passed. Next: Phase 21.15 AI Docs/Postman +
+Runtime Regression. Evidence:
+`docs/ai/phase-21-evaluation-observability.md`.
 ```
 
 Services means agricultural operational services, not equipment rental.
