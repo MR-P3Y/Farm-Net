@@ -234,6 +234,13 @@ compileall, 368 backend tests, migration and database/Redis health passed.
 OpenAI live generation remains disabled until billing is activated. Next:
 Phase 21.12 Mobile Barzegar Assistant.
 Evidence: `docs/ai/phase-21-smart-diary-reports.md`.
+Phase 21.12 Mobile Barzegar Assistant: completed. Authenticated Home exposes
+`/barzegar` with typed support for all six request kinds, explicit 24-hour
+Farm/Plot/Cycle context, private image upload, request refresh, farmer-confirmed
+diary suggestions, and snapshot-backed reports. Permission, subscription/quota,
+safety, Provider-disabled, loading, empty, and error states are rendered.
+Flutter analyze, 72 tests, and Web build/Wasm dry run passed. Next: Phase 21.13
+Admin Barzegar Governance. Evidence: `docs/ai/phase-21-mobile-barzegar.md`.
 ```
 
 Services means agricultural operational services, not equipment rental.

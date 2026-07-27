@@ -1192,6 +1192,17 @@ Redis health passed. Live Provider generation remains disabled pending OpenAI
 billing. Step 21.12 Mobile Barzegar Assistant is next.
 Evidence: `docs/ai/phase-21-smart-diary-reports.md`.
 
+Phase 21.12 Mobile Barzegar Assistant is completed. The authenticated Flutter
+Home now links to `/barzegar`, which provides typed chat, selected-Farm/deep
+analysis, private image evidence, smart-diary, and farmer-report flows for all
+six Backend request kinds. The farmer explicitly chooses a purpose-matched
+24-hour Farm/Plot/Cycle context, refreshes queued request state, accepts or
+rejects diary proposals, and reads real snapshot-backed reports. Loading,
+empty, permission, entitlement/quota, safety, and Provider-disabled states are
+rendered. Flutter analyze, all 72 tests, and Web build/Wasm dry run passed;
+generated build output was not staged. Step 21.13 Admin Barzegar Governance is
+next. Evidence: `docs/ai/phase-21-mobile-barzegar.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -2504,6 +2504,28 @@ Status: completed
 - Next: Step 21.12 Mobile Barzegar Assistant.
 - Evidence: `docs/ai/phase-21-smart-diary-reports.md`.
 
+### Step 21.12 Mobile Barzegar Assistant
+
+Status: completed
+
+- Added typed Mobile models/API/repository for Barzegar conversations,
+  requests, selected-Farm consent, diary suggestions, and farmer reports.
+- Covered all six real Backend request kinds and their exact feature codes.
+- Added the authenticated `/barzegar` Home entry and a three-section farmer UI:
+  chat, smart diary, and reports.
+- Added real Farm/Plot/Cycle selection with purpose-matched 24-hour consent.
+- Added private JPEG/PNG/WebP Media upload for evidence-gated image analysis.
+- Added request status refresh, safety copy, Provider-disabled notice, and
+  permission/entitlement/quota/error/empty/loading states.
+- Diary proposals require explicit farmer acceptance or rejection.
+- Reports render real operation/input/harvest snapshot counts.
+- Flutter analyze: OK.
+- Flutter tests: 72 passed.
+- Flutter Web build and Wasm dry run: OK.
+- Generated output was not staged.
+- Next: Step 21.13 Admin Barzegar Governance.
+- Evidence: `docs/ai/phase-21-mobile-barzegar.md`.
+
 ## Progress Update Rule
 
 After every completed step:

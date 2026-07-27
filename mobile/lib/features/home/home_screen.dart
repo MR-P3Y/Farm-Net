@@ -154,6 +154,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                     delegate: SliverChildListDelegate([
                       _DashboardTile(
+                        title: 'برزگر',
+                        subtitle: 'دستیار هوشمند کشاورز',
+                        icon: Icons.auto_awesome_rounded,
+                        color: Colors.amber.shade800,
+                        onTap: () => context.push('/barzegar'),
+                      ),
+                      _DashboardTile(
                         title: 'مزارع من',
                         subtitle: 'نظارت بر قطعات',
                         icon: Icons.grass_rounded,
