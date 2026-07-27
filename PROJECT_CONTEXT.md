@@ -1123,6 +1123,17 @@ Hardening is next. All 344 Backend tests, MySQL migration/no-drift, real
 create/replay/cancel/cleanup, five-path/six-operation OpenAPI inspection, and
 health passed. Evidence: `docs/ai/phase-21-async-workflow.md`.
 
+Phase 21.6 hardened selected-Farm context at Alembic head `e21a8f26e0c4`.
+Versioned, expiring and idempotent consent is owner-scoped across the real
+Farm/Plot/Crop Cycle hierarchy. Request snapshots contain a minimal allowlist
+and freshness checksum, not all Farms or unrestricted free text. Revoked,
+expired, cross-owner, archived, cancelled, or changed context cannot run; the
+worker blocks it with an explicit refresh requirement. Step 21.7 Model Gateway,
+Prompt/Policy Registry + Routing is next. Evidence:
+`docs/ai/phase-21-selected-farm-context.md`. All 349 Backend tests, real
+consent/request/revoke/stale-block/cleanup, seven-path/nine-operation OpenAPI,
+MySQL no-drift, and health passed.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

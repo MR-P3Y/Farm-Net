@@ -774,6 +774,10 @@ ai.retention.manage
 Permission نقش را کنترل می‌کند؛ Subscription Entitlement و quota دسترسی
 تجاری را کنترل می‌کنند. هیچ‌کدام جایگزین دیگری نیست.
 
+`ai.context.use_own` فقط اجازهٔ انتخاب context متعلق به همان کاربر را می‌دهد.
+این permission هرگز مجوز خواندن همهٔ مزارع یا Farm کاربر دیگر نیست و
+Farm/Plot/Cycle باید در Backend به‌صورت زنجیره‌ای ownership-check شوند.
+
 عملیات ثبت، ویرایش، بازبینی/تأیید و ingestion دانش مجزا هستند. Admin و
 Content Manager این عملیات را دریافت می‌کنند؛ کاربر عادی اجازه مدیریت منبع
 دانش یا index برداری ندارد.

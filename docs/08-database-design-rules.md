@@ -1343,6 +1343,12 @@ attempt، worker lease و index صف شد. `ai_messages.request_message_kind` و
 `SKIP LOCKED` باشد؛ lease منقضی باید attempt قبلی را ببندد و سقف retry نباید
 request را در وضعیت running رها کند.
 
+در Phase 21.6، consent مزرعه دارای idempotency، fingerprint انتخاب و
+active-scope یکتا شد. Crop Cycle بدون Plot مجاز نیست. snapshot درخواست فقط
+انتخاب صریح مالک را نگه می‌دارد و freshness checksum آن قبل از worker اجرا
+دوباره با Farm/Plot/Cycle واقعی مقایسه می‌شود؛ snapshot قدیمی نباید بی‌صدا
+تازه‌سازی شود.
+
 ---
 
 # 33. جدول‌های Social

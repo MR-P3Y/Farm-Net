@@ -12,6 +12,7 @@ from app.modules.ai.models import (
     AIMessage,
     AIRequest,
 )
+from app.modules.ai.context_service import AIContextService
 from app.modules.ai.schemas import AIRequestCreateIn
 from app.modules.auth.models import AuthUser
 
@@ -71,12 +72,27 @@ class AIWorkflowService:
         conversation = self.get_conversation(user=user, conversation_id=conversation_id)
         if conversation.status != "active":
             raise AppException("AI_CONVERSATION_NOT_ACTIVE", "Conversation is not active", 409)
+        expected_feature = {
+            "text": "ai.text_chat",
+            "farm_context": "ai.farm_context",
+            "deep_analysis": "ai.deep_analysis",
+            "image_analysis": "ai.image_analysis",
+            "smart_diary": "ai.smart_diary",
+            "report": "ai.report_export",
+        }[payload.request_kind]
+        if payload.feature_code != expected_feature:
+            raise AppException(
+                "AI_FEATURE_KIND_MISMATCH",
+                "AI feature does not match the request kind",
+                422,
+            )
         content = payload.content.strip()
         fingerprint = self._fingerprint(
             conversation_id=conversation_id,
             feature_code=payload.feature_code,
             request_kind=payload.request_kind,
             content=content,
+            context_consent_id=payload.context_consent_id,
         )
         existing = self.db.scalar(
             select(AIRequest).where(
@@ -94,6 +110,19 @@ class AIWorkflowService:
             return existing
 
         now = datetime.utcnow()
+        context_consent = None
+        context_manifest = None
+        context_captured_at = None
+        if payload.context_consent_id is not None:
+            (
+                context_consent,
+                context_manifest,
+                context_captured_at,
+            ) = AIContextService(self.db).capture_manifest(
+                user_id=user.id,
+                consent_id=payload.context_consent_id,
+                request_kind=payload.request_kind,
+            )
         row = AIRequest(
             conversation_id=conversation_id,
             user_id=user.id,
@@ -107,6 +136,9 @@ class AIWorkflowService:
             next_attempt_at=now,
             attempt_count=0,
             max_attempts=3,
+            context_consent_id=context_consent.id if context_consent else None,
+            context_manifest=context_manifest,
+            context_captured_at=context_captured_at,
         )
         self.db.add(row)
         self.db.flush()
@@ -160,15 +192,19 @@ class AIWorkflowService:
         feature_code: str,
         request_kind: str,
         content: str,
+        context_consent_id: int | None = None,
     ) -> str:
+        values = {
+            "conversation_id": conversation_id,
+            "feature_code": feature_code,
+            "request_kind": request_kind,
+            "content": content,
+            "prompt_policy_version": "barzegar-v1",
+        }
+        if context_consent_id is not None:
+            values["context_consent_id"] = context_consent_id
         canonical = json.dumps(
-            {
-                "conversation_id": conversation_id,
-                "feature_code": feature_code,
-                "request_kind": request_kind,
-                "content": content,
-                "prompt_policy_version": "barzegar-v1",
-            },
+            values,
             ensure_ascii=False,
             sort_keys=True,
             separators=(",", ":"),
@@ -238,6 +274,19 @@ class AIWorkerService:
         if row is None:
             if exhausted is not None:
                 self.db.commit()
+            return None
+
+        if row.context_manifest is not None and not AIContextService(self.db).is_manifest_fresh(
+            request_context=row.context_manifest,
+            user_id=row.user_id,
+        ):
+            row.status = "blocked"
+            row.failure_code = "AI_CONTEXT_STALE"
+            row.safety_code = "CONTEXT_REFRESH_REQUIRED"
+            row.completed_at = now
+            row.locked_by = None
+            row.lease_expires_at = None
+            self.db.commit()
             return None
 
         if row.status == "running":

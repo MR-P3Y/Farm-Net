@@ -88,6 +88,9 @@ class AIContextConsent(Base):
     crop_cycle_id: Mapped[int | None] = mapped_column(
         BigInteger, ForeignKey("farm_crop_cycles.id", ondelete="RESTRICT"), index=True
     )
+    idempotency_key: Mapped[str] = mapped_column(String(180), nullable=False)
+    selection_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    active_scope: Mapped[str | None] = mapped_column(String(64))
     purpose: Mapped[str] = mapped_column(String(80), nullable=False)
     consent_version: Mapped[str] = mapped_column(String(40), nullable=False)
     status: Mapped[str] = mapped_column(
@@ -100,6 +103,8 @@ class AIContextConsent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (
+        UniqueConstraint("user_id", "idempotency_key", name="uq_ai_context_user_idempotency"),
+        UniqueConstraint("active_scope", name="uq_ai_context_active_scope"),
         CheckConstraint(
             "purpose IN ('answer_question','deep_analysis','image_analysis',"
             "'smart_diary','report')",
@@ -118,6 +123,15 @@ class AIContextConsent(Base):
         CheckConstraint(
             "expires_at IS NULL OR expires_at > granted_at",
             name="ck_ai_context_consents_expiry",
+        ),
+        CheckConstraint(
+            "crop_cycle_id IS NULL OR plot_id IS NOT NULL",
+            name="ck_ai_context_consents_cycle_requires_plot",
+        ),
+        CheckConstraint(
+            "(status = 'active' AND active_scope IS NOT NULL) OR "
+            "(status <> 'active' AND active_scope IS NULL)",
+            name="ck_ai_context_consents_active_scope",
         ),
         Index("ix_ai_context_consents_user_farm_status", "user_id", "farm_id", "status"),
     )

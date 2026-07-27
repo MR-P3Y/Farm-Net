@@ -21,8 +21,57 @@ class AIRequestCreateIn(BaseModel):
         default="text",
         pattern="^(text|farm_context|deep_analysis|image_analysis|smart_diary|report)$",
     )
+    context_consent_id: int | None = Field(default=None, ge=1)
 
     model_config = {"extra": "forbid"}
+
+
+class AIContextConsentCreateIn(BaseModel):
+    idempotency_key: str = Field(min_length=8, max_length=180)
+    farm_id: int = Field(ge=1)
+    plot_id: int | None = Field(default=None, ge=1)
+    crop_cycle_id: int | None = Field(default=None, ge=1)
+    purpose: str = Field(
+        pattern="^(answer_question|deep_analysis|image_analysis|smart_diary|report)$"
+    )
+    expires_in_hours: int = Field(default=24, ge=1, le=168)
+
+    model_config = {"extra": "forbid"}
+
+
+class AIContextConsentRevokeIn(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
+
+    model_config = {"extra": "forbid"}
+
+
+class AIContextConsentOut(BaseModel):
+    id: int
+    farm_id: int
+    plot_id: int | None
+    crop_cycle_id: int | None
+    purpose: str
+    consent_version: str
+    status: str
+    granted_at: datetime
+    expires_at: datetime | None
+    revoked_at: datetime | None
+
+    model_config = {"from_attributes": True}
+
+
+class AIContextConsentResponse(BaseModel):
+    success: bool
+    data: AIContextConsentOut
+    message: str
+    meta: dict
+
+
+class AIContextConsentListResponse(BaseModel):
+    success: bool
+    data: list[AIContextConsentOut]
+    message: str
+    meta: dict
 
 
 class AIMessageOut(BaseModel):

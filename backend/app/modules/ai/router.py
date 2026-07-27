@@ -6,6 +6,11 @@ from sqlalchemy.orm import Session
 from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.ai.schemas import (
+    AIContextConsentCreateIn,
+    AIContextConsentListResponse,
+    AIContextConsentOut,
+    AIContextConsentResponse,
+    AIContextConsentRevokeIn,
     AIConversationCreateIn,
     AIConversationDetailOut,
     AIConversationDetailResponse,
@@ -16,12 +21,64 @@ from app.modules.ai.schemas import (
     AIRequestOut,
     AIRequestResponse,
 )
+from app.modules.ai.context_service import AIContextService
 from app.modules.ai.workflow_service import AIWorkflowService
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
 
 
 router = APIRouter(prefix="/ai", tags=["Barzegar AI"])
+
+
+@router.post(
+    "/context-consents",
+    response_model=AIContextConsentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_context_consent(
+    payload: AIContextConsentCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("ai.context.use_own")),
+):
+    row = AIContextService(db).create_consent(user=user, payload=payload)
+    return success_response(
+        data=AIContextConsentOut.model_validate(row).model_dump(mode="json"),
+        message="Selected Farm context consent created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/context-consents", response_model=AIContextConsentListResponse)
+def list_context_consents(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("ai.context.use_own")),
+):
+    rows = AIContextService(db).list_consents(user=user)
+    return success_response(
+        data=[AIContextConsentOut.model_validate(row).model_dump(mode="json") for row in rows],
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post(
+    "/context-consents/{consent_id}/revoke",
+    response_model=AIContextConsentResponse,
+)
+def revoke_context_consent(
+    consent_id: int,
+    payload: AIContextConsentRevokeIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("ai.context.use_own")),
+):
+    row = AIContextService(db).revoke(user=user, consent_id=consent_id, reason=payload.reason)
+    return success_response(
+        data=AIContextConsentOut.model_validate(row).model_dump(mode="json"),
+        message="Selected Farm context consent revoked",
+        meta={"trace_id": request.state.trace_id},
+    )
 
 
 @router.post(

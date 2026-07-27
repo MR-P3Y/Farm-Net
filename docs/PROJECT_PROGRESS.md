@@ -2402,6 +2402,23 @@ assistant.
 - Next: Step 21.6 Selected Farm Context, Consent, Freshness + Privacy Hardening.
 - Evidence: `docs/ai/phase-21-async-workflow.md`.
 
+### Step 21.6 Selected Farm Context, Consent, Freshness + Privacy Hardening
+
+- Added three typed owner APIs for selected-Farm consent create/list/revoke.
+- Added consent idempotency, stable selection fingerprint, one-active scope,
+  version, bounded expiry, hierarchy, revocation, and lifecycle constraints.
+- Revalidated real Farm owner → Plot → Crop Cycle lineage at consent and request
+  capture time; inaccessible selections return a non-enumerating not-found.
+- Added minimal allowlisted context snapshots and excluded descriptions, notes,
+  boundaries, precise coordinates, media, history, and other Farms by default.
+- Added freshness hashing and worker-time revalidation; changed or inactive
+  context blocks execution and requires a new snapshot.
+- All 349 Backend tests, Ruff/compileall, MySQL migration/no-drift, real
+  consent/request/revoke/stale-block/cleanup, seven-path/nine-operation OpenAPI
+  inspection, and app/database/Redis health passed.
+- Next: Step 21.7 Model Gateway, Prompt/Policy Registry + Routing.
+- Evidence: `docs/ai/phase-21-selected-farm-context.md`.
+
 ## Progress Update Rule
 
 After every completed step:
