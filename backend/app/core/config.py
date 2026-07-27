@@ -24,6 +24,10 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://redis:6379/0"
     redis_url_file: str = ""
+    qdrant_url: str = "http://qdrant:6333"
+    qdrant_api_key: str = ""
+    qdrant_api_key_file: str = ""
+    qdrant_timeout_seconds: int = 10
     media_storage_dir: str = "storage/media"
 
     auth_dev_otp_enabled: bool = True
@@ -108,6 +112,7 @@ class Settings(BaseSettings):
             ("sms_api_key", "sms_api_key_file"),
             ("push_api_key", "push_api_key_file"),
             ("payment_merchant_id", "payment_merchant_id_file"),
+            ("qdrant_api_key", "qdrant_api_key_file"),
         )
         for value_field, file_field in secret_fields:
             secret_file = getattr(self, file_field).strip()

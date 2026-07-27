@@ -765,6 +765,7 @@ ai.knowledge_sources.create
 ai.knowledge_sources.update
 ai.knowledge_sources.review
 ai.knowledge_ingestion.manage
+ai.retrieval.manage
 ai.usage.read
 ai.audit.read
 ai.retention.manage
@@ -775,7 +776,7 @@ Permission نقش را کنترل می‌کند؛ Subscription Entitlement و qu
 
 عملیات ثبت، ویرایش، بازبینی/تأیید و ingestion دانش مجزا هستند. Admin و
 Content Manager این عملیات را دریافت می‌کنند؛ کاربر عادی اجازه مدیریت منبع
-دانش ندارد.
+دانش یا index برداری ندارد.
 
 ---
 

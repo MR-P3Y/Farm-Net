@@ -2361,6 +2361,26 @@ assistant.
 - Next: Step 21.4 Retrieval Store, Chunking, Embeddings + Citation Contracts.
 - Evidence: `docs/ai/phase-21-knowledge-governance.md`.
 
+### Step 21.4 Retrieval Store, Chunking, Embeddings + Citation Contracts
+
+- Added four normalized MySQL tables for page chunks, embedding model registry,
+  external point lifecycle, and immutable response citations.
+- Selected pinned Qdrant `v1.18.2` as the external vector store; vector arrays
+  are not stored in MySQL JSON.
+- Added deterministic Persian page chunking with offsets, overlap, SHA-256,
+  model/version contracts, and exact citation quote validation.
+- Enforced approved source/version, successful extraction, reviewed page,
+  active-point filtering, version filtering, exact-once indexes, and withdrawal
+  removal boundaries.
+- Added `ai.retrieval.manage` to Admin and Content Manager; ordinary users
+  receive no index-management access.
+- Real Qdrant collection/upsert/filtered-query/remove/cleanup/health smoke,
+  migration/no-drift, and seed twice with 284 permissions passed.
+- All 338 Backend tests, Ruff, compileall, app/database/Redis health, and Qdrant
+  health passed.
+- Next: Step 21.5 Conversation, Request/Run + Idempotent Async Workflow.
+- Evidence: `docs/ai/phase-21-retrieval-foundation.md`.
+
 ## Progress Update Rule
 
 After every completed step:

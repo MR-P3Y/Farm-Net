@@ -617,3 +617,175 @@ class AIKnowledgeExtractedPage(Base):
         ),
         CheckConstraint("quality_score BETWEEN 0 AND 1", name="ck_ai_extracted_pages_quality"),
     )
+
+
+class AIKnowledgeChunk(Base):
+    __tablename__ = "ai_knowledge_chunks"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    source_version_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_knowledge_source_versions.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    document_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_knowledge_documents.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    extracted_page_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_knowledge_extracted_pages.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    page_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    character_start: Mapped[int] = mapped_column(Integer, nullable=False)
+    character_end: Mapped[int] = mapped_column(Integer, nullable=False)
+    chunk_text: Mapped[str] = mapped_column(Text, nullable=False)
+    text_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    chunker_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    token_estimate: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "extracted_page_id",
+            "chunker_version",
+            "chunk_index",
+            name="uq_ai_chunk_page_version_index",
+        ),
+        CheckConstraint("page_number > 0", name="ck_ai_chunks_page_number"),
+        CheckConstraint("chunk_index >= 0", name="ck_ai_chunks_index"),
+        CheckConstraint(
+            "character_start >= 0 AND character_end > character_start",
+            name="ck_ai_chunks_character_range",
+        ),
+        CheckConstraint(
+            "CHAR_LENGTH(chunk_text) = character_end - character_start",
+            name="ck_ai_chunks_character_count",
+        ),
+        CheckConstraint("token_estimate > 0", name="ck_ai_chunks_token_estimate"),
+        Index("ix_ai_chunks_document_page_active", "document_id", "page_number", "is_active"),
+    )
+
+
+class AIEmbeddingModel(Base):
+    __tablename__ = "ai_embedding_models"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    model_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    dimensions: Mapped[int] = mapped_column(Integer, nullable=False)
+    distance_metric: Mapped[str] = mapped_column(String(20), nullable=False)
+    normalization: Mapped[str] = mapped_column(String(30), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    active_scope: Mapped[str | None] = mapped_column(String(30), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("model_key", "model_version", name="uq_ai_embedding_model_version"),
+        CheckConstraint("dimensions BETWEEN 8 AND 65536", name="ck_ai_embedding_dimensions"),
+        CheckConstraint(
+            "distance_metric IN ('cosine','dot','euclidean')",
+            name="ck_ai_embedding_distance",
+        ),
+        CheckConstraint("normalization IN ('none','l2')", name="ck_ai_embedding_normalization"),
+        CheckConstraint(
+            "(is_active = 1 AND active_scope = 'global') OR "
+            "(is_active = 0 AND active_scope IS NULL)",
+            name="ck_ai_embedding_active_scope",
+        ),
+    )
+
+
+class AIEmbeddingIndexRecord(Base):
+    __tablename__ = "ai_embedding_index_records"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    chunk_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_knowledge_chunks.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    embedding_model_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_embedding_models.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    store_key: Mapped[str] = mapped_column(String(80), nullable=False)
+    collection_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    point_id: Mapped[str] = mapped_column(String(180), nullable=False)
+    vector_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    failure_code: Mapped[str | None] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("chunk_id", "embedding_model_id", name="uq_ai_embedding_chunk_model"),
+        UniqueConstraint(
+            "store_key",
+            "collection_name",
+            "point_id",
+            name="uq_ai_embedding_store_point",
+        ),
+        CheckConstraint(
+            "status IN ('pending','indexed','failed','removed')",
+            name="ck_ai_embedding_index_status",
+        ),
+        CheckConstraint(
+            "(status = 'pending' AND indexed_at IS NULL AND removed_at IS NULL "
+            "AND failure_code IS NULL) OR "
+            "(status = 'indexed' AND indexed_at IS NOT NULL AND removed_at IS NULL "
+            "AND failure_code IS NULL) OR "
+            "(status = 'failed' AND failure_code IS NOT NULL) OR "
+            "(status = 'removed' AND indexed_at IS NOT NULL AND removed_at IS NOT NULL)",
+            name="ck_ai_embedding_index_lifecycle",
+        ),
+    )
+
+
+class AIResponseCitation(Base):
+    __tablename__ = "ai_response_citations"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    message_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_messages.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    chunk_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_knowledge_chunks.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    citation_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    quoted_text: Mapped[str] = mapped_column(Text, nullable=False)
+    quoted_text_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_title_snapshot: Mapped[str] = mapped_column(String(250), nullable=False)
+    source_version_snapshot: Mapped[str] = mapped_column(String(120), nullable=False)
+    page_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    retrieval_score: Mapped[Decimal | None] = mapped_column(Numeric(8, 7))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("message_id", "citation_order", name="uq_ai_citation_message_order"),
+        UniqueConstraint("message_id", "chunk_id", name="uq_ai_citation_message_chunk"),
+        CheckConstraint("citation_order > 0", name="ck_ai_citation_order"),
+        CheckConstraint("page_number > 0", name="ck_ai_citation_page"),
+        CheckConstraint("CHAR_LENGTH(quoted_text) > 0", name="ck_ai_citation_quote_nonempty"),
+        CheckConstraint(
+            "retrieval_score IS NULL OR retrieval_score BETWEEN 0 AND 1",
+            name="ck_ai_citation_score",
+        ),
+    )

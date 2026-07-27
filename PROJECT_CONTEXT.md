@@ -1101,6 +1101,17 @@ five-table runtime inspection, rebuilt image, and health passed. Step 21.4
 Retrieval Store, Chunking, Embeddings + Citation Contracts is next. Evidence:
 `docs/ai/phase-21-knowledge-governance.md`.
 
+Phase 21.4 added deterministic Persian page chunking, embedding
+model/index governance, immutable response citations, and a Provider-neutral
+retrieval-store contract at Alembic head `c21e6d04c8a2`. MySQL stores lineage
+and index identity, never vector arrays. Qdrant `v1.18.2` is the selected
+external vector store in the development topology; its adapter enforces
+approved/active payload filters and removal. No embedding or LLM Provider is
+enabled. Step 21.5 Conversation, Request/Run + Idempotent Async Workflow is
+next. All 338 Backend tests, Ruff/compileall, MySQL no-drift, Qdrant CRUD/query
+smoke and both application and Qdrant health passed. Evidence:
+`docs/ai/phase-21-retrieval-foundation.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

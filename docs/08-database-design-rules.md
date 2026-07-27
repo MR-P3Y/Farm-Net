@@ -1313,6 +1313,10 @@ ai_knowledge_source_versions
 ai_knowledge_documents
 ai_knowledge_ingestion_jobs
 ai_knowledge_extracted_pages
+ai_knowledge_chunks
+ai_embedding_models
+ai_embedding_index_records
+ai_response_citations
 ```
 
 قانون:
@@ -1328,7 +1332,10 @@ Billing reservation، Provider attempt، technical usage و Audit قابل رد�
 منبع دانش، نسخه، سند PDF، job استخراج و متن صفحه در Phase 21.3 اضافه شدند.
 تأیید منبع از استخراج جدا است؛ checksum و idempotency اجباری‌اند و هیچ سندی
 صرفاً با استخراج موفق، قابل retrieval نمی‌شود. chunk و embedding در Phase
-21.4 اضافه می‌شوند.
+21.4 اضافه شدند. بردار واقعی در MySQL یا JSON ذخیره نمی‌شود؛ MySQL فقط
+lineage، checksum، model version، point identity و lifecycle را نگه می‌دارد و
+Qdrant مخزن برداری خارجی است. retrieval فقط از source/version تأییدشده مجاز
+است و citation باید به chunk و صفحهٔ تغییرناپذیر برگردد.
 
 ---
 

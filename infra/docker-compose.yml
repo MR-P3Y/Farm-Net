@@ -15,6 +15,7 @@ services:
     depends_on:
       - mysql
       - redis
+      - qdrant
     restart: unless-stopped
 
   mysql:
@@ -38,5 +39,15 @@ services:
       - "${REDIS_HOST_PORT:-6380}:6379"
     restart: unless-stopped
 
+  qdrant:
+    image: qdrant/qdrant:v1.18.2
+    container_name: farmnet_qdrant
+    ports:
+      - "127.0.0.1:${QDRANT_HOST_PORT:-6333}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
 volumes:
   mysql_data:
+  qdrant_data:
