@@ -1076,6 +1076,19 @@ The approved implementation has 16 steps. Step 21.2 AI Core DB, Permissions,
 Retention + Provider-Neutral Contracts is next. Evidence:
 `docs/ai/phase-21-barzegar-real-state-audit.md`.
 
+Phase 21.2 added the Provider-neutral Barzegar core at Alembic head
+`a21c4b82a6e0`: nine additive tables cover Conversations, Messages, Requests,
+execution Attempts, selected-Farm consent manifests, technical Usage,
+Feedback, idempotent deletion requests, and immutable Audit. Requests link
+one-to-one to the existing Billing quota reservation. Nine owner-scoped and
+eight Admin AI permissions are assigned without conflating roles with
+Subscription Entitlements. No Provider, SDK, credential, network call, RAG
+ingestion, vector store, prompt implementation, or API is claimed. All 322
+Backend tests, Ruff/compileall, real MySQL migration/no-drift, seed twice with
+281 permissions, nine-table runtime inspection, and health passed. Step 21.3
+Knowledge Source Governance, Ingestion + Persian Extraction is next. Evidence:
+`docs/ai/phase-21-ai-core-foundation.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -1,0 +1,1 @@
+"""Barzegar agricultural AI domain."""

@@ -748,13 +748,28 @@ weather.manage_alerts
 # 24. Permissionهای AI
 
 ```text
+ai.conversations.create
+ai.conversations.read_own
+ai.conversations.manage_own
+ai.requests.create
+ai.requests.read_own
+ai.requests.cancel_own
+ai.context.use_own
+ai.feedback.create_own
+ai.data.delete_own
+
 ai.requests.read
 ai.feedback.read
 ai.knowledge_sources.read
 ai.knowledge_sources.create
 ai.knowledge_sources.update
 ai.usage.read
+ai.audit.read
+ai.retention.manage
 ```
+
+Permission نقش را کنترل می‌کند؛ Subscription Entitlement و quota دسترسی
+تجاری را کنترل می‌کنند. هیچ‌کدام جایگزین دیگری نیست.
 
 ---
 

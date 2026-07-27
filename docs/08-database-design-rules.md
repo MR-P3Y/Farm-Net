@@ -1299,17 +1299,30 @@ Weather بیشتر cache/API است و نباید دیتابیس سنگین غی
 # 32. جدول‌های AI
 
 ```text
+ai_conversations
+ai_context_consents
 ai_requests
+ai_messages
+ai_execution_attempts
+ai_usage_records
 ai_feedback
-ai_usage_logs
-ai_knowledge_sources
+ai_data_deletion_requests
+ai_audit_logs
 ```
 
 قانون:
 
 ```text
-هر request باید user_id، intent، usage و feedback قابل ردیابی داشته باشد.
+هر request باید مالک، idempotency، lifecycle، consent اختیاری مزرعه،
+Billing reservation، Provider attempt، technical usage و Audit قابل ردیابی
+داشته باشد.
+متن خام prompt، کلید Provider و context خصوصی نباید وارد Audit/metrics شود.
+حذف مکالمه باید retention-aware باشد و از cascade مخرب استفاده نکند.
 ```
+
+Knowledge source/version/document/chunk/ingestion tables در Phase 21.3 و
+retrieval/embedding storage در Phase 21.4 پس از تصمیم مبتنی بر شواهد اضافه
+می‌شوند.
 
 ---
 

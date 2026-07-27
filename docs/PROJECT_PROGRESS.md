@@ -2323,6 +2323,25 @@ assistant.
   Contracts.
 - Evidence: `docs/ai/phase-21-barzegar-real-state-audit.md`.
 
+### Step 21.2 AI Core DB, Permissions, Retention + Provider-Neutral Contracts
+
+- Added nine additive AI tables for Conversations, selected-Farm consent
+  manifests, Requests, Messages, execution Attempts, technical Usage, Feedback,
+  idempotent deletion work, and immutable Audit.
+- Linked Farm context to real Farm/Plot/Cycle FKs and commercial quota to the
+  existing Billing reservation boundary.
+- Added explicit lifecycle, idempotency, retention, deletion, Provider replay,
+  technical cost, safe Audit, and `RESTRICT` ownership constraints.
+- Added nine owner-scoped and two new restricted Admin permissions; the Admin
+  role now has eight AI operations in total.
+- Added immutable Provider-neutral request/result/usage contracts without an
+  SDK, credential, concrete Provider, or network call.
+- Migration `a21c4b82a6e0`, six focused and all 322 Backend tests,
+  Ruff/compileall, MySQL upgrade/no-drift, seed twice with 281 permissions,
+  nine runtime AI tables, and app/database/Redis health passed.
+- Next: Step 21.3 Knowledge Source Governance, Ingestion + Persian Extraction.
+- Evidence: `docs/ai/phase-21-ai-core-foundation.md`.
+
 ## Progress Update Rule
 
 After every completed step:
