@@ -1089,6 +1089,18 @@ Backend tests, Ruff/compileall, real MySQL migration/no-drift, seed twice with
 Knowledge Source Governance, Ingestion + Persian Extraction is next. Evidence:
 `docs/ai/phase-21-ai-core-foundation.md`.
 
+Phase 21.3 added governed knowledge-source, version, PDF document, exact-once
+ingestion-job, and extracted-page contracts at Alembic head `b21d5c93b7f1`.
+Persian extraction is deterministic, checksum-bound, quality-flagged, and
+keeps approval separate from ingestion. The read-only `docs/FARMER` audit found
+30 candidate PDFs and 1,245 pages, including one encrypted file; none were
+automatically registered or approved. Dedicated review and ingestion
+permissions are assigned to Admin and Content Manager. All 329 Backend tests,
+Ruff/compileall, MySQL migration/no-drift, idempotent 283-permission seed,
+five-table runtime inspection, rebuilt image, and health passed. Step 21.4
+Retrieval Store, Chunking, Embeddings + Citation Contracts is next. Evidence:
+`docs/ai/phase-21-knowledge-governance.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

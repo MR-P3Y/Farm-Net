@@ -1308,6 +1308,11 @@ ai_usage_records
 ai_feedback
 ai_data_deletion_requests
 ai_audit_logs
+ai_knowledge_sources
+ai_knowledge_source_versions
+ai_knowledge_documents
+ai_knowledge_ingestion_jobs
+ai_knowledge_extracted_pages
 ```
 
 قانون:
@@ -1320,9 +1325,10 @@ Billing reservation، Provider attempt، technical usage و Audit قابل رد�
 حذف مکالمه باید retention-aware باشد و از cascade مخرب استفاده نکند.
 ```
 
-Knowledge source/version/document/chunk/ingestion tables در Phase 21.3 و
-retrieval/embedding storage در Phase 21.4 پس از تصمیم مبتنی بر شواهد اضافه
-می‌شوند.
+منبع دانش، نسخه، سند PDF، job استخراج و متن صفحه در Phase 21.3 اضافه شدند.
+تأیید منبع از استخراج جدا است؛ checksum و idempotency اجباری‌اند و هیچ سندی
+صرفاً با استخراج موفق، قابل retrieval نمی‌شود. chunk و embedding در Phase
+21.4 اضافه می‌شوند.
 
 ---
 

@@ -2342,6 +2342,25 @@ assistant.
 - Next: Step 21.3 Knowledge Source Governance, Ingestion + Persian Extraction.
 - Evidence: `docs/ai/phase-21-ai-core-foundation.md`.
 
+### Step 21.3 Knowledge Source Governance, Ingestion + Persian Extraction
+
+- Added five governed tables for source provenance/licensing, versions,
+  immutable PDF documents, exact-once ingestion jobs, and page-level extracted
+  text.
+- Kept source/version human approval independent from extraction success and
+  used `RESTRICT` foreign keys for governance history.
+- Added checksum-bound Persian extraction with NFKC and Persian character
+  normalization, stable failures, quality flags, and encrypted-PDF rejection.
+- Added separate review and ingestion permissions for Admin and Content
+  Manager; ordinary users receive no knowledge-management permission.
+- Audited 30 candidate PDFs/1,245 pages under `docs/FARMER`; one encrypted file
+  requires manual review and no candidate was automatically approved.
+- Migration `b21d5c93b7f1`, all 329 Backend tests, Ruff/compileall, MySQL
+  upgrade/no-drift, seed twice with 283 permissions, five-table inspection,
+  rebuilt runtime image with `pypdf`, and app/database/Redis health passed.
+- Next: Step 21.4 Retrieval Store, Chunking, Embeddings + Citation Contracts.
+- Evidence: `docs/ai/phase-21-knowledge-governance.md`.
+
 ## Progress Update Rule
 
 After every completed step:

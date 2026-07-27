@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -374,9 +375,7 @@ class AIDataDeletionRequest(Base):
     failure_code: Mapped[str | None] = mapped_column(String(100))
 
     __table_args__ = (
-        UniqueConstraint(
-            "user_id", "idempotency_key", name="uq_ai_deletion_user_idempotency"
-        ),
+        UniqueConstraint("user_id", "idempotency_key", name="uq_ai_deletion_user_idempotency"),
         CheckConstraint(
             "scope IN ('conversation','all_conversations')",
             name="ck_ai_deletion_scope",
@@ -435,4 +434,186 @@ class AIAuditLog(Base):
             name="ck_ai_audit_actor",
         ),
         Index("ix_ai_audit_target_created", "target_type", "target_id", "created_at"),
+    )
+
+
+class AIKnowledgeSource(Base):
+    __tablename__ = "ai_knowledge_sources"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    title: Mapped[str] = mapped_column(String(250), nullable=False)
+    publisher: Mapped[str] = mapped_column(String(250), nullable=False)
+    source_url: Mapped[str | None] = mapped_column(String(1000))
+    license_code: Mapped[str] = mapped_column(String(80), nullable=False)
+    license_evidence: Mapped[str] = mapped_column(String(1000), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)
+    created_by_user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT"), nullable=False
+    )
+    reviewed_by_user_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT")
+    )
+    review_reason: Mapped[str | None] = mapped_column(String(1000))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('draft','in_review','approved','rejected','withdrawn')",
+            name="ck_ai_knowledge_sources_status",
+        ),
+        CheckConstraint(
+            "(status IN ('draft','in_review') AND reviewed_at IS NULL) OR "
+            "(status IN ('approved','rejected','withdrawn') AND reviewed_at IS NOT NULL "
+            "AND reviewed_by_user_id IS NOT NULL)",
+            name="ck_ai_knowledge_sources_review_state",
+        ),
+    )
+
+
+class AIKnowledgeSourceVersion(Base):
+    __tablename__ = "ai_knowledge_source_versions"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    source_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_knowledge_sources.id", ondelete="RESTRICT"), nullable=False
+    )
+    version_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    edition: Mapped[str | None] = mapped_column(String(120))
+    published_at: Mapped[datetime | None] = mapped_column(DateTime)
+    effective_from: Mapped[datetime | None] = mapped_column(DateTime)
+    effective_until: Mapped[datetime | None] = mapped_column(DateTime)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft", index=True)
+    approved_by_user_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("auth_users.id", ondelete="RESTRICT")
+    )
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime)
+    withdrawal_reason: Mapped[str | None] = mapped_column(String(1000))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("source_id", "version_no", name="uq_ai_source_version_no"),
+        CheckConstraint("version_no > 0", name="ck_ai_source_version_positive"),
+        CheckConstraint(
+            "status IN ('draft','in_review','approved','rejected','withdrawn')",
+            name="ck_ai_source_versions_status",
+        ),
+        CheckConstraint(
+            "effective_until IS NULL OR effective_from IS NOT NULL "
+            "AND effective_until > effective_from",
+            name="ck_ai_source_versions_effective_range",
+        ),
+        CheckConstraint(
+            "(status = 'approved' AND approved_by_user_id IS NOT NULL "
+            "AND approved_at IS NOT NULL) OR status <> 'approved'",
+            name="ck_ai_source_versions_approval",
+        ),
+    )
+
+
+class AIKnowledgeDocument(Base):
+    __tablename__ = "ai_knowledge_documents"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    source_version_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_knowledge_source_versions.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    filename: Mapped[str] = mapped_column(String(500), nullable=False)
+    storage_key: Mapped[str] = mapped_column(String(1000), nullable=False)
+    mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    byte_size: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    page_count: Mapped[int | None] = mapped_column(Integer)
+    is_encrypted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    extraction_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="pending", index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (
+        CheckConstraint("byte_size > 0", name="ck_ai_documents_byte_size"),
+        CheckConstraint("page_count IS NULL OR page_count > 0", name="ck_ai_documents_page_count"),
+        CheckConstraint("mime_type = 'application/pdf'", name="ck_ai_documents_pdf_only"),
+        CheckConstraint(
+            "extraction_status IN ('pending','running','succeeded','needs_review','failed')",
+            name="ck_ai_documents_extraction_status",
+        ),
+    )
+
+
+class AIKnowledgeIngestionJob(Base):
+    __tablename__ = "ai_knowledge_ingestion_jobs"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    document_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_knowledge_documents.id", ondelete="RESTRICT"), nullable=False
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(180), nullable=False, unique=True)
+    extractor_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    pages_processed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    extracted_characters: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    quality_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
+    failure_code: Mapped[str | None] = mapped_column(String(100))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending','running','succeeded','needs_review','failed')",
+            name="ck_ai_ingestion_jobs_status",
+        ),
+        CheckConstraint(
+            "pages_processed >= 0 AND extracted_characters >= 0",
+            name="ck_ai_ingestion_jobs_counts",
+        ),
+        CheckConstraint(
+            "quality_score IS NULL OR quality_score BETWEEN 0 AND 1",
+            name="ck_ai_ingestion_jobs_quality",
+        ),
+        CheckConstraint(
+            "(status = 'pending' AND started_at IS NULL AND completed_at IS NULL) OR "
+            "(status = 'running' AND started_at IS NOT NULL AND completed_at IS NULL) OR "
+            "(status IN ('succeeded','needs_review','failed') "
+            "AND started_at IS NOT NULL AND completed_at IS NOT NULL)",
+            name="ck_ai_ingestion_jobs_lifecycle",
+        ),
+        CheckConstraint(
+            "(status = 'failed' AND failure_code IS NOT NULL) OR "
+            "(status <> 'failed' AND failure_code IS NULL)",
+            name="ck_ai_ingestion_jobs_failure",
+        ),
+    )
+
+
+class AIKnowledgeExtractedPage(Base):
+    __tablename__ = "ai_knowledge_extracted_pages"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    ingestion_job_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_knowledge_ingestion_jobs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    document_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ai_knowledge_documents.id", ondelete="RESTRICT"), nullable=False
+    )
+    page_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    extracted_text: Mapped[str] = mapped_column(Text, nullable=False)
+    text_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    character_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    quality_score: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    needs_review: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("ingestion_job_id", "page_number", name="uq_ai_extracted_page_job_number"),
+        CheckConstraint("page_number > 0", name="ck_ai_extracted_pages_number"),
+        CheckConstraint(
+            "character_count = CHAR_LENGTH(extracted_text)",
+            name="ck_ai_extracted_pages_character_count",
+        ),
+        CheckConstraint("quality_score BETWEEN 0 AND 1", name="ck_ai_extracted_pages_quality"),
     )
