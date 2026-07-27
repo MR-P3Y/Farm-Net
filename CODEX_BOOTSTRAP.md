@@ -217,6 +217,10 @@ usable success, releases terminal failure/cancellation, records exact-once
 technical usage, and permits only configured TOMAN cost rates. Next: Phase
 21.9 Agricultural Safety, Output Validation + Human Escalation. Evidence:
 `docs/ai/phase-21-subscription-quota-usage.md`.
+Phase 21.9 Agricultural Safety, Output Validation + Human Escalation:
+completed. Emergency poisoning is unmetered; high-risk chemical output is
+evidence-gated; human escalation is explicit and uses real Consult Requests.
+Next: Phase 21.10 Image Analysis Boundary + Evidence-Gated Diagnosis.
 ```
 
 Services means agricultural operational services, not equipment rental.

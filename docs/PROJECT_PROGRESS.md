@@ -2460,6 +2460,19 @@ assistant.
 - Next: Step 21.9 Agricultural Safety, Output Validation + Human Escalation.
 - Evidence: `docs/ai/phase-21-subscription-quota-usage.md`.
 
+### Step 21.9 Agricultural Safety, Output Validation + Human Escalation
+
+- Added Persian poisoning/emergency and high-risk chemical triage.
+- Emergency guidance is available before Entitlement and consumes no quota.
+- High-risk usable output requires citations, uncertainty, and human review.
+- Invalid output is blocked, unbilled, and releases reserved quota.
+- Added explicit user-triggered escalation to the existing Consultant workflow
+  with TOMAN and an auditable request link; no automatic consult purchase.
+- Ruff/compileall, 360 Backend tests, migration, and real emergency runtime
+  passed.
+- Next: Step 21.10 Image Analysis Boundary + Evidence-Gated Diagnosis.
+- Evidence: `docs/ai/phase-21-agricultural-safety.md`.
+
 ## Progress Update Rule
 
 After every completed step:

@@ -1159,6 +1159,17 @@ reserve-finalize-cleanup flows, and health passed. Step 21.9 Agricultural
 Safety, Output Validation + Human Escalation is next. Evidence:
 `docs/ai/phase-21-subscription-quota-usage.md`.
 
+Phase 21.9 is completed at Alembic head `i21e6c3af807`. Persian agricultural
+safety triage now handles poisoning emergencies before Billing with immediate
+conservative guidance and no quota consumption. High-risk chemical answers
+require immutable citations, uncertainty language, and human-review guidance;
+invalid output is blocked and its reservation released. User-triggered
+escalation reuses the real Consultant request/status/notification workflow and
+records a unique `RESTRICT` link without automatic commercial action. All 360
+Backend tests and real emergency runtime passed. Step 21.10 Image Analysis
+Boundary + Evidence-Gated Diagnosis is next. Evidence:
+`docs/ai/phase-21-agricultural-safety.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

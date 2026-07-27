@@ -171,6 +171,11 @@ class AIRequest(Base):
         ForeignKey("billing_usage_reservations.id", ondelete="RESTRICT"),
         unique=True,
     )
+    consult_request_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("consult_requests.id", ondelete="RESTRICT"),
+        unique=True,
+    )
     failure_code: Mapped[str | None] = mapped_column(String(100))
     safety_code: Mapped[str | None] = mapped_column(String(100))
     requested_at: Mapped[datetime] = mapped_column(

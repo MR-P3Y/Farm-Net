@@ -26,6 +26,14 @@ class AIRequestCreateIn(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+class AIHumanEscalationCreateIn(BaseModel):
+    specialty_id: int | None = Field(default=None, ge=1)
+    contact_method: str = Field(default="in_app", min_length=2, max_length=40)
+    note: str | None = Field(default=None, max_length=2000)
+
+    model_config = {"extra": "forbid"}
+
+
 class AIContextConsentCreateIn(BaseModel):
     idempotency_key: str = Field(min_length=8, max_length=180)
     farm_id: int = Field(ge=1)
@@ -93,6 +101,7 @@ class AIRequestOut(BaseModel):
     status: str
     failure_code: str | None
     safety_code: str | None
+    consult_request_id: int | None
     requested_at: datetime
     started_at: datetime | None
     completed_at: datetime | None

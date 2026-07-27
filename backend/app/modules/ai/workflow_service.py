@@ -13,14 +13,18 @@ from app.modules.ai.models import (
     AIMessage,
     AIModelConfiguration,
     AIRequest,
+    AIResponseCitation,
     AIUsageRecord,
 )
 from app.modules.ai.context_service import AIContextService
 from app.modules.ai.policy_registry import AIPolicyRegistry
 from app.modules.ai.quota_bridge import AIQuotaBridge
 from app.modules.ai.contracts import AIProviderUsage
-from app.modules.ai.schemas import AIRequestCreateIn
+from app.modules.ai.schemas import AIHumanEscalationCreateIn, AIRequestCreateIn
+from app.modules.ai.safety import AgriculturalSafetyService
 from app.modules.auth.models import AuthUser
+from app.modules.consultants.schemas import ConsultRequestCreateIn
+from app.modules.consultants.service import ConsultantService
 
 
 class AIWorkflowService:
@@ -122,6 +126,48 @@ class AIWorkflowService:
             return existing
 
         now = datetime.utcnow()
+        safety = AgriculturalSafetyService.triage(content)
+        if safety.emergency:
+            row = AIRequest(
+                conversation_id=conversation_id,
+                user_id=user.id,
+                idempotency_key=payload.idempotency_key,
+                request_fingerprint=fingerprint,
+                feature_code=payload.feature_code,
+                request_kind=payload.request_kind,
+                status="blocked",
+                processing_priority="priority",
+                prompt_policy_version=route.prompt_policy.version,
+                routing_policy_version=route.route_version,
+                next_attempt_at=now,
+                attempt_count=0,
+                max_attempts=3,
+                safety_code=safety.code,
+                completed_at=now,
+            )
+            guidance = AgriculturalSafetyService.emergency_guidance()
+            self.db.add(row)
+            self.db.flush()
+            for role, kind, message in (
+                ("user", "input", content),
+                ("assistant", "output", guidance),
+            ):
+                self.db.add(
+                    AIMessage(
+                        conversation_id=conversation_id,
+                        request_id=row.id,
+                        role=role,
+                        request_message_kind=kind,
+                        content=message,
+                        content_sha256=hashlib.sha256(message.encode()).hexdigest(),
+                        safety_label=safety.code,
+                    )
+                )
+            conversation.updated_at = now
+            self.db.commit()
+            self.db.refresh(row)
+            return row
+
         context_consent = None
         context_manifest = None
         context_captured_at = None
@@ -163,6 +209,7 @@ class AIWorkflowService:
             context_manifest=context_manifest,
             context_captured_at=context_captured_at,
             billing_reservation_id=reservation_id,
+            safety_code=safety.code,
         )
         try:
             self.db.add(row)
@@ -219,6 +266,48 @@ class AIWorkflowService:
             reservation_id=row.billing_reservation_id,
             reason="ai_request_cancelled",
         )
+        self.db.refresh(row)
+        return row
+
+    def escalate_to_consultant(
+        self,
+        *,
+        user: AuthUser,
+        request_id: int,
+        payload: AIHumanEscalationCreateIn,
+    ) -> AIRequest:
+        row = self.get_request(user=user, request_id=request_id)
+        if row.safety_code is None:
+            raise AppException(
+                "AI_ESCALATION_NOT_REQUIRED",
+                "This request has no safety escalation recommendation",
+                409,
+            )
+        if row.consult_request_id is not None:
+            return row
+        input_message = self.db.scalar(
+            select(AIMessage).where(
+                AIMessage.request_id == row.id,
+                AIMessage.request_message_kind == "input",
+            )
+        )
+        if input_message is None:
+            raise AppException("AI_INPUT_MESSAGE_NOT_FOUND", "AI input message not found", 409)
+        description = input_message.content
+        if payload.note:
+            description = f"{description}\n\nتوضیح کاربر: {payload.note.strip()}"
+        consult = ConsultantService(self.db).create_request(
+            user=user,
+            payload=ConsultRequestCreateIn(
+                specialty_id=payload.specialty_id,
+                title="ارجاع ایمنی از برزگر",
+                description=description[:8000],
+                contact_method=payload.contact_method,
+                currency="TOMAN",
+            ),
+        )
+        row.consult_request_id = consult.id
+        self.db.commit()
         self.db.refresh(row)
         return row
 
@@ -407,8 +496,30 @@ class AIWorkerService:
         row, attempt = self._locked_run(request_id=request_id, attempt_id=attempt_id)
         now = datetime.utcnow()
         output = content.strip()
-        if not output:
-            raise AppException("AI_EMPTY_OUTPUT", "AI output cannot be empty", 409)
+        citation_count = self.db.query(AIResponseCitation).filter(
+            AIResponseCitation.request_id == row.id
+        ).count()
+        validation = AgriculturalSafetyService.validate_output(
+            content=output,
+            safety_code=row.safety_code,
+            citation_count=citation_count,
+        )
+        if not validation.usable:
+            attempt.status = "failed"
+            attempt.failure_code = validation.failure_code
+            attempt.completed_at = now
+            row.status = "blocked"
+            row.failure_code = validation.failure_code
+            row.completed_at = now
+            row.locked_by = None
+            row.lease_expires_at = None
+            AIQuotaBridge(self.db).release(
+                user_id=row.user_id,
+                reservation_id=row.billing_reservation_id,
+                reason=validation.failure_code or "ai_output_validation_failed",
+            )
+            self.db.refresh(row)
+            return row
         existing = self.db.scalar(
             select(AIMessage).where(
                 AIMessage.request_id == row.id,

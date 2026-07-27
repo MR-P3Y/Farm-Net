@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.ai.schemas import (
+    AIHumanEscalationCreateIn,
     AIContextConsentCreateIn,
     AIContextConsentListResponse,
     AIContextConsentOut,
@@ -188,5 +189,25 @@ def cancel_request(
     return success_response(
         data=AIRequestOut.model_validate(row).model_dump(mode="json"),
         message="Barzegar request cancelled",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/requests/{request_id}/escalate", response_model=AIRequestResponse)
+def escalate_request(
+    request_id: int,
+    payload: AIHumanEscalationCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("consult.requests.create")),
+):
+    row = AIWorkflowService(db).escalate_to_consultant(
+        user=user,
+        request_id=request_id,
+        payload=payload,
+    )
+    return success_response(
+        data=AIRequestOut.model_validate(row).model_dump(mode="json"),
+        message="Consult request created",
         meta={"trace_id": request.state.trace_id},
     )
