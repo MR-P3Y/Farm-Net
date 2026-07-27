@@ -768,6 +768,7 @@ ai.knowledge_ingestion.manage
 ai.retrieval.manage
 ai.usage.read
 ai.audit.read
+ai.evaluation.manage
 ai.retention.manage
 ```
 
@@ -781,6 +782,10 @@ Farm/Plot/Cycle باید در Backend به‌صورت زنجیره‌ای owners
 عملیات ثبت، ویرایش، بازبینی/تأیید و ingestion دانش مجزا هستند. Admin و
 Content Manager این عملیات را دریافت می‌کنند؛ کاربر عادی اجازه مدیریت منبع
 دانش یا index برداری ندارد.
+
+`ai.evaluation.manage` فقط به نقش Admin داده می‌شود و ساخت، فعال‌سازی و اجرای
+Release Gate نسخه‌بندی‌شده را کنترل می‌کند. Permissionهای Audit یا Usage به
+تنهایی اجازهٔ تغییر Evaluation را نمی‌دهند.
 
 ---
 

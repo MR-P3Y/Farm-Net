@@ -1303,8 +1303,14 @@ ai_conversations
 ai_context_consents
 ai_requests
 ai_messages
+ai_request_media
+ai_diary_suggestions
+ai_farmer_reports
 ai_execution_attempts
 ai_usage_records
+ai_prompt_policy_versions
+ai_model_configurations
+ai_routing_policy_versions
 ai_feedback
 ai_data_deletion_requests
 ai_audit_logs
@@ -1317,6 +1323,10 @@ ai_knowledge_chunks
 ai_embedding_models
 ai_embedding_index_records
 ai_response_citations
+ai_evaluation_suites
+ai_evaluation_cases
+ai_evaluation_runs
+ai_evaluation_results
 ```
 
 قانون:
@@ -1348,6 +1358,12 @@ active-scope یکتا شد. Crop Cycle بدون Plot مجاز نیست. snapshot
 انتخاب صریح مالک را نگه می‌دارد و freshness checksum آن قبل از worker اجرا
 دوباره با Farm/Plot/Cycle واقعی مقایسه می‌شود؛ snapshot قدیمی نباید بی‌صدا
 تازه‌سازی شود.
+
+در Phaseهای 21.7 تا 21.14، Registry نسخه‌بندی‌شدهٔ Prompt/Model/Routing،
+Media evidence، پیشنهاد دفتر مزرعه، گزارش مالک و Release Gate ارزیابی اضافه
+شدند. Evaluation Suite ابتدا Draft است و فعال‌سازی تراکنشی آن نسخهٔ فعال قبلی
+همان Suite را Retired می‌کند. Run/Result exact-once است و متن خروجی Candidate
+در Evaluation نگهداری نمی‌شود؛ فقط SHA-256 و Failure Code محدود ذخیره می‌شود.
 
 ---
 

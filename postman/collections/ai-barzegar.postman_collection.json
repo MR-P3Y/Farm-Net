@@ -1,0 +1,545 @@
+{
+  "info": {
+    "name": "Farm Net - Barzegar AI",
+    "description": "Phase 21 owner-private and Admin-governed Barzegar contracts. Provider generation remains disabled until OpenAI billing activation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_access_token",
+      "value": ""
+    },
+    {
+      "key": "idempotency_key",
+      "value": "barzegar-request-0001"
+    },
+    {
+      "key": "evaluation_idempotency_key",
+      "value": "barzegar-eval-0001"
+    },
+    {
+      "key": "consent_id",
+      "value": "1"
+    },
+    {
+      "key": "conversation_id",
+      "value": "1"
+    },
+    {
+      "key": "request_id",
+      "value": "1"
+    },
+    {
+      "key": "suggestion_id",
+      "value": "1"
+    },
+    {
+      "key": "source_id",
+      "value": "1"
+    },
+    {
+      "key": "suite_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Farmer Barzegar",
+      "item": [
+        {
+          "name": "Create selected-Farm consent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/ai/context-consents",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{idempotency_key}}\",\n  \"farm_id\": 1,\n  \"plot_id\": 1,\n  \"crop_cycle_id\": 1,\n  \"purpose\": \"answer_question\",\n  \"expires_in_hours\": 24\n}"
+            }
+          }
+        },
+        {
+          "name": "List selected-Farm consents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/ai/context-consents",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Revoke selected-Farm consent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/ai/context-consents/:consent_id/revoke",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"User revoked access\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/ai/conversations",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"بررسی مزرعه\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/ai/conversations?page=1&page_size=20",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Conversation detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/ai/conversations/:conversation_id",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Submit text request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/ai/conversations/:conversation_id/requests",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{idempotency_key}}\",\n  \"content\": \"برای آبیاری این هفته چه نکاتی را بررسی کنم؟\",\n  \"feature_code\": \"ai.text_chat\",\n  \"request_kind\": \"text\",\n  \"context_consent_id\": null,\n  \"media_file_key\": null\n}"
+            }
+          }
+        },
+        {
+          "name": "Request status and result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/ai/requests/:request_id",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Cancel queued request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/ai/requests/:request_id/cancel",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Escalate to consultant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/ai/requests/:request_id/escalate",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"specialty_id\": null,\n  \"contact_method\": \"in_app\",\n  \"note\": \"نیاز به بررسی انسانی دارم\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List smart-diary suggestions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/ai/diary-suggestions",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Accept diary suggestion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/ai/diary-suggestions/:suggestion_id/accept",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": null\n}"
+            }
+          }
+        },
+        {
+          "name": "Reject diary suggestion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/ai/diary-suggestions/:suggestion_id/reject",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"این عملیات انجام نشده است\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List farmer reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/ai/farmer-reports",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Governance",
+      "item": [
+        {
+          "name": "Admin overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/overview",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Admin request runs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/requests?page=1&page_size=25",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Admin technical usage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/usage?page=1&page_size=25",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Admin feedback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/feedback?page=1&page_size=25",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Admin knowledge sources",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/knowledge-sources",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Create knowledge source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/knowledge-sources",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"agriculture.guide.v1\",\n  \"title\": \"راهنمای کشاورزی تأییدشده\",\n  \"publisher\": \"Farm Net\",\n  \"source_url\": \"https://example.invalid/agriculture-guide\",\n  \"license_code\": \"internal-approved\",\n  \"license_evidence\": \"Approved internal publication record\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Submit knowledge source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/knowledge-sources/:source_id/submit",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Review knowledge source",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/knowledge-sources/:source_id/review",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"approved\",\n  \"reason\": \"License and agricultural content verified\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin safe audit",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/audit?page=1&page_size=25",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Admin prompt policies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/policies",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Admin model registry",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/models",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Create evaluation suite draft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/evaluation/suites",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"suite_key\": \"barzegar.release\",\n  \"version\": \"v1\",\n  \"title\": \"Barzegar Persian agricultural release gate\",\n  \"minimum_pass_rate\": 0.9,\n  \"cases\": [\n    {\n      \"case_key\": \"leaf-risk-001\",\n      \"request_kind\": \"image_analysis\",\n      \"prompt\": \"لکه روی برگ را بررسی کن\",\n      \"required_terms\": [\n        \"برگ\"\n      ],\n      \"forbidden_terms\": [\n        \"تشخیص قطعی\"\n      ],\n      \"requires_uncertainty\": true,\n      \"requires_human_review\": true\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Activate evaluation suite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/evaluation/suites/:suite_id/activate",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Run deterministic evaluation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/admin/ai/evaluation/runs",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"suite_id\": 1,\n  \"idempotency_key\": \"{{evaluation_idempotency_key}}\",\n  \"model_configuration_id\": null,\n  \"candidates\": [\n    {\n      \"case_key\": \"leaf-risk-001\",\n      \"output\": \"روی برگ لکه دیده می‌شود؛ احتمال بیماری وجود دارد و بررسی متخصص لازم است.\"\n    }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

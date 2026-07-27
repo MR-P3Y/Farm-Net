@@ -1228,6 +1228,18 @@ idempotent seed, runtime health, metrics, and OpenAPI passed. Step 21.15 AI
 Docs/Postman + Runtime Regression is next. Evidence:
 `docs/ai/phase-21-evaluation-observability.md`.
 
+Phase 21.15 Docs, Postman + Runtime Regression is completed. The authoritative
+Barzegar API document, database/Permission/roadmap registers, deterministic
+secret-free Postman generator and collection now cover all 28 live AI
+operations. Contract tests enforce exact OpenAPI parity, parse all bodies, and
+reject credential patterns. Runtime verified 28 AI tables, 28/28
+unauthenticated privacy responses, 6/6 metrics, app/database/Redis/Qdrant,
+Alembic head/no-drift, and Provider-disabled state. Ruff/compileall, 381
+Backend tests, Mobile analyze/72 tests/Web build, Admin analyze/30 tests/Web
+build, and all 17 Postman collections/425 requests passed. Step 21.16 Barzegar
+Release Gate + Tag is next. Evidence:
+`docs/ai/phase-21-docs-postman-runtime-regression.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

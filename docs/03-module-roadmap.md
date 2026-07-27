@@ -1779,18 +1779,38 @@ Geo در بعضی intentها
 ## جدول‌های اصلی
 
 ```text
+ai_conversations
+ai_context_consents
 ai_requests
+ai_messages
+ai_request_media
+ai_execution_attempts
+ai_usage_records
 ai_feedback
-ai_usage_logs
 ai_knowledge_sources
+ai_knowledge_source_versions
+ai_knowledge_documents
+ai_knowledge_chunks
+ai_response_citations
+ai_diary_suggestions
+ai_farmer_reports
+ai_evaluation_suites
+ai_evaluation_cases
+ai_evaluation_runs
+ai_evaluation_results
 ```
 
 ## APIهای اصلی
 
 ```text
-POST /api/v1/ai/ask
-GET /api/v1/ai/requests/me
-POST /api/v1/ai/feedback
+POST /api/v1/ai/context-consents
+POST /api/v1/ai/conversations
+POST /api/v1/ai/conversations/{conversation_id}/requests
+GET /api/v1/ai/requests/{request_id}
+POST /api/v1/ai/requests/{request_id}/cancel
+POST /api/v1/ai/requests/{request_id}/escalate
+GET /api/v1/ai/diary-suggestions
+GET /api/v1/ai/farmer-reports
 ```
 
 ## Admin API
@@ -1800,7 +1820,17 @@ GET /api/v1/admin/ai/requests
 GET /api/v1/admin/ai/feedback
 GET /api/v1/admin/ai/knowledge-sources
 POST /api/v1/admin/ai/knowledge-sources
+GET /api/v1/admin/ai/usage
+GET /api/v1/admin/ai/audit
+GET /api/v1/admin/ai/policies
+GET /api/v1/admin/ai/models
+POST /api/v1/admin/ai/evaluation/suites
+POST /api/v1/admin/ai/evaluation/suites/{suite_id}/activate
+POST /api/v1/admin/ai/evaluation/runs
 ```
+
+قرارداد کامل ۲۸ عملیات در `docs/api/ai-barzegar.md` و Collection متناظر
+Postman ثبت شده است.
 
 ## Notification Events
 

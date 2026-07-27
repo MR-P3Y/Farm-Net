@@ -18,6 +18,7 @@
 - `services.postman_collection.json`
 - `stores.postman_collection.json`
 - `weather.postman_collection.json`
+- `ai-barzegar.postman_collection.json`
 
 `social-expert.postman_collection.json` covers social post detail `expert_answers`, public/expert answer flows, admin expert answer moderation, and notification visibility checks for `expert_answer_created`.
 
@@ -41,6 +42,11 @@ incomplete availability rejection.
 authenticated owner CRUD, public active-only Reviews and rating summaries,
 governed reporting, typed Admin Review/report moderation, and immutable
 moderation-log reads.
+
+`ai-barzegar.postman_collection.json` covers all 28 Barzegar OpenAPI
+operations: owner-private selected-Farm context, conversations, async requests,
+safety escalation, diary/report tools, Admin governance, knowledge lifecycle,
+and deterministic evaluation release gates. It contains no Provider key.
 ## Unified Subscriptions
 
 `subscriptions.postman_collection.json` is the Phase 25 contract collection.

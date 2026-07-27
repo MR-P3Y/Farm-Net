@@ -18,3 +18,4 @@
 - [Stores](stores.md)
 - [Weather](weather.md)
 - [Farm Management](farms.md)
+- [Barzegar AI](ai-barzegar.md)

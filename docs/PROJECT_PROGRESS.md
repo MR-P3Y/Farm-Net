@@ -2577,6 +2577,30 @@ Status: completed
 - Next: Step 21.15 AI Docs/Postman + Runtime Regression.
 - Evidence: `docs/ai/phase-21-evaluation-observability.md`.
 
+### Step 21.15 Docs, Postman + Runtime Regression
+
+Status: completed
+
+- Added the authoritative Barzegar API contract and linked it from the API
+  index.
+- Updated the AI roadmap, 28-table database register, and Permission register.
+- Added a deterministic, secret-free Postman generator and collection.
+- Added exact OpenAPI/Postman/document parity and JSON/secret contract tests.
+- Farmer operations: 14; Admin operations: 14; total: 28.
+- Runtime AI tables: 28.
+- Runtime privacy: all 28 operations returned 401 without a token.
+- Health: app/database/Redis `ok`; Qdrant 200.
+- Alembic current/head `l21h9f6d2130`; no drift.
+- Prometheus AI metrics: 6/6.
+- Provider remained intentionally disabled.
+- Backend Ruff/compileall: OK; 381 tests passed.
+- Mobile analyze: OK; 72 tests; Web/Wasm build: OK.
+- Admin analyze: OK; 30 tests; Web/Wasm build: OK.
+- All Postman JSON: 17 collections / 425 requests parsed.
+- No authenticated Runtime mutation was performed.
+- Next: Step 21.16 Barzegar Release Gate + Tag.
+- Evidence: `docs/ai/phase-21-docs-postman-runtime-regression.md`.
+
 ## Progress Update Rule
 
 After every completed step:

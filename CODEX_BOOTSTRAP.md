@@ -260,6 +260,15 @@ place. Ruff/compileall, 379 Backend tests, no-drift, repeated seed, runtime
 health, metrics, and OpenAPI passed. Next: Phase 21.15 AI Docs/Postman +
 Runtime Regression. Evidence:
 `docs/ai/phase-21-evaluation-observability.md`.
+Phase 21.15 Docs, Postman + Runtime Regression: completed. The authoritative
+API doc and deterministic secret-free Collection cover all 28 live Barzegar
+operations with exact OpenAPI parity. Runtime verified 28 AI tables, 28/28
+unauthenticated privacy responses, 6/6 metrics, app/database/Redis/Qdrant,
+Alembic no-drift, and Provider-disabled state. Ruff/compileall, 381 Backend
+tests, Mobile analyze/72 tests/Web build, Admin analyze/30 tests/Web build, and
+17 Postman collections/425 requests passed. Next: Phase 21.16 Barzegar Release
+Gate + Tag. Evidence:
+`docs/ai/phase-21-docs-postman-runtime-regression.md`.
 ```
 
 Services means agricultural operational services, not equipment rental.
