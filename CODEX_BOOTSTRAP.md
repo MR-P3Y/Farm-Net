@@ -221,6 +221,10 @@ Phase 21.9 Agricultural Safety, Output Validation + Human Escalation:
 completed. Emergency poisoning is unmetered; high-risk chemical output is
 evidence-gated; human escalation is explicit and uses real Consult Requests.
 Next: Phase 21.10 Image Analysis Boundary + Evidence-Gated Diagnosis.
+Phase 21.10 Image Analysis Boundary + Evidence-Gated Diagnosis: completed.
+Owner-scoped Media evidence is bounded and immutable; image conclusions require
+visible evidence, uncertainty, and human review. Next: Phase 21.11 Smart Diary
+Suggestions + Farmer Reports. Evidence: `docs/ai/phase-21-image-analysis.md`.
 ```
 
 Services means agricultural operational services, not equipment rental.

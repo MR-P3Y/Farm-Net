@@ -1170,6 +1170,17 @@ Backend tests and real emergency runtime passed. Step 21.10 Image Analysis
 Boundary + Evidence-Gated Diagnosis is next. Evidence:
 `docs/ai/phase-21-agricultural-safety.md`.
 
+Phase 21.10 is completed at Alembic head `j21f7d4b0918`. Image analysis now
+requires one active owner-scoped JPEG/PNG/WebP Media item within size and
+dimension limits, snapshots checksum and evidence metadata with exact-once
+`RESTRICT` links, and includes checksum in idempotency. Provider contracts
+support in-memory image input without exposing private paths. Output must name
+visible evidence, uncertainty, and human review rather than claim certain
+diagnosis. All 363 Backend tests passed. Real owner-image runtime was skipped
+because no qualifying owner image exists in development; no artificial user
+Media was created. Step 21.11 Smart Diary Suggestions + Farmer Reports is next.
+Evidence: `docs/ai/phase-21-image-analysis.md`.
+
 ## Known Gaps
 
 - Services has focused backend and client model/widget coverage; broad

@@ -22,6 +22,7 @@ class AIRequestCreateIn(BaseModel):
         pattern="^(text|farm_context|deep_analysis|image_analysis|smart_diary|report)$",
     )
     context_consent_id: int | None = Field(default=None, ge=1)
+    media_file_key: str | None = Field(default=None, min_length=8, max_length=80)
 
     model_config = {"extra": "forbid"}
 

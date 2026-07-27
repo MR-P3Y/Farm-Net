@@ -9,6 +9,12 @@ class AIProviderMessage:
 
 
 @dataclass(frozen=True)
+class AIProviderImage:
+    media_type: str
+    data_base64: str
+
+
+@dataclass(frozen=True)
 class AIProviderRequest:
     request_id: int
     messages: Sequence[AIProviderMessage]
@@ -18,6 +24,7 @@ class AIProviderRequest:
     metadata: Mapping[str, str]
     max_output_tokens: int = 1200
     reasoning_effort: str = "low"
+    images: Sequence[AIProviderImage] = ()
 
 
 @dataclass(frozen=True)

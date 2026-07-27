@@ -2,6 +2,7 @@ from collections.abc import Mapping, Sequence
 
 from app.modules.ai.contracts import (
     AIProviderError,
+    AIProviderImage,
     AIProviderMessage,
     AIProviderRequest,
     AIProviderResult,
@@ -21,6 +22,7 @@ class AIRoutingService:
         route: ResolvedAIRoute,
         messages: Sequence[AIProviderMessage],
         metadata: Mapping[str, str],
+        images: Sequence[AIProviderImage] = (),
     ) -> tuple[AIProviderResult, str]:
         policy_messages = (
             AIProviderMessage(role="system", content=route.prompt_policy.system_prompt),
@@ -40,6 +42,7 @@ class AIRoutingService:
                         metadata=metadata,
                         max_output_tokens=model.max_output_tokens,
                         reasoning_effort=model.reasoning_effort,
+                        images=images,
                     ),
                 )
                 return result, route.route_version

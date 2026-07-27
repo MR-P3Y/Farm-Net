@@ -16,6 +16,7 @@ from app.modules.ai.models import (
     AIResponseCitation,
     AIUsageRecord,
 )
+from app.modules.ai.image_analysis import AIImageAnalysisService
 from app.modules.ai.context_service import AIContextService
 from app.modules.ai.policy_registry import AIPolicyRegistry
 from app.modules.ai.quota_bridge import AIQuotaBridge
@@ -97,6 +98,20 @@ class AIWorkflowService:
                 422,
             )
         content = payload.content.strip()
+        image = None
+        if payload.request_kind == "image_analysis":
+            if payload.media_file_key is None:
+                raise AppException("AI_IMAGE_REQUIRED", "Image is required", 422)
+            image = AIImageAnalysisService(self.db).validate_owned_image(
+                user_id=user.id,
+                file_key=payload.media_file_key,
+            )
+        elif payload.media_file_key is not None:
+            raise AppException(
+                "AI_IMAGE_NOT_ALLOWED",
+                "Image is only allowed for image analysis",
+                422,
+            )
         route = AIPolicyRegistry(self.db).resolve(
             feature_code=payload.feature_code,
             request_kind=payload.request_kind,
@@ -109,6 +124,7 @@ class AIWorkflowService:
             context_consent_id=payload.context_consent_id,
             prompt_policy_version=route.prompt_policy.version,
             routing_policy_version=route.route_version,
+            image_checksum_sha256=image.checksum_sha256 if image else None,
         )
         existing = self.db.scalar(
             select(AIRequest).where(
@@ -209,11 +225,13 @@ class AIWorkflowService:
             context_manifest=context_manifest,
             context_captured_at=context_captured_at,
             billing_reservation_id=reservation_id,
-            safety_code=safety.code,
+            safety_code=safety.code or ("IMAGE_EVIDENCE_GATED" if image else None),
         )
         try:
             self.db.add(row)
             self.db.flush()
+            if image is not None:
+                AIImageAnalysisService(self.db).bind(request_id=row.id, image=image)
             self.db.add(
                 AIMessage(
                     conversation_id=conversation_id,
@@ -321,6 +339,7 @@ class AIWorkflowService:
         context_consent_id: int | None = None,
         prompt_policy_version: str = "barzegar-v1",
         routing_policy_version: str = "routing-v1",
+        image_checksum_sha256: str | None = None,
     ) -> str:
         values = {
             "conversation_id": conversation_id,
@@ -332,6 +351,8 @@ class AIWorkflowService:
         }
         if context_consent_id is not None:
             values["context_consent_id"] = context_consent_id
+        if image_checksum_sha256 is not None:
+            values["image_checksum_sha256"] = image_checksum_sha256
         canonical = json.dumps(
             values,
             ensure_ascii=False,

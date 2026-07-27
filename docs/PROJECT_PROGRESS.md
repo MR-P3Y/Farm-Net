@@ -2473,6 +2473,19 @@ assistant.
 - Next: Step 21.10 Image Analysis Boundary + Evidence-Gated Diagnosis.
 - Evidence: `docs/ai/phase-21-agricultural-safety.md`.
 
+### Step 21.10 Image Analysis Boundary + Evidence-Gated Diagnosis
+
+- Added owner-scoped Media binding for image analysis with exact-once checksum,
+  MIME, size, and dimension snapshots.
+- Enforced JPEG/PNG/WebP, 10MB maximum, and 256×256 minimum.
+- Added provider-neutral in-memory image input and Responses `input_image`.
+- Required visible evidence, uncertainty, and human review; no certain
+  diagnosis from one image.
+- Ruff/compileall, 363 Backend tests, migration/no-drift, and health passed.
+- Real owner-image smoke skipped: no qualifying owner image exists locally.
+- Next: Step 21.11 Smart Diary Suggestions + Farmer Reports.
+- Evidence: `docs/ai/phase-21-image-analysis.md`.
+
 ## Progress Update Rule
 
 After every completed step:

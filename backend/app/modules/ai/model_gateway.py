@@ -29,11 +29,23 @@ class OpenAIResponsesProvider:
         if not self.settings.ai_provider_enabled or not api_key:
             raise AIProviderError("AI_PROVIDER_DISABLED", retryable=False)
 
-        input_items = [
-            {"role": message.role, "content": message.content}
-            for message in request.messages
-            if message.role != "system"
+        input_items = []
+        non_system_messages = [
+            message for message in request.messages if message.role != "system"
         ]
+        for index, message in enumerate(non_system_messages):
+            content: object = message.content
+            if index == len(non_system_messages) - 1 and request.images:
+                content = [{"type": "input_text", "text": message.content}]
+                content.extend(
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:{image.media_type};base64,{image.data_base64}",
+                        "detail": "high",
+                    }
+                    for image in request.images
+                )
+            input_items.append({"role": message.role, "content": content})
         instructions = "\n\n".join(
             message.content for message in request.messages if message.role == "system"
         )

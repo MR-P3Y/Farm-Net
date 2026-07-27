@@ -17,6 +17,7 @@ HIGH_RISK_TERMS = (
 )
 UNCERTAINTY_MARKERS = ("ممکن", "احتمال", "عدم قطعیت", "اطلاعات کافی")
 HUMAN_MARKERS = ("کارشناس", "مشاور", "متخصص")
+VISIBLE_EVIDENCE_MARKERS = ("در تصویر", "مشاهده", "نشانه ظاهری")
 
 
 @dataclass(frozen=True)
@@ -60,6 +61,14 @@ class AgriculturalSafetyService:
         if not output:
             return AIOutputValidation(False, "AI_EMPTY_OUTPUT")
         if safety_code != "HIGH_RISK_CHEMICAL":
+            if safety_code != "IMAGE_EVIDENCE_GATED":
+                return AIOutputValidation(True)
+            if not any(marker in output for marker in VISIBLE_EVIDENCE_MARKERS):
+                return AIOutputValidation(False, "AI_IMAGE_VISIBLE_EVIDENCE_REQUIRED")
+            if not any(marker in output for marker in UNCERTAINTY_MARKERS):
+                return AIOutputValidation(False, "AI_IMAGE_UNCERTAINTY_REQUIRED")
+            if not any(marker in output for marker in HUMAN_MARKERS):
+                return AIOutputValidation(False, "AI_IMAGE_HUMAN_REVIEW_REQUIRED")
             return AIOutputValidation(True)
         if citation_count < 1:
             return AIOutputValidation(False, "AI_SAFETY_CITATION_REQUIRED")

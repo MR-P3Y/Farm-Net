@@ -40,3 +40,19 @@ def test_high_risk_output_requires_evidence_uncertainty_and_human_review() -> No
 def test_general_agricultural_answer_is_not_high_risk() -> None:
     decision = AgriculturalSafetyService.triage("بهترین زمان آبیاری گندم چیست؟")
     assert decision.code is None
+
+
+def test_image_diagnosis_requires_visible_evidence_uncertainty_and_human_review() -> None:
+    assert (
+        AgriculturalSafetyService.validate_output(
+            content="این بیماری قطعی است",
+            safety_code="IMAGE_EVIDENCE_GATED",
+            citation_count=0,
+        ).failure_code
+        == "AI_IMAGE_VISIBLE_EVIDENCE_REQUIRED"
+    )
+    assert AgriculturalSafetyService.validate_output(
+        content="در تصویر لکه‌هایی مشاهده می‌شود؛ احتمال بیماری وجود دارد و متخصص باید بررسی کند.",
+        safety_code="IMAGE_EVIDENCE_GATED",
+        citation_count=0,
+    ).usable

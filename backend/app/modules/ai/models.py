@@ -285,6 +285,45 @@ class AIMessage(Base):
     )
 
 
+class AIRequestMedia(Base):
+    __tablename__ = "ai_request_media"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    request_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ai_requests.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
+    )
+    media_file_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("media_files.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
+    )
+    checksum_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    mime_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    width: Mapped[int] = mapped_column(Integer, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "mime_type IN ('image/jpeg','image/png','image/webp')",
+            name="ck_ai_request_media_mime",
+        ),
+        CheckConstraint(
+            "size_bytes BETWEEN 1 AND 10485760",
+            name="ck_ai_request_media_size",
+        ),
+        CheckConstraint(
+            "width >= 256 AND height >= 256",
+            name="ck_ai_request_media_dimensions",
+        ),
+    )
+
+
 class AIExecutionAttempt(Base):
     __tablename__ = "ai_execution_attempts"
 
