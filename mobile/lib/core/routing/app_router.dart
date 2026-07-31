@@ -12,6 +12,7 @@ import '../../features/consultants/presentation/consultant_workbench_screen.dart
 import '../../features/consultants/presentation/consultation_request_detail_screen.dart';
 import '../../features/consultants/presentation/my_consultant_profile_screen.dart';
 import '../../features/consultants/presentation/my_consultation_requests_screen.dart';
+import '../../features/discover/presentation/discover_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/finance/presentation/finance_center_screen.dart';
 import '../../features/farms/data/farm_models.dart';
@@ -68,6 +69,7 @@ import '../../features/stores/presentation/public_stores_screen.dart';
 import '../../features/subscriptions/presentation/subscription_center_screen.dart';
 import '../../features/verification/presentation/verification_requests_screen.dart';
 import '../../features/weather/presentation/weather_screen.dart';
+import 'app_shell.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -77,20 +79,62 @@ final GoRouter appRouter = GoRouter(
       name: 'auth-gate',
       builder: (context, state) => const AuthGate(),
     ),
-    GoRoute(
-      path: '/home',
-      name: 'home',
-      builder: (context, state) => protectedRoute(const HomeScreen()),
-    ),
-    GoRoute(
-      path: '/activity',
-      name: 'my-activity-center',
-      builder: (context, state) => protectedRoute(const ActivityCenterScreen()),
-    ),
-    GoRoute(
-      path: '/barzegar',
-      name: 'barzegar',
-      builder: (context, state) => protectedRoute(const BarzegarScreen()),
+    StatefulShellRoute.indexedStack(
+      builder:
+          (context, state, navigationShell) =>
+              protectedRoute(FarmAppShell(navigationShell: navigationShell)),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/home',
+              name: 'home',
+              builder: (context, state) => protectedRoute(const HomeScreen()),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/discover',
+              name: 'discover',
+              builder:
+                  (context, state) => protectedRoute(const DiscoverScreen()),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/barzegar',
+              name: 'barzegar',
+              builder:
+                  (context, state) => protectedRoute(const BarzegarScreen()),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/activity',
+              name: 'my-activity-center',
+              builder:
+                  (context, state) =>
+                      protectedRoute(const ActivityCenterScreen()),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/profile',
+              name: 'profile',
+              builder:
+                  (context, state) => protectedRoute(const ProfileScreen()),
+            ),
+          ],
+        ),
+      ],
     ),
     GoRoute(
       path: '/farms',
@@ -431,11 +475,6 @@ final GoRouter appRouter = GoRouter(
         final id = int.tryParse(state.pathParameters['profileId'] ?? '') ?? 0;
         return ConsultantDetailScreen(profileId: id);
       },
-    ),
-    GoRoute(
-      path: '/profile',
-      name: 'profile',
-      builder: (context, state) => protectedRoute(const ProfileScreen()),
     ),
     GoRoute(
       path: '/verifications',

@@ -2627,6 +2627,31 @@ Status: passed
 
 ## Progress Update Rule
 
+### Frontend Redesign Foundation — Accepted
+
+Status: completed and manually accepted on 2026-07-31
+
+- Added semantic Design Tokens and separate light/dark Glassmorphism contracts.
+- Persisted Persian/English locale and system/light/dark theme selection.
+- Enforced Jalali dates for Persian and Gregorian dates for English.
+- Standardized shared icons, illustrations, back navigation, buttons, inputs,
+  search, loading, empty, offline, and error states.
+- Added a responsive StatefulShell with Home, Discover, Barzegar, My Activity,
+  and Profile destinations; Mobile uses glass bottom navigation while wider
+  layouts use NavigationRail/Sidebar.
+- Added a bilingual Discover hub for Farms, Weather, Consultants, Services,
+  Rentals, Marketplace, Social, and unified Search.
+- Localized the general Auth, OTP, Guard, Home, Drawer, Discover, Navigation,
+  and Profile journey. Domain-specific legacy surfaces remain explicitly
+  assigned to their own redesign phases.
+- Fixed Development/Test CORS for random Flutter localhost ports without
+  widening Staging/Production origins.
+- Backend Ruff/compileall: OK; 385 tests passed; runtime CORS smoke and
+  app/database/Redis health passed.
+- Mobile analyze: OK; 77 tests passed; Web build and Wasm dry run passed.
+- Project-owner manual verification: accepted.
+- Next: professional Home dashboard redesign.
+
 After every completed step:
 
 1. update this document with the commit and verification evidence;

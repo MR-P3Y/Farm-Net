@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'farm_back_button.dart';
+
 class FarmAppBar extends StatelessWidget implements PreferredSizeWidget {
   const FarmAppBar({
     super.key,
@@ -22,12 +24,7 @@ class FarmAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       centerTitle: true,
       title: Text(title),
-      leading: showBack && canPop
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.pop(context),
-            )
-          : null,
+      leading: showBack && canPop ? const FarmBackButton() : null,
       actions: actions,
     );
   }

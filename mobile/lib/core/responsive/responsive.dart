@@ -10,13 +10,10 @@ class AppBreakpoints {
 }
 
 class ResponsiveBuilder extends StatelessWidget {
-  const ResponsiveBuilder({
-    super.key,
-    required this.builder,
-  });
+  const ResponsiveBuilder({super.key, required this.builder});
 
   final Widget Function(BuildContext context, BoxConstraints constraints, R r)
-      builder;
+  builder;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +37,8 @@ class R {
   double get height => constraints.maxHeight;
 
   bool get isMobile => width < AppBreakpoints.mobile;
-  bool get isTablet => width >= AppBreakpoints.mobile && width < AppBreakpoints.tablet;
+  bool get isTablet =>
+      width >= AppBreakpoints.mobile && width < AppBreakpoints.tablet;
   bool get isDesktop => width >= AppBreakpoints.tablet;
 
   double s(double value) => value.w;

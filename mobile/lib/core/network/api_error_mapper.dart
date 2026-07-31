@@ -15,8 +15,5 @@ ApiError mapApiError(Object error) {
     );
   }
 
-  return ApiError(
-    code: 'UNKNOWN_ERROR',
-    message: error.toString(),
-  );
+  return ApiError(code: 'UNKNOWN_ERROR', message: error.toString());
 }

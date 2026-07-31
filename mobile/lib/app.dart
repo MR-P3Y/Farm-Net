@@ -24,7 +24,7 @@ class FarmNetApp extends ConsumerWidget {
       builder: (context, child) {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
-          title: 'Farm Net',
+          onGenerateTitle: (context) => AppLocalizations.of(context).appName,
           theme: AppTheme.light(locale),
           darkTheme: AppTheme.dark(locale),
           themeMode: themeMode,

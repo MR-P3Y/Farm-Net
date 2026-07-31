@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../state/auth_controller.dart';
 
@@ -46,14 +47,17 @@ class _State extends ConsumerState<AuthenticatedRouteGuard> {
               children: [
                 const Icon(Icons.lock_outline, size: 52),
                 const SizedBox(height: 14),
-                const Text(
-                  'برای مشاهده این بخش ابتدا وارد حساب خود شوید.',
+                Text(
+                  context.l10n.tr(
+                    fa: 'برای مشاهده این بخش ابتدا وارد حساب خود شوید.',
+                    en: 'Sign in to view this section.',
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 18),
                 FilledButton(
                   onPressed: () => context.go('/'),
-                  child: const Text('ورود به حساب'),
+                  child: Text(context.l10n.login),
                 ),
               ],
             ),

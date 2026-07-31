@@ -9,6 +9,12 @@ class FarmTextField extends StatelessWidget {
     this.validator,
     this.obscureText = false,
     this.maxLines = 1,
+    this.hint,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.onChanged,
+    this.textInputAction,
+    this.enabled = true,
   });
 
   final TextEditingController controller;
@@ -17,6 +23,12 @@ class FarmTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final bool obscureText;
   final int maxLines;
+  final String? hint;
+  final IconData? prefixIcon;
+  final Widget? suffixIcon;
+  final ValueChanged<String>? onChanged;
+  final TextInputAction? textInputAction;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +38,14 @@ class FarmTextField extends StatelessWidget {
       validator: validator,
       obscureText: obscureText,
       maxLines: maxLines,
+      onChanged: onChanged,
+      textInputAction: textInputAction,
+      enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
+        hintText: hint,
+        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon),
+        suffixIcon: suffixIcon,
       ),
     );
   }

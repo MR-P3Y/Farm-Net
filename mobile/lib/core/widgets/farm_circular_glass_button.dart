@@ -8,16 +8,18 @@ class FarmCircularGlassButton extends StatelessWidget {
     required this.onTap,
     this.size = 24,
     this.padding = 10,
+    this.tooltip,
   });
 
   final IconData icon;
   final VoidCallback onTap;
   final double size;
   final double padding;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final button = InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(50),
       child: FarmGlassCard(
@@ -28,5 +30,6 @@ class FarmCircularGlassButton extends StatelessWidget {
         child: Icon(icon, size: size),
       ),
     );
+    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
   }
 }

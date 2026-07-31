@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/farm_button.dart';
 import '../../../core/widgets/farm_glass_card.dart';
@@ -41,6 +42,7 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: ResponsiveBuilder(
@@ -69,11 +71,15 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
               ),
               // محتوا
               Align(
-                alignment: isWide ? AlignmentDirectional.centerStart : const Alignment(0, -0.6),
+                alignment:
+                    isWide
+                        ? AlignmentDirectional.centerStart
+                        : const Alignment(0, -0.6),
                 child: Padding(
-                  padding: isWide
-                      ? EdgeInsetsDirectional.only(start: r.width * 0.08)
-                      : EdgeInsets.symmetric(horizontal: r.s(40)),
+                  padding:
+                      isWide
+                          ? EdgeInsetsDirectional.only(start: r.width * 0.08)
+                          : EdgeInsets.symmetric(horizontal: r.s(40)),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: isWide ? 400 : 330),
                     child: SingleChildScrollView(
@@ -81,7 +87,12 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
                         borderRadius: 28,
                         opacity: 0.1,
                         blur: 16,
-                        padding: const EdgeInsetsDirectional.fromSTEB(24, 12, 24, 32),
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          24,
+                          12,
+                          24,
+                          32,
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,15 +101,23 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
                             Align(
                               alignment: AlignmentDirectional.centerStart,
                               child: IconButton(
-                                icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 20),
+                                icon: const Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
                                 onPressed: () => Navigator.pop(context),
                               ),
                             ),
-                            const Icon(Icons.phone_android_rounded, color: Colors.white, size: 48),
+                            const Icon(
+                              Icons.phone_android_rounded,
+                              color: Colors.white,
+                              size: 48,
+                            ),
                             const SizedBox(height: 16),
-                            const Text(
-                              'ورود با شماره موبایل',
-                              style: TextStyle(
+                            Text(
+                              l10n.loginWithMobile,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -110,21 +129,32 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
                               data: Theme.of(context).copyWith(
                                 inputDecorationTheme: InputDecorationTheme(
                                   filled: true,
-                                  fillColor: Colors.white.withValues(alpha: 0.05),
-                                  labelStyle: const TextStyle(color: Colors.white70, fontSize: 13),
+                                  fillColor: Colors.white.withValues(
+                                    alpha: 0.05,
+                                  ),
+                                  labelStyle: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
-                                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                                    borderSide: BorderSide(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                    ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
-                                    borderSide: const BorderSide(color: Colors.white),
+                                    borderSide: const BorderSide(
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
                               child: FarmTextField(
                                 controller: _phoneController,
-                                label: 'شماره موبایل',
+                                label: l10n.mobileNumber,
                                 keyboardType: TextInputType.phone,
                               ),
                             ),
@@ -132,13 +162,16 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
                               const SizedBox(height: 12),
                               Text(
                                 auth.errorMessage!,
-                                style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 11,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ],
                             const SizedBox(height: 32),
                             FarmButton(
-                              label: 'دریافت کد تایید',
+                              label: l10n.getOtpCode,
                               isLoading: auth.isLoading,
                               onPressed: auth.isLoading ? null : _requestOtp,
                             ),

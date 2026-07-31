@@ -328,3 +328,15 @@ For each implementation step, provide:
 Never describe a foundation as production-ready unless real external providers,
 security controls, tests, deployment, monitoring, and operational verification
 actually support that claim.
+
+## Current Frontend Redesign State
+
+The Mobile Design/Navigation foundation was manually accepted on 2026-07-31.
+It includes real light/dark Glassmorphism themes, persisted Persian/English,
+Jalali/Gregorian locale-aware dates, shared components, a responsive five-tab
+StatefulShell, and a bilingual Discover hub. Development/Test CORS accepts
+Flutter Web random localhost ports while live environments remain restricted.
+Backend verification is 385 tests; Mobile verification is 77 tests plus
+analyze and Web/Wasm build. The next authorized phase is the professional Home
+dashboard redesign. Preserve the foundation and migrate legacy domain strings
+and visuals incrementally in their respective redesign phases.

@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import '../utils/money.dart';
 
 class FarmPriceText extends StatelessWidget {
-  const FarmPriceText({
-    super.key,
-    required this.amountToman,
-  });
+  const FarmPriceText({super.key, required this.amountToman});
 
   final num amountToman;
 

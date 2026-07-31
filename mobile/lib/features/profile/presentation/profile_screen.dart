@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/theme_controller.dart';
@@ -35,10 +36,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(profileControllerProvider);
     final profile = state.profile;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('پروفایل من'),
+        title: Text(l10n.tr(fa: 'پروفایل من', en: 'My profile')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -70,31 +72,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         SizedBox(height: r.v(12)),
                         Text(
                           profile?.profileCompleted == true
-                              ? 'پروفایل شما کامل است'
-                              : 'پروفایل شما هنوز کامل نیست',
+                              ? l10n.tr(
+                                fa: 'پروفایل شما کامل است',
+                                en: 'Your profile is complete',
+                              )
+                              : l10n.tr(
+                                fa: 'پروفایل شما هنوز کامل نیست',
+                                en: 'Your profile is not complete yet',
+                              ),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         SizedBox(height: r.v(20)),
                         _InfoRow(
-                          label: 'نام',
+                          label: l10n.tr(fa: 'نام', en: 'First name'),
                           value: profile?.firstName ?? '-',
                         ),
                         _InfoRow(
-                          label: 'نام خانوادگی',
+                          label: l10n.tr(fa: 'نام خانوادگی', en: 'Last name'),
                           value: profile?.lastName ?? '-',
                         ),
                         _InfoRow(
-                          label: 'نام نمایشی',
+                          label: l10n.tr(fa: 'نام نمایشی', en: 'Display name'),
                           value: profile?.displayName ?? '-',
                         ),
                         _InfoRow(
-                          label: 'کد ملی',
+                          label: l10n.tr(fa: 'کد ملی', en: 'National ID'),
                           value: profile?.nationalId ?? '-',
                         ),
-                        _InfoRow(label: 'آدرس', value: profile?.address ?? '-'),
                         _InfoRow(
-                          label: 'کد پستی',
+                          label: l10n.tr(fa: 'آدرس', en: 'Address'),
+                          value: profile?.address ?? '-',
+                        ),
+                        _InfoRow(
+                          label: l10n.tr(fa: 'کد پستی', en: 'Postal code'),
                           value: profile?.postalCode ?? '-',
                         ),
                         if (state.errorMessage != null) ...[
@@ -117,7 +128,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             );
                           },
                           icon: const Icon(Icons.edit_outlined),
-                          label: const Text('ویرایش پروفایل'),
+                          label: Text(
+                            l10n.tr(fa: 'ویرایش پروفایل', en: 'Edit profile'),
+                          ),
                         ),
                         SizedBox(height: r.v(12)),
                         OutlinedButton.icon(
@@ -125,23 +138,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             context.push('/verifications');
                           },
                           icon: const Icon(Icons.verified_user_outlined),
-                          label: const Text('درخواست‌های تأیید من'),
+                          label: Text(
+                            l10n.tr(
+                              fa: 'درخواست‌های تأیید من',
+                              en: 'My verification requests',
+                            ),
+                          ),
                         ),
                         const Divider(height: 40),
                         Text(
-                          'تنظیمات اپلیکیشن',
+                          l10n.settings,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 12),
                         SwitchListTile(
-                          title: const Text('حالت تیره (Dark Mode)'),
-                          value: Theme.of(context).brightness == Brightness.dark,
+                          title: Text(l10n.darkMode),
+                          value:
+                              Theme.of(context).brightness == Brightness.dark,
                           onChanged: (_) {
                             ref.read(themeControllerProvider.notifier).toggle();
                           },
                         ),
                         ListTile(
-                          title: const Text('زبان (Language)'),
+                          title: Text(l10n.language),
                           subtitle: Text(
                             Localizations.localeOf(context).languageCode == 'fa'
                                 ? 'فارسی'
@@ -149,7 +168,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                           trailing: const Icon(Icons.language),
                           onTap: () {
-                            ref.read(localeControllerProvider.notifier).toggle();
+                            ref
+                                .read(localeControllerProvider.notifier)
+                                .toggle();
                           },
                         ),
                       ],

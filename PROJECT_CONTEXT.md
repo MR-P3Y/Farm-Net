@@ -1311,3 +1311,18 @@ The latest completed tagged foundation is:
 ```text
 v0.28.0-barzegar-foundation
 ```
+
+## Frontend Redesign
+
+The Mobile frontend redesign foundation was completed and manually accepted by
+the project owner on 2026-07-31. It establishes semantic light/dark glass
+themes, persisted Persian/English locale and theme choices, Jalali dates for
+Persian and Gregorian dates for English, shared design tokens/components, and
+a responsive five-destination StatefulShell navigation for Home, Discover,
+Barzegar, My Activity, and Profile. General authentication, Home, Discover,
+navigation, and Profile surfaces follow the active locale. Feature-specific
+legacy screens must be localized and visually migrated as each domain redesign
+phase is completed. Flutter analyze passed, all 77 Mobile tests passed, and the
+Web/Wasm build passed. Development/test CORS now safely supports Flutter Web's
+random localhost ports; staging/production do not. The next frontend phase is
+the professional Home dashboard redesign.

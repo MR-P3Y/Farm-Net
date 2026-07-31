@@ -18,7 +18,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  int _bottomNavIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _getGreeting(),
+                                _getGreeting(l10n),
                                 style: TextStyle(
                                   color:
                                       isDark ? Colors.white70 : Colors.black54,
@@ -103,7 +102,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ),
                               ),
                               Text(
-                                user?.email ?? user?.phone ?? 'کشاورز پیشرو',
+                                user?.email ??
+                                    user?.phone ??
+                                    l10n.tr(
+                                      fa: 'کشاورز پیشرو',
+                                      en: 'Progressive farmer',
+                                    ),
                                 style: TextStyle(
                                   color:
                                       isDark
@@ -140,7 +144,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 // هاب خدمات اصلی (گرید شیشه‌ای)
                 SliverToBoxAdapter(
-                  child: _buildSectionHeader('مدیریت و نظارت مزرعه', isDark),
+                  child: _buildSectionHeader(
+                    l10n.tr(fa: 'مدیریت و نظارت مزرعه', en: 'Farm management'),
+                    isDark,
+                  ),
                 ),
                 SliverPadding(
                   padding: EdgeInsets.symmetric(horizontal: r.s(16)),
@@ -154,22 +161,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                     delegate: SliverChildListDelegate([
                       _DashboardTile(
-                        title: 'برزگر',
-                        subtitle: 'دستیار هوشمند کشاورز',
+                        title: l10n.barzegar,
+                        subtitle: l10n.tr(
+                          fa: 'دستیار هوشمند کشاورز',
+                          en: 'Your farming assistant',
+                        ),
                         icon: Icons.auto_awesome_rounded,
                         color: Colors.amber.shade800,
-                        onTap: () => context.push('/barzegar'),
+                        onTap: () => context.go('/barzegar'),
                       ),
                       _DashboardTile(
-                        title: 'مزارع من',
-                        subtitle: 'نظارت بر قطعات',
+                        title: l10n.farms,
+                        subtitle: l10n.tr(
+                          fa: 'نظارت بر قطعات',
+                          en: 'Monitor your plots',
+                        ),
                         icon: Icons.grass_rounded,
                         color: Colors.green,
                         onTap: () => context.push('/farms'),
                       ),
                       _DashboardTile(
-                        title: 'مشاوران',
-                        subtitle: 'پرسش و پاسخ',
+                        title: l10n.consultants,
+                        subtitle: l10n.tr(
+                          fa: 'پرسش و پاسخ',
+                          en: 'Expert advice',
+                        ),
                         icon: Icons.psychology_rounded,
                         color: Colors.purple,
                         onTap: () => context.push('/consultants'),
@@ -180,7 +196,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 // بازار و محصولات
                 SliverToBoxAdapter(
-                  child: _buildSectionHeader('بازار فارم‌نت', isDark),
+                  child: _buildSectionHeader(
+                    l10n.tr(fa: 'بازار فارم‌نت', en: 'Farm Net marketplace'),
+                    isDark,
+                  ),
                 ),
                 SliverToBoxAdapter(
                   child: SizedBox(
@@ -191,25 +210,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       physics: const BouncingScrollPhysics(),
                       children: [
                         _MarketHubItem(
-                          title: 'فروشگاه‌ها',
+                          title: l10n.tr(fa: 'فروشگاه‌ها', en: 'Stores'),
                           icon: Icons.storefront_rounded,
                           color: Colors.blue,
                           onTap: () => context.push('/stores'),
                         ),
                         _MarketHubItem(
-                          title: 'محصولات',
+                          title: l10n.tr(fa: 'محصولات', en: 'Products'),
                           icon: Icons.inventory_2_rounded,
                           color: Colors.teal,
                           onTap: () => context.push('/products'),
                         ),
                         _MarketHubItem(
-                          title: 'خدمات فنی',
+                          title: l10n.services,
                           icon: Icons.handyman_rounded,
                           color: Colors.orange,
                           onTap: () => context.push('/services'),
                         ),
                         _MarketHubItem(
-                          title: 'اجاره ماشین',
+                          title: l10n.rentals,
                           icon: Icons.agriculture_rounded,
                           color: Colors.brown,
                           onTap: () => context.push('/rentals'),
@@ -221,7 +240,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 // نبض جامعه
                 SliverToBoxAdapter(
-                  child: _buildSectionHeader('نبض جامعه کشاورزان', isDark),
+                  child: _buildSectionHeader(
+                    l10n.tr(fa: 'نبض جامعه کشاورزان', en: 'Farmer community'),
+                    isDark,
+                  ),
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
@@ -237,13 +259,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SliverToBoxAdapter(child: SizedBox(height: 130)),
               ],
             ),
-          ),
-
-          // ۳. نوار ناوبری کریستالی چندمنظوره
-          _ProfessionalGlassNav(
-            currentIndex: _bottomNavIndex,
-            isDark: isDark,
-            onTap: (index) => setState(() => _bottomNavIndex = index),
           ),
         ],
       ),
@@ -264,123 +279,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _getGreeting() {
+  String _getGreeting(AppLocalizations l10n) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'صبح بخیر؛';
-    if (hour < 17) return 'ظهر بخیر؛';
-    return 'شب خوش؛';
-  }
-}
-
-class _ProfessionalGlassNav extends StatelessWidget {
-  final int currentIndex;
-  final bool isDark;
-  final Function(int) onTap;
-
-  const _ProfessionalGlassNav({
-    required this.currentIndex,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      bottom: 24,
-      left: 16,
-      right: 16,
-      child: FarmGlassCard(
-        borderRadius: 35,
-        blur: 25,
-        opacity: isDark ? 0.12 : 0.75,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _NavButton(
-              icon: Icons.home_rounded,
-              label: 'خانه',
-              isActive: currentIndex == 0,
-              onTap: () => onTap(0),
-            ),
-            _NavButton(
-              icon: Icons.storefront_rounded,
-              label: 'فروشگاه',
-              isActive: currentIndex == 1,
-              onTap: () {
-                onTap(1);
-                context.push('/stores');
-              },
-            ),
-            _NavButton(
-              icon: Icons.agriculture_rounded,
-              label: 'اجاره',
-              isActive: currentIndex == 2,
-              onTap: () {
-                onTap(2);
-                context.push('/rentals');
-              },
-            ),
-            _NavButton(
-              icon: Icons.handyman_rounded,
-              label: 'خدمات',
-              isActive: currentIndex == 3,
-              onTap: () {
-                onTap(3);
-                context.push('/services');
-              },
-            ),
-            _NavButton(
-              icon: Icons.wb_cloudy_rounded,
-              label: 'هوا',
-              isActive: currentIndex == 4,
-              onTap: () {
-                onTap(4);
-                context.push('/weather');
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  const _NavButton({
-    required this.icon,
-    required this.label,
-    this.isActive = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final activeColor = const Color(0xFF2E7D32);
-    final color = isActive ? activeColor : Colors.grey.withValues(alpha: 0.8);
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
+    if (hour < 12) return l10n.tr(fa: 'صبح بخیر؛', en: 'Good morning,');
+    if (hour < 17) return l10n.tr(fa: 'ظهر بخیر؛', en: 'Good afternoon,');
+    return l10n.tr(fa: 'شب خوش؛', en: 'Good evening,');
   }
 }
 
@@ -482,6 +385,7 @@ class _WeatherHeroWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return FarmGlassCard(
       borderRadius: 32,
       blur: 20,
@@ -495,9 +399,12 @@ class _WeatherHeroWidget extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'ورامین، تهران',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                  Text(
+                    l10n.tr(fa: 'ورامین، تهران', en: 'Varamin, Tehran'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Container(
@@ -509,9 +416,12 @@ class _WeatherHeroWidget extends StatelessWidget {
                       color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
-                      'مناسب برای کوددهی',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.tr(
+                        fa: 'مناسب برای کوددهی',
+                        en: 'Suitable for fertilizing',
+                      ),
+                      style: const TextStyle(
                         color: Color(0xFF2E7D32),
                         fontWeight: FontWeight.w900,
                         fontSize: 11,
@@ -540,12 +450,20 @@ class _WeatherHeroWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _Stat(
-                label: 'رطوبت',
-                value: '۴۵٪',
+                label: l10n.tr(fa: 'رطوبت', en: 'Humidity'),
+                value: l10n.tr(fa: '۴۵٪', en: '45%'),
                 icon: Icons.water_drop_rounded,
               ),
-              _Stat(label: 'باد', value: '۱۸km', icon: Icons.air_rounded),
-              _Stat(label: 'بارش', value: '۵٪', icon: Icons.umbrella_rounded),
+              _Stat(
+                label: l10n.tr(fa: 'باد', en: 'Wind'),
+                value: l10n.tr(fa: '۱۸km', en: '18km'),
+                icon: Icons.air_rounded,
+              ),
+              _Stat(
+                label: l10n.tr(fa: 'بارش', en: 'Rain'),
+                value: l10n.tr(fa: '۵٪', en: '5%'),
+                icon: Icons.umbrella_rounded,
+              ),
             ],
           ),
         ],
@@ -560,6 +478,7 @@ class _SocialPulseWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return FarmGlassCard(
       borderRadius: 28,
       blur: 10,
@@ -575,15 +494,21 @@ class _SocialPulseWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'مهندس علوی (مشاور)',
-                      style: TextStyle(
+                    Text(
+                      l10n.tr(
+                        fa: 'مهندس علوی (مشاور)',
+                        en: 'Engineer Alavi (Consultant)',
+                      ),
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
                       ),
                     ),
                     Text(
-                      'پاسخ به سوال "آبیاری ذرت"',
+                      l10n.tr(
+                        fa: 'پاسخ به سوال "آبیاری ذرت"',
+                        en: 'Answer to "Corn irrigation"',
+                      ),
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark ? Colors.white54 : Colors.black45,
@@ -601,7 +526,12 @@ class _SocialPulseWidget extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'در این فصل بهتر است آبیاری را در ساعات پایانی شب انجام دهید تا میزان تبخیر سطحی به حداقل برسد و ریشه گیاه فرصت جذب کافی داشته باشد...',
+            l10n.tr(
+              fa:
+                  'در این فصل بهتر است آبیاری را در ساعات پایانی شب انجام دهید تا میزان تبخیر سطحی به حداقل برسد و ریشه گیاه فرصت جذب کافی داشته باشد...',
+              en:
+                  'This season, irrigate late at night to reduce surface evaporation and give roots enough time to absorb water...',
+            ),
             style: TextStyle(
               fontSize: 13,
               height: 1.5,
@@ -695,7 +625,8 @@ class _HomeDrawer extends StatelessWidget {
                 ),
               ),
               accountName: Text(
-                user?.email?.split('@').first ?? 'کشاورز',
+                user?.email?.split('@').first ??
+                    l10n.tr(fa: 'کشاورز', en: 'Farmer'),
                 style: const TextStyle(fontWeight: FontWeight.w900),
               ),
               accountEmail: Text(
@@ -705,19 +636,19 @@ class _HomeDrawer extends StatelessWidget {
             ),
             _DrawerItem(
               icon: Icons.account_balance_wallet_rounded,
-              label: 'کیف پول و موجودی',
+              label: l10n.tr(fa: 'کیف پول و موجودی', en: 'Wallet and balance'),
               onTap: () => context.push('/finance'),
             ),
             _DrawerItem(
               icon: Icons.workspace_premium_rounded,
-              label: 'ارتقا به حساب ویژه',
+              label: l10n.tr(fa: 'ارتقا به حساب ویژه', en: 'Upgrade plan'),
               color: Colors.amber[800],
               onTap: () => context.push('/subscription'),
             ),
             _DrawerItem(
               icon: Icons.history_rounded,
-              label: 'تاریخچه فعالیت‌ها',
-              onTap: () => context.push('/activity'),
+              label: l10n.myActivity,
+              onTap: () => context.go('/activity'),
             ),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
@@ -725,19 +656,19 @@ class _HomeDrawer extends StatelessWidget {
             ),
             _DrawerItem(
               icon: Icons.settings_outlined,
-              label: 'تنظیمات اپلیکیشن',
-              onTap: () => context.push('/profile'),
+              label: l10n.settings,
+              onTap: () => context.go('/profile'),
             ),
             _DrawerItem(
               icon: Icons.help_outline_rounded,
-              label: 'مرکز پشتیبانی',
+              label: l10n.tr(fa: 'مرکز پشتیبانی', en: 'Help center'),
               onTap: () {},
             ),
             const Spacer(),
             const Divider(),
             _DrawerItem(
               icon: Icons.logout_rounded,
-              label: 'خروج از حساب',
+              label: l10n.logout,
               color: Colors.redAccent,
               onTap: () {},
             ),

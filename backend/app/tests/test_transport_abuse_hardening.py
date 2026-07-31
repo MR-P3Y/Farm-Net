@@ -236,3 +236,25 @@ def test_runtime_cors_allows_known_headers_and_rejects_unknown_headers():
     assert allowed.status_code == 200
     assert allowed.headers["access-control-allow-origin"] == "http://localhost:8080"
     assert rejected.status_code == 400
+
+
+def test_development_cors_allows_flutter_random_localhost_port():
+    from app.main import app
+
+    client = TestClient(app)
+    response = client.options(
+        "/api/v1/auth/login/email",
+        headers={
+            "Origin": "http://localhost:56963",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Content-Type",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:56963"
+
+
+def test_live_environments_do_not_allow_random_localhost_origins():
+    assert Settings(app_env="staging", _env_file=None).cors_origin_regex is None
+    assert Settings(app_env="production", _env_file=None).cors_origin_regex is None

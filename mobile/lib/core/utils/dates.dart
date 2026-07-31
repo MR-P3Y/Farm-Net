@@ -27,9 +27,31 @@ String formatDate(
 
     return persianDigits ? toPersianDigits(dateStr) : dateStr;
   } else {
-    final format = showTime ? DateFormat.yMd().add_jm() : DateFormat.yMd();
+    final format =
+        showTime ? DateFormat.yMd('en').add_jm() : DateFormat.yMd('en');
     return format.format(date);
   }
+}
+
+String formatLocalizedDate(
+  DateTime date, {
+  required Locale locale,
+  bool showTime = false,
+  bool persianDigits = true,
+}) {
+  if (locale.languageCode == 'fa') {
+    final jalali = Jalali.fromDateTime(date);
+    final dateValue =
+        '${jalali.year}/${jalali.month.toString().padLeft(2, '0')}/${jalali.day.toString().padLeft(2, '0')}';
+    final value =
+        showTime
+            ? '$dateValue ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}'
+            : dateValue;
+    return persianDigits ? toPersianDigits(value) : value;
+  }
+
+  return (showTime ? DateFormat.yMd('en').add_jm() : DateFormat.yMd('en'))
+      .format(date);
 }
 
 extension DateTimeX on DateTime {

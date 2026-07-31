@@ -11,8 +11,6 @@ class AppTypography {
   }
 
   static List<String> fallbackFamilies(Locale locale) {
-    return locale.languageCode == 'fa'
-        ? const [ptSans]
-        : const [irYekan];
+    return locale.languageCode == 'fa' ? const [ptSans] : const [irYekan];
   }
 }

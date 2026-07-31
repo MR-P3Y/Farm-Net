@@ -93,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: FarmGlassCard(
                         borderRadius: 28,
                         opacity: 0.1, // افزایش شفافیت برای ایجاد حس ۵۰٪ شیشه‌ای
-                        blur: 16,    // تاری بیشتر برای افکت شیشه‌ای قوی‌تر
+                        blur: 16, // تاری بیشتر برای افکت شیشه‌ای قوی‌تر
                         padding: EdgeInsets.symmetric(
                           vertical: isWide ? 36 : 24,
                           horizontal: isWide ? 32 : 24,
@@ -111,19 +111,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Text(
                               l10n.appName,
                               style: (isWide
-                                      ? Theme.of(context).textTheme.headlineMedium
-                                      : Theme.of(context).textTheme.headlineSmall)
+                                      ? Theme.of(
+                                        context,
+                                      ).textTheme.headlineMedium
+                                      : Theme.of(
+                                        context,
+                                      ).textTheme.headlineSmall)
                                   ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 2,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black.withValues(alpha: 0.3),
-                                    blurRadius: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 2,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        blurRadius: 10,
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
                               textAlign: TextAlign.center,
                             ),
                             SizedBox(height: isWide ? r.v(40) : r.v(24)),

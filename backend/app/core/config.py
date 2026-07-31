@@ -142,6 +142,13 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
+    def cors_origin_regex(self) -> str | None:
+        """Allow Flutter's random localhost Web port only outside live environments."""
+        if self.app_env.strip().lower() in {"development", "test"}:
+            return r"^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?$"
+        return None
+
+    @property
     def trusted_proxy_host_set(self) -> set[str]:
         return {host.strip() for host in self.trusted_proxy_hosts.split(",") if host.strip()}
 
