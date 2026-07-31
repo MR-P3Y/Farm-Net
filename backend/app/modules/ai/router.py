@@ -7,6 +7,10 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.ai.schemas import (
     AIHumanEscalationCreateIn,
+    AIDataDeletionCreateIn,
+    AIDataDeletionOut,
+    AIFeedbackCreateIn,
+    AIFeedbackOut,
     AIDiaryDecisionIn,
     AIDiarySuggestionOut,
     AIFarmerReportOut,
@@ -146,6 +150,24 @@ def get_conversation(
     )
 
 
+@router.post("/conversations/{conversation_id}/deletion-requests")
+def request_conversation_deletion(
+    conversation_id: int,
+    payload: AIDataDeletionCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("ai.data.delete_own")),
+):
+    row = AIWorkflowService(db).request_conversation_deletion(
+        user=user, conversation_id=conversation_id, payload=payload
+    )
+    return success_response(
+        data=AIDataDeletionOut.model_validate(row).model_dump(mode="json"),
+        message="Barzegar conversation deletion scheduled",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
 @router.post(
     "/conversations/{conversation_id}/requests",
     response_model=AIRequestResponse,
@@ -178,6 +200,24 @@ def get_request(
     row = AIWorkflowService(db).get_request(user=user, request_id=request_id)
     return success_response(
         data=AIRequestOut.model_validate(row).model_dump(mode="json"),
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/requests/{request_id}/feedback", status_code=status.HTTP_201_CREATED)
+def create_feedback(
+    request_id: int,
+    payload: AIFeedbackCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("ai.feedback.create_own")),
+):
+    row = AIWorkflowService(db).create_feedback(
+        user=user, request_id=request_id, payload=payload
+    )
+    return success_response(
+        data=AIFeedbackOut.model_validate(row).model_dump(mode="json"),
+        message="Barzegar feedback recorded",
         meta={"trace_id": request.state.trace_id},
     )
 

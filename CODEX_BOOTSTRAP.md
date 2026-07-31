@@ -261,14 +261,21 @@ health, metrics, and OpenAPI passed. Next: Phase 21.15 AI Docs/Postman +
 Runtime Regression. Evidence:
 `docs/ai/phase-21-evaluation-observability.md`.
 Phase 21.15 Docs, Postman + Runtime Regression: completed. The authoritative
-API doc and deterministic secret-free Collection cover all 28 live Barzegar
-operations with exact OpenAPI parity. Runtime verified 28 AI tables, 28/28
+API doc and deterministic secret-free Collection cover all 30 live Barzegar
+operations with exact OpenAPI parity. Runtime verified 28 AI tables, 30/30
 unauthenticated privacy responses, 6/6 metrics, app/database/Redis/Qdrant,
-Alembic no-drift, and Provider-disabled state. Ruff/compileall, 381 Backend
+Alembic no-drift, and Provider-disabled state. Ruff/compileall, 383 Backend
 tests, Mobile analyze/72 tests/Web build, Admin analyze/30 tests/Web build, and
-17 Postman collections/425 requests passed. Next: Phase 21.16 Barzegar Release
+17 Postman collections/427 requests passed. Next: Phase 21.16 Barzegar Release
 Gate + Tag. Evidence:
 `docs/ai/phase-21-docs-postman-runtime-regression.md`.
+Phase 21.16 Barzegar Release Gate: passed after closing exact-once owner
+feedback and Retention-aware conversation deletion gaps across Backend,
+Mobile, Docs and Postman. Final gate: 383 Backend tests, Mobile 72/Admin 30,
+both Web builds, Alembic no-drift, repeated seed, full health, 30/30 privacy,
+6/6 metrics, real owner smoke, and Persian offline evaluation 3/3. Release tag:
+`v0.28.0-barzegar-foundation`. Live Provider remains disabled pending billing.
+Evidence: `docs/ai/phase-21-release-gate.md`.
 ```
 
 Services means agricultural operational services, not equipment rental.

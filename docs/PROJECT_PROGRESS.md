@@ -2586,9 +2586,9 @@ Status: completed
 - Updated the AI roadmap, 28-table database register, and Permission register.
 - Added a deterministic, secret-free Postman generator and collection.
 - Added exact OpenAPI/Postman/document parity and JSON/secret contract tests.
-- Farmer operations: 14; Admin operations: 14; total: 28.
+- Farmer operations: 16; Admin operations: 14; total: 30.
 - Runtime AI tables: 28.
-- Runtime privacy: all 28 operations returned 401 without a token.
+- Runtime privacy: all 30 operations returned 401 without a token.
 - Health: app/database/Redis `ok`; Qdrant 200.
 - Alembic current/head `l21h9f6d2130`; no drift.
 - Prometheus AI metrics: 6/6.
@@ -2596,10 +2596,34 @@ Status: completed
 - Backend Ruff/compileall: OK; 381 tests passed.
 - Mobile analyze: OK; 72 tests; Web/Wasm build: OK.
 - Admin analyze: OK; 30 tests; Web/Wasm build: OK.
-- All Postman JSON: 17 collections / 425 requests parsed.
+- All Postman JSON: 17 collections / 427 requests parsed.
 - No authenticated Runtime mutation was performed.
 - Next: Step 21.16 Barzegar Release Gate + Tag.
 - Evidence: `docs/ai/phase-21-docs-postman-runtime-regression.md`.
+
+### Step 21.16 Barzegar Release Gate + Tag
+
+Status: passed
+
+- Release audit found and closed missing owner feedback and Retention-aware
+  conversation deletion contracts before tagging.
+- Added exact-once terminal-answer feedback and idempotent deletion scheduling.
+- Added owner/mobile controls, Audit, active-work rejection and privacy hiding.
+- Final Barzegar contract: 16 Farmer + 14 Admin = 30 operations.
+- Backend Ruff/compileall: OK; 383 tests passed.
+- Alembic current/head `l21h9f6d2130`; no drift.
+- Auth seed twice: 12 roles / 285 permissions.
+- Runtime app/database/Redis: `ok`; Qdrant: 200.
+- Real owner smoke: emergency blocked, feedback helpful, deletion requested.
+- Persian deterministic release evaluation: 3/3, pass rate 1.0000.
+- Privacy: 30/30 unauthenticated requests returned 401; metrics 6/6.
+- Mobile analyze: OK; 72 tests; Web build: OK.
+- Admin analyze: OK; 30 tests; Web build: OK.
+- Postman: 17 collections / 427 requests; JSON and OpenAPI parity OK.
+- Tag: `v0.28.0-barzegar-foundation`.
+- Live Provider/model evaluation skipped because OpenAI billing is inactive;
+  `AI_PROVIDER_ENABLED=false` remains enforced.
+- Evidence: `docs/ai/phase-21-release-gate.md`.
 
 ## Progress Update Rule
 

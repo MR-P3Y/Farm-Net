@@ -212,12 +212,70 @@ class _BarzegarScreenState extends ConsumerState<BarzegarScreen> {
     }
   }
 
+  Future<void> _feedback(bool helpful) async {
+    final request = _latestRequest;
+    if (request == null) return;
+    try {
+      await ref
+          .read(barzegarRepositoryProvider)
+          .submitFeedback(request.id, helpful: helpful);
+      if (mounted) _notice('بازخورد شما ثبت شد.');
+    } catch (error) {
+      if (mounted) setState(() => _error = _message(error));
+    }
+  }
+
+  Future<void> _deleteConversation() async {
+    final conversation = _conversation;
+    if (conversation == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('حذف گفت‌وگوی برزگر'),
+            content: const Text(
+              'گفت‌وگو فوراً از فهرست شما پنهان می‌شود و حذف نهایی آن مطابق دوره نگهداری انجام می‌شود.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('انصراف'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('درخواست حذف'),
+              ),
+            ],
+          ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref
+          .read(barzegarRepositoryProvider)
+          .requestConversationDeletion(conversation.id);
+      if (!mounted) return;
+      setState(() {
+        _conversation = null;
+        _latestRequest = null;
+      });
+      await _load();
+      if (mounted) _notice('درخواست حذف طبق دوره نگهداری ثبت شد.');
+    } catch (error) {
+      if (mounted) setState(() => _error = _message(error));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: FarmAppBar(
         title: 'برزگر',
         actions: [
+          IconButton(
+            tooltip: 'حذف گفت‌وگو',
+            onPressed: _conversation == null ? null : _deleteConversation,
+            icon: const Icon(Icons.delete_outline_rounded),
+          ),
           IconButton(
             tooltip: 'به‌روزرسانی',
             onPressed: _refreshRequest,
@@ -327,22 +385,43 @@ class _BarzegarScreenState extends ConsumerState<BarzegarScreen> {
             onTap: _chooseFarmContext,
           ),
         if (_latestRequest != null)
-          ListTile(
-            dense: true,
-            leading: Icon(
-              _latestRequest!.isPending
-                  ? Icons.schedule_rounded
-                  : Icons.task_alt_rounded,
-            ),
-            title: Text('وضعیت: ${_statusLabel(_latestRequest!.status)}'),
-            subtitle:
-                _latestRequest!.failureCode == null
-                    ? null
-                    : Text(_latestRequest!.failureCode!),
-            trailing: IconButton(
-              onPressed: _refreshRequest,
-              icon: const Icon(Icons.sync_rounded),
-            ),
+          Column(
+            children: [
+              ListTile(
+                dense: true,
+                leading: Icon(
+                  _latestRequest!.isPending
+                      ? Icons.schedule_rounded
+                      : Icons.task_alt_rounded,
+                ),
+                title: Text('وضعیت: ${_statusLabel(_latestRequest!.status)}'),
+                subtitle:
+                    _latestRequest!.failureCode == null
+                        ? null
+                        : Text(_latestRequest!.failureCode!),
+                trailing: IconButton(
+                  onPressed: _refreshRequest,
+                  icon: const Icon(Icons.sync_rounded),
+                ),
+              ),
+              if (_latestRequest!.status == 'succeeded' ||
+                  _latestRequest!.status == 'blocked')
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _feedback(true),
+                      icon: const Icon(Icons.thumb_up_alt_outlined),
+                      label: const Text('مفید بود'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _feedback(false),
+                      icon: const Icon(Icons.thumb_down_alt_outlined),
+                      label: const Text('مفید نبود'),
+                    ),
+                  ],
+                ),
+            ],
           ),
         Expanded(
           child:

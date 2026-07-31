@@ -28,8 +28,10 @@
 | POST | `/ai/conversations` | ایجاد گفتگوی خصوصی |
 | GET | `/ai/conversations` | فهرست گفتگوهای مالک |
 | GET | `/ai/conversations/{conversation_id}` | جزئیات گفتگو |
+| POST | `/ai/conversations/{conversation_id}/deletion-requests` | پنهان‌سازی فوری و زمان‌بندی حذف مطابق Retention |
 | POST | `/ai/conversations/{conversation_id}/requests` | ثبت درخواست صف‌شونده |
 | GET | `/ai/requests/{request_id}` | وضعیت و نتیجهٔ درخواست مالک |
+| POST | `/ai/requests/{request_id}/feedback` | بازخورد exact-once مالک درباره پاسخ نهایی |
 | POST | `/ai/requests/{request_id}/cancel` | لغو درخواست مجاز |
 | POST | `/ai/requests/{request_id}/escalate` | ارجاع صریح به مشاور انسانی |
 | GET | `/ai/diary-suggestions` | پیشنهادهای دفتر مزرعه |
@@ -51,6 +53,12 @@
 درخواست‌های Context‌دار به Consent فعال و تازه با Purpose متناسب نیاز دارند.
 تحلیل تصویر علاوه بر Consent، به `media_file_key` خصوصی و متعلق به همان کاربر
 نیاز دارد. هر کاربر حداکثر پنج درخواست `queued/running` هم‌زمان دارد.
+
+Feedback فقط برای پاسخ `succeeded` یا پاسخ ایمنی `blocked` مجاز است. ارسال
+دوبارهٔ همان مقدار idempotent و تغییر مقدار قبلی Conflict است. درخواست حذف
+تنها برای گفت‌وگوی متعلق به کاربر و فاقد کار فعال پذیرفته می‌شود؛ گفتگو فوراً
+به `deletion_pending` می‌رود و حذف نهایی زودتر از `retention_until` انجام
+نمی‌شود.
 
 ## Admin operations
 

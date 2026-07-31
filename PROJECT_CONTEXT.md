@@ -1230,15 +1230,27 @@ Docs/Postman + Runtime Regression is next. Evidence:
 
 Phase 21.15 Docs, Postman + Runtime Regression is completed. The authoritative
 Barzegar API document, database/Permission/roadmap registers, deterministic
-secret-free Postman generator and collection now cover all 28 live AI
+secret-free Postman generator and collection now cover all 30 live AI
 operations. Contract tests enforce exact OpenAPI parity, parse all bodies, and
-reject credential patterns. Runtime verified 28 AI tables, 28/28
+reject credential patterns. Runtime verified 28 AI tables, 30/30
 unauthenticated privacy responses, 6/6 metrics, app/database/Redis/Qdrant,
 Alembic head/no-drift, and Provider-disabled state. Ruff/compileall, 381
 Backend tests, Mobile analyze/72 tests/Web build, Admin analyze/30 tests/Web
-build, and all 17 Postman collections/425 requests passed. Step 21.16 Barzegar
+build, and all 17 Postman collections/427 requests passed. Step 21.16 Barzegar
 Release Gate + Tag is next. Evidence:
 `docs/ai/phase-21-docs-postman-runtime-regression.md`.
+
+Phase 21.16 Barzegar Release Gate passed. The gate first exposed and closed two
+real owner-contract gaps: exact-once answer feedback and idempotent,
+Retention-aware conversation deletion, including Mobile controls, Audit and
+30-path Docs/Postman parity. Final verification passed Ruff/compileall, 383
+Backend tests, Mobile analyze/72 tests/Web build, Admin analyze/30 tests/Web
+build, Alembic head/no-drift, repeated seed, app/database/Redis/Qdrant health,
+30/30 privacy responses, 6/6 metrics, real owner feedback/deletion smoke and a
+3/3 Persian deterministic evaluation run. Release tag:
+`v0.28.0-barzegar-foundation`. Live OpenAI generation remains disabled pending
+billing, so this is a foundation release rather than production-ready live AI.
+Evidence: `docs/ai/phase-21-release-gate.md`.
 
 ## Known Gaps
 
@@ -1247,7 +1259,8 @@ Release Gate + Tag is next. Evidence:
 - The Zarinpal adapter is implemented but disabled; credentialed sandbox and
   production activation remain operational gaps.
 - SMS, email, and push providers are not connected for production delivery.
-- Contracts, promotion, real payout integration, AI/RAG, BI/data access, and
+- Contracts, promotion, real payout integration, live AI Provider activation,
+  BI/data access, and
   production hardening remain future work. Subscription commerce is
   implemented, but credentialed Zarinpal sandbox/production activation remains
   an operational gate.
@@ -1296,5 +1309,5 @@ Additional rules:
 The latest completed tagged foundation is:
 
 ```text
-v0.25.0-reviews-foundation
+v0.28.0-barzegar-foundation
 ```

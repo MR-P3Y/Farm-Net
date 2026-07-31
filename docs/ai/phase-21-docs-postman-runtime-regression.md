@@ -16,12 +16,12 @@ Status: completed
 
 ## Contract inventory
 
-- Farmer Barzegar operations: 14.
+- Farmer Barzegar operations: 16.
 - Admin Barzegar operations: 14.
-- Total OpenAPI/Postman operations: 28.
+- Total OpenAPI/Postman operations: 30.
 - Runtime AI tables: 28.
 - Postman collections in repository: 17.
-- Total Postman requests: 425.
+- Total Postman requests: 427.
 
 The Postman collection uses separate owner and Admin token variables. It
 contains no OpenAI key, Provider credential, Super Admin password, or live
@@ -35,11 +35,11 @@ mutation token.
 | Qdrant | `/healthz` returned 200 |
 | Alembic | current/head `l21h9f6d2130`; no drift |
 | AI database tables | 28 |
-| OpenAPI | 28 Barzegar operations |
-| Unauthenticated privacy boundary | 28/28 operations returned 401 |
+| OpenAPI | 30 Barzegar operations |
+| Unauthenticated privacy boundary | 30/30 operations returned 401 |
 | Prometheus | 6/6 expected AI metric families present |
 | Provider flag | `false` |
-| Postman | 17 collections / 425 requests; JSON parse OK |
+| Postman | 17 collections / 427 requests; JSON parse OK |
 | Backend | Ruff/compileall OK; 381 tests passed |
 | Mobile | analyze OK; 72 tests; Web/Wasm build OK |
 | Admin | analyze OK; 30 tests; Web/Wasm build OK |

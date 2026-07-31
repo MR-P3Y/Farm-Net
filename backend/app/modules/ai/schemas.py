@@ -10,6 +10,42 @@ class AIConversationCreateIn(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+class AIFeedbackCreateIn(BaseModel):
+    rating: str = Field(pattern="^(helpful|not_helpful)$")
+    reason_codes: list[str] = Field(default_factory=list, max_length=10)
+    comment: str | None = Field(default=None, max_length=1000)
+
+    model_config = {"extra": "forbid"}
+
+
+class AIFeedbackOut(BaseModel):
+    id: int
+    request_id: int
+    rating: str
+    reason_codes: list | None
+    comment: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AIDataDeletionCreateIn(BaseModel):
+    idempotency_key: str = Field(min_length=8, max_length=180)
+
+    model_config = {"extra": "forbid"}
+
+
+class AIDataDeletionOut(BaseModel):
+    id: int
+    conversation_id: int | None
+    scope: str
+    status: str
+    requested_at: datetime
+    process_after: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class AIRequestCreateIn(BaseModel):
     idempotency_key: str = Field(min_length=8, max_length=180)
     content: str = Field(min_length=1, max_length=12000)

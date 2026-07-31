@@ -31,7 +31,7 @@ def test_ai_collection_is_complete_parseable_and_secret_free() -> None:
     collection = json.loads(raw)
     requests = _requests(collection["item"])
 
-    assert len(requests) == 28
+    assert len(requests) == 30
     assert re.search(r"\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}", raw) is None
     assert "OPENAI_API_KEY" not in raw
     assert "SUPER_ADMIN_PASSWORD" not in raw
@@ -48,7 +48,7 @@ def test_ai_collection_is_complete_parseable_and_secret_free() -> None:
         for method in value
         if method in {"get", "post", "patch", "put", "delete"}
     }
-    assert len(openapi_operations) == 28
+    assert len(openapi_operations) == 30
     assert collection_operations == openapi_operations
 
     for request in requests:

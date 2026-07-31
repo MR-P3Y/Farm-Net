@@ -16,6 +16,10 @@ class BarzegarRepository {
       _api.createConversation();
   Future<BarzegarConversation> conversation(int id) => _api.conversation(id);
   Future<BarzegarRequest> request(int id) => _api.request(id);
+  Future<void> submitFeedback(int requestId, {required bool helpful}) =>
+      _api.submitFeedback(requestId, helpful: helpful);
+  Future<void> requestConversationDeletion(int conversationId) =>
+      _api.requestConversationDeletion(conversationId);
   Future<List<BarzegarDiarySuggestion>> diarySuggestions() =>
       _api.diarySuggestions();
   Future<List<BarzegarFarmerReport>> reports() => _api.reports();

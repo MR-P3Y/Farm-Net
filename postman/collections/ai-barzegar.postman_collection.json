@@ -26,6 +26,10 @@
       "value": "barzegar-eval-0001"
     },
     {
+      "key": "deletion_idempotency_key",
+      "value": "barzegar-delete-0001"
+    },
+    {
       "key": "consent_id",
       "value": "1"
     },
@@ -163,6 +167,28 @@
           }
         },
         {
+          "name": "Schedule conversation deletion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/ai/conversations/:conversation_id/deletion-requests",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotency_key\": \"{{deletion_idempotency_key}}\"\n}"
+            }
+          }
+        },
+        {
           "name": "Submit text request",
           "request": {
             "method": "POST",
@@ -196,6 +222,28 @@
             ],
             "url": "{{base_url}}/ai/requests/:request_id",
             "description": "Contract is defined by the live Farm Net OpenAPI schema."
+          }
+        },
+        {
+          "name": "Submit answer feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/ai/requests/:request_id/feedback",
+            "description": "Contract is defined by the live Farm Net OpenAPI schema.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": \"helpful\",\n  \"reason_codes\": [],\n  \"comment\": null\n}"
+            }
           }
         },
         {

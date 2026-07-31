@@ -43,10 +43,11 @@ authenticated owner CRUD, public active-only Reviews and rating summaries,
 governed reporting, typed Admin Review/report moderation, and immutable
 moderation-log reads.
 
-`ai-barzegar.postman_collection.json` covers all 28 Barzegar OpenAPI
+`ai-barzegar.postman_collection.json` covers all 30 Barzegar OpenAPI
 operations: owner-private selected-Farm context, conversations, async requests,
-safety escalation, diary/report tools, Admin governance, knowledge lifecycle,
-and deterministic evaluation release gates. It contains no Provider key.
+exact-once feedback, retention-aware deletion, safety escalation, diary/report
+tools, Admin governance, knowledge lifecycle, and deterministic evaluation
+release gates. It contains no Provider key.
 ## Unified Subscriptions
 
 `subscriptions.postman_collection.json` is the Phase 25 contract collection.

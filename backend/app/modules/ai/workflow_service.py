@@ -8,8 +8,11 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppException
 from app.modules.ai.models import (
+    AIAuditLog,
     AIConversation,
+    AIDataDeletionRequest,
     AIExecutionAttempt,
+    AIFeedback,
     AIMessage,
     AIModelConfiguration,
     AIRequest,
@@ -22,7 +25,12 @@ from app.modules.ai.context_service import AIContextService
 from app.modules.ai.policy_registry import AIPolicyRegistry
 from app.modules.ai.quota_bridge import AIQuotaBridge
 from app.modules.ai.contracts import AIProviderUsage
-from app.modules.ai.schemas import AIHumanEscalationCreateIn, AIRequestCreateIn
+from app.modules.ai.schemas import (
+    AIDataDeletionCreateIn,
+    AIFeedbackCreateIn,
+    AIHumanEscalationCreateIn,
+    AIRequestCreateIn,
+)
 from app.modules.ai.safety import AgriculturalSafetyService
 from app.modules.ai.observability import (
     AI_ABUSE_REJECTIONS,
@@ -75,7 +83,7 @@ class AIWorkflowService:
             select(AIConversation).where(
                 AIConversation.id == conversation_id,
                 AIConversation.owner_user_id == user.id,
-                AIConversation.status != "deleted",
+                AIConversation.status.in_(("active", "archived")),
             )
         )
         if row is None:
@@ -296,6 +304,130 @@ class AIWorkflowService:
         )
         if row is None:
             raise AppException("AI_REQUEST_NOT_FOUND", "AI request not found", 404)
+        return row
+
+    def create_feedback(
+        self, *, user: AuthUser, request_id: int, payload: AIFeedbackCreateIn
+    ) -> AIFeedback:
+        request = self.db.scalar(
+            select(AIRequest)
+            .where(AIRequest.id == request_id, AIRequest.user_id == user.id)
+            .with_for_update()
+        )
+        if request is None:
+            raise AppException("AI_REQUEST_NOT_FOUND", "AI request not found", 404)
+        if request.status not in {"succeeded", "blocked"}:
+            raise AppException(
+                "AI_FEEDBACK_NOT_ALLOWED",
+                "Feedback is available only for a completed Barzegar answer",
+                409,
+            )
+        existing = self.db.scalar(
+            select(AIFeedback).where(
+                AIFeedback.request_id == request.id,
+                AIFeedback.user_id == user.id,
+            )
+        )
+        reason_codes = sorted(set(payload.reason_codes)) or None
+        comment = payload.comment.strip() if payload.comment else None
+        if existing is not None:
+            if (
+                existing.rating != payload.rating
+                or existing.reason_codes != reason_codes
+                or existing.comment != comment
+            ):
+                raise AppException(
+                    "AI_FEEDBACK_CONFLICT",
+                    "Feedback was already submitted with different values",
+                    409,
+                )
+            return existing
+        row = AIFeedback(
+            request_id=request.id,
+            user_id=user.id,
+            rating=payload.rating,
+            reason_codes=reason_codes,
+            comment=comment,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return row
+
+    def request_conversation_deletion(
+        self,
+        *,
+        user: AuthUser,
+        conversation_id: int,
+        payload: AIDataDeletionCreateIn,
+    ) -> AIDataDeletionRequest:
+        self.db.scalar(
+            select(AuthUser.id).where(AuthUser.id == user.id).with_for_update()
+        )
+        existing = self.db.scalar(
+            select(AIDataDeletionRequest).where(
+                AIDataDeletionRequest.user_id == user.id,
+                AIDataDeletionRequest.idempotency_key == payload.idempotency_key,
+            )
+        )
+        if existing is not None:
+            if existing.conversation_id != conversation_id:
+                raise AppException(
+                    "AI_DELETION_IDEMPOTENCY_CONFLICT",
+                    "Deletion key was used for another conversation",
+                    409,
+                )
+            return existing
+        conversation = self.db.scalar(
+            select(AIConversation)
+            .where(
+                AIConversation.id == conversation_id,
+                AIConversation.owner_user_id == user.id,
+                AIConversation.status.in_(("active", "archived")),
+            )
+            .with_for_update()
+        )
+        if conversation is None:
+            raise AppException("AI_CONVERSATION_NOT_FOUND", "Conversation not found", 404)
+        active = self.db.scalar(
+            select(func.count(AIRequest.id)).where(
+                AIRequest.conversation_id == conversation.id,
+                AIRequest.status.in_(("queued", "running")),
+            )
+        ) or 0
+        if active:
+            raise AppException(
+                "AI_CONVERSATION_HAS_ACTIVE_REQUESTS",
+                "Cancel or finish active requests before deletion",
+                409,
+            )
+        now = datetime.utcnow()
+        row = AIDataDeletionRequest(
+            user_id=user.id,
+            conversation_id=conversation.id,
+            idempotency_key=payload.idempotency_key,
+            scope="conversation",
+            status="requested",
+            requested_at=now,
+            process_after=max(now, conversation.retention_until),
+        )
+        self.db.add(row)
+        self.db.flush()
+        conversation.status = "deletion_pending"
+        conversation.deletion_requested_at = now
+        self.db.add(
+            AIAuditLog(
+                event_key=f"ai-conversation-deletion-requested:{row.id}",
+                action="conversation_deletion_requested",
+                target_type="conversation",
+                target_id=conversation.id,
+                actor_type="user",
+                actor_user_id=user.id,
+                safe_metadata={"process_after": row.process_after.isoformat()},
+            )
+        )
+        self.db.commit()
+        self.db.refresh(row)
         return row
 
     def cancel_request(self, *, user: AuthUser, request_id: int) -> AIRequest:

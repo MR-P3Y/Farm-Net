@@ -25,6 +25,9 @@ USER_OPERATIONS = (
     ("POST", "/ai/conversations", "Create conversation", {"title": "بررسی مزرعه"}),
     ("GET", "/ai/conversations?page=1&page_size=20", "List conversations", None),
     ("GET", "/ai/conversations/:conversation_id", "Conversation detail", None),
+    ("POST", "/ai/conversations/:conversation_id/deletion-requests", "Schedule conversation deletion", {
+        "idempotency_key": "{{deletion_idempotency_key}}",
+    }),
     ("POST", "/ai/conversations/:conversation_id/requests", "Submit text request", {
         "idempotency_key": "{{idempotency_key}}",
         "content": "برای آبیاری این هفته چه نکاتی را بررسی کنم؟",
@@ -34,6 +37,11 @@ USER_OPERATIONS = (
         "media_file_key": None,
     }),
     ("GET", "/ai/requests/:request_id", "Request status and result", None),
+    ("POST", "/ai/requests/:request_id/feedback", "Submit answer feedback", {
+        "rating": "helpful",
+        "reason_codes": [],
+        "comment": None,
+    }),
     ("POST", "/ai/requests/:request_id/cancel", "Cancel queued request", None),
     ("POST", "/ai/requests/:request_id/escalate", "Escalate to consultant", {
         "specialty_id": None,
@@ -137,6 +145,7 @@ def main() -> None:
             {"key": "admin_access_token", "value": ""},
             {"key": "idempotency_key", "value": "barzegar-request-0001"},
             {"key": "evaluation_idempotency_key", "value": "barzegar-eval-0001"},
+            {"key": "deletion_idempotency_key", "value": "barzegar-delete-0001"},
             {"key": "consent_id", "value": "1"},
             {"key": "conversation_id", "value": "1"},
             {"key": "request_id", "value": "1"},

@@ -7,7 +7,12 @@ from sqlalchemy import CheckConstraint, UniqueConstraint
 
 from app.main import app
 from app.modules.ai.models import AIMessage, AIRequest
-from app.modules.ai.schemas import AIRequestCreateIn, AIRequestOut
+from app.modules.ai.schemas import (
+    AIDataDeletionCreateIn,
+    AIFeedbackCreateIn,
+    AIRequestCreateIn,
+    AIRequestOut,
+)
 from app.modules.ai.workflow_service import AIWorkflowService
 from app.modules.ai.workflow_service import AIWorkerService
 
@@ -110,6 +115,11 @@ def test_barzegar_owner_routes_are_registered_with_typed_contracts() -> None:
         ("post", "/api/v1/ai/conversations/{conversation_id}/requests"),
         ("get", "/api/v1/ai/requests/{request_id}"),
         ("post", "/api/v1/ai/requests/{request_id}/cancel"),
+        ("post", "/api/v1/ai/requests/{request_id}/feedback"),
+        (
+            "post",
+            "/api/v1/ai/conversations/{conversation_id}/deletion-requests",
+        ),
     }
     assert all(method in paths[path] for method, path in expected)
     assert all(
@@ -118,3 +128,28 @@ def test_barzegar_owner_routes_are_registered_with_typed_contracts() -> None:
         or paths[path][method]["responses"].get("202")
         for method, path in expected
     )
+
+
+def test_feedback_and_deletion_inputs_are_closed_and_bounded() -> None:
+    feedback = AIFeedbackCreateIn(
+        rating="not_helpful", reason_codes=["too_general"], comment="جزئیات کم بود"
+    )
+    deletion = AIDataDeletionCreateIn(idempotency_key="delete-conversation-1")
+    assert feedback.rating == "not_helpful"
+    assert deletion.idempotency_key == "delete-conversation-1"
+    with pytest.raises(ValidationError):
+        AIFeedbackCreateIn(rating="neutral")
+    with pytest.raises(ValidationError):
+        AIDataDeletionCreateIn(idempotency_key="short")
+
+
+def test_feedback_and_deletion_services_enforce_release_contracts() -> None:
+    feedback = inspect.getsource(AIWorkflowService.create_feedback)
+    deletion = inspect.getsource(AIWorkflowService.request_conversation_deletion)
+    assert "AI_FEEDBACK_CONFLICT" in feedback
+    assert '{"succeeded", "blocked"}' in feedback
+    assert "with_for_update()" in feedback
+    assert "with_for_update()" in deletion
+    assert "AI_CONVERSATION_HAS_ACTIVE_REQUESTS" in deletion
+    assert 'conversation.status = "deletion_pending"' in deletion
+    assert "max(now, conversation.retention_until)" in deletion

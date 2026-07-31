@@ -58,6 +58,21 @@ class BarzegarApi {
     return BarzegarRequest.fromJson(_data(json));
   }
 
+  Future<void> submitFeedback(int requestId, {required bool helpful}) async {
+    await _post('ai/requests/$requestId/feedback', {
+      'rating': helpful ? 'helpful' : 'not_helpful',
+      'reason_codes': <String>[],
+      'comment': null,
+    });
+  }
+
+  Future<void> requestConversationDeletion(int conversationId) async {
+    await _post('ai/conversations/$conversationId/deletion-requests', {
+      'idempotency_key':
+          'mobile-delete-${DateTime.now().microsecondsSinceEpoch}-$conversationId',
+    });
+  }
+
   Future<BarzegarContextConsent> createConsent({
     required int farmId,
     required int? plotId,
