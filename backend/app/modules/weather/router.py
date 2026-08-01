@@ -7,7 +7,7 @@ from app.core.responses import success_response
 from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.models import AuthUser
-from app.modules.weather.schemas import WeatherGpsLocationIn
+from app.modules.weather.schemas import WeatherGeoLocationIn, WeatherGpsLocationIn
 from app.modules.weather.service import WeatherService
 
 
@@ -64,6 +64,24 @@ def create_gps_weather_location(
     return success_response(
         data=result.model_dump(mode="json"),
         message="Weather GPS location created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/locations/geo")
+def create_geo_weather_location(
+    payload: WeatherGeoLocationIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("weather.read")),
+):
+    result = WeatherService(db).create_geo_location(
+        province_id=payload.province_id,
+        city_id=payload.city_id,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Weather city location created",
         meta={"trace_id": request.state.trace_id},
     )
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../../core/widgets/farm_back_button.dart';
 import '../../../core/widgets/farm_glass_card.dart';
@@ -149,7 +150,11 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                           ],
                         ),
                         Text(
-                          state.current?.conditionText ?? 'در حال دریافت...',
+                          state.errorMessage ??
+                              state.current?.conditionText ??
+                              (state.isSaving
+                                  ? 'در حال دریافت اطلاعات هواشناسی...'
+                                  : 'اطلاعات هواشناسی دریافت نشد'),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -433,16 +438,7 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
                 icon: Icons.my_location_rounded,
                 title: 'موقعیت آنی (GPS)',
                 subtitle: 'دقیق‌ترین پایش بر اساس مختصات فعلی',
-                onTap: () {
-                  ref
-                      .read(weatherControllerProvider.notifier)
-                      .createGpsLocation(
-                        latitude: 35.6892,
-                        longitude: 51.3890,
-                        displayName: 'موقعیت مزرعه',
-                      );
-                  Navigator.pop(context);
-                },
+                onTap: () => _useCurrentLocation(context),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
@@ -569,7 +565,18 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
               const SizedBox(height: 32),
               if (_cityId != null)
                 FilledButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () async {
+                    final provinceId = _provinceId;
+                    final cityId = _cityId;
+                    if (provinceId == null || cityId == null) return;
+                    Navigator.pop(context);
+                    await ref
+                        .read(weatherControllerProvider.notifier)
+                        .createGeoLocation(
+                          provinceId: provinceId,
+                          cityId: cityId,
+                        );
+                  },
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     minimumSize: const Size(double.infinity, 56),
@@ -588,6 +595,51 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
       ),
     );
   }
+
+  Future<void> _useCurrentLocation(BuildContext sheetContext) async {
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw const _LocationMessage(
+          'اجازهٔ دسترسی به موقعیت داده نشد. دسترسی Location را در مرورگر فعال کنید.',
+        );
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      if (!mounted || !sheetContext.mounted) return;
+      Navigator.pop(sheetContext);
+      await ref
+          .read(weatherControllerProvider.notifier)
+          .createGpsLocation(
+            latitude: position.latitude,
+            longitude: position.longitude,
+            displayName: 'موقعیت فعلی من',
+          );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error is _LocationMessage
+                ? error.message
+                : 'موقعیت فعلی دریافت نشد. دسترسی Location مرورگر را بررسی کنید.',
+          ),
+        ),
+      );
+    }
+  }
+}
+
+class _LocationMessage implements Exception {
+  const _LocationMessage(this.message);
+  final String message;
 }
 
 class _PickerOption extends StatelessWidget {

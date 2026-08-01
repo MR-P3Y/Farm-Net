@@ -34,6 +34,11 @@ class WeatherGpsLocationIn(BaseModel):
     timezone: str | None = Field(default=None, max_length=80)
 
 
+class WeatherGeoLocationIn(BaseModel):
+    province_id: int = Field(ge=1)
+    city_id: int = Field(ge=1)
+
+
 class WeatherLocationOut(BaseModel):
     id: int
 

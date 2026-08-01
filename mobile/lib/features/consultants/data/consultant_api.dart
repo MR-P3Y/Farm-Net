@@ -29,10 +29,7 @@ class ConsultantApi {
     int page = 1,
     int pageSize = 20,
   }) async {
-    final params = <String, dynamic>{
-      'page': page,
-      'page_size': pageSize,
-    };
+    final params = <String, dynamic>{'page': page, 'page_size': pageSize};
     if (query != null && query.isNotEmpty) params['q'] = query;
     if (specialtyId != null) params['specialty_id'] = specialtyId;
     if (provinceId != null) params['province_id'] = provinceId;
@@ -41,7 +38,9 @@ class ConsultantApi {
 
     final json = await _get('consultants', queryParameters: params);
     final data = json['data'] as List? ?? [];
-    return data.map((item) => ConsultantProfileModel.fromJson((item as Map).cast())).toList();
+    return data
+        .map((item) => ConsultantProfileModel.fromJson((item as Map).cast()))
+        .toList();
   }
 
   Future<ConsultantProfileModel> detail(int id) async {
@@ -50,16 +49,18 @@ class ConsultantApi {
   }
 
   Future<List<ConsultantSpecialtyModel>> specialties() async {
-    final json = await _get('consultant-specialties');
+    final json = await _get('consultants/specialties');
     final data = json['data'] as List? ?? [];
-    return data.map((item) => ConsultantSpecialtyModel.fromJson((item as Map).cast())).toList();
+    return data
+        .map((item) => ConsultantSpecialtyModel.fromJson((item as Map).cast()))
+        .toList();
   }
 
   // Management
   Future<ConsultantProfileModel?> myProfile() async {
     await _auth();
     try {
-      final json = await _get('consultants/me');
+      final json = await _get('consultants/me/profile');
       if (json['data'] == null) return null;
       return ConsultantProfileModel.fromJson((json['data'] as Map).cast());
     } on ConsultantApiException catch (e) {
@@ -76,15 +77,16 @@ class ConsultantApi {
     required bool create,
   }) async {
     await _auth();
-    final json = create
-        ? await _post('consultants', data: input.toJson())
-        : await _patch('consultants/me', data: input.toJson());
+    final json =
+        create
+            ? await _post('consultants/me/profile', data: input.toJson())
+            : await _put('consultants/me/profile', data: input.toJson());
     return ConsultantProfileModel.fromJson((json['data'] as Map).cast());
   }
 
   Future<ConsultantProfileModel> submitMyProfile() async {
     await _auth();
-    final json = await _post('consultants/me/submit', data: {});
+    final json = await _post('consultants/me/profile/submit', data: {});
     return ConsultantProfileModel.fromJson((json['data'] as Map).cast());
   }
 
@@ -96,13 +98,16 @@ class ConsultantApi {
     required String contactMethod,
   }) async {
     await _auth();
-    final json = await _post('consultation-requests', data: {
-      'consultant_profile_id': consultantProfileId,
-      'specialty_id': specialtyId,
-      'title': title,
-      'description': description,
-      'contact_method': contactMethod,
-    });
+    final json = await _post(
+      'consultants/requests',
+      data: {
+        'consultant_profile_id': consultantProfileId,
+        'specialty_id': specialtyId,
+        'title': title,
+        'description': description,
+        'contact_method': contactMethod,
+      },
+    );
     return ConsultationRequestModel.fromJson((json['data'] as Map).cast());
   }
 
@@ -114,14 +119,16 @@ class ConsultantApi {
     await _auth();
     final params = <String, dynamic>{'page': page, 'page_size': pageSize};
     if (status != null) params['status'] = status;
-    final json = await _get('consultation-requests/me', queryParameters: params);
+    final json = await _get('consultants/requests/me', queryParameters: params);
     final data = json['data'] as List? ?? [];
-    return data.map((item) => ConsultationRequestModel.fromJson((item as Map).cast())).toList();
+    return data
+        .map((item) => ConsultationRequestModel.fromJson((item as Map).cast()))
+        .toList();
   }
 
   Future<ConsultationRequestModel> requestDetail(int requestId) async {
     await _auth();
-    final json = await _get('consultation-requests/$requestId');
+    final json = await _get('consultants/requests/$requestId');
     return ConsultationRequestModel.fromJson((json['data'] as Map).cast());
   }
 
@@ -130,7 +137,10 @@ class ConsultantApi {
     String? note,
   }) async {
     await _auth();
-    final json = await _post('consultation-requests/$requestId/cancel', data: {'note': note});
+    final json = await _patch(
+      'consultants/requests/$requestId/cancel',
+      data: {'status': 'cancelled', 'note': note},
+    );
     return ConsultationRequestModel.fromJson((json['data'] as Map).cast());
   }
 
@@ -142,14 +152,19 @@ class ConsultantApi {
     await _auth();
     final params = <String, dynamic>{'page': page, 'page_size': pageSize};
     if (status != null) params['status'] = status;
-    final json = await _get('consultation-requests/assigned', queryParameters: params);
+    final json = await _get(
+      'consultants/requests/assigned',
+      queryParameters: params,
+    );
     final data = json['data'] as List? ?? [];
-    return data.map((item) => ConsultationRequestModel.fromJson((item as Map).cast())).toList();
+    return data
+        .map((item) => ConsultationRequestModel.fromJson((item as Map).cast()))
+        .toList();
   }
 
   Future<ConsultationRequestModel> assignedRequestDetail(int requestId) async {
     await _auth();
-    final json = await _get('consultation-requests/assigned/$requestId');
+    final json = await _get('consultants/requests/assigned/$requestId');
     return ConsultationRequestModel.fromJson((json['data'] as Map).cast());
   }
 
@@ -159,10 +174,10 @@ class ConsultantApi {
     String? note,
   }) async {
     await _auth();
-    final json = await _post('consultation-requests/assigned/$requestId/transition', data: {
-      'to_status': status,
-      'note': note,
-    });
+    final json = await _patch(
+      'consultants/requests/$requestId/status',
+      data: {'to_status': status, 'note': note},
+    );
     return ConsultationRequestModel.fromJson((json['data'] as Map).cast());
   }
 
@@ -170,16 +185,25 @@ class ConsultantApi {
     _client.setToken(await _storage.getAccessToken());
   }
 
-  Future<Map<String, dynamic>> _get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Map<String, dynamic>> _get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     try {
-      final response = await _client.get(path, queryParameters: queryParameters);
+      final response = await _client.get(
+        path,
+        queryParameters: queryParameters,
+      );
       return (response.data as Map?)?.cast<String, dynamic>() ?? {};
     } on DioException catch (error) {
       throw ConsultantApiException(_mapDioError(error));
     }
   }
 
-  Future<Map<String, dynamic>> _post(String path, {required Map<String, dynamic> data}) async {
+  Future<Map<String, dynamic>> _post(
+    String path, {
+    required Map<String, dynamic> data,
+  }) async {
     try {
       final response = await _client.post(path, data: data);
       return (response.data as Map?)?.cast<String, dynamic>() ?? {};
@@ -188,9 +212,24 @@ class ConsultantApi {
     }
   }
 
-  Future<Map<String, dynamic>> _patch(String path, {required Map<String, dynamic> data}) async {
+  Future<Map<String, dynamic>> _patch(
+    String path, {
+    required Map<String, dynamic> data,
+  }) async {
     try {
       final response = await _client.patch(path, data: data);
+      return (response.data as Map?)?.cast<String, dynamic>() ?? {};
+    } on DioException catch (error) {
+      throw ConsultantApiException(_mapDioError(error));
+    }
+  }
+
+  Future<Map<String, dynamic>> _put(
+    String path, {
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await _client.put(path, data: data);
       return (response.data as Map?)?.cast<String, dynamic>() ?? {};
     } on DioException catch (error) {
       throw ConsultantApiException(_mapDioError(error));
@@ -200,6 +239,9 @@ class ConsultantApi {
   ApiError _mapDioError(DioException error) {
     final data = error.response?.data;
     if (data is Map) return ApiError.fromJson(data.cast<String, dynamic>());
-    return ApiError(code: 'NETWORK_ERROR', message: error.message ?? 'Network error');
+    return ApiError(
+      code: 'NETWORK_ERROR',
+      message: error.message ?? 'Network error',
+    );
   }
 }

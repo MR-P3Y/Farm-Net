@@ -25,6 +25,7 @@ from app.modules.weather.models import (
 from app.modules.weather.providers.base import WeatherProviderClient, WeatherProviderLocation
 from app.modules.weather.providers.mock_provider import MockWeatherProviderClient
 from app.modules.weather.providers.openweather_provider import OpenWeatherProviderClient
+from app.modules.geo.models import GeoCity, GeoProvince
 from app.modules.weather.repository import WeatherRepository
 from app.modules.weather.schemas import (
     WeatherAlertEvaluationOut,
@@ -266,6 +267,37 @@ class WeatherService:
                 latitude=payload.latitude,
                 longitude=payload.longitude,
                 timezone=payload.timezone,
+            )
+        )
+
+    def create_geo_location(self, *, province_id: int, city_id: int) -> WeatherLocationOut:
+        city = self.db.query(GeoCity).filter(
+            GeoCity.id == city_id,
+            GeoCity.province_id == province_id,
+            GeoCity.is_active == True,  # noqa: E712
+        ).one_or_none()
+        province = self.db.query(GeoProvince).filter(
+            GeoProvince.id == province_id,
+            GeoProvince.is_active == True,  # noqa: E712
+        ).one_or_none()
+        if city is None or province is None:
+            raise ValidationAuthError(message="Selected province or city is invalid")
+        provider = self._provider(provider_override=None)
+        if not isinstance(provider, OpenWeatherProviderClient):
+            raise ValidationAuthError(message="Active weather provider does not support geocoding")
+        latitude, longitude = provider.geocode(query=f"{city.name}, {province.name}")
+        return self.create_location(
+            payload=WeatherLocationCreateIn(
+                country_code="IR",
+                province_id=province.id,
+                city_id=city.id,
+                province_name=province.name,
+                city_name=city.name,
+                display_name=f"{city.name}، {province.name}",
+                location_type=WeatherLocationType.CITY.value,
+                latitude=latitude,
+                longitude=longitude,
+                timezone="Asia/Tehran",
             )
         )
 

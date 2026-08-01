@@ -54,15 +54,21 @@ class WeatherController extends StateNotifier<WeatherState> {
     );
 
     try {
-      final current = await _repository.current(location.id);
-      final forecasts = await _repository.forecast(location.id);
-      final alerts = await _repository.alerts(location.id);
+      var current = await _repository.current(location.id);
+      if (current == null) {
+        await _repository.refresh(locationId: location.id);
+        current = await _repository.current(location.id);
+      }
+      final values = await Future.wait<Object>([
+        _repository.forecast(location.id),
+        _repository.alerts(location.id),
+      ]);
 
       state = state.copyWith(
         isSaving: false,
         current: current,
-        forecasts: forecasts,
-        alerts: alerts,
+        forecasts: values[0] as List<WeatherForecastModel>,
+        alerts: values[1] as List<WeatherAlertModel>,
       );
     } on WeatherApiException catch (e) {
       state = state.copyWith(isSaving: false, errorMessage: e.error.message);
@@ -116,6 +122,7 @@ class WeatherController extends StateNotifier<WeatherState> {
         selectedLocation: location,
       );
 
+      await _repository.refresh(locationId: location.id);
       await loadLocation(location);
     } on WeatherApiException catch (e) {
       state = state.copyWith(isSaving: false, errorMessage: e.error.message);
@@ -123,6 +130,33 @@ class WeatherController extends StateNotifier<WeatherState> {
       state = state.copyWith(
         isSaving: false,
         errorMessage: 'خطا در ثبت موقعیت GPS',
+      );
+    }
+  }
+
+  Future<void> createGeoLocation({
+    required int provinceId,
+    required int cityId,
+  }) async {
+    state = state.copyWith(isSaving: true, clearError: true);
+    try {
+      final location = await _repository.createGeoLocation(
+        provinceId: provinceId,
+        cityId: cityId,
+      );
+      state = state.copyWith(
+        isSaving: false,
+        locations: [location, ...state.locations],
+        selectedLocation: location,
+      );
+      await _repository.refresh(locationId: location.id);
+      await loadLocation(location);
+    } on WeatherApiException catch (e) {
+      state = state.copyWith(isSaving: false, errorMessage: e.error.message);
+    } catch (_) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: 'خطا در ثبت شهر هواشناسی',
       );
     }
   }

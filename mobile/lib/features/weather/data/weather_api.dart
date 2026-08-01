@@ -24,7 +24,10 @@ class WeatherApi {
   final TokenStorage _tokenStorage;
 
   Future<List<WeatherLocationModel>> listLocations() async {
-    final json = await _get('weather/locations', queryParameters: {'page': 1, 'page_size': 50});
+    final json = await _get(
+      'weather/locations',
+      queryParameters: {'page': 1, 'page_size': 50},
+    );
     final rows = json['data'] as List? ?? [];
 
     return rows
@@ -55,8 +58,23 @@ class WeatherApi {
     return WeatherLocationModel.fromJson(json['data'] as Map<String, dynamic>);
   }
 
+  Future<WeatherLocationModel> createGeoLocation({
+    required int provinceId,
+    required int cityId,
+  }) async {
+    await _setStoredToken();
+    final json = await _post(
+      'weather/locations/geo',
+      data: {'province_id': provinceId, 'city_id': cityId},
+    );
+    return WeatherLocationModel.fromJson(json['data'] as Map<String, dynamic>);
+  }
+
   Future<WeatherSnapshotModel?> current(int locationId) async {
-    final json = await _get('weather/current', queryParameters: {'location_id': locationId});
+    final json = await _get(
+      'weather/current',
+      queryParameters: {'location_id': locationId},
+    );
     final data = json['data'];
 
     if (data == null) return null;
@@ -66,7 +84,10 @@ class WeatherApi {
   }
 
   Future<List<WeatherForecastModel>> forecast(int locationId) async {
-    final json = await _get('weather/forecast', queryParameters: {'location_id': locationId});
+    final json = await _get(
+      'weather/forecast',
+      queryParameters: {'location_id': locationId},
+    );
     final rows = json['data'] as List? ?? [];
 
     return rows
@@ -77,7 +98,10 @@ class WeatherApi {
   }
 
   Future<List<WeatherAlertModel>> alerts(int locationId) async {
-    final json = await _get('weather/alerts', queryParameters: {'location_id': locationId});
+    final json = await _get(
+      'weather/alerts',
+      queryParameters: {'location_id': locationId},
+    );
     final rows = json['data'] as List? ?? [];
 
     return rows
@@ -85,16 +109,16 @@ class WeatherApi {
         .toList();
   }
 
-  Future<void> refresh({
-    required int locationId,
-    String provider = 'mock',
-  }) async {
+  Future<void> refresh({required int locationId, String? provider}) async {
     await _setStoredToken();
 
-    await _post('weather/refresh', queryParameters: {
-      'location_id': locationId,
-      'provider': provider,
-    });
+    await _post(
+      'weather/refresh',
+      queryParameters: {
+        'location_id': locationId,
+        if (provider != null) 'provider': provider,
+      },
+    );
   }
 
   Future<void> _setStoredToken() async {
@@ -102,9 +126,15 @@ class WeatherApi {
     _client.setToken(token);
   }
 
-  Future<Map<String, dynamic>> _get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Map<String, dynamic>> _get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     try {
-      final response = await _client.get(path, queryParameters: queryParameters);
+      final response = await _client.get(
+        path,
+        queryParameters: queryParameters,
+      );
       return (response.data as Map?)?.cast<String, dynamic>() ?? {};
     } on DioException catch (e) {
       throw WeatherApiException(_mapDioError(e));
@@ -117,7 +147,11 @@ class WeatherApi {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      final response = await _client.post(path, data: data, queryParameters: queryParameters);
+      final response = await _client.post(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+      );
       return (response.data as Map?)?.cast<String, dynamic>() ?? {};
     } on DioException catch (e) {
       throw WeatherApiException(_mapDioError(e));

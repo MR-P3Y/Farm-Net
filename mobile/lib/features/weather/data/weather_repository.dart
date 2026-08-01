@@ -30,6 +30,11 @@ class WeatherRepository {
     );
   }
 
+  Future<WeatherLocationModel> createGeoLocation({
+    required int provinceId,
+    required int cityId,
+  }) => _api.createGeoLocation(provinceId: provinceId, cityId: cityId);
+
   Future<WeatherSnapshotModel?> current(int locationId) {
     return _api.current(locationId);
   }
@@ -42,7 +47,7 @@ class WeatherRepository {
     return _api.alerts(locationId);
   }
 
-  Future<void> refresh({required int locationId, String provider = 'mock'}) {
+  Future<void> refresh({required int locationId, String? provider}) {
     return _api.refresh(locationId: locationId, provider: provider);
   }
 }

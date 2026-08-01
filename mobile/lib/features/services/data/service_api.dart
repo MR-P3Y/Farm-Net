@@ -53,7 +53,7 @@ class ServiceApi {
 
     try {
       final response = await _client.get(
-        'services/discovery',
+        'services/offers',
         queryParameters: params,
       );
       final rows = response.data?['data'] as List? ?? [];
@@ -67,7 +67,7 @@ class ServiceApi {
 
   Future<ServiceOfferDetail> detail(int id) async {
     try {
-      final response = await _client.get('services/discovery/$id');
+      final response = await _client.get('services/offers/$id');
       return ServiceOfferDetail.fromJson(
         response.data?['data'] as Map<String, dynamic>,
       );
@@ -139,9 +139,9 @@ class ServiceApi {
   Future<ServiceRequest> cancelRequest(int id, {required String reason}) async {
     await _auth();
     try {
-      final response = await _client.post(
+      final response = await _client.patch(
         'services/requests/$id/cancel',
-        data: {'cancel_reason': reason},
+        data: {'reason': reason},
       );
       return ServiceRequest.fromJson(
         response.data?['data'] as Map<String, dynamic>,
@@ -155,7 +155,7 @@ class ServiceApi {
   Future<ServiceProviderProfileOwner?> myProviderProfile() async {
     await _auth();
     try {
-      final response = await _client.get('services/management/profile');
+      final response = await _client.get('services/me/provider-profile');
       final data = response.data?['data'];
       return data == null
           ? null
@@ -174,11 +174,11 @@ class ServiceApi {
       final response =
           create
               ? await _client.post(
-                'services/management/profile',
+                'services/me/provider-profile',
                 data: input.toJson(),
               )
-              : await _client.patch(
-                'services/management/profile',
+              : await _client.put(
+                'services/me/provider-profile',
                 data: input.toJson(),
               );
       return ServiceProviderProfileOwner.fromJson(
@@ -193,7 +193,7 @@ class ServiceApi {
     await _auth();
     try {
       final response = await _client.post(
-        'services/management/profile/submit',
+        'services/me/provider-profile/submit',
         data: {},
       );
       return ServiceProviderProfileOwner.fromJson(
@@ -207,7 +207,7 @@ class ServiceApi {
   Future<List<ServiceOfferOwner>> myOffers() async {
     await _auth();
     try {
-      final response = await _client.get('services/management/offers');
+      final response = await _client.get('services/me/offers');
       final rows = response.data?['data'] as List? ?? [];
       return rows
           .map(
@@ -227,12 +227,9 @@ class ServiceApi {
     try {
       final response =
           offerId == null
-              ? await _client.post(
-                'services/management/offers',
-                data: input.toJson(),
-              )
+              ? await _client.post('services/me/offers', data: input.toJson())
               : await _client.put(
-                'services/management/offers/$offerId',
+                'services/me/offers/$offerId',
                 data: input.toJson(),
               );
       return ServiceOfferOwner.fromJson(
@@ -247,7 +244,7 @@ class ServiceApi {
     await _auth();
     try {
       final response = await _client.post(
-        'services/management/offers/$id/submit',
+        'services/me/offers/$id/submit',
         data: {},
       );
       return ServiceOfferOwner.fromJson(
@@ -270,7 +267,7 @@ class ServiceApi {
     if (categoryId != null) params['category_id'] = categoryId;
     try {
       final response = await _client.get(
-        'services/management/requests',
+        'services/requests/assigned',
         queryParameters: params,
       );
       final rows = response.data?['data'] as List? ?? [];
@@ -285,7 +282,7 @@ class ServiceApi {
   Future<ServiceRequest> assignedRequestDetail(int id) async {
     await _auth();
     try {
-      final response = await _client.get('services/management/requests/$id');
+      final response = await _client.get('services/requests/assigned/$id');
       return ServiceRequest.fromJson(
         response.data?['data'] as Map<String, dynamic>,
       );
@@ -300,8 +297,8 @@ class ServiceApi {
   ) async {
     await _auth();
     try {
-      final response = await _client.post(
-        'services/management/requests/$id/transition',
+      final response = await _client.patch(
+        'services/requests/$id/status',
         data: input.toJson(),
       );
       return ServiceRequest.fromJson(

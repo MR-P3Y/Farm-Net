@@ -133,6 +133,26 @@ class OpenWeatherProviderClient(WeatherProviderClient):
 
         return rows
 
+    def geocode(self, *, query: str) -> tuple[Decimal, Decimal]:
+        params = urlencode(
+            {"q": f"{query},IR", "limit": "1", "appid": self._api_key()}
+        )
+        request = Request(
+            f"https://api.openweathermap.org/geo/1.0/direct?{params}",
+            headers={"Accept": "application/json"},
+        )
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                rows = json.loads(response.read().decode("utf-8"))
+        except (HTTPError, URLError) as error:
+            raise ValidationAuthError(
+                message="OpenWeather geocoding request failed",
+                details={"reason": str(error)},
+            ) from error
+        if not rows:
+            raise ValidationAuthError(message="Selected city coordinates were not found")
+        return Decimal(str(rows[0]["lat"])), Decimal(str(rows[0]["lon"]))
+
     def _get_json(
         self,
         path: str,

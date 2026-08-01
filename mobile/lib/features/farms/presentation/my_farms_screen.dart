@@ -7,6 +7,7 @@ import '../../../core/widgets/farm_empty_view.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/farm_models.dart';
 import '../data/farm_repository.dart';
+import '../../home/state/home_dashboard_controller.dart';
 
 class MyFarmsScreen extends ConsumerStatefulWidget {
   const MyFarmsScreen({super.key});
@@ -87,6 +88,7 @@ class _MyFarmsScreenState extends ConsumerState<MyFarmsScreen> {
         'declared_area_sqm': double.tryParse(area.text),
       });
       await _load();
+      await ref.read(homeDashboardControllerProvider.notifier).refresh();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(

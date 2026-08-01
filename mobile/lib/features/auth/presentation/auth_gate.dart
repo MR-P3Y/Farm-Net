@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/farm_loading_view.dart';
-import '../../home/home_screen.dart';
 import '../state/auth_controller.dart';
 import 'login_screen.dart';
 
@@ -37,9 +37,34 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     }
 
     if (state.isAuthenticated) {
-      return const HomeScreen();
+      return const _AuthenticatedRedirect();
     }
 
     return const LoginScreen();
   }
+}
+
+class _AuthenticatedRedirect extends StatefulWidget {
+  const _AuthenticatedRedirect();
+
+  @override
+  State<_AuthenticatedRedirect> createState() => _AuthenticatedRedirectState();
+}
+
+class _AuthenticatedRedirectState extends State<_AuthenticatedRedirect> {
+  bool _scheduled = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_scheduled) return;
+    _scheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.go('/home');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: FarmLoadingView(compact: true));
 }

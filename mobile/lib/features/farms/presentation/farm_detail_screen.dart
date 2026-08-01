@@ -7,6 +7,7 @@ import '../../../core/widgets/farm_empty_view.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/farm_models.dart';
 import '../data/farm_repository.dart';
+import '../../home/state/home_dashboard_controller.dart';
 
 class FarmDetailScreen extends ConsumerStatefulWidget {
   const FarmDetailScreen({required this.farmId, this.farm, super.key});
@@ -125,6 +126,7 @@ class _FarmDetailScreenState extends ConsumerState<FarmDetailScreen> {
         'boundary': null,
       });
       await _load();
+      await ref.read(homeDashboardControllerProvider.notifier).refresh();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
