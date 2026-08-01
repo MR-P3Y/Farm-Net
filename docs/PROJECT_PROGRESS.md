@@ -2750,6 +2750,32 @@ Status: completed and manually accepted on 2026-08-01 with noted coverage gap
   excluded from this step.
 - Next: Farm-profile Weather linking and professional multi-location switching.
 
+### Frontend Weather Redesign — Step 4 Accepted
+
+Status: completed and manually accepted on 2026-08-02
+
+- Unified public city/GPS and owner-private Farm Plot weather as selectable
+  sources on the same professional Weather surface.
+- Added horizontally scrollable saved-location and `Farm · Plot` selectors;
+  only plots with real latitude/longitude are offered to the contextual
+  Weather API.
+- Preserved the Backend privacy boundary: private Farm weather is loaded from
+  the owner-scoped Farm Plot context API and is not copied into the public
+  Weather-location catalog.
+- Retained the complete private Farm snapshot and adapted its snapshot,
+  forecast, and alert contracts to the shared typed Weather presentation.
+- Added Farm-source state, display identity, source switching, refresh, retry,
+  and safe return to public city/GPS sources.
+- Made the expanded source picker scrollable and height-bounded for narrow
+  Mobile displays.
+- Added focused tests for Farm context adaptation, complete snapshot retention,
+  source identity, display naming, and source clearing.
+- Mobile analyze: OK; all 91 current tests passed; Web/Wasm build: OK.
+- Project-owner manual verification: accepted.
+- Concurrent owner changes to Android, branding, Home, Routing, Splash,
+  Settings, shared UI, and root documentation were preserved and excluded.
+- Next: rule-based Farm-operation weather planner.
+
 After every completed step:
 
 1. update this document with the commit and verification evidence;

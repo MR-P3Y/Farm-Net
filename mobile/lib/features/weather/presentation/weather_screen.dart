@@ -11,6 +11,8 @@ import '../../../core/widgets/farm_glass_card.dart';
 import '../../../core/widgets/farm_circular_glass_button.dart';
 import '../../../core/widgets/farm_error_view.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../farms/data/farm_models.dart';
+import '../../farms/data/farm_repository.dart';
 import '../../geo/data/geo_models.dart';
 import '../../geo/data/geo_repository.dart';
 import '../data/weather_models.dart';
@@ -58,9 +60,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       );
     }
 
-    if (state.errorMessage != null &&
-        state.current == null &&
-        state.selectedLocation != null) {
+    if (state.errorMessage != null && state.current == null) {
       return Scaffold(
         appBar: AppBar(
           leading: const FarmBackButton(),
@@ -71,15 +71,26 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
             fa: state.errorMessage!,
             en: 'Weather data could not be loaded. Please try again.',
           ),
-          onRetry:
-              () => ref
-                  .read(weatherControllerProvider.notifier)
-                  .loadLocation(state.selectedLocation!),
+          onRetry: () {
+            final controller = ref.read(weatherControllerProvider.notifier);
+            if (state.isFarmSource) {
+              controller.loadFarmPlot(
+                farmId: state.selectedFarmId!,
+                plotId: state.selectedPlotId!,
+                farmName: state.selectedFarmName ?? '',
+                plotName: state.selectedPlotName ?? '',
+              );
+            } else if (state.selectedLocation != null) {
+              controller.loadLocation(state.selectedLocation!);
+            } else {
+              controller.load();
+            }
+          },
         ),
       );
     }
 
-    if (state.locations.isEmpty) {
+    if (state.locations.isEmpty && !state.isFarmSource) {
       return _NoWeatherLocationView(
         onChooseLocation: () => _showLocationPicker(context),
       );
@@ -138,7 +149,8 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                             Column(
                               children: [
                                 Text(
-                                  state.selectedLocation?.displayName ??
+                                  state.farmDisplayName ??
+                                      state.selectedLocation?.displayName ??
                                       l10n.tr(
                                         fa: 'موقعیت نامشخص',
                                         en: 'Unknown location',
@@ -1166,16 +1178,27 @@ class _LocationPickerSheet extends ConsumerStatefulWidget {
 class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
   int? _provinceId;
   int? _cityId;
+  late final Future<List<_FarmPlotOption>> _farmPlotsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _farmPlotsFuture = _loadFarmPlots(ref.read(farmRepositoryProvider));
+  }
 
   @override
   Widget build(BuildContext context) {
     final geoRepo = ref.watch(geoRepositoryProvider);
+    final weatherState = ref.watch(weatherControllerProvider);
     final isWide = MediaQuery.of(context).size.width > 900;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Center(
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: isWide ? 450 : double.infinity),
+        constraints: BoxConstraints(
+          maxWidth: isWide ? 450 : double.infinity,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+        ),
         child: Container(
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF101810) : Colors.white,
@@ -1188,127 +1211,206 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
             ],
           ),
           padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white24 : Colors.black12,
-                  borderRadius: BorderRadius.circular(10),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                context.l10n.tr(
-                  fa: 'تنظیم موقعیت پایش',
-                  en: 'Monitoring location',
-                ),
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : const Color(0xFF1B5E20),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              _PickerOption(
-                isDark: isDark,
-                icon: Icons.my_location_rounded,
-                title: context.l10n.tr(
-                  fa: 'موقعیت آنی (GPS)',
-                  en: 'Current location (GPS)',
-                ),
-                subtitle: context.l10n.tr(
-                  fa: 'دقیق‌ترین پایش بر اساس مختصات فعلی',
-                  en: 'Most accurate monitoring for your coordinates',
-                ),
-                onTap: () => _useCurrentLocation(context),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Divider(
-                  height: 1,
-                  color: isDark ? Colors.white12 : Colors.black12,
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
+                const SizedBox(height: 20),
+                Text(
                   context.l10n.tr(
-                    fa: 'انتخاب دستی منطقه',
-                    en: 'Choose a region manually',
+                    fa: 'تنظیم موقعیت پایش',
+                    en: 'Monitoring location',
                   ),
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: isDark ? Colors.white70 : Colors.black54,
+                    color: isDark ? Colors.white : const Color(0xFF1B5E20),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Theme(
-                data: Theme.of(context).copyWith(
-                  canvasColor: isDark ? const Color(0xFF1B5E20) : Colors.white,
-                ),
-                child: Column(
-                  children: [
-                    FutureBuilder<List<GeoProvince>>(
-                      future: geoRepo.getProvinces(),
-                      builder: (context, snapshot) {
-                        final provinces = snapshot.data ?? [];
-                        return DropdownButtonFormField<int>(
-                          dropdownColor:
-                              isDark ? const Color(0xFF1B5E20) : Colors.white,
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
-                            fontFamily: 'IRYekan',
+                const SizedBox(height: 24),
+
+                if (weatherState.locations.isNotEmpty) ...[
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      context.l10n.tr(
+                        fa: 'موقعیت‌های ذخیره‌شده',
+                        en: 'Saved locations',
+                      ),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 48,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: weatherState.locations.length,
+                      separatorBuilder:
+                          (context, index) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final location = weatherState.locations[index];
+                        final selected =
+                            !weatherState.isFarmSource &&
+                            weatherState.selectedLocation?.id == location.id;
+                        return ChoiceChip(
+                          selected: selected,
+                          avatar: Icon(
+                            location.locationType == 'gps'
+                                ? Icons.my_location_rounded
+                                : Icons.location_city_rounded,
+                            size: 17,
                           ),
-                          initialValue: _provinceId,
-                          decoration: InputDecoration(
-                            labelText: context.l10n.tr(
-                              fa: 'استان',
-                              en: 'Province',
-                            ),
-                            labelStyle: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black45,
-                            ),
-                            filled: true,
-                            fillColor:
-                                isDark
-                                    ? Colors.white.withValues(alpha: 0.05)
-                                    : Colors.black.withValues(alpha: 0.03),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: isDark ? Colors.white12 : Colors.black12,
-                              ),
-                            ),
-                          ),
-                          items:
-                              provinces
-                                  .map(
-                                    (p) => DropdownMenuItem(
-                                      value: p.id,
-                                      child: Text(p.name),
-                                    ),
-                                  )
-                                  .toList(),
-                          onChanged:
-                              (v) => setState(() {
-                                _provinceId = v;
-                                _cityId = null;
-                              }),
+                          label: Text(location.displayName),
+                          onSelected: (_) {
+                            Navigator.pop(context);
+                            ref
+                                .read(weatherControllerProvider.notifier)
+                                .loadLocation(location);
+                          },
                         );
                       },
                     ),
-                    const SizedBox(height: 12),
-                    if (_provinceId != null)
-                      FutureBuilder<List<GeoCity>>(
-                        future: geoRepo.getCities(provinceId: _provinceId),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    context.l10n.tr(
+                      fa: 'مزارع و قطعه‌های من',
+                      en: 'My farms and plots',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                FutureBuilder<List<_FarmPlotOption>>(
+                  future: _farmPlotsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const FarmLoadingView(compact: true);
+                    }
+                    final options = snapshot.data ?? const <_FarmPlotOption>[];
+                    if (options.isEmpty) {
+                      return Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          context.l10n.tr(
+                            fa: 'قطعه دارای مختصات برای پایش پیدا نشد.',
+                            en: 'No plot with coordinates is available.',
+                          ),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      );
+                    }
+                    return SizedBox(
+                      height: 56,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: options.length,
+                        separatorBuilder:
+                            (context, index) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final option = options[index];
+                          final selected =
+                              weatherState.selectedFarmId == option.farm.id &&
+                              weatherState.selectedPlotId == option.plot.id;
+                          return ChoiceChip(
+                            selected: selected,
+                            avatar: const Icon(
+                              Icons.agriculture_rounded,
+                              size: 18,
+                            ),
+                            label: Text(
+                              '${option.farm.name} · ${option.plot.name}',
+                            ),
+                            onSelected: (_) {
+                              Navigator.pop(context);
+                              ref
+                                  .read(weatherControllerProvider.notifier)
+                                  .loadFarmPlot(
+                                    farmId: option.farm.id,
+                                    plotId: option.plot.id,
+                                    farmName: option.farm.name,
+                                    plotName: option.plot.name,
+                                  );
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Divider(
+                    height: 1,
+                    color: isDark ? Colors.white12 : Colors.black12,
+                  ),
+                ),
+
+                _PickerOption(
+                  isDark: isDark,
+                  icon: Icons.my_location_rounded,
+                  title: context.l10n.tr(
+                    fa: 'موقعیت آنی (GPS)',
+                    en: 'Current location (GPS)',
+                  ),
+                  subtitle: context.l10n.tr(
+                    fa: 'دقیق‌ترین پایش بر اساس مختصات فعلی',
+                    en: 'Most accurate monitoring for your coordinates',
+                  ),
+                  onTap: () => _useCurrentLocation(context),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Divider(
+                    height: 1,
+                    color: isDark ? Colors.white12 : Colors.black12,
+                  ),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    context.l10n.tr(
+                      fa: 'انتخاب دستی منطقه',
+                      en: 'Choose a region manually',
+                    ),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Theme(
+                  data: Theme.of(context).copyWith(
+                    canvasColor:
+                        isDark ? const Color(0xFF1B5E20) : Colors.white,
+                  ),
+                  child: Column(
+                    children: [
+                      FutureBuilder<List<GeoProvince>>(
+                        future: geoRepo.getProvinces(),
                         builder: (context, snapshot) {
-                          final cities = snapshot.data ?? [];
+                          final provinces = snapshot.data ?? [];
                           return DropdownButtonFormField<int>(
                             dropdownColor:
                                 isDark ? const Color(0xFF1B5E20) : Colors.white,
@@ -1316,9 +1418,12 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
                               color: isDark ? Colors.white : Colors.black87,
                               fontFamily: 'IRYekan',
                             ),
-                            initialValue: _cityId,
+                            initialValue: _provinceId,
                             decoration: InputDecoration(
-                              labelText: context.l10n.tr(fa: 'شهر', en: 'City'),
+                              labelText: context.l10n.tr(
+                                fa: 'استان',
+                                en: 'Province',
+                              ),
                               labelStyle: TextStyle(
                                 color: isDark ? Colors.white70 : Colors.black45,
                               ),
@@ -1336,55 +1441,113 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
                               ),
                             ),
                             items:
-                                cities
+                                provinces
                                     .map(
-                                      (c) => DropdownMenuItem(
-                                        value: c.id,
-                                        child: Text(c.name),
+                                      (p) => DropdownMenuItem(
+                                        value: p.id,
+                                        child: Text(p.name),
                                       ),
                                     )
                                     .toList(),
                             onChanged:
                                 (v) => setState(() {
-                                  _cityId = v;
+                                  _provinceId = v;
+                                  _cityId = null;
                                 }),
                           );
                         },
                       ),
-                  ],
+                      const SizedBox(height: 12),
+                      if (_provinceId != null)
+                        FutureBuilder<List<GeoCity>>(
+                          future: geoRepo.getCities(provinceId: _provinceId),
+                          builder: (context, snapshot) {
+                            final cities = snapshot.data ?? [];
+                            return DropdownButtonFormField<int>(
+                              dropdownColor:
+                                  isDark
+                                      ? const Color(0xFF1B5E20)
+                                      : Colors.white,
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black87,
+                                fontFamily: 'IRYekan',
+                              ),
+                              initialValue: _cityId,
+                              decoration: InputDecoration(
+                                labelText: context.l10n.tr(
+                                  fa: 'شهر',
+                                  en: 'City',
+                                ),
+                                labelStyle: TextStyle(
+                                  color:
+                                      isDark ? Colors.white70 : Colors.black45,
+                                ),
+                                filled: true,
+                                fillColor:
+                                    isDark
+                                        ? Colors.white.withValues(alpha: 0.05)
+                                        : Colors.black.withValues(alpha: 0.03),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color:
+                                        isDark
+                                            ? Colors.white12
+                                            : Colors.black12,
+                                  ),
+                                ),
+                              ),
+                              items:
+                                  cities
+                                      .map(
+                                        (c) => DropdownMenuItem(
+                                          value: c.id,
+                                          child: Text(c.name),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged:
+                                  (v) => setState(() {
+                                    _cityId = v;
+                                  }),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              if (_cityId != null)
-                FilledButton(
-                  onPressed: () async {
-                    final provinceId = _provinceId;
-                    final cityId = _cityId;
-                    if (provinceId == null || cityId == null) return;
-                    Navigator.pop(context);
-                    await ref
-                        .read(weatherControllerProvider.notifier)
-                        .createGeoLocation(
-                          provinceId: provinceId,
-                          cityId: cityId,
-                        );
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                const SizedBox(height: 32),
+                if (_cityId != null)
+                  FilledButton(
+                    onPressed: () async {
+                      final provinceId = _provinceId;
+                      final cityId = _cityId;
+                      if (provinceId == null || cityId == null) return;
+                      Navigator.pop(context);
+                      await ref
+                          .read(weatherControllerProvider.notifier)
+                          .createGeoLocation(
+                            provinceId: provinceId,
+                            cityId: cityId,
+                          );
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32),
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      context.l10n.tr(
+                        fa: 'تأیید و مشاهده آب‌وهوا',
+                        en: 'Confirm and view weather',
+                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  child: Text(
-                    context.l10n.tr(
-                      fa: 'تأیید و مشاهده آب‌وهوا',
-                      en: 'Confirm and view weather',
-                    ),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1444,6 +1607,32 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
       );
     }
   }
+
+  Future<List<_FarmPlotOption>> _loadFarmPlots(
+    FarmRepository repository,
+  ) async {
+    try {
+      final farms = await repository.farms();
+      final values = await Future.wait(
+        farms.map((farm) async {
+          final plots = await repository.plots(farm.id);
+          return plots
+              .where((plot) => plot.latitude != null && plot.longitude != null)
+              .map((plot) => _FarmPlotOption(farm: farm, plot: plot));
+        }),
+      );
+      return values.expand((items) => items).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+}
+
+class _FarmPlotOption {
+  const _FarmPlotOption({required this.farm, required this.plot});
+
+  final FarmModel farm;
+  final FarmPlotModel plot;
 }
 
 class _LocationMessage implements Exception {

@@ -10,6 +10,10 @@ class WeatherState {
     this.forecasts = const [],
     this.alerts = const [],
     this.errorMessage,
+    this.selectedFarmId,
+    this.selectedPlotId,
+    this.selectedFarmName,
+    this.selectedPlotName,
   });
 
   final bool isLoading;
@@ -23,6 +27,16 @@ class WeatherState {
   final List<WeatherAlertModel> alerts;
 
   final String? errorMessage;
+  final int? selectedFarmId;
+  final int? selectedPlotId;
+  final String? selectedFarmName;
+  final String? selectedPlotName;
+
+  bool get isFarmSource => selectedFarmId != null && selectedPlotId != null;
+  String? get farmDisplayName {
+    if (selectedFarmName == null || selectedPlotName == null) return null;
+    return '$selectedFarmName · $selectedPlotName';
+  }
 
   factory WeatherState.initial() {
     return const WeatherState(isLoading: true);
@@ -39,6 +53,11 @@ class WeatherState {
     String? errorMessage,
     bool clearCurrent = false,
     bool clearError = false,
+    int? selectedFarmId,
+    int? selectedPlotId,
+    String? selectedFarmName,
+    String? selectedPlotName,
+    bool clearFarmSource = false,
   }) {
     return WeatherState(
       isLoading: isLoading ?? this.isLoading,
@@ -49,6 +68,14 @@ class WeatherState {
       forecasts: forecasts ?? this.forecasts,
       alerts: alerts ?? this.alerts,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+      selectedFarmId:
+          clearFarmSource ? null : selectedFarmId ?? this.selectedFarmId,
+      selectedPlotId:
+          clearFarmSource ? null : selectedPlotId ?? this.selectedPlotId,
+      selectedFarmName:
+          clearFarmSource ? null : selectedFarmName ?? this.selectedFarmName,
+      selectedPlotName:
+          clearFarmSource ? null : selectedPlotName ?? this.selectedPlotName,
     );
   }
 }

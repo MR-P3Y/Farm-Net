@@ -171,10 +171,12 @@ class FarmWeatherModel {
     required this.refreshed,
     required this.forecasts,
     required this.alerts,
+    this.snapshot,
     this.temperatureC,
     this.conditionText,
   });
   final bool refreshed;
+  final Map<String, dynamic>? snapshot;
   final double? temperatureC;
   final String? conditionText;
   final List<Map<String, dynamic>> forecasts;
@@ -184,6 +186,7 @@ class FarmWeatherModel {
     final snapshot = json['snapshot'] as Map<String, dynamic>?;
     return FarmWeatherModel(
       refreshed: json['refreshed'] as bool? ?? false,
+      snapshot: snapshot == null ? null : Map<String, dynamic>.from(snapshot),
       temperatureC: _double(snapshot?['temperature_c']),
       conditionText: snapshot?['condition_text'] as String?,
       forecasts:

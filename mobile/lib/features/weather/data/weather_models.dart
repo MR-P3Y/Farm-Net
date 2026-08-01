@@ -92,6 +92,26 @@ class WeatherSnapshotModel {
       observedAt: json['observed_at']?.toString() ?? '',
     );
   }
+
+  factory WeatherSnapshotModel.fromFarmJson(Map<String, dynamic> json) {
+    return WeatherSnapshotModel(
+      id: 0,
+      locationId: 0,
+      provider: json['provider']?.toString() ?? '',
+      temperatureC: json['temperature_c']?.toString(),
+      feelsLikeC: json['feels_like_c']?.toString(),
+      humidityPercent: json['humidity_percent']?.toString(),
+      windSpeedMps: json['wind_speed_mps']?.toString(),
+      windDirectionDeg:
+          json['wind_direction_deg'] == null
+              ? null
+              : (json['wind_direction_deg'] as num).toInt(),
+      pressureHpa: json['pressure_hpa']?.toString(),
+      conditionCode: json['condition_code']?.toString(),
+      conditionText: json['condition_text']?.toString(),
+      observedAt: json['observed_at']?.toString() ?? '',
+    );
+  }
 }
 
 class WeatherForecastModel {
@@ -130,6 +150,24 @@ class WeatherForecastModel {
     return WeatherForecastModel(
       id: (json['id'] as num).toInt(),
       locationId: (json['location_id'] as num).toInt(),
+      provider: json['provider']?.toString() ?? '',
+      forecastType: json['forecast_type']?.toString() ?? '',
+      forecastTime: json['forecast_time']?.toString() ?? '',
+      temperatureC: json['temperature_c']?.toString(),
+      minTemperatureC: json['min_temperature_c']?.toString(),
+      maxTemperatureC: json['max_temperature_c']?.toString(),
+      humidityPercent: json['humidity_percent']?.toString(),
+      precipitationMm: json['precipitation_mm']?.toString(),
+      precipitationProbability: json['precipitation_probability']?.toString(),
+      windSpeedMps: json['wind_speed_mps']?.toString(),
+      conditionText: json['condition_text']?.toString(),
+    );
+  }
+
+  factory WeatherForecastModel.fromFarmJson(Map<String, dynamic> json) {
+    return WeatherForecastModel(
+      id: 0,
+      locationId: 0,
       provider: json['provider']?.toString() ?? '',
       forecastType: json['forecast_type']?.toString() ?? '',
       forecastTime: json['forecast_time']?.toString() ?? '',
@@ -200,6 +238,21 @@ class WeatherAlertModel {
               : const {},
       createdAt: json['created_at']?.toString(),
       updatedAt: json['updated_at']?.toString(),
+    );
+  }
+
+  factory WeatherAlertModel.fromFarmJson(Map<String, dynamic> json) {
+    return WeatherAlertModel(
+      id: (json['id'] as num).toInt(),
+      locationId: 0,
+      alertType: json['alert_type']?.toString() ?? '',
+      severity: json['severity']?.toString() ?? '',
+      status: 'active',
+      title: json['title']?.toString() ?? '',
+      body: json['body']?.toString() ?? '',
+      startsAt: json['starts_at']?.toString() ?? '',
+      endsAt: json['ends_at']?.toString(),
+      isActive: true,
     );
   }
 }

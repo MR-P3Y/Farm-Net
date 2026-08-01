@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../farms/data/farm_repository.dart';
 import '../data/weather_api.dart';
 import '../data/weather_models.dart';
 import '../data/weather_repository.dart';
@@ -9,15 +10,20 @@ final weatherControllerProvider =
     StateNotifierProvider<WeatherController, WeatherState>((ref) {
       return WeatherController(
         repository: ref.watch(weatherRepositoryProvider),
+        farmRepository: ref.watch(farmRepositoryProvider),
       );
     });
 
 class WeatherController extends StateNotifier<WeatherState> {
-  WeatherController({required WeatherRepository repository})
-    : _repository = repository,
-      super(WeatherState.initial());
+  WeatherController({
+    required WeatherRepository repository,
+    required FarmRepository farmRepository,
+  }) : _repository = repository,
+       _farmRepository = farmRepository,
+       super(WeatherState.initial());
 
   final WeatherRepository _repository;
+  final FarmRepository _farmRepository;
 
   Future<void> load() async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -51,6 +57,7 @@ class WeatherController extends StateNotifier<WeatherState> {
       selectedLocation: location,
       clearCurrent: true,
       clearError: true,
+      clearFarmSource: true,
     );
 
     try {
@@ -81,6 +88,18 @@ class WeatherController extends StateNotifier<WeatherState> {
   }
 
   Future<void> refreshSelected() async {
+    if (state.isFarmSource) {
+      final farmId = state.selectedFarmId!;
+      final plotId = state.selectedPlotId!;
+      await loadFarmPlot(
+        farmId: farmId,
+        plotId: plotId,
+        farmName: state.selectedFarmName ?? '',
+        plotName: state.selectedPlotName ?? '',
+        refresh: true,
+      );
+      return;
+    }
     final location = state.selectedLocation;
     if (location == null) return;
 
@@ -95,6 +114,46 @@ class WeatherController extends StateNotifier<WeatherState> {
       state = state.copyWith(
         isSaving: false,
         errorMessage: 'خطا در بروزرسانی آب‌وهوا',
+      );
+    }
+  }
+
+  Future<void> loadFarmPlot({
+    required int farmId,
+    required int plotId,
+    required String farmName,
+    required String plotName,
+    bool refresh = false,
+  }) async {
+    state = state.copyWith(
+      isSaving: true,
+      clearCurrent: true,
+      clearError: true,
+      selectedFarmId: farmId,
+      selectedPlotId: plotId,
+      selectedFarmName: farmName,
+      selectedPlotName: plotName,
+    );
+    try {
+      final value = await _farmRepository.weather(
+        farmId,
+        plotId,
+        refresh: refresh,
+      );
+      state = state.copyWith(
+        isSaving: false,
+        current:
+            value.snapshot == null
+                ? null
+                : WeatherSnapshotModel.fromFarmJson(value.snapshot!),
+        forecasts:
+            value.forecasts.map(WeatherForecastModel.fromFarmJson).toList(),
+        alerts: value.alerts.map(WeatherAlertModel.fromFarmJson).toList(),
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: 'خطا در دریافت آب‌وهوای قطعه مزرعه',
       );
     }
   }
