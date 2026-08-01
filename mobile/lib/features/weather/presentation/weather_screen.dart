@@ -667,7 +667,9 @@ class _WeatherAlerts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = alerts.take(3).toList();
+    final active = [...alerts]..sort(
+      (a, b) => _severityRank(b.severity).compareTo(_severityRank(a.severity)),
+    );
     return FarmGlassCard(
       borderRadius: 24,
       opacity: 0.12,
@@ -688,32 +690,231 @@ class _WeatherAlerts extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           for (var index = 0; index < active.length; index++) ...[
-            Text(
-              active[index].title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            if (active[index].body.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                active[index].body,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.76),
-                  height: 1.5,
-                ),
-              ),
-            ],
-            if (index != active.length - 1)
-              Divider(color: Colors.white.withValues(alpha: 0.14), height: 24),
+            _WeatherAlertCard(alert: active[index]),
+            if (index != active.length - 1) const SizedBox(height: 10),
           ],
         ],
       ),
     );
   }
+
+  static int _severityRank(String severity) => switch (severity) {
+    'critical' => 5,
+    'high' => 4,
+    'medium' => 3,
+    'low' => 2,
+    _ => 1,
+  };
+}
+
+class _WeatherAlertCard extends StatelessWidget {
+  const _WeatherAlertCard({required this.alert});
+
+  final WeatherAlertModel alert;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _severityColor(alert.severity);
+    final startsAt = DateTime.tryParse(alert.startsAt)?.toLocal();
+    final endsAt = DateTime.tryParse(alert.endsAt ?? '')?.toLocal();
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.55)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(_alertIcon(alert.alertType), color: accent, size: 25),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _alertTitle(context, alert),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    if (startsAt != null) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        endsAt == null
+                            ? context.l10n.tr(
+                              fa:
+                                  'شروع: ${formatDate(context, startsAt, showTime: true)}',
+                              en:
+                                  'Starts: ${formatDate(context, startsAt, showTime: true)}',
+                            )
+                            : context.l10n.tr(
+                              fa:
+                                  '${formatDate(context, startsAt, showTime: true)} تا ${formatDate(context, endsAt, showTime: true)}',
+                              en:
+                                  '${formatDate(context, startsAt, showTime: true)} to ${formatDate(context, endsAt, showTime: true)}',
+                            ),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.62),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  _severityLabel(context, alert.severity),
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 11),
+          Text(
+            _alertDescription(context, alert),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              height: 1.55,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.task_alt_rounded, color: accent, size: 18),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  _alertAction(context, alert.alertType),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    height: 1.45,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _severityColor(String severity) => switch (severity) {
+    'critical' => const Color(0xFFFF5252),
+    'high' => const Color(0xFFFF7043),
+    'medium' => const Color(0xFFFFC107),
+    'low' => const Color(0xFF64B5F6),
+    _ => const Color(0xFF90A4AE),
+  };
+
+  IconData _alertIcon(String type) => switch (type) {
+    'frost' => Icons.ac_unit_rounded,
+    'heat' => Icons.local_fire_department_rounded,
+    'heavy_rain' => Icons.thunderstorm_rounded,
+    'strong_wind' => Icons.air_rounded,
+    'drought' => Icons.water_drop_outlined,
+    'hail' => Icons.grain_rounded,
+    'spraying_not_recommended' => Icons.sanitizer_outlined,
+    _ => Icons.warning_amber_rounded,
+  };
+
+  String _severityLabel(BuildContext context, String severity) =>
+      switch (severity) {
+        'critical' => context.l10n.tr(fa: 'بحرانی', en: 'Critical'),
+        'high' => context.l10n.tr(fa: 'خطر زیاد', en: 'High'),
+        'medium' => context.l10n.tr(fa: 'نیازمند توجه', en: 'Medium'),
+        'low' => context.l10n.tr(fa: 'کم', en: 'Low'),
+        _ => context.l10n.tr(fa: 'اطلاع‌رسانی', en: 'Info'),
+      };
+
+  String _alertTitle(BuildContext context, WeatherAlertModel value) {
+    if (context.l10n.isFa && value.title.isNotEmpty) return value.title;
+    return switch (value.alertType) {
+      'frost' => 'Frost warning',
+      'heat' => 'Extreme heat warning',
+      'heavy_rain' => 'Heavy rain warning',
+      'strong_wind' => 'Strong wind warning',
+      'drought' => 'Drought warning',
+      'hail' => 'Hail warning',
+      'spraying_not_recommended' => 'Spraying is not recommended',
+      _ => context.l10n.tr(fa: value.title, en: 'Weather warning'),
+    };
+  }
+
+  String _alertDescription(BuildContext context, WeatherAlertModel value) {
+    if (context.l10n.isFa && value.body.isNotEmpty) return value.body;
+    final payload = value.payload;
+    return switch (value.alertType) {
+      'frost' =>
+        'Forecast temperature may reach ${payload['temperature_c'] ?? '--'}°C.',
+      'heat' =>
+        'Forecast temperature may reach ${payload['temperature_c'] ?? '--'}°C.',
+      'heavy_rain' =>
+        'Forecast precipitation is ${payload['precipitation_mm'] ?? '--'} mm.',
+      'strong_wind' =>
+        'Forecast wind speed is ${payload['wind_speed_mps'] ?? '--'} m/s.',
+      'spraying_not_recommended' =>
+        'Wind or precipitation probability makes this period unsuitable for spraying.',
+      _ => 'Weather conditions may affect farm operations during this period.',
+    };
+  }
+
+  String _alertAction(BuildContext context, String type) => switch (type) {
+    'frost' => context.l10n.tr(
+      fa: 'از محصولات حساس محافظت و تجهیزات مقابله با سرما را آماده کنید.',
+      en: 'Protect sensitive crops and prepare frost protection equipment.',
+    ),
+    'heat' => context.l10n.tr(
+      fa: 'آبیاری، سایه‌اندازی و تنش گرمایی محصول را بررسی کنید.',
+      en: 'Review irrigation, shading, and crop heat stress.',
+    ),
+    'heavy_rain' => context.l10n.tr(
+      fa: 'زهکشی را بررسی و عملیات مزرعه را تا بهبود شرایط متوقف کنید.',
+      en:
+          'Check drainage and postpone field operations until conditions improve.',
+    ),
+    'strong_wind' => context.l10n.tr(
+      fa: 'سم‌پاشی و عملیات حساس به باد را متوقف کنید.',
+      en: 'Stop spraying and other wind-sensitive operations.',
+    ),
+    'drought' => context.l10n.tr(
+      fa: 'رطوبت خاک و برنامه آبیاری را بررسی کنید.',
+      en: 'Review soil moisture and the irrigation plan.',
+    ),
+    'hail' => context.l10n.tr(
+      fa: 'پوشش‌های محافظ و ایمنی تجهیزات را بررسی کنید.',
+      en: 'Check protective covers and secure exposed equipment.',
+    ),
+    'spraying_not_recommended' => context.l10n.tr(
+      fa: 'سم‌پاشی را به بازه‌ای با باد و احتمال بارش کمتر موکول کنید.',
+      en: 'Move spraying to a period with lower wind and rain probability.',
+    ),
+    _ => context.l10n.tr(
+      fa: 'پیش از عملیات، شرایط مزرعه و پیش‌بینی جدید را بررسی کنید.',
+      en: 'Check field conditions and the latest forecast before operating.',
+    ),
+  };
 }
 
 class _DailyForecastSummary {

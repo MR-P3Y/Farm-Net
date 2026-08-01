@@ -155,6 +155,12 @@ class WeatherAlertModel {
     required this.title,
     required this.body,
     required this.startsAt,
+    required this.isActive,
+    this.ruleId,
+    this.endsAt,
+    this.payload = const {},
+    this.createdAt,
+    this.updatedAt,
   });
 
   final int id;
@@ -165,6 +171,15 @@ class WeatherAlertModel {
   final String title;
   final String body;
   final String startsAt;
+  final int? ruleId;
+  final String? endsAt;
+  final bool isActive;
+  final Map<String, dynamic> payload;
+  final String? createdAt;
+  final String? updatedAt;
+
+  bool get isCritical => severity == 'critical';
+  bool get isHighPriority => severity == 'high' || isCritical;
 
   factory WeatherAlertModel.fromJson(Map<String, dynamic> json) {
     return WeatherAlertModel(
@@ -176,6 +191,15 @@ class WeatherAlertModel {
       title: json['title']?.toString() ?? '',
       body: json['body']?.toString() ?? '',
       startsAt: json['starts_at']?.toString() ?? '',
+      ruleId: json['rule_id'] == null ? null : (json['rule_id'] as num).toInt(),
+      endsAt: json['ends_at']?.toString(),
+      isActive: json['is_active'] == true,
+      payload:
+          json['payload_json'] is Map
+              ? Map<String, dynamic>.from(json['payload_json'] as Map)
+              : const {},
+      createdAt: json['created_at']?.toString(),
+      updatedAt: json['updated_at']?.toString(),
     );
   }
 }

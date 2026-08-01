@@ -2728,6 +2728,28 @@ Status: completed and manually accepted on 2026-08-01
   excluded from this step.
 - Next: professional Weather alert severity and actionable farming guidance.
 
+### Frontend Weather Redesign — Step 3 Accepted
+
+Status: completed and manually accepted on 2026-08-01 with noted coverage gap
+
+- Expanded the typed Mobile alert model to match the real Backend contract:
+  optional rule/end time, active state, payload, timestamps, and priority
+  helpers.
+- Added deterministic severity ordering and distinct Info, Low, Medium, High,
+  and Critical visual contracts.
+- Added localized alert titles, severity labels, start/end times, payload-backed
+  descriptions, type-specific icons, and actionable farming guidance for all
+  seven Backend alert types.
+- Kept missing `ends_at` honest; the UI does not invent a warning duration.
+- Added focused parsing/default/priority tests for the complete alert contract.
+- Mobile analyze: OK; all 85 current tests passed; Web/Wasm build: OK.
+- Project-owner manual verification accepted the no-active-alert state. No real
+  alert existed during the run, so an active warning card was not visually
+  exercised; its contract is covered by model tests and static verification.
+- Concurrent local Android, Home, Routing, and Settings work was preserved and
+  excluded from this step.
+- Next: Farm-profile Weather linking and professional multi-location switching.
+
 After every completed step:
 
 1. update this document with the commit and verification evidence;

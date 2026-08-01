@@ -344,5 +344,10 @@ manually accepted: it renders the next real 24 hours and aggregates every day
 returned by the configured provider into localized daily summaries. The
 current OpenWeather `/forecast` contract returns 40 three-hour rows (normally
 about five days), so the client does not fabricate seven-day data. The next
-authorized Weather step is professional alert severity and action guidance.
-Preserve the foundation and migrate remaining domain strings incrementally.
+authorized Weather step is Farm-profile linking and multi-location switching.
+Weather Step 3 is accepted with exact alert contracts, severity ordering,
+localized actions, optional real start/end times, and payload-backed metrics.
+The owner's manual run had no active alert, so the no-alert state was observed;
+active alert visuals are code/model tested but not yet manually observed with a
+real warning. Preserve the foundation and migrate remaining domain strings
+incrementally.
