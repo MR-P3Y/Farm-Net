@@ -339,6 +339,10 @@ StatefulShell, and a bilingual Discover hub. Home consumes real Farm, Weather,
 Notification, and Barzegar data. Weather Step 1 provides responsive current
 conditions, refresh, observation time, real alerts, rule-based farming guidance,
 GPS/Geo selection, localized digits, and explicit loading/error/empty states.
-Mobile analyze, all 81 tests, and Web/Wasm build pass. The next authorized
-Weather step is professional 24-hour and 7-day forecast presentation. Preserve
-the foundation and migrate remaining domain strings and visuals incrementally.
+Mobile analyze, all 81 tests, and Web/Wasm build pass. Weather Step 2 is also
+manually accepted: it renders the next real 24 hours and aggregates every day
+returned by the configured provider into localized daily summaries. The
+current OpenWeather `/forecast` contract returns 40 three-hour rows (normally
+about five days), so the client does not fabricate seven-day data. The next
+authorized Weather step is professional alert severity and action guidance.
+Preserve the foundation and migrate remaining domain strings incrementally.

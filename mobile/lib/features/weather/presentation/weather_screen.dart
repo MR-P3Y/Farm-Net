@@ -40,6 +40,8 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     final l10n = context.l10n;
     final observedAt =
         DateTime.tryParse(state.current?.observedAt ?? '')?.toLocal();
+    final hourlyForecasts = _next24Hours(state.forecasts);
+    final dailyForecasts = _dailyForecasts(state.forecasts);
 
     if (state.isLoading && state.locations.isEmpty) {
       return Scaffold(
@@ -391,7 +393,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                               ),
                             ),
                             Text(
-                              l10n.tr(fa: '۱۲ ساعت آینده', en: 'Next 12 hours'),
+                              l10n.tr(fa: '۲۴ ساعت آینده', en: 'Next 24 hours'),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.5),
                                 fontSize: 11,
@@ -403,14 +405,14 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                     ),
                     SliverToBoxAdapter(
                       child: SizedBox(
-                        height: 130,
+                        height: 172,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           physics: const BouncingScrollPhysics(),
-                          itemCount: state.forecasts.length.clamp(0, 12),
+                          itemCount: hourlyForecasts.length,
                           itemBuilder: (context, index) {
-                            final forecast = state.forecasts[index];
+                            final forecast = hourlyForecasts[index];
                             return _HourlyForecastItem(
                               forecast: forecast,
                               isNight: isActuallyNight,
@@ -419,7 +421,55 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                         ),
                       ),
                     ),
-
+                    if (dailyForecasts.isNotEmpty) ...[
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                l10n.tr(
+                                  fa: 'پیش‌بینی روزهای آینده',
+                                  en: 'Upcoming days',
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              Text(
+                                l10n.tr(
+                                  fa:
+                                      'پوشش ${toPersianDigits(dailyForecasts.length.toString())} روز',
+                                  en: '${dailyForecasts.length}-day coverage',
+                                ),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.55),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: 205,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: dailyForecasts.length,
+                            separatorBuilder:
+                                (context, index) => const SizedBox(width: 12),
+                            itemBuilder:
+                                (context, index) => _DailyForecastCard(
+                                  summary: dailyForecasts[index],
+                                ),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SliverToBoxAdapter(child: SizedBox(height: 40)),
                   ],
                 ),
@@ -497,6 +547,35 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => const _LocationPickerSheet(),
     );
+  }
+
+  List<WeatherForecastModel> _next24Hours(
+    List<WeatherForecastModel> forecasts,
+  ) {
+    final now = DateTime.now();
+    final end = now.add(const Duration(hours: 24));
+    final rows =
+        forecasts.where((forecast) {
+          final time = DateTime.tryParse(forecast.forecastTime)?.toLocal();
+          return time != null && !time.isBefore(now) && !time.isAfter(end);
+        }).toList();
+    return rows.isNotEmpty ? rows : forecasts.take(8).toList();
+  }
+
+  List<_DailyForecastSummary> _dailyForecasts(
+    List<WeatherForecastModel> forecasts,
+  ) {
+    final groups = <DateTime, List<WeatherForecastModel>>{};
+    for (final forecast in forecasts) {
+      final time = DateTime.tryParse(forecast.forecastTime)?.toLocal();
+      if (time == null) continue;
+      final day = DateTime(time.year, time.month, time.day);
+      groups.putIfAbsent(day, () => []).add(forecast);
+    }
+    return groups.entries
+        .map((entry) => _DailyForecastSummary.fromRows(entry.key, entry.value))
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
   }
 }
 
@@ -633,6 +712,218 @@ class _WeatherAlerts extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _DailyForecastSummary {
+  const _DailyForecastSummary({
+    required this.date,
+    required this.minTemperature,
+    required this.maxTemperature,
+    required this.maxPrecipitationProbability,
+    required this.totalPrecipitationMm,
+    required this.averageHumidity,
+    required this.maxWindSpeed,
+    required this.condition,
+  });
+
+  final DateTime date;
+  final double? minTemperature;
+  final double? maxTemperature;
+  final double? maxPrecipitationProbability;
+  final double? totalPrecipitationMm;
+  final double? averageHumidity;
+  final double? maxWindSpeed;
+  final String? condition;
+
+  factory _DailyForecastSummary.fromRows(
+    DateTime date,
+    List<WeatherForecastModel> rows,
+  ) {
+    final temperatures = <double>[];
+    final probabilities = <double>[];
+    final precipitation = <double>[];
+    final humidities = <double>[];
+    final winds = <double>[];
+    final conditions = <String, int>{};
+
+    for (final row in rows) {
+      final temperature = double.tryParse(row.temperatureC ?? '');
+      final minTemperature = double.tryParse(row.minTemperatureC ?? '');
+      final maxTemperature = double.tryParse(row.maxTemperatureC ?? '');
+      if (temperature != null) temperatures.add(temperature);
+      if (minTemperature != null) temperatures.add(minTemperature);
+      if (maxTemperature != null) temperatures.add(maxTemperature);
+
+      final probability = double.tryParse(row.precipitationProbability ?? '');
+      if (probability != null) probabilities.add(probability);
+      final rain = double.tryParse(row.precipitationMm ?? '');
+      if (rain != null) precipitation.add(rain);
+      final humidity = double.tryParse(row.humidityPercent ?? '');
+      if (humidity != null) humidities.add(humidity);
+      final wind = double.tryParse(row.windSpeedMps ?? '');
+      if (wind != null) winds.add(wind);
+      final condition = row.conditionText?.trim();
+      if (condition != null && condition.isNotEmpty) {
+        conditions[condition] = (conditions[condition] ?? 0) + 1;
+      }
+    }
+
+    double? minimum(List<double> values) =>
+        values.isEmpty ? null : values.reduce((a, b) => a < b ? a : b);
+    double? maximum(List<double> values) =>
+        values.isEmpty ? null : values.reduce((a, b) => a > b ? a : b);
+    double? average(List<double> values) =>
+        values.isEmpty ? null : values.reduce((a, b) => a + b) / values.length;
+    final sortedConditions =
+        conditions.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+
+    return _DailyForecastSummary(
+      date: date,
+      minTemperature: minimum(temperatures),
+      maxTemperature: maximum(temperatures),
+      maxPrecipitationProbability: maximum(probabilities),
+      totalPrecipitationMm:
+          precipitation.isEmpty ? null : precipitation.reduce((a, b) => a + b),
+      averageHumidity: average(humidities),
+      maxWindSpeed: maximum(winds),
+      condition: sortedConditions.isEmpty ? null : sortedConditions.first.key,
+    );
+  }
+}
+
+class _DailyForecastCard extends StatelessWidget {
+  const _DailyForecastCard({required this.summary});
+
+  final _DailyForecastSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final rainProbability = summary.maxPrecipitationProbability;
+    final probabilityPercent =
+        rainProbability == null
+            ? null
+            : (rainProbability <= 1 ? rainProbability * 100 : rainProbability)
+                .round();
+    return SizedBox(
+      width: 190,
+      child: FarmGlassCard(
+        borderRadius: 24,
+        opacity: 0.1,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              formatDate(context, summary.date),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              summary.condition ??
+                  context.l10n.tr(fa: 'بدون توضیح', en: 'No description'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.68),
+                fontSize: 11,
+              ),
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                const Icon(
+                  Icons.thermostat_rounded,
+                  color: Colors.orangeAccent,
+                  size: 20,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _localizedNumber(
+                    context,
+                    '${summary.maxTemperature?.round() ?? '--'}° / ${summary.minTemperature?.round() ?? '--'}°',
+                  ),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _DailyMetricLine(
+              icon: Icons.water_drop_outlined,
+              label: context.l10n.tr(fa: 'بارش', en: 'Rain'),
+              value: _localizedNumber(
+                context,
+                '${probabilityPercent == null ? '--' : '$probabilityPercent%'} · ${summary.totalPrecipitationMm?.toStringAsFixed(1) ?? '--'} mm',
+              ),
+            ),
+            const SizedBox(height: 6),
+            _DailyMetricLine(
+              icon: Icons.air_rounded,
+              label: context.l10n.tr(fa: 'بیشینه باد', en: 'Peak wind'),
+              value: _localizedNumber(
+                context,
+                '${summary.maxWindSpeed?.toStringAsFixed(1) ?? '--'} m/s',
+              ),
+            ),
+            const SizedBox(height: 6),
+            _DailyMetricLine(
+              icon: Icons.opacity_rounded,
+              label: context.l10n.tr(fa: 'میانگین رطوبت', en: 'Avg humidity'),
+              value: _localizedNumber(
+                context,
+                '${summary.averageHumidity?.round() ?? '--'}%',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DailyMetricLine extends StatelessWidget {
+  const _DailyMetricLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white70, size: 15),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.64),
+              fontSize: 9,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1082,7 +1373,7 @@ class _HourlyForecastItem extends StatelessWidget {
               alwaysUse24HourFormat: true,
             );
     return Container(
-      width: 75,
+      width: 104,
       margin: const EdgeInsets.only(left: 12),
       child: FarmGlassCard(
         borderRadius: 24,
@@ -1117,10 +1408,47 @@ class _HourlyForecastItem extends StatelessWidget {
                 fontSize: 16,
               ),
             ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.water_drop_outlined,
+                  color: Colors.lightBlueAccent,
+                  size: 13,
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  _forecastRainLabel(context, forecast),
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    fontSize: 9,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _localizedNumber(context, '${forecast.windSpeedMps ?? '--'} m/s'),
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 9,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  String _forecastRainLabel(
+    BuildContext context,
+    WeatherForecastModel forecast,
+  ) {
+    final value = double.tryParse(forecast.precipitationProbability ?? '');
+    if (value == null) return '--';
+    final percent = value <= 1 ? value * 100 : value;
+    return _localizedNumber(context, '${percent.round()}%');
   }
 }
 

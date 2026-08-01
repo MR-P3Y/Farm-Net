@@ -2706,6 +2706,28 @@ Status: completed and manually accepted on 2026-08-01
   was not rerun as part of this UI-only step.
 - Next: professional 24-hour and 7-day Weather forecast presentation.
 
+### Frontend Weather Redesign — Step 2 Accepted
+
+Status: completed and manually accepted on 2026-08-01
+
+- Replaced the previous ambiguous 12-item strip with an exact next-24-hour
+  window derived from real timestamped forecast rows.
+- Hourly cards now expose localized time, temperature, precipitation
+  probability, and wind speed.
+- Added localized daily summaries derived from the Provider rows: min/max
+  temperature, dominant condition, maximum precipitation probability, total
+  precipitation, average humidity, and peak wind.
+- The UI reports the actual Provider coverage instead of promising a fixed
+  seven days. The configured OpenWeather `/forecast` response supplies 40
+  three-hour rows, normally covering approximately five days; no missing days
+  are synthesized.
+- Persian uses Persian digits and Jalali dates; English uses Gregorian dates.
+- Mobile analyze: OK; all 81 tests passed; Web/Wasm build: OK.
+- Project-owner manual verification: accepted.
+- Concurrent local Android, Home, Routing, and Settings work was preserved and
+  excluded from this step.
+- Next: professional Weather alert severity and actionable farming guidance.
+
 After every completed step:
 
 1. update this document with the commit and verification evidence;
