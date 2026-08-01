@@ -2776,6 +2776,26 @@ Status: completed and manually accepted on 2026-08-02
   Settings, shared UI, and root documentation were preserved and excluded.
 - Next: rule-based Farm-operation weather planner.
 
+
+### Frontend Weather — Step 5 Farm Operation Planner and Source Persistence
+
+Status: completed and manually accepted on 2026-08-02
+
+- Added five rule-based 48-hour operation plans for spraying, irrigation,
+  fertilizing, harvesting, and machinery work.
+- Added localized score, suitability, suggested time window, decision reason,
+  and an explicit agronomic limitation notice.
+- Persisted the last selected public city/GPS location or private Farm Plot and
+  safely validates the stored source before restoring it.
+- Replaced the first-location fallback that repeatedly selected Deland when a
+  valid user selection already existed.
+- Improved the location picker as a floating, safe-area-aware sheet and fixed
+  long location/Farm names overflowing on narrow displays.
+- Focused Mobile analyze: OK; 7 focused tests passed; Web/Wasm build: OK.
+- Project-owner manual verification passed for five horizontally scrollable
+  cards, location-dependent recalculation, Persian/English, light/dark themes,
+  and narrow Mobile layouts.
+- Concurrent owner changes were preserved and excluded from the commit.
 After every completed step:
 
 1. update this document with the commit and verification evidence;

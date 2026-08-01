@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../farms/data/farm_repository.dart';
 import '../data/weather_api.dart';
@@ -15,6 +16,13 @@ final weatherControllerProvider =
     });
 
 class WeatherController extends StateNotifier<WeatherState> {
+  static const _sourceKindKey = 'weather_selected_source_kind';
+  static const _locationIdKey = 'weather_selected_location_id';
+  static const _farmIdKey = 'weather_selected_farm_id';
+  static const _plotIdKey = 'weather_selected_plot_id';
+  static const _farmNameKey = 'weather_selected_farm_name';
+  static const _plotNameKey = 'weather_selected_plot_name';
+
   WeatherController({
     required WeatherRepository repository,
     required FarmRepository farmRepository,
@@ -30,7 +38,42 @@ class WeatherController extends StateNotifier<WeatherState> {
 
     try {
       final locations = await _repository.listLocations();
-      final selected = locations.isEmpty ? null : locations.first;
+      final preferences = await SharedPreferences.getInstance();
+      final sourceKind = preferences.getString(_sourceKindKey);
+
+      if (sourceKind == 'farm') {
+        final farmId = preferences.getInt(_farmIdKey);
+        final plotId = preferences.getInt(_plotIdKey);
+        if (farmId != null && plotId != null) {
+          final farms = await _farmRepository.farms();
+          final farm = farms.where((item) => item.id == farmId).firstOrNull;
+          if (farm != null) {
+            final plots = await _farmRepository.plots(farm.id);
+            final plot = plots.where((item) => item.id == plotId).firstOrNull;
+            if (plot != null &&
+                plot.latitude != null &&
+                plot.longitude != null) {
+              state = state.copyWith(isLoading: false, locations: locations);
+              await loadFarmPlot(
+                farmId: farm.id,
+                plotId: plot.id,
+                farmName: farm.name,
+                plotName: plot.name,
+              );
+              return;
+            }
+          }
+        }
+      }
+
+      final storedLocationId = preferences.getInt(_locationIdKey);
+      final storedLocation =
+          storedLocationId == null
+              ? null
+              : locations
+                  .where((location) => location.id == storedLocationId)
+                  .firstOrNull;
+      final selected = storedLocation ?? locations.firstOrNull;
 
       state = state.copyWith(
         isLoading: false,
@@ -40,6 +83,8 @@ class WeatherController extends StateNotifier<WeatherState> {
 
       if (selected != null) {
         await loadLocation(selected);
+      } else {
+        await _clearStoredSource();
       }
     } on WeatherApiException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.error.message);
@@ -77,6 +122,7 @@ class WeatherController extends StateNotifier<WeatherState> {
         forecasts: values[0] as List<WeatherForecastModel>,
         alerts: values[1] as List<WeatherAlertModel>,
       );
+      await _persistLocation(location.id);
     } on WeatherApiException catch (e) {
       state = state.copyWith(isSaving: false, errorMessage: e.error.message);
     } catch (_) {
@@ -150,12 +196,53 @@ class WeatherController extends StateNotifier<WeatherState> {
             value.forecasts.map(WeatherForecastModel.fromFarmJson).toList(),
         alerts: value.alerts.map(WeatherAlertModel.fromFarmJson).toList(),
       );
+      await _persistFarm(
+        farmId: farmId,
+        plotId: plotId,
+        farmName: farmName,
+        plotName: plotName,
+      );
     } catch (_) {
       state = state.copyWith(
         isSaving: false,
         errorMessage: 'خطا در دریافت آب‌وهوای قطعه مزرعه',
       );
     }
+  }
+
+  Future<void> _persistLocation(int locationId) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_sourceKindKey, 'location');
+    await preferences.setInt(_locationIdKey, locationId);
+    await preferences.remove(_farmIdKey);
+    await preferences.remove(_plotIdKey);
+    await preferences.remove(_farmNameKey);
+    await preferences.remove(_plotNameKey);
+  }
+
+  Future<void> _persistFarm({
+    required int farmId,
+    required int plotId,
+    required String farmName,
+    required String plotName,
+  }) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_sourceKindKey, 'farm');
+    await preferences.setInt(_farmIdKey, farmId);
+    await preferences.setInt(_plotIdKey, plotId);
+    await preferences.setString(_farmNameKey, farmName);
+    await preferences.setString(_plotNameKey, plotName);
+    await preferences.remove(_locationIdKey);
+  }
+
+  Future<void> _clearStoredSource() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_sourceKindKey);
+    await preferences.remove(_locationIdKey);
+    await preferences.remove(_farmIdKey);
+    await preferences.remove(_plotIdKey);
+    await preferences.remove(_farmNameKey);
+    await preferences.remove(_plotNameKey);
   }
 
   Future<void> createGpsLocation({
