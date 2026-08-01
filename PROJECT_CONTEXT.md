@@ -1326,3 +1326,18 @@ phase is completed. Flutter analyze passed, all 77 Mobile tests passed, and the
 Web/Wasm build passed. Development/test CORS now safely supports Flutter Web's
 random localhost ports; staging/production do not. The next frontend phase is
 the professional Home dashboard redesign.
+
+The professional Mobile Home dashboard was completed and manually accepted on
+2026-08-01 at commit `1af4e56`. Home now aggregates real Farms, contextual Farm
+weather, Notifications, and Barzegar data with persisted Farm selection and
+partial-failure handling. Login enters the shared navigation shell, Farm/Plot
+changes refresh Home, and stale Services/Consultants client paths were aligned
+with the current Backend contracts. Weather now supports real browser/device
+GPS, OpenWeather-backed manual Iran province/city selection, and automatic
+refresh for empty snapshots. The local runtime Geo seed contains all 31
+provinces and 1,554 cities; it is environment data, not a tracked database
+artifact. Mobile analyze, 81 tests, Web build, focused Backend tests, health,
+real OpenWeather smoke, and owner browser verification passed. Android APK
+verification remains an environment gap because NDK `26.1.10909125` is absent
+and the Google SDK repository was unreachable. The next frontend phase is the
+professional Weather Mobile redesign plus Android emulator stabilization.

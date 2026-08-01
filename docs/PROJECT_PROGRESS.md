@@ -2652,6 +2652,37 @@ Status: completed and manually accepted on 2026-07-31
 - Project-owner manual verification: accepted.
 - Next: professional Home dashboard redesign.
 
+### Frontend Home Dashboard — Accepted
+
+Status: completed and manually accepted on 2026-08-01
+
+- Commit: `1af4e56 feat(mobile): connect home dashboard and live weather`.
+- Replaced placeholder Home values with an authenticated aggregate for Farms,
+  contextual Farm weather, unread Notifications, and the latest Barzegar
+  conversation; partial failures no longer hide healthy sections.
+- Added persisted active-Farm selection, responsive quick actions, empty/error/
+  loading states, and immediate Home refresh after Farm or Plot creation.
+- Fixed authenticated entry to navigate through `/home`, preserving the shared
+  StatefulShell and bottom navigation after login.
+- Corrected stale Mobile contracts for Services offers/management and
+  Consultants discovery/specialties/requests.
+- Replaced the fixed Tehran GPS placeholder with real device/browser
+  geolocation and added Android/iOS location permissions.
+- Added authenticated manual province/city weather selection backed by
+  OpenWeather geocoding and automatic cache refresh when no snapshot exists.
+- Seeded the local runtime Geo dataset: 31 provinces, 448 counties, 1,099
+  districts, 2,637 rural districts, 1,554 cities, and 98,100 villages.
+- Real OpenWeather smoke: provider `openweather`, current snapshot returned,
+  40 forecast rows; project-owner browser verification passed.
+- Backend Ruff/compileall: OK; focused Farm weather/Geo tests: 14 passed;
+  app/database/Redis health: OK.
+- Mobile analyze: OK; 81 tests passed; Web/Wasm build: OK.
+- Android APK verification is pending environment repair: Android NDK
+  `26.1.10909125` is not installed and the Google SDK repository was
+  unreachable. The Pixel 9 AVD exists but this is not treated as a code pass.
+- Next: professional Weather Mobile redesign and Android emulator environment
+  stabilization before its final manual gate.
+
 After every completed step:
 
 1. update this document with the commit and verification evidence;
