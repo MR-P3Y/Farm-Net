@@ -2683,6 +2683,29 @@ Status: completed and manually accepted on 2026-08-01
 - Next: professional Weather Mobile redesign and Android emulator environment
   stabilization before its final manual gate.
 
+### Frontend Weather Redesign — Step 1 Accepted
+
+Status: completed and manually accepted on 2026-08-01
+
+- Rebuilt the current-conditions surface as a bounded responsive
+  Glassmorphism view with dynamic day/night and condition atmosphere.
+- Added localized current temperature, humidity, wind, pressure, observation
+  time, manual refresh, and a robust 12-hour forecast strip.
+- Added real Backend weather-alert rendering and replaced the ambiguous
+  "smart" advice label with transparent rule-based farming guidance.
+- Completed Persian/English copy for the redesigned journey, Persian digits,
+  Jalali dates for Persian, and Gregorian dates for English.
+- Added explicit loading, retryable error, and no-location onboarding states.
+- Kept real GPS and Iran province/city selection, including localized
+  permission and failure guidance.
+- Extended the shared circular glass control with a disabled state so refresh
+  cannot be triggered twice while a request is active.
+- Mobile analyze: OK; all 81 tests passed; Web/Wasm build: OK.
+- Project-owner manual verification: accepted.
+- Android emulator operation was accepted by the project owner; an APK build
+  was not rerun as part of this UI-only step.
+- Next: professional 24-hour and 7-day Weather forecast presentation.
+
 After every completed step:
 
 1. update this document with the commit and verification evidence;

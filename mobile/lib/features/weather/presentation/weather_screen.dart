@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/dates.dart';
+import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_back_button.dart';
+import '../../../core/widgets/farm_button.dart';
 import '../../../core/widgets/farm_glass_card.dart';
 import '../../../core/widgets/farm_circular_glass_button.dart';
+import '../../../core/widgets/farm_error_view.dart';
+import '../../../core/widgets/farm_loading_view.dart';
 import '../../geo/data/geo_models.dart';
 import '../../geo/data/geo_repository.dart';
 import '../data/weather_models.dart';
@@ -31,6 +37,51 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(weatherControllerProvider);
+    final l10n = context.l10n;
+    final observedAt =
+        DateTime.tryParse(state.current?.observedAt ?? '')?.toLocal();
+
+    if (state.isLoading && state.locations.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: const FarmBackButton(),
+          title: Text(l10n.weather),
+        ),
+        body: FarmLoadingView(
+          message: l10n.tr(
+            fa: 'در حال آماده‌سازی پایش آب‌وهوا...',
+            en: 'Preparing weather monitoring...',
+          ),
+        ),
+      );
+    }
+
+    if (state.errorMessage != null &&
+        state.current == null &&
+        state.selectedLocation != null) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: const FarmBackButton(),
+          title: Text(l10n.weather),
+        ),
+        body: FarmErrorView(
+          message: l10n.tr(
+            fa: state.errorMessage!,
+            en: 'Weather data could not be loaded. Please try again.',
+          ),
+          onRetry:
+              () => ref
+                  .read(weatherControllerProvider.notifier)
+                  .loadLocation(state.selectedLocation!),
+        ),
+      );
+    }
+
+    if (state.locations.isEmpty) {
+      return _NoWeatherLocationView(
+        onChooseLocation: () => _showLocationPicker(context),
+      );
+    }
     final isDarkGlobal = Theme.of(context).brightness == Brightness.dark;
 
     final hour = DateTime.now().hour;
@@ -69,223 +120,310 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
           ),
 
           SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const FarmBackButton(),
-                        Column(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const FarmBackButton(),
+                            Column(
+                              children: [
+                                Text(
+                                  state.selectedLocation?.displayName ??
+                                      l10n.tr(
+                                        fa: 'موقعیت نامشخص',
+                                        en: 'Unknown location',
+                                      ),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 18,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black26,
+                                        blurRadius: 10,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  isActuallyNight
+                                      ? l10n.tr(
+                                        fa: 'پایش شبانه',
+                                        en: 'Night monitoring',
+                                      )
+                                      : l10n.tr(
+                                        fa: 'پایش روزانه',
+                                        en: 'Day monitoring',
+                                      ),
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                FarmCircularGlassButton(
+                                  icon: Icons.refresh_rounded,
+                                  onTap:
+                                      state.isSaving
+                                          ? null
+                                          : () =>
+                                              ref
+                                                  .read(
+                                                    weatherControllerProvider
+                                                        .notifier,
+                                                  )
+                                                  .refreshSelected(),
+                                ),
+                                const SizedBox(width: 8),
+                                FarmCircularGlassButton(
+                                  icon: Icons.map_rounded,
+                                  onTap: () => _showLocationPicker(context),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 30),
+                        child: Column(
+                          children: [
+                            _WeatherIcon(
+                              condition: state.current?.conditionText,
+                              isNight: isActuallyNight,
+                            ),
+                            const SizedBox(height: 10),
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Container(
+                                  width: 150,
+                                  height: 150,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.15,
+                                        ),
+                                        blurRadius: 80,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  _localizedNumber(
+                                    context,
+                                    '${double.tryParse(state.current?.temperatureC ?? '')?.round() ?? '--'}°',
+                                  ),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 120,
+                                    fontWeight: FontWeight.w900,
+                                    fontFamily: 'IRYekan',
+                                    height: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              state.errorMessage ??
+                                  state.current?.conditionText ??
+                                  (state.isSaving
+                                      ? l10n.tr(
+                                        fa: 'در حال دریافت اطلاعات هواشناسی...',
+                                        en: 'Fetching weather data...',
+                                      )
+                                      : l10n.tr(
+                                        fa: 'اطلاعات هواشناسی دریافت نشد',
+                                        en: 'Weather data is unavailable',
+                                      )),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            if (observedAt != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                l10n.tr(
+                                  fa:
+                                      'آخرین مشاهده: ${formatDate(context, observedAt, showTime: true)}',
+                                  en:
+                                      'Last observed: ${formatDate(context, observedAt, showTime: true)}',
+                                ),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.68),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: FarmGlassCard(
+                          borderRadius: 30,
+                          opacity: 0.12,
+                          blur: 20,
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome_rounded,
+                                    color: Colors.amber[300],
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    l10n.tr(
+                                      fa: 'راهنمای کشاورزی امروز',
+                                      en: "Today's farming guidance",
+                                    ),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _getFarmAdvice(context, state.current),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  height: 1.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (state.alerts.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                          child: _WeatherAlerts(alerts: state.alerts),
+                        ),
+                      ),
+
+                    SliverPadding(
+                      padding: const EdgeInsets.all(20),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 16,
+                              crossAxisSpacing: 16,
+                              childAspectRatio: 0.85,
+                            ),
+                        delegate: SliverChildListDelegate([
+                          _MetricCard(
+                            label: l10n.tr(fa: 'رطوبت', en: 'Humidity'),
+                            value: _localizedNumber(
+                              context,
+                              '${state.current?.humidityPercent ?? '--'}%',
+                            ),
+                            icon: Icons.water_drop_rounded,
+                          ),
+                          _MetricCard(
+                            label: l10n.tr(fa: 'سرعت باد', en: 'Wind'),
+                            value: _localizedNumber(
+                              context,
+                              '${state.current?.windSpeedMps ?? '--'} m/s',
+                            ),
+                            icon: Icons.air_rounded,
+                          ),
+                          _MetricCard(
+                            label: l10n.tr(fa: 'فشار', en: 'Pressure'),
+                            value: _localizedNumber(
+                              context,
+                              '${state.current?.pressureHpa ?? '--'} hPa',
+                            ),
+                            icon: Icons.shutter_speed_rounded,
+                          ),
+                        ]),
+                      ),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              state.selectedLocation?.displayName ??
-                                  'موقعیت نامشخص',
+                              l10n.tr(
+                                fa: 'پیش‌بینی ساعتی',
+                                en: 'Hourly forecast',
+                              ),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 18,
-                                shadows: [
-                                  Shadow(color: Colors.black26, blurRadius: 10),
-                                ],
                               ),
                             ),
                             Text(
-                              isActuallyNight ? 'پایش شبانه' : 'پایش روزانه',
+                              l10n.tr(fa: '۱۲ ساعت آینده', en: 'Next 12 hours'),
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: Colors.white.withValues(alpha: 0.5),
                                 fontSize: 11,
                               ),
                             ),
                           ],
                         ),
-                        FarmCircularGlassButton(
-                          icon: Icons.map_rounded,
-                          onTap: () => _showLocationPicker(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 30),
-                    child: Column(
-                      children: [
-                        _WeatherIcon(
-                          condition: state.current?.conditionText,
-                          isNight: isActuallyNight,
-                        ),
-                        const SizedBox(height: 10),
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              width: 150,
-                              height: 150,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    blurRadius: 80,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              '${double.tryParse(state.current?.temperatureC ?? '')?.toInt() ?? '--'}°',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 120,
-                                fontWeight: FontWeight.w900,
-                                fontFamily: 'IRYekan',
-                                height: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          state.errorMessage ??
-                              state.current?.conditionText ??
-                              (state.isSaving
-                                  ? 'در حال دریافت اطلاعات هواشناسی...'
-                                  : 'اطلاعات هواشناسی دریافت نشد'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: FarmGlassCard(
-                      borderRadius: 30,
-                      opacity: 0.12,
-                      blur: 20,
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.auto_awesome_rounded,
-                                color: Colors.amber[300],
-                                size: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'توصیه هوشمند امروز',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _getFarmAdvice(state.current),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              height: 1.6,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
-                  ),
-                ),
-
-                SliverPadding(
-                  padding: const EdgeInsets.all(20),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 0.85,
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 130,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: state.forecasts.length.clamp(0, 12),
+                          itemBuilder: (context, index) {
+                            final forecast = state.forecasts[index];
+                            return _HourlyForecastItem(
+                              forecast: forecast,
+                              isNight: isActuallyNight,
+                            );
+                          },
                         ),
-                    delegate: SliverChildListDelegate([
-                      _MetricCard(
-                        label: 'رطوبت',
-                        value: '${state.current?.humidityPercent ?? '--'}٪',
-                        icon: Icons.water_drop_rounded,
                       ),
-                      _MetricCard(
-                        label: 'سرعت باد',
-                        value: '${state.current?.windSpeedMps ?? '--'} m/s',
-                        icon: Icons.air_rounded,
-                      ),
-                      _MetricCard(
-                        label: 'فشار',
-                        value: (state.current?.pressureHpa ?? '--').toString(),
-                        icon: Icons.shutter_speed_rounded,
-                      ),
-                    ]),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'پیش‌بینی ساعتی',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        Text(
-                          '۱۲ ساعت آینده',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 130,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: state.forecasts.length.clamp(0, 12),
-                      itemBuilder: (context, index) {
-                        final forecast = state.forecasts[index];
-                        return _HourlyForecastItem(
-                          forecast: forecast,
-                          isNight: isActuallyNight,
-                        );
-                      },
-                    ),
-                  ),
-                ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 40)),
-              ],
+                    const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -327,13 +465,29 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     );
   }
 
-  String _getFarmAdvice(WeatherSnapshotModel? current) {
-    if (current == null) return 'در حال دریافت اطلاعات مزرعه...';
+  String _getFarmAdvice(BuildContext context, WeatherSnapshotModel? current) {
+    final l10n = context.l10n;
+    if (current == null) {
+      return l10n.tr(
+        fa: 'برای دریافت راهنما، ابتدا اطلاعات هوا را دریافت کنید.',
+        en: 'Fetch weather data first to receive farming guidance.',
+      );
+    }
     final wind = double.tryParse(current.windSpeedMps ?? '0') ?? 0;
     if (wind > 5) {
-      return 'هشدار: سرعت باد برای سم‌پاشی زیاد است. سم‌پاشی را به ساعات آرام‌تر (غروب یا سپیده‌دم) موکول کنید.';
+      return l10n.tr(
+        fa:
+            'سرعت باد برای سم‌پاشی زیاد است. عملیات را به ساعات آرام‌تر موکول کنید و پیش از اقدام شرایط مزرعه را بررسی کنید.',
+        en:
+            'Wind is too strong for spraying. Postpone the operation to calmer hours and verify field conditions first.',
+      );
     }
-    return 'شرایط جوی برای تغذیه برگی و آبیاری تحت‌فشار بسیار مساعد است. رطوبت هوا در بازه بهینه قرار دارد.';
+    return l10n.tr(
+      fa:
+          'باد فعلی مانع آشکاری برای عملیات سبک مزرعه ایجاد نمی‌کند. پیش از آبیاری یا سم‌پاشی، رطوبت خاک و پیش‌بینی ساعات بعد را نیز بررسی کنید.',
+      en:
+          'Current wind does not indicate an obvious obstacle to light field work. Also check soil moisture and the next-hours forecast before irrigation or spraying.',
+    );
   }
 
   void _showLocationPicker(BuildContext context) {
@@ -350,6 +504,137 @@ class _Atmosphere {
   final List<Color> colors;
   final Color accentColor;
   _Atmosphere({required this.colors, required this.accentColor});
+}
+
+class _NoWeatherLocationView extends StatelessWidget {
+  const _NoWeatherLocationView({required this.onChooseLocation});
+
+  final VoidCallback onChooseLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        leading: const FarmBackButton(),
+        title: Text(context.l10n.weather),
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: FarmGlassCard(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 64,
+                    color: colors.primary,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    context.l10n.tr(
+                      fa: 'هنوز موقعیت هواشناسی ندارید',
+                      en: 'No weather location yet',
+                    ),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    context.l10n.tr(
+                      fa:
+                          'موقعیت فعلی یا یکی از شهرهای ایران را انتخاب کنید تا پایش آب‌وهوا آغاز شود.',
+                      en:
+                          'Choose your current location or an Iranian city to start weather monitoring.',
+                    ),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FarmButton(
+                    label: context.l10n.tr(
+                      fa: 'انتخاب موقعیت',
+                      en: 'Choose location',
+                    ),
+                    icon: Icons.add_location_alt_rounded,
+                    onPressed: onChooseLocation,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _localizedNumber(BuildContext context, String value) {
+  return context.l10n.isFa ? toPersianDigits(value) : value;
+}
+
+class _WeatherAlerts extends StatelessWidget {
+  const _WeatherAlerts({required this.alerts});
+
+  final List<WeatherAlertModel> alerts;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = alerts.take(3).toList();
+    return FarmGlassCard(
+      borderRadius: 24,
+      opacity: 0.12,
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.amber),
+              const SizedBox(width: 10),
+              Text(
+                context.l10n.tr(fa: 'هشدارهای فعال', en: 'Active alerts'),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (var index = 0; index < active.length; index++) ...[
+            Text(
+              active[index].title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (active[index].body.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                active[index].body,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.76),
+                  height: 1.5,
+                ),
+              ),
+            ],
+            if (index != active.length - 1)
+              Divider(color: Colors.white.withValues(alpha: 0.14), height: 24),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _PositionedOrb extends StatelessWidget {
@@ -424,7 +709,10 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
               ),
               const SizedBox(height: 20),
               Text(
-                'تنظیم موقعیت پایش',
+                context.l10n.tr(
+                  fa: 'تنظیم موقعیت پایش',
+                  en: 'Monitoring location',
+                ),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
@@ -436,8 +724,14 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
               _PickerOption(
                 isDark: isDark,
                 icon: Icons.my_location_rounded,
-                title: 'موقعیت آنی (GPS)',
-                subtitle: 'دقیق‌ترین پایش بر اساس مختصات فعلی',
+                title: context.l10n.tr(
+                  fa: 'موقعیت آنی (GPS)',
+                  en: 'Current location (GPS)',
+                ),
+                subtitle: context.l10n.tr(
+                  fa: 'دقیق‌ترین پایش بر اساس مختصات فعلی',
+                  en: 'Most accurate monitoring for your coordinates',
+                ),
                 onTap: () => _useCurrentLocation(context),
               ),
               Padding(
@@ -450,7 +744,10 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
               Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: Text(
-                  'انتخاب دستی منطقه',
+                  context.l10n.tr(
+                    fa: 'انتخاب دستی منطقه',
+                    en: 'Choose a region manually',
+                  ),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
@@ -478,7 +775,10 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
                           ),
                           initialValue: _provinceId,
                           decoration: InputDecoration(
-                            labelText: 'استان',
+                            labelText: context.l10n.tr(
+                              fa: 'استان',
+                              en: 'Province',
+                            ),
                             labelStyle: TextStyle(
                               color: isDark ? Colors.white70 : Colors.black45,
                             ),
@@ -526,7 +826,7 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
                             ),
                             initialValue: _cityId,
                             decoration: InputDecoration(
-                              labelText: 'شهر',
+                              labelText: context.l10n.tr(fa: 'شهر', en: 'City'),
                               labelStyle: TextStyle(
                                 color: isDark ? Colors.white70 : Colors.black45,
                               ),
@@ -584,9 +884,12 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
-                    'تایید و مشاهده آب‌وهوا',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Text(
+                    context.l10n.tr(
+                      fa: 'تأیید و مشاهده آب‌وهوا',
+                      en: 'Confirm and view weather',
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
             ],
@@ -597,6 +900,7 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
   }
 
   Future<void> _useCurrentLocation(BuildContext sheetContext) async {
+    final l10n = context.l10n;
     try {
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -604,8 +908,13 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        throw const _LocationMessage(
-          'اجازهٔ دسترسی به موقعیت داده نشد. دسترسی Location را در مرورگر فعال کنید.',
+        throw _LocationMessage(
+          l10n.tr(
+            fa:
+                'اجازهٔ دسترسی به موقعیت داده نشد. دسترسی Location را در مرورگر فعال کنید.',
+            en:
+                'Location permission was denied. Enable Location access in your browser.',
+          ),
         );
       }
       final position = await Geolocator.getCurrentPosition(
@@ -620,7 +929,10 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
           .createGpsLocation(
             latitude: position.latitude,
             longitude: position.longitude,
-            displayName: 'موقعیت فعلی من',
+            displayName: l10n.tr(
+              fa: 'موقعیت فعلی من',
+              en: 'My current location',
+            ),
           );
     } catch (error) {
       if (!mounted) return;
@@ -629,7 +941,12 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
           content: Text(
             error is _LocationMessage
                 ? error.message
-                : 'موقعیت فعلی دریافت نشد. دسترسی Location مرورگر را بررسی کنید.',
+                : l10n.tr(
+                  fa:
+                      'موقعیت فعلی دریافت نشد. دسترسی Location مرورگر را بررسی کنید.',
+                  en:
+                      'Current location could not be read. Check browser Location access.',
+                ),
           ),
         ),
       );
@@ -756,6 +1073,14 @@ class _HourlyForecastItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final parsedTime = DateTime.tryParse(forecast.forecastTime)?.toLocal();
+    final timeLabel =
+        parsedTime == null
+            ? '--:--'
+            : MaterialLocalizations.of(context).formatTimeOfDay(
+              TimeOfDay.fromDateTime(parsedTime),
+              alwaysUse24HourFormat: true,
+            );
     return Container(
       width: 75,
       margin: const EdgeInsets.only(left: 12),
@@ -767,7 +1092,7 @@ class _HourlyForecastItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              forecast.forecastTime.split(' ').last.substring(0, 5),
+              _localizedNumber(context, timeLabel),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.6),
                 fontSize: 11,
@@ -782,7 +1107,10 @@ class _HourlyForecastItem extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '${double.tryParse(forecast.temperatureC ?? '')?.toInt() ?? '--'}°',
+              _localizedNumber(
+                context,
+                '${double.tryParse(forecast.temperatureC ?? '')?.round() ?? '--'}°',
+              ),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,

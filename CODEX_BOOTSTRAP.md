@@ -331,12 +331,14 @@ actually support that claim.
 
 ## Current Frontend Redesign State
 
-The Mobile Design/Navigation foundation was manually accepted on 2026-07-31.
-It includes real light/dark Glassmorphism themes, persisted Persian/English,
+The Mobile Design/Navigation foundation, professional Home dashboard, and
+Weather redesign Step 1 were manually accepted by 2026-08-01. The foundation
+includes real light/dark Glassmorphism themes, persisted Persian/English,
 Jalali/Gregorian locale-aware dates, shared components, a responsive five-tab
-StatefulShell, and a bilingual Discover hub. Development/Test CORS accepts
-Flutter Web random localhost ports while live environments remain restricted.
-Backend verification is 385 tests; Mobile verification is 77 tests plus
-analyze and Web/Wasm build. The next authorized phase is the professional Home
-dashboard redesign. Preserve the foundation and migrate legacy domain strings
-and visuals incrementally in their respective redesign phases.
+StatefulShell, and a bilingual Discover hub. Home consumes real Farm, Weather,
+Notification, and Barzegar data. Weather Step 1 provides responsive current
+conditions, refresh, observation time, real alerts, rule-based farming guidance,
+GPS/Geo selection, localized digits, and explicit loading/error/empty states.
+Mobile analyze, all 81 tests, and Web/Wasm build pass. The next authorized
+Weather step is professional 24-hour and 7-day forecast presentation. Preserve
+the foundation and migrate remaining domain strings and visuals incrementally.
