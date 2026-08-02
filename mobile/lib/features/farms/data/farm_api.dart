@@ -20,10 +20,30 @@ class FarmApi {
   final ApiClient _client;
   final TokenStorage _storage;
 
-  Future<List<FarmModel>> farms() async => _list('farms', FarmModel.fromJson);
+  Future<List<FarmModel>> farms({bool includeArchived = false}) async => _list(
+    'farms',
+    FarmModel.fromJson,
+    queryParameters: {'include_archived': includeArchived},
+  );
+
+  Future<FarmModel> farm(int farmId) async =>
+      FarmModel.fromJson(await _read('farms/$farmId'));
 
   Future<FarmModel> createFarm(Map<String, dynamic> payload) async =>
       FarmModel.fromJson(await _write('farms', payload));
+
+  Future<FarmModel> updateFarm(
+    int farmId,
+    Map<String, dynamic> payload,
+  ) async => FarmModel.fromJson(await _patch('farms/$farmId', payload));
+
+  Future<FarmModel> archiveFarm(int farmId, {String? reason}) async =>
+      FarmModel.fromJson(
+        await _write('farms/$farmId/archive', {'reason': reason}),
+      );
+
+  Future<FarmModel> restoreFarm(int farmId) async =>
+      FarmModel.fromJson(await _write('farms/$farmId/restore', const {}));
 
   Future<List<FarmPlotModel>> plots(int farmId) async =>
       _list('farms/$farmId/plots', FarmPlotModel.fromJson);
@@ -121,12 +141,11 @@ class FarmApi {
     bool refresh = false,
   }) async {
     await _auth();
-    final path = 'farms/$farmId/plots/$plotId/weather${refresh ? '/refresh' : ''}';
+    final path =
+        'farms/$farmId/plots/$plotId/weather${refresh ? '/refresh' : ''}';
     try {
       final response =
-          refresh
-              ? await _client.post(path)
-              : await _client.get(path);
+          refresh ? await _client.post(path) : await _client.get(path);
       return FarmWeatherModel.fromJson(
         response.data?['data'] as Map<String, dynamic>,
       );
@@ -142,7 +161,10 @@ class FarmApi {
   }) async {
     await _auth();
     try {
-      final response = await _client.get(path, queryParameters: queryParameters);
+      final response = await _client.get(
+        path,
+        queryParameters: queryParameters,
+      );
       return (response.data?['data'] as List? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(parse)
@@ -158,10 +180,30 @@ class FarmApi {
   ) async {
     await _auth();
     try {
-      final response = await _client.post(
-        path,
-        data: payload,
-      );
+      final response = await _client.post(path, data: payload);
+      return response.data?['data'] as Map<String, dynamic>;
+    } on DioException catch (error) {
+      throw FarmApiException(_error(error));
+    }
+  }
+
+  Future<Map<String, dynamic>> _read(String path) async {
+    await _auth();
+    try {
+      final response = await _client.get(path);
+      return response.data?['data'] as Map<String, dynamic>;
+    } on DioException catch (error) {
+      throw FarmApiException(_error(error));
+    }
+  }
+
+  Future<Map<String, dynamic>> _patch(
+    String path,
+    Map<String, dynamic> payload,
+  ) async {
+    await _auth();
+    try {
+      final response = await _client.patch(path, data: payload);
       return response.data?['data'] as Map<String, dynamic>;
     } on DioException catch (error) {
       throw FarmApiException(_error(error));

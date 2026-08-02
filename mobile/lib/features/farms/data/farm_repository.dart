@@ -11,9 +11,16 @@ class FarmRepository {
   const FarmRepository({required FarmApi api}) : _api = api;
   final FarmApi _api;
 
-  Future<List<FarmModel>> farms() => _api.farms();
+  Future<List<FarmModel>> farms({bool includeArchived = false}) =>
+      _api.farms(includeArchived: includeArchived);
+  Future<FarmModel> farm(int id) => _api.farm(id);
   Future<FarmModel> createFarm(Map<String, dynamic> value) =>
       _api.createFarm(value);
+  Future<FarmModel> updateFarm(int id, Map<String, dynamic> value) =>
+      _api.updateFarm(id, value);
+  Future<FarmModel> archiveFarm(int id, {String? reason}) =>
+      _api.archiveFarm(id, reason: reason);
+  Future<FarmModel> restoreFarm(int id) => _api.restoreFarm(id);
   Future<List<FarmPlotModel>> plots(int farmId) => _api.plots(farmId);
   Future<FarmPlotModel> createPlot(int farmId, Map<String, dynamic> value) =>
       _api.createPlot(farmId, value);

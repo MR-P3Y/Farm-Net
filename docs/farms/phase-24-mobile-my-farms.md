@@ -54,6 +54,10 @@ This step does not add polygon map editing, offline synchronization, Farm
 media upload UI, soil/water/lab editing UI, or Admin support. These remain
 separate product work rather than being hidden behind incomplete controls.
 
+Polygon map editing was implemented later in
+`docs/farms/phase-24-mobile-map-boundary-editor.md`. The remaining boundaries
+from this historical step are unchanged.
+
 ## Next step
 
 Step 24.11 — Activity Center + Restricted Admin Support.

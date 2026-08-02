@@ -112,7 +112,7 @@ class _WeatherRepository implements WeatherRepository {
 
 class _FarmRepository implements FarmRepository {
   @override
-  Future<List<FarmModel>> farms() async => const [
+  Future<List<FarmModel>> farms({bool includeArchived = false}) async => const [
     FarmModel(id: 10, name: 'My farm', status: 'active'),
   ];
 

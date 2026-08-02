@@ -5,6 +5,11 @@ class FarmModel {
     required this.status,
     this.description,
     this.declaredAreaSqm,
+    this.archivedAt,
+    this.archiveReason,
+    this.canEdit = true,
+    this.canArchive = true,
+    this.canRestore = false,
   });
 
   final int id;
@@ -12,14 +17,30 @@ class FarmModel {
   final String status;
   final String? description;
   final double? declaredAreaSqm;
+  final DateTime? archivedAt;
+  final String? archiveReason;
+  final bool canEdit;
+  final bool canArchive;
+  final bool canRestore;
 
-  factory FarmModel.fromJson(Map<String, dynamic> json) => FarmModel(
-    id: json['id'] as int,
-    name: json['name'] as String,
-    status: json['status'] as String,
-    description: json['description'] as String?,
-    declaredAreaSqm: _double(json['declared_area_sqm']),
-  );
+  bool get isArchived => status == 'archived';
+
+  factory FarmModel.fromJson(Map<String, dynamic> json) {
+    final status = json['status'] as String;
+    final isActive = status == 'active';
+    return FarmModel(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      status: status,
+      description: json['description'] as String?,
+      declaredAreaSqm: _double(json['declared_area_sqm']),
+      archivedAt: _date(json['archived_at']),
+      archiveReason: json['archive_reason'] as String?,
+      canEdit: json['can_edit'] as bool? ?? isActive,
+      canArchive: json['can_archive'] as bool? ?? isActive,
+      canRestore: json['can_restore'] as bool? ?? !isActive,
+    );
+  }
 }
 
 class FarmPlotModel {
@@ -29,8 +50,10 @@ class FarmPlotModel {
     required this.name,
     required this.areaSqm,
     required this.status,
+    this.description,
     this.latitude,
     this.longitude,
+    this.boundary = const [],
   });
 
   final int id;
@@ -38,8 +61,14 @@ class FarmPlotModel {
   final String name;
   final double areaSqm;
   final String status;
+  final String? description;
   final double? latitude;
   final double? longitude;
+  final List<FarmGeoPointModel> boundary;
+
+  bool get hasLocation => latitude != null && longitude != null;
+
+  bool get hasBoundary => boundary.length >= 4;
 
   factory FarmPlotModel.fromJson(Map<String, dynamic> json) => FarmPlotModel(
     id: json['id'] as int,
@@ -47,9 +76,32 @@ class FarmPlotModel {
     name: json['name'] as String,
     areaSqm: _double(json['area_sqm']) ?? 0,
     status: json['status'] as String,
+    description: json['description'] as String?,
     latitude: _double(json['latitude']),
     longitude: _double(json['longitude']),
+    boundary: (json['boundary'] as List? ?? const [])
+        .whereType<Map>()
+        .map((point) => FarmGeoPointModel.fromJson(point.cast()))
+        .toList(growable: false),
   );
+}
+
+class FarmGeoPointModel {
+  const FarmGeoPointModel({required this.latitude, required this.longitude});
+
+  final double latitude;
+  final double longitude;
+
+  factory FarmGeoPointModel.fromJson(Map<String, dynamic> json) =>
+      FarmGeoPointModel(
+        latitude: _double(json['latitude']) ?? 0,
+        longitude: _double(json['longitude']) ?? 0,
+      );
+
+  Map<String, double> toJson() => {
+    'latitude': latitude,
+    'longitude': longitude,
+  };
 }
 
 class CropReference {

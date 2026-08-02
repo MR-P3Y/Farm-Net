@@ -2776,6 +2776,30 @@ Status: completed and manually accepted on 2026-08-02
   Settings, shared UI, and root documentation were preserved and excluded.
 - Next: rule-based Farm-operation weather planner.
 
+### Frontend Farms Map — Step 1 Implemented
+
+Status: completed and manually accepted on 2026-08-02
+
+- Replaced manual latitude/longitude entry with a three-step Plot journey:
+  location, boundary, and details.
+- Added current-device location, map-centre selection, numbered boundary
+  points, undo/clear, self-intersection rejection, and automatic area
+  calculation.
+- Kept an honest point-only fallback with explicit known area when a complete
+  boundary is unavailable.
+- Added Plot list/map switching and owner-scoped display of existing points and
+  polygons.
+- Kept map tile URL and user agent configurable, OpenStreetMap attribution
+  visible, and exact Plot geometry inside the existing authenticated Farm API.
+- Added typed boundary parsing and focused geometry/model tests.
+- Mobile analyze: OK; all 99 current tests passed; Web release/Wasm and Android
+  debug APK builds passed.
+- Existing real phone/API reverse, Backend health, and Chrome HTTP 200 were
+  verified without stopping, restarting, installing over, or reconfiguring any
+  owner-managed runtime.
+- Project-owner manual verification: accepted on 2026-08-02.
+- Evidence: `docs/farms/phase-24-mobile-map-boundary-editor.md`.
+- Next: controlled location search and an approved satellite-map provider.
 
 ### Frontend Weather — Step 5 Farm Operation Planner and Source Persistence
 
@@ -2796,6 +2820,30 @@ Status: completed and manually accepted on 2026-08-02
   cards, location-dependent recalculation, Persian/English, light/dark themes,
   and narrow Mobile layouts.
 - Concurrent owner changes were preserved and excluded from the commit.
+
+### Frontend Farm Profiles — Create, Edit, Remove + Restore Accepted
+
+Status: completed and manually accepted on 2026-08-02
+
+- Replaced the small create dialog with one dedicated responsive form shared
+  by Farm creation and editing.
+- Added owner-scoped profile editing for name, description, and declared area,
+  including Persian/Arabic digit normalization and positive-area validation.
+- Added a clear `Remove Farm` action from both My Farms and Farm detail with a
+  confirmation, optional reason, and explicit retained-history explanation.
+- Kept the Backend retention contract: removal archives rather than
+  destructively deleting Plot, crop-cycle, operation, media, and audit history.
+- Added an archived-Farms switch and owner restore action.
+- Consumed real `can_edit`, `can_archive`, and `can_restore` flags and refreshed
+  the Home aggregate after every successful mutation.
+- No Backend schema, migration, permission, OpenAPI, or database change was
+  required; all five owner lifecycle endpoints already existed.
+- Mobile analyze: OK; all 109 current tests passed; Web release/Wasm and
+  Android debug APK builds passed.
+- Existing owner-managed runtimes were not stopped, restarted, installed over,
+  or reconfigured.
+- Project-owner manual verification: accepted.
+- Evidence: `docs/farms/phase-24-mobile-farm-profile-management.md`.
 
 ### Frontend Weather — Step 6 Forecast Charts and Daily Detail
 
@@ -2853,6 +2901,7 @@ Status: completed on 2026-08-02 with one non-blocking Runtime gap
   remains an explicitly recorded non-blocking follow-up.
 - Concurrent owner files, including a separate Home navigation fix, were
   inspected and excluded from this commit.
+
 After every completed step:
 
 1. update this document with the commit and verification evidence;
@@ -2863,8 +2912,7 @@ After every completed step:
 
 ### Frontend + Backend Farms — Practical Farm Toolbox
 
-Status: code complete and local runtime activated on 2026-08-02; visual
-acceptance pending
+Status: completed, locally activated, and manually accepted on 2026-08-02
 
 - Added seven deterministic, offline-first Mobile calculators for seed,
   irrigation, fertilizer, spraying, profit/break-even, unit conversion, and
@@ -2892,6 +2940,7 @@ acceptance pending
   OpenAPI paths loaded, and the unauthenticated boundary returned `401` instead
   of `404`.
 - Evidence: `docs/farms/phase-24-farm-toolbox.md`.
+- Project-owner manual verification: accepted on 2026-08-02.
 
 #### Farm Toolbox UX and localization follow-up
 

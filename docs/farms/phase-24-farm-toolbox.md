@@ -1,7 +1,6 @@
 # Phase 24 — Farm Toolbox
 
-Status: code complete and local runtime activated on 2026-08-02; visual
-acceptance pending.
+Status: completed, locally activated, and manually accepted on 2026-08-02.
 
 ## Product surface
 
@@ -67,3 +66,10 @@ offline/network failure and does not display raw `Not Found` as offline.
 The Android emulator was not running during verification; its support is
 covered by the successful Android build and no emulator session was launched or
 reconfigured.
+
+## Acceptance
+
+On 2026-08-02, the project owner confirmed the manual Toolbox checks passed,
+including the compact Farm context selector and the corrected synchronization
+state. The automated and runtime evidence above remains the release evidence;
+the owner confirmation closes the visual acceptance gate.
