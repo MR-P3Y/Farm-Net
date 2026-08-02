@@ -16,8 +16,10 @@ import '../../farms/data/farm_repository.dart';
 import '../../geo/data/geo_models.dart';
 import '../../geo/data/geo_repository.dart';
 import '../data/weather_models.dart';
+import '../domain/weather_condition_localizer.dart';
 import '../domain/weather_operation_planner.dart';
 import '../state/weather_controller.dart';
+import 'widgets/weather_forecast_charts.dart';
 
 class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
@@ -275,7 +277,13 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                             ),
                             Text(
                               state.errorMessage ??
-                                  state.current?.conditionText ??
+                                  (state.current == null
+                                      ? null
+                                      : WeatherConditionLocalizer.label(
+                                        isFa: l10n.isFa,
+                                        code: state.current!.conditionCode,
+                                        text: state.current!.conditionText,
+                                      )) ??
                                   (state.isSaving
                                       ? l10n.tr(
                                         fa: 'در حال دریافت اطلاعات هواشناسی...',
@@ -449,6 +457,12 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                             );
                           },
                         ),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: WeatherForecastCharts(
+                        forecasts: state.forecasts,
+                        current: state.current,
                       ),
                     ),
                     if (dailyForecasts.isNotEmpty) ...[
@@ -1215,6 +1229,8 @@ class _DailyForecastSummary {
     required this.averageHumidity,
     required this.maxWindSpeed,
     required this.condition,
+    required this.conditionCode,
+    required this.rows,
   });
 
   final DateTime date;
@@ -1225,6 +1241,8 @@ class _DailyForecastSummary {
   final double? averageHumidity;
   final double? maxWindSpeed;
   final String? condition;
+  final String? conditionCode;
+  final List<WeatherForecastModel> rows;
 
   factory _DailyForecastSummary.fromRows(
     DateTime date,
@@ -1236,6 +1254,7 @@ class _DailyForecastSummary {
     final humidities = <double>[];
     final winds = <double>[];
     final conditions = <String, int>{};
+    final conditionCodes = <String, String?>{};
 
     for (final row in rows) {
       final temperature = double.tryParse(row.temperatureC ?? '');
@@ -1256,6 +1275,7 @@ class _DailyForecastSummary {
       final condition = row.conditionText?.trim();
       if (condition != null && condition.isNotEmpty) {
         conditions[condition] = (conditions[condition] ?? 0) + 1;
+        conditionCodes[condition] = row.conditionCode;
       }
     }
 
@@ -1278,6 +1298,11 @@ class _DailyForecastSummary {
       averageHumidity: average(humidities),
       maxWindSpeed: maximum(winds),
       condition: sortedConditions.isEmpty ? null : sortedConditions.first.key,
+      conditionCode:
+          sortedConditions.isEmpty
+              ? null
+              : conditionCodes[sortedConditions.first.key],
+      rows: List.unmodifiable(rows),
     );
   }
 }
@@ -1297,81 +1322,311 @@ class _DailyForecastCard extends StatelessWidget {
                 .round();
     return SizedBox(
       width: 190,
-      child: FarmGlassCard(
-        borderRadius: 24,
-        opacity: 0.1,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              formatDate(context, summary.date),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: () => _showDailyDetails(context, summary),
+        child: FarmGlassCard(
+          borderRadius: 24,
+          opacity: 0.1,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                formatDate(context, summary.date),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                WeatherConditionLocalizer.label(
+                  isFa: context.l10n.isFa,
+                  code: summary.conditionCode,
+                  text: summary.condition,
+                  fallback: context.l10n.tr(
+                    fa: 'بدون توضیح',
+                    en: 'No description',
+                  ),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.68),
+                  fontSize: 11,
+                ),
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.thermostat_rounded,
+                    color: Colors.orangeAccent,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _localizedNumber(
+                      context,
+                      '${summary.maxTemperature?.round() ?? '--'}° / ${summary.minTemperature?.round() ?? '--'}°',
+                    ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _DailyMetricLine(
+                icon: Icons.water_drop_outlined,
+                label: context.l10n.tr(fa: 'بارش', en: 'Rain'),
+                value: _localizedNumber(
+                  context,
+                  '${probabilityPercent == null ? '--' : '$probabilityPercent%'} · ${summary.totalPrecipitationMm?.toStringAsFixed(1) ?? '--'} mm',
+                ),
+              ),
+              const SizedBox(height: 6),
+              _DailyMetricLine(
+                icon: Icons.air_rounded,
+                label: context.l10n.tr(fa: 'بیشینه باد', en: 'Peak wind'),
+                value: _localizedNumber(
+                  context,
+                  '${summary.maxWindSpeed?.toStringAsFixed(1) ?? '--'} m/s',
+                ),
+              ),
+              const SizedBox(height: 6),
+              _DailyMetricLine(
+                icon: Icons.opacity_rounded,
+                label: context.l10n.tr(fa: 'میانگین رطوبت', en: 'Avg humidity'),
+                value: _localizedNumber(
+                  context,
+                  '${summary.averageHumidity?.round() ?? '--'}%',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void _showDailyDetails(BuildContext context, _DailyForecastSummary summary) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    builder:
+        (sheetContext) => Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 520,
+                maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.82,
+              ),
+              child: Material(
+                color: Theme.of(sheetContext).colorScheme.surface,
+                borderRadius: BorderRadius.circular(30),
+                clipBehavior: Clip.antiAlias,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(22),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 42,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              sheetContext,
+                            ).colorScheme.onSurface.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        formatDate(sheetContext, summary.date),
+                        style: Theme.of(sheetContext).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        WeatherConditionLocalizer.label(
+                          isFa: sheetContext.l10n.isFa,
+                          code: summary.conditionCode,
+                          text: summary.condition,
+                          fallback: sheetContext.l10n.tr(
+                            fa: 'بدون توضیح',
+                            en: 'No description',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _DailyDetailMetric(
+                            icon: Icons.thermostat_rounded,
+                            label: sheetContext.l10n.tr(
+                              fa: 'کمینه/بیشینه',
+                              en: 'Low / high',
+                            ),
+                            value:
+                                '${summary.minTemperature?.round() ?? '--'}° / ${summary.maxTemperature?.round() ?? '--'}°',
+                          ),
+                          _DailyDetailMetric(
+                            icon: Icons.opacity_rounded,
+                            label: sheetContext.l10n.tr(
+                              fa: 'رطوبت',
+                              en: 'Humidity',
+                            ),
+                            value:
+                                '${summary.averageHumidity?.round() ?? '--'}%',
+                          ),
+                          _DailyDetailMetric(
+                            icon: Icons.air_rounded,
+                            label: sheetContext.l10n.tr(
+                              fa: 'بیشینه باد',
+                              en: 'Peak wind',
+                            ),
+                            value:
+                                '${summary.maxWindSpeed?.toStringAsFixed(1) ?? '--'} m/s',
+                          ),
+                          _DailyDetailMetric(
+                            icon: Icons.water_drop_outlined,
+                            label: sheetContext.l10n.tr(
+                              fa: 'مجموع بارش',
+                              en: 'Total rain',
+                            ),
+                            value:
+                                '${summary.totalPrecipitationMm?.toStringAsFixed(1) ?? '--'} mm',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 22),
+                      Text(
+                        sheetContext.l10n.tr(
+                          fa: 'بازه‌های روز',
+                          en: 'Day intervals',
+                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 10),
+                      ...summary.rows.map((row) => _DailyIntervalRow(row: row)),
+                      const SizedBox(height: 8),
+                      Text(
+                        sheetContext.l10n.tr(
+                          fa:
+                              'طلوع و غروب در قرارداد فعلی سرویس هواشناسی موجود نیست.',
+                          en:
+                              'Sunrise and sunset are not available in the current weather contract.',
+                        ),
+                        style: Theme.of(
+                          sheetContext,
+                        ).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            sheetContext,
+                          ).colorScheme.onSurface.withValues(alpha: 0.55),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              summary.condition ??
-                  context.l10n.tr(fa: 'بدون توضیح', en: 'No description'),
+          ),
+        ),
+  );
+}
+
+class _DailyDetailMetric extends StatelessWidget {
+  const _DailyDetailMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 145,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(height: 8),
+        Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        const SizedBox(height: 3),
+        Text(
+          _localizedNumber(context, value),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
+      ],
+    ),
+  );
+}
+
+class _DailyIntervalRow extends StatelessWidget {
+  const _DailyIntervalRow({required this.row});
+
+  final WeatherForecastModel row;
+
+  @override
+  Widget build(BuildContext context) {
+    final time = DateTime.tryParse(row.forecastTime)?.toLocal();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 58,
+            child: Text(
+              time == null
+                  ? '--'
+                  : formatDate(context, time, showTime: true).split(' ').last,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              WeatherConditionLocalizer.label(
+                isFa: context.l10n.isFa,
+                code: row.conditionCode,
+                text: row.conditionText,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.68),
-                fontSize: 11,
-              ),
             ),
-            const Spacer(),
-            Row(
-              children: [
-                const Icon(
-                  Icons.thermostat_rounded,
-                  color: Colors.orangeAccent,
-                  size: 20,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _localizedNumber(
-                    context,
-                    '${summary.maxTemperature?.round() ?? '--'}° / ${summary.minTemperature?.round() ?? '--'}°',
-                  ),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _DailyMetricLine(
-              icon: Icons.water_drop_outlined,
-              label: context.l10n.tr(fa: 'بارش', en: 'Rain'),
-              value: _localizedNumber(
-                context,
-                '${probabilityPercent == null ? '--' : '$probabilityPercent%'} · ${summary.totalPrecipitationMm?.toStringAsFixed(1) ?? '--'} mm',
-              ),
-            ),
-            const SizedBox(height: 6),
-            _DailyMetricLine(
-              icon: Icons.air_rounded,
-              label: context.l10n.tr(fa: 'بیشینه باد', en: 'Peak wind'),
-              value: _localizedNumber(
-                context,
-                '${summary.maxWindSpeed?.toStringAsFixed(1) ?? '--'} m/s',
-              ),
-            ),
-            const SizedBox(height: 6),
-            _DailyMetricLine(
-              icon: Icons.opacity_rounded,
-              label: context.l10n.tr(fa: 'میانگین رطوبت', en: 'Avg humidity'),
-              value: _localizedNumber(
-                context,
-                '${summary.averageHumidity?.round() ?? '--'}%',
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            _localizedNumber(context, '${row.temperatureC ?? '--'}°'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            _localizedNumber(context, '${row.windSpeedMps ?? '--'} m/s'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }
@@ -2014,17 +2269,29 @@ class _MetricCard extends StatelessWidget {
         children: [
           Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 28),
           const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
+          SizedBox(
+            width: double.infinity,
+            height: 24,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.5),
               fontSize: 10,

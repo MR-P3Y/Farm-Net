@@ -2796,6 +2796,22 @@ Status: completed and manually accepted on 2026-08-02
   cards, location-dependent recalculation, Persian/English, light/dark themes,
   and narrow Mobile layouts.
 - Concurrent owner changes were preserved and excluded from the commit.
+
+### Frontend Weather — Step 6 Forecast Charts and Daily Detail
+
+Status: completed on 2026-08-02; project-owner accepted the visual fixes
+
+- Added real 24-hour temperature, precipitation-probability, humidity, and
+  wind-speed charts with selectable high-contrast Glass controls.
+- Added current wind-direction context without inventing unavailable forecast
+  direction, sunrise, or sunset values.
+- Added responsive daily detail sheets with real intervals and aggregated
+  temperature, humidity, precipitation, and wind measurements.
+- Fixed narrow Mobile overflow in current-condition metric cards.
+- Added shared OpenWeather condition localization based on numeric condition
+  codes, with Persian labels and English Provider text retained.
+- Mobile focused analyze: OK; 9 focused tests passed; Web/Wasm build: OK.
+- Concurrent owner work was inspected immediately before staging and excluded.
 After every completed step:
 
 1. update this document with the commit and verification evidence;

@@ -128,6 +128,7 @@ class WeatherForecastModel {
     this.precipitationMm,
     this.precipitationProbability,
     this.windSpeedMps,
+    this.conditionCode,
     this.conditionText,
   });
 
@@ -144,6 +145,7 @@ class WeatherForecastModel {
   final String? precipitationMm;
   final String? precipitationProbability;
   final String? windSpeedMps;
+  final String? conditionCode;
   final String? conditionText;
 
   factory WeatherForecastModel.fromJson(Map<String, dynamic> json) {
@@ -160,6 +162,7 @@ class WeatherForecastModel {
       precipitationMm: json['precipitation_mm']?.toString(),
       precipitationProbability: json['precipitation_probability']?.toString(),
       windSpeedMps: json['wind_speed_mps']?.toString(),
+      conditionCode: json['condition_code']?.toString(),
       conditionText: json['condition_text']?.toString(),
     );
   }
@@ -178,6 +181,7 @@ class WeatherForecastModel {
       precipitationMm: json['precipitation_mm']?.toString(),
       precipitationProbability: json['precipitation_probability']?.toString(),
       windSpeedMps: json['wind_speed_mps']?.toString(),
+      conditionCode: json['condition_code']?.toString(),
       conditionText: json['condition_text']?.toString(),
     );
   }
