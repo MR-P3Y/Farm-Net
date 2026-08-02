@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/responsive/responsive.dart';
+import '../../../core/utils/dates.dart';
 import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_empty_view.dart';
+import '../../../core/widgets/farm_glass_card.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/consultant_models.dart';
 import '../state/consultant_request_controller.dart';
@@ -21,6 +24,7 @@ class MyConsultationRequestsScreen extends ConsumerStatefulWidget {
 class _MyConsultationRequestsScreenState
     extends ConsumerState<MyConsultationRequestsScreen> {
   bool _loaded = false;
+  String _selectedStatus = 'all';
 
   @override
   void didChangeDependencies() {
@@ -37,9 +41,32 @@ class _MyConsultationRequestsScreenState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(consultantRequestControllerProvider);
+    final visibleRequests =
+        _selectedStatus == 'all'
+            ? state.requests
+            : state.requests
+                .where((request) => request.status == _selectedStatus)
+                .toList();
 
     return Scaffold(
-      appBar: const FarmAppBar(title: 'درخواست‌های مشاوره من'),
+      appBar: FarmAppBar(
+        title: context.l10n.tr(
+          fa: 'درخواست‌های مشاوره من',
+          en: 'My consultation requests',
+        ),
+        actions: [
+          IconButton(
+            tooltip: context.l10n.tr(fa: 'انتخاب مشاور', en: 'Find consultant'),
+            onPressed: () => context.go('/consultants'),
+            icon: const Icon(Icons.support_agent_outlined),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go('/consultants'),
+        icon: const Icon(Icons.add_comment_outlined),
+        label: Text(context.l10n.tr(fa: 'درخواست جدید', en: 'New request')),
+      ),
       body: SafeArea(
         child: ResponsiveBuilder(
           builder: (context, constraints, r) {
@@ -55,6 +82,14 @@ class _MyConsultationRequestsScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      _RequestsOverview(requests: state.requests),
+                      SizedBox(height: r.v(10)),
+                      _StatusFilters(
+                        selected: _selectedStatus,
+                        requests: state.requests,
+                        onSelected:
+                            (value) => setState(() => _selectedStatus = value),
+                      ),
                       if (state.isSaving) const LinearProgressIndicator(),
                       if (state.errorMessage != null) ...[
                         SizedBox(height: r.v(12)),
@@ -82,26 +117,38 @@ class _MyConsultationRequestsScreenState
                                       )
                                       .loadMyRequests(),
                           child:
-                              state.requests.isEmpty
+                              visibleRequests.isEmpty
                                   ? ListView(
                                     physics:
                                         const AlwaysScrollableScrollPhysics(),
                                     children: [
                                       SizedBox(height: r.v(120)),
-                                      const FarmEmptyView(
+                                      FarmEmptyView(
                                         message:
-                                            'هنوز درخواست مشاوره‌ای ثبت نکرده‌اید.',
+                                            state.requests.isEmpty
+                                                ? context.l10n.tr(
+                                                  fa:
+                                                      'هنوز درخواست مشاوره‌ای ثبت نکرده‌اید.',
+                                                  en:
+                                                      'You have no consultation requests yet.',
+                                                )
+                                                : context.l10n.tr(
+                                                  fa:
+                                                      'درخواستی با این وضعیت وجود ندارد.',
+                                                  en:
+                                                      'No request has this status.',
+                                                ),
                                       ),
                                     ],
                                   )
                                   : ListView.separated(
                                     physics:
                                         const AlwaysScrollableScrollPhysics(),
-                                    itemCount: state.requests.length,
+                                    itemCount: visibleRequests.length,
                                     separatorBuilder:
                                         (_, __) => SizedBox(height: r.v(10)),
                                     itemBuilder: (context, index) {
-                                      final request = state.requests[index];
+                                      final request = visibleRequests[index];
                                       return _RequestCard(
                                         request: request,
                                         onTap:
@@ -157,6 +204,137 @@ class _MyConsultationRequestsScreenState
   }
 }
 
+class _RequestsOverview extends StatelessWidget {
+  const _RequestsOverview({required this.requests});
+  final List<ConsultationRequestModel> requests;
+
+  @override
+  Widget build(BuildContext context) {
+    final active =
+        requests
+            .where(
+              (item) => const {
+                'open',
+                'accepted',
+                'in_progress',
+              }.contains(item.status),
+            )
+            .length;
+    final completed =
+        requests.where((item) => item.status == 'completed').length;
+    return FarmGlassCard(
+      borderRadius: 22,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          _OverviewMetric(
+            icon: Icons.all_inbox_outlined,
+            value: requests.length,
+            label: context.l10n.tr(fa: 'همه', en: 'All'),
+          ),
+          const _MetricDivider(),
+          _OverviewMetric(
+            icon: Icons.pending_actions_outlined,
+            value: active,
+            label: context.l10n.tr(fa: 'فعال', en: 'Active'),
+          ),
+          const _MetricDivider(),
+          _OverviewMetric(
+            icon: Icons.task_alt_rounded,
+            value: completed,
+            label: context.l10n.tr(fa: 'تکمیل', en: 'Done'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OverviewMetric extends StatelessWidget {
+  const _OverviewMetric({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+  final IconData icon;
+  final int value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(height: 3),
+        Text(
+          toPersianDigits(value),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
+      ],
+    ),
+  );
+}
+
+class _MetricDivider extends StatelessWidget {
+  const _MetricDivider();
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 42,
+    child: VerticalDivider(color: Theme.of(context).colorScheme.outlineVariant),
+  );
+}
+
+class _StatusFilters extends StatelessWidget {
+  const _StatusFilters({
+    required this.selected,
+    required this.requests,
+    required this.onSelected,
+  });
+  final String selected;
+  final List<ConsultationRequestModel> requests;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    const statuses = [
+      'all',
+      'open',
+      'accepted',
+      'in_progress',
+      'completed',
+      'cancelled',
+      'rejected',
+    ];
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: statuses.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        itemBuilder: (context, index) {
+          final status = statuses[index];
+          final count =
+              status == 'all'
+                  ? requests.length
+                  : requests.where((item) => item.status == status).length;
+          return ChoiceChip(
+            visualDensity: VisualDensity.compact,
+            selected: selected == status,
+            onSelected: (_) => onSelected(status),
+            label: Text(
+              '${_localizedStatus(context, status)} (${toPersianDigits(count)})',
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _RequestCard extends StatelessWidget {
   const _RequestCard({
     required this.request,
@@ -180,9 +358,11 @@ class _RequestCard extends StatelessWidget {
       _contactMethodLabel(request.contactMethod),
     ];
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return FarmGlassCard(
+      borderRadius: 22,
+      padding: EdgeInsets.zero,
       child: InkWell(
+        borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -229,16 +409,23 @@ class _RequestCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      _compactDate(request.createdAt),
+                      _localizedDate(context, request.createdAt),
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
-                  if (onCancel != null)
+                  if (onCancel != null) ...[
                     TextButton.icon(
                       onPressed: onCancel,
                       icon: const Icon(Icons.cancel_outlined),
                       label: const Text('لغو'),
                     ),
+                    const SizedBox(width: 4),
+                  ],
+                  FilledButton.tonalIcon(
+                    onPressed: onTap,
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                    label: const Text('جزئیات'),
+                  ),
                 ],
               ),
             ],
@@ -317,6 +504,20 @@ String _statusLabel(String status) {
   };
 }
 
+String _localizedStatus(BuildContext context, String status) {
+  if (context.l10n.isFa) return status == 'all' ? 'همه' : _statusLabel(status);
+  return switch (status) {
+    'all' => 'All',
+    'open' => 'Open',
+    'accepted' => 'Accepted',
+    'in_progress' => 'In progress',
+    'completed' => 'Completed',
+    'cancelled' => 'Cancelled',
+    'rejected' => 'Rejected',
+    _ => status,
+  };
+}
+
 String _contactMethodLabel(String method) {
   return switch (method) {
     'in_app' => 'داخل اپلیکیشن',
@@ -327,7 +528,7 @@ String _contactMethodLabel(String method) {
   };
 }
 
-String _compactDate(String value) {
-  if (value.length < 10) return toPersianDigits(value);
-  return toPersianDigits(value.substring(0, 10));
+String _localizedDate(BuildContext context, String value) {
+  final parsed = DateTime.tryParse(value);
+  return parsed == null ? value : formatDate(context, parsed.toLocal());
 }

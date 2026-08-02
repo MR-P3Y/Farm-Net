@@ -176,7 +176,7 @@ class ConsultantApi {
     await _auth();
     final json = await _patch(
       'consultants/requests/$requestId/status',
-      data: {'to_status': status, 'note': note},
+      data: {'status': status, 'note': note},
     );
     return ConsultationRequestModel.fromJson((json['data'] as Map).cast());
   }

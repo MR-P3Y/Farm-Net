@@ -46,7 +46,7 @@ class ConsultantRequestDetailController
     }
   }
 
-  Future<void> cancelRequest(int requestId) async {
+  Future<void> cancelRequest(int requestId, {String? note}) async {
     state = state.copyWith(
       isSaving: true,
       clearError: true,
@@ -54,7 +54,10 @@ class ConsultantRequestDetailController
     );
 
     try {
-      final request = await _repository.cancelRequest(requestId: requestId);
+      final request = await _repository.cancelRequest(
+        requestId: requestId,
+        note: note,
+      );
 
       state = state.copyWith(
         isSaving: false,
@@ -105,6 +108,10 @@ class ConsultantRequestDetailController
   String _errorMessage(ConsultantApiException exception) {
     if (exception.error.code == 'PERMISSION_DENIED') {
       return 'برای مشاهده این بخش دسترسی لازم را ندارید.';
+    }
+
+    if (exception.error.code == 'VALIDATION_ERROR') {
+      return 'این عملیات با وضعیت فعلی درخواست سازگار نیست. صفحه را تازه‌سازی و دوباره تلاش کنید.';
     }
 
     return exception.error.message;

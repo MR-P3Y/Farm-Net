@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/responsive/responsive.dart';
+import '../../../core/utils/dates.dart';
 import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_app_bar.dart';
+import '../../../core/widgets/farm_glass_card.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/consultant_models.dart';
 import '../state/consultant_request_detail_controller.dart';
@@ -50,7 +53,13 @@ class _ConsultationRequestDetailScreenState
 
     return Scaffold(
       appBar: FarmAppBar(
-        title: widget.assignedMode ? 'جزئیات کار مشاور' : 'جزئیات درخواست',
+        title:
+            widget.assignedMode
+                ? context.l10n.tr(
+                  fa: 'جزئیات کار مشاور',
+                  en: 'Consultant work detail',
+                )
+                : context.l10n.tr(fa: 'جزئیات درخواست', en: 'Request details'),
       ),
       body: SafeArea(
         child: ResponsiveBuilder(
@@ -95,6 +104,8 @@ class _ConsultationRequestDetailScreenState
                       if (request == null)
                         const _EmptyDetail()
                       else ...[
+                        _RequestProgressHeader(request: request),
+                        SizedBox(height: r.v(12)),
                         _RequestSummaryCard(request: request),
                         SizedBox(height: r.v(12)),
                         _RequestNotesCard(request: request),
@@ -113,18 +124,19 @@ class _ConsultationRequestDetailScreenState
                             request.consultantProfileId != null) ...[
                           SizedBox(height: r.v(12)),
                           FilledButton.icon(
-                            onPressed: () => context.push(
-                              '/reviews/create',
-                              extra: ReviewCreateTarget(
-                                sourceType: 'consult_request',
-                                sourceId: request.id,
-                                subjectType: 'consultant',
-                                subjectId: request.consultantProfileId!,
-                                title:
-                                    request.consultant?.resolvedName ??
-                                    'مشاور',
-                              ),
-                            ),
+                            onPressed:
+                                () => context.push(
+                                  '/reviews/create',
+                                  extra: ReviewCreateTarget(
+                                    sourceType: 'consult_request',
+                                    sourceId: request.id,
+                                    subjectType: 'consultant',
+                                    subjectId: request.consultantProfileId!,
+                                    title:
+                                        request.consultant?.resolvedName ??
+                                        'مشاور',
+                                  ),
+                                ),
                             icon: const Icon(Icons.rate_review_outlined),
                             label: const Text('ثبت نظر برای مشاور'),
                           ),
@@ -142,19 +154,38 @@ class _ConsultationRequestDetailScreenState
   }
 
   Future<void> _confirmCancel(ConsultationRequestModel request) async {
-    final confirmed = await showDialog<bool>(
+    final noteController = TextEditingController();
+    final reason = await showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('لغو درخواست'),
-          content: Text('درخواست «${request.title}» لغو شود؟'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('درخواست «${request.title}» لغو شود؟'),
+              const SizedBox(height: 14),
+              TextField(
+                controller: noteController,
+                minLines: 2,
+                maxLines: 4,
+                maxLength: 500,
+                decoration: const InputDecoration(
+                  labelText: 'دلیل لغو (اختیاری)',
+                  hintText: 'برای اطلاع مشاور توضیح کوتاهی بنویسید.',
+                ),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(context),
               child: const Text('انصراف'),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed:
+                  () => Navigator.pop(context, noteController.text.trim()),
               child: const Text('لغو درخواست'),
             ),
           ],
@@ -162,11 +193,12 @@ class _ConsultationRequestDetailScreenState
       },
     );
 
-    if (confirmed != true) return;
+    noteController.dispose();
+    if (reason == null) return;
 
     await ref
         .read(consultantRequestDetailControllerProvider.notifier)
-        .cancelRequest(request.id);
+        .cancelRequest(request.id, note: reason.isEmpty ? null : reason);
   }
 
   Future<void> _changeStatus(ConsultationRequestModel request) async {
@@ -209,6 +241,118 @@ class _ConsultationRequestDetailScreenState
   }
 }
 
+class _RequestProgressHeader extends StatelessWidget {
+  const _RequestProgressHeader({required this.request});
+  final ConsultationRequestModel request;
+
+  @override
+  Widget build(BuildContext context) {
+    const mainFlow = ['open', 'accepted', 'in_progress', 'completed'];
+    final currentIndex = mainFlow.indexOf(request.status);
+    final terminalError =
+        request.status == 'cancelled' || request.status == 'rejected';
+    final colors = Theme.of(context).colorScheme;
+    return FarmGlassCard(
+      borderRadius: 24,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color:
+                      terminalError
+                          ? colors.errorContainer
+                          : colors.primaryContainer,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  terminalError ? Icons.block_outlined : Icons.route_outlined,
+                  color:
+                      terminalError
+                          ? colors.onErrorContainer
+                          : colors.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _statusLabel(request.status),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      _statusHint(context, request.status),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (!terminalError) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: List.generate(mainFlow.length * 2 - 1, (index) {
+                if (index.isOdd) {
+                  final step = index ~/ 2;
+                  return Expanded(
+                    child: Container(
+                      height: 2,
+                      color:
+                          step < currentIndex
+                              ? colors.primary
+                              : colors.outlineVariant,
+                    ),
+                  );
+                }
+                final step = index ~/ 2;
+                final reached = step <= currentIndex;
+                return Icon(
+                  reached ? Icons.check_circle : Icons.circle_outlined,
+                  size: 20,
+                  color: reached ? colors.primary : colors.outlineVariant,
+                );
+              }),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _statusHint(BuildContext context, String status) {
+    if (context.l10n.isFa) {
+      return switch (status) {
+        'open' => 'در انتظار بررسی مشاور',
+        'accepted' => 'مشاور درخواست را پذیرفته است',
+        'in_progress' => 'مشاوره در حال انجام است',
+        'completed' => 'فرایند مشاوره تکمیل شده است',
+        'cancelled' => 'این درخواست لغو شده است',
+        'rejected' => 'مشاور این درخواست را نپذیرفته است',
+        _ => 'آخرین وضعیت درخواست',
+      };
+    }
+    return switch (status) {
+      'open' => 'Waiting for consultant review',
+      'accepted' => 'The consultant accepted this request',
+      'in_progress' => 'Consultation is in progress',
+      'completed' => 'Consultation has been completed',
+      'cancelled' => 'This request was cancelled',
+      'rejected' => 'The consultant declined this request',
+      _ => 'Latest request status',
+    };
+  }
+}
+
 class _RequestSummaryCard extends StatelessWidget {
   const _RequestSummaryCard({required this.request});
 
@@ -224,9 +368,9 @@ class _RequestSummaryCard extends StatelessWidget {
       if (request.specialty?.title.trim().isNotEmpty == true)
         ('تخصص', request.specialty!.title),
       ('روش ارتباط', _contactMethodLabel(request.contactMethod)),
-      ('ثبت', _compactDate(request.createdAt)),
+      ('ثبت', _localizedDate(context, request.createdAt)),
       if (request.scheduledAt != null)
-        ('زمان پیشنهادی', _compactDate(request.scheduledAt!)),
+        ('زمان پیشنهادی', _localizedDate(context, request.scheduledAt!)),
       if (request.budgetAmount != null)
         (
           'بودجه',
@@ -234,7 +378,8 @@ class _RequestSummaryCard extends StatelessWidget {
         ),
     ];
 
-    return Card(
+    return FarmGlassCard(
+      borderRadius: 24,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -281,18 +426,19 @@ class _RequestNotesCard extends StatelessWidget {
           request.cancelReason!.trim().isNotEmpty)
         ('دلیل لغو', request.cancelReason!),
       if (request.acceptedAt != null)
-        ('پذیرش', _compactDate(request.acceptedAt!)),
+        ('پذیرش', _localizedDate(context, request.acceptedAt!)),
       if (request.completedAt != null)
-        ('تکمیل', _compactDate(request.completedAt!)),
+        ('تکمیل', _localizedDate(context, request.completedAt!)),
       if (request.cancelledAt != null)
-        ('لغو', _compactDate(request.cancelledAt!)),
+        ('لغو', _localizedDate(context, request.cancelledAt!)),
     ];
 
     if (notes.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Card(
+    return FarmGlassCard(
+      borderRadius: 22,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -320,7 +466,8 @@ class _StatusTimelineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return FarmGlassCard(
+      borderRadius: 22,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -334,7 +481,12 @@ class _StatusTimelineCard extends StatelessWidget {
             if (logs.isEmpty)
               const Text('تغییر وضعیتی ثبت نشده است.')
             else
-              ...logs.map((log) => _TimelineRow(log: log)),
+              ...logs.asMap().entries.map(
+                (entry) => _TimelineRow(
+                  log: entry.value,
+                  isLast: entry.key == logs.length - 1,
+                ),
+              ),
           ],
         ),
       ),
@@ -343,9 +495,10 @@ class _StatusTimelineCard extends StatelessWidget {
 }
 
 class _TimelineRow extends StatelessWidget {
-  const _TimelineRow({required this.log});
+  const _TimelineRow({required this.log, required this.isLast});
 
   final ConsultRequestStatusLogModel log;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
@@ -360,10 +513,23 @@ class _TimelineRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.check_circle_outline,
-            size: 20,
-            color: theme.colorScheme.primary,
+          SizedBox(
+            width: 22,
+            child: Column(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+                if (!isLast)
+                  Container(
+                    width: 2,
+                    height: 42,
+                    color: theme.colorScheme.primary.withValues(alpha: .35),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -373,7 +539,7 @@ class _TimelineRow extends StatelessWidget {
                 Text(change, style: theme.textTheme.bodyMedium),
                 const SizedBox(height: 4),
                 Text(
-                  _compactDate(log.createdAt),
+                  _localizedDate(context, log.createdAt),
                   style: theme.textTheme.bodySmall,
                 ),
                 if (log.note != null && log.note!.trim().isNotEmpty) ...[
@@ -552,7 +718,7 @@ String _contactMethodLabel(String method) {
   };
 }
 
-String _compactDate(String value) {
-  if (value.length < 10) return toPersianDigits(value);
-  return toPersianDigits(value.substring(0, 10));
+String _localizedDate(BuildContext context, String value) {
+  final parsed = DateTime.tryParse(value);
+  return parsed == null ? value : formatDate(context, parsed.toLocal());
 }

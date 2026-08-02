@@ -31,7 +31,7 @@ class ConsultantWorkbenchController
     );
 
     try {
-      final requests = await _repository.assignedRequests(status: status);
+      final requests = await _repository.assignedRequests();
       state = state.copyWith(isLoading: false, requests: requests);
     } on ConsultantApiException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: _errorMessage(e));
@@ -59,9 +59,7 @@ class ConsultantWorkbenchController
         status: status,
       );
 
-      final requests = await _repository.assignedRequests(
-        status: state.selectedStatus,
-      );
+      final requests = await _repository.assignedRequests();
 
       state = state.copyWith(
         isSaving: false,
@@ -81,6 +79,10 @@ class ConsultantWorkbenchController
   String _errorMessage(ConsultantApiException exception) {
     if (exception.error.code == 'PERMISSION_DENIED') {
       return 'برای استفاده از میزکار، پروفایل مشاور تأییدشده لازم است.';
+    }
+
+    if (exception.error.code == 'VALIDATION_ERROR') {
+      return 'این عملیات با وضعیت فعلی درخواست سازگار نیست. فهرست را تازه‌سازی و دوباره تلاش کنید.';
     }
 
     return exception.error.message;
