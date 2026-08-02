@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
 import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_app_bar.dart';
+import '../../../core/widgets/farm_glass_card.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../../reviews/presentation/public_reviews_section.dart';
 import '../data/consultant_models.dart';
@@ -26,7 +28,35 @@ class ConsultantDetailScreen extends ConsumerWidget {
     final detail = ref.watch(consultantDetailProvider(profileId));
 
     return Scaffold(
-      appBar: const FarmAppBar(title: 'پروفایل مشاور'),
+      appBar: FarmAppBar(
+        title: context.l10n.tr(fa: 'پروفایل مشاور', en: 'Consultant profile'),
+        actions: [
+          IconButton(
+            tooltip: context.l10n.tr(fa: 'درخواست‌های من', en: 'My requests'),
+            onPressed: () => context.push('/consultants/requests'),
+            icon: const Icon(Icons.assignment_outlined),
+          ),
+        ],
+      ),
+      bottomNavigationBar:
+          detail.asData == null
+              ? null
+              : SafeArea(
+                minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: FilledButton.icon(
+                  onPressed:
+                      () => context.push(
+                        '/consultants/${detail.asData!.value.id}/request',
+                      ),
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  label: Text(
+                    context.l10n.tr(
+                      fa: 'درخواست مشاوره',
+                      en: 'Request consultation',
+                    ),
+                  ),
+                ),
+              ),
       body: SafeArea(
         child: ResponsiveBuilder(
           builder: (context, constraints, r) {
@@ -37,7 +67,10 @@ class ConsultantDetailScreen extends ConsumerWidget {
                     child: Padding(
                       padding: r.pagePadding(),
                       child: Text(
-                        'دریافت اطلاعات مشاور ناموفق بود.',
+                        context.l10n.tr(
+                          fa: 'دریافت اطلاعات مشاور ناموفق بود.',
+                          en: 'Could not load consultant information.',
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -53,7 +86,8 @@ class ConsultantDetailScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Card(
+                          FarmGlassCard(
+                            borderRadius: 28,
                             child: Padding(
                               padding: EdgeInsets.all(r.s(20)),
                               child: Column(
@@ -105,23 +139,35 @@ class ConsultantDetailScreen extends ConsumerWidget {
                                     children: [
                                       _InfoChip(
                                         icon: Icons.star_rounded,
-                                        label:
-                                            'امتیاز ${toPersianDigits(consultant.ratingAverage.toStringAsFixed(1))}',
+                                        label: context.l10n.tr(
+                                          fa:
+                                              'امتیاز ${toPersianDigits(consultant.ratingAverage.toStringAsFixed(1))}',
+                                          en:
+                                              'Rating ${consultant.ratingAverage.toStringAsFixed(1)}',
+                                        ),
                                       ),
                                       _InfoChip(
                                         icon: Icons.rate_review_outlined,
-                                        label:
-                                            '${toPersianDigits(consultant.reviewsCount)} نظر',
+                                        label: context.l10n.tr(
+                                          fa:
+                                              '${toPersianDigits(consultant.reviewsCount)} نظر',
+                                          en:
+                                              '${consultant.reviewsCount} reviews',
+                                        ),
                                       ),
                                       _InfoChip(
                                         icon: Icons.place_outlined,
-                                        label: consultant.locationText,
+                                        label: _location(context, consultant),
                                       ),
                                       if (consultant.experienceYears != null)
                                         _InfoChip(
                                           icon: Icons.work_outline,
-                                          label:
-                                              '${toPersianDigits(consultant.experienceYears)} سال تجربه',
+                                          label: context.l10n.tr(
+                                            fa:
+                                                '${toPersianDigits(consultant.experienceYears)} سال تجربه',
+                                            en:
+                                                '${consultant.experienceYears} years experience',
+                                          ),
                                         ),
                                     ],
                                   ),
@@ -130,32 +176,13 @@ class ConsultantDetailScreen extends ConsumerWidget {
                             ),
                           ),
                           SizedBox(height: r.v(12)),
-                          PublicReviewsSection(
-                            subjectType: 'consultant',
-                            subjectId: consultant.id,
-                          ),
-                          SizedBox(height: r.v(12)),
-                          FilledButton.icon(
-                            onPressed: () {
-                              context.push(
-                                '/consultants/${consultant.id}/request',
-                              );
-                            },
-                            icon: const Icon(Icons.send_outlined),
-                            label: const Text('ثبت درخواست مشاوره'),
-                          ),
-                          SizedBox(height: r.v(8)),
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              context.push('/consultants/requests');
-                            },
-                            icon: const Icon(Icons.assignment_outlined),
-                            label: const Text('درخواست‌های من'),
-                          ),
-                          SizedBox(height: r.v(12)),
                           if (consultant.specialties.isNotEmpty)
                             _SectionCard(
-                              title: 'تخصص‌ها',
+                              icon: Icons.workspace_premium_outlined,
+                              title: context.l10n.tr(
+                                fa: 'حوزه‌های تخصصی',
+                                en: 'Areas of expertise',
+                              ),
                               child: Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
@@ -176,7 +203,11 @@ class ConsultantDetailScreen extends ConsumerWidget {
                           if ((consultant.bio ?? '').isNotEmpty) ...[
                             SizedBox(height: r.v(12)),
                             _SectionCard(
-                              title: 'درباره مشاور',
+                              icon: Icons.person_outline_rounded,
+                              title: context.l10n.tr(
+                                fa: 'درباره مشاور',
+                                en: 'About the consultant',
+                              ),
                               child: Text(
                                 consultant.bio!,
                                 style: Theme.of(context).textTheme.bodyLarge,
@@ -185,21 +216,37 @@ class ConsultantDetailScreen extends ConsumerWidget {
                           ],
                           SizedBox(height: r.v(12)),
                           _SectionCard(
-                            title: 'آمار مشاوره',
+                            icon: Icons.insights_outlined,
+                            title: context.l10n.tr(
+                              fa: 'عملکرد مشاوره',
+                              en: 'Consultation performance',
+                            ),
                             child: Column(
                               children: [
                                 _MetricRow(
-                                  label: 'درخواست‌ها',
+                                  label: context.l10n.tr(
+                                    fa: 'کل درخواست‌ها',
+                                    en: 'Total requests',
+                                  ),
                                   value: consultant.requestsCount,
                                 ),
                                 const Divider(height: 20),
                                 _MetricRow(
-                                  label: 'درخواست‌های تکمیل‌شده',
+                                  label: context.l10n.tr(
+                                    fa: 'مشاوره‌های تکمیل‌شده',
+                                    en: 'Completed consultations',
+                                  ),
                                   value: consultant.completedRequestsCount,
                                 ),
                               ],
                             ),
                           ),
+                          SizedBox(height: r.v(12)),
+                          PublicReviewsSection(
+                            subjectType: 'consultant',
+                            subjectId: consultant.id,
+                          ),
+                          SizedBox(height: r.v(12)),
                         ],
                       ),
                     ),
@@ -211,6 +258,17 @@ class ConsultantDetailScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _location(BuildContext context, ConsultantProfileModel value) {
+    final parts =
+        [
+          value.cityName,
+          value.provinceName,
+        ].where((item) => item?.trim().isNotEmpty == true).cast<String>();
+    return parts.isEmpty
+        ? context.l10n.tr(fa: 'موقعیت ثبت نشده', en: 'Location unavailable')
+        : parts.join(context.l10n.isFa ? '، ' : ', ');
   }
 }
 
@@ -273,20 +331,43 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.child});
+  const _SectionCard({
+    required this.icon,
+    required this.title,
+    required this.child,
+  });
 
+  final IconData icon;
   final String title;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return FarmGlassCard(
+      borderRadius: 22,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 21,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             child,
           ],

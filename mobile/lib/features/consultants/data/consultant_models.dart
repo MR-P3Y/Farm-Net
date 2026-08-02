@@ -108,7 +108,7 @@ class ConsultantProfileModel {
       isVerified: json['is_verified'] == true,
       verificationStatus: json['verification_status']?.toString(),
       isFeatured: json['is_featured'] == true,
-      ratingAverage: (json['rating_average'] as num?)?.toDouble() ?? 0,
+      ratingAverage: _decimal(json['rating_average']),
       reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
       requestsCount: (json['requests_count'] as num?)?.toInt() ?? 0,
       completedRequestsCount:
@@ -125,6 +125,11 @@ class ConsultantProfileModel {
       suspendedAt: json['suspended_at']?.toString(),
     );
   }
+}
+
+double _decimal(Object? value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? 0;
 }
 
 class ConsultantProfileInput {
