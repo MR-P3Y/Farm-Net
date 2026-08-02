@@ -67,6 +67,7 @@ import '../../features/stores/presentation/my_store_screen.dart';
 import '../../features/stores/presentation/public_store_detail_screen.dart';
 import '../../features/stores/presentation/public_stores_screen.dart';
 import '../../features/subscriptions/presentation/subscription_center_screen.dart';
+import '../../features/toolbox/presentation/toolbox_screen.dart';
 import '../../features/verification/presentation/verification_requests_screen.dart';
 import '../../features/weather/presentation/weather_screen.dart';
 import 'app_shell.dart';
@@ -140,6 +141,14 @@ final GoRouter appRouter = GoRouter(
       path: '/farms',
       name: 'my-farms',
       builder: (context, state) => protectedRoute(const MyFarmsScreen()),
+    ),
+    GoRoute(
+      path: '/toolbox',
+      name: 'farm-toolbox',
+      builder:
+          (context, state) => protectedRoute(
+            ToolboxScreen(initialFarm: state.extra as FarmModel?),
+          ),
     ),
     GoRoute(
       path: '/farms/:farmId',

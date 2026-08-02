@@ -65,6 +65,8 @@ social.comment_hidden
 
 expert_answer_created
 
+farm.plan_reminder
+
 system.message
 ```
 
@@ -107,6 +109,9 @@ Social:
 
 Expert Answers:
 - expert_answer_created
+
+Farm Toolbox:
+- farm.plan_reminder
 ```
 
 ## Defined but not fully wired yet

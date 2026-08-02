@@ -2860,3 +2860,51 @@ After every completed step:
 3. add or update the Postman collection;
 4. report tracked and untracked Git status separately;
 5. do not mark a step done until its required tests and smoke checks pass.
+
+### Frontend + Backend Farms — Practical Farm Toolbox
+
+Status: code complete and local runtime activated on 2026-08-02; visual
+acceptance pending
+
+- Added seven deterministic, offline-first Mobile calculators for seed,
+  irrigation, fertilizer, spraying, profit/break-even, unit conversion, and
+  pump/fuel calculations.
+- Added Farm/Plot/Cycle context selection, responsive calculator cards,
+  prefilled area, Persian/Arabic digit parsing, and an explicit non-prescribing
+  safety note for fertilizer and spraying.
+- Added owner-private saved calculation history with Backend-authoritative
+  formula version `1.0` recalculation and immutable snapshots.
+- Added retained expense/revenue records, scoped summaries, audited voiding,
+  and profit-calculator integration.
+- Added retained operation plans, optional reminders, complete/cancel actions,
+  and optional completion writes to the existing crop-cycle operation diary.
+- Added `farm.plan_reminder` dispatch to the existing notification worker.
+- Added the additive three-table Alembic migration and applied it to local
+  MySQL without stopping/restarting owner-managed runtimes.
+- Backend Ruff, compileall, 13 focused tests, and all 400 Backend tests: passed.
+- Full Mobile analyze, all 131 Mobile tests, Web release/Wasm dry-run, and
+  Android debug APK build: passed.
+- Runtime application/database/Redis health is `ok`; real-phone `tcp:8000`
+  reverse and Chrome availability were verified read-only. The emulator was not
+  running and was not launched or reconfigured.
+- After explicit owner approval, only `farmnet_backend` received one controlled
+  restart. Runtime app/database/Redis health returned `ok`, all seven Toolbox
+  OpenAPI paths loaded, and the unauthenticated boundary returned `401` instead
+  of `404`.
+- Evidence: `docs/farms/phase-24-farm-toolbox.md`.
+
+#### Farm Toolbox UX and localization follow-up
+
+- Collapsed the Farm/Plot/Cycle context selector to one compact summary row;
+  the three selectors are shown only when expanded.
+- Localized calculator inputs, conversions, results, notebook units, statuses,
+  reminders, validation, and sync errors for both Persian and English.
+- Persian numeric results now use Persian digits and Persian unit names.
+- Classified Backend route `404` as a server-version mismatch rather than an
+  offline state; raw `Not Found` text is no longer shown to the owner.
+- Confirmed the pre-restart runtime `404` was caused by the stale in-memory
+  application, then verified the owner-authorized Backend-only restart activated
+  all seven paths. Database, Redis, phone, Chrome, and Android reverse remained
+  untouched.
+- Full Mobile analyze and all 131 tests passed; Web release/Wasm dry-run and
+  Android debug APK builds passed again.

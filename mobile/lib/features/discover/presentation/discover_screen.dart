@@ -111,6 +111,11 @@ class _DiscoverTile extends StatelessWidget {
 
 List<_DiscoverEntry> _entries(BuildContext context) => [
   _DiscoverEntry(context.l10n.farms, AppIllustrations.farm, '/farms'),
+  _DiscoverEntry(
+    context.l10n.tr(fa: 'جعبه‌ابزار مزرعه', en: 'Farm toolbox'),
+    Icons.handyman_outlined,
+    '/toolbox',
+  ),
   _DiscoverEntry(context.l10n.weather, AppIllustrations.weather, '/weather'),
   _DiscoverEntry(
     context.l10n.consultants,

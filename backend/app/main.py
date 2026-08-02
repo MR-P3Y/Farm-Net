@@ -22,6 +22,7 @@ from app.modules.farms.cycle_router import cycle_router as farm_cycle_router
 from app.modules.farms.cycle_router import reference_router as farm_reference_router
 from app.modules.farms.environment_router import router as farm_environment_router
 from app.modules.farms.diary_router import router as farm_diary_router
+from app.modules.farms.toolbox_router import router as farm_toolbox_router
 from app.modules.farms.weather_router import router as farm_weather_router
 from app.modules.farms.admin_router import router as admin_farms_router
 from app.modules.geo.router import router as geo_router
@@ -163,6 +164,7 @@ def create_app() -> FastAPI:
     app.include_router(farm_reference_router, prefix=settings.api_v1_prefix)
     app.include_router(farm_environment_router, prefix=settings.api_v1_prefix)
     app.include_router(farm_diary_router, prefix=settings.api_v1_prefix)
+    app.include_router(farm_toolbox_router, prefix=settings.api_v1_prefix)
     app.include_router(farm_weather_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_farms_router, prefix=settings.api_v1_prefix)
     app.include_router(subscriptions_router, prefix=settings.api_v1_prefix)

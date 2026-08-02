@@ -24,6 +24,7 @@ from app.db.base import Base
 from app.modules.farms.enums import (
     CropCycleStatus,
     CultivationMode,
+    FarmPlanStatus,
     FarmStatus,
     IrrigationMethod,
     SoilTexture,
@@ -354,6 +355,173 @@ class FarmRecordMedia(Base):
     )
 
 
+class FarmToolCalculation(Base):
+    __tablename__ = "farm_tool_calculations"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    farm_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farms.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    plot_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_plots.id", ondelete="RESTRICT"), nullable=True, index=True
+    )
+    cycle_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("farm_crop_cycles.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    calculator_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    formula_version: Mapped[str] = mapped_column(String(30), nullable=False)
+    title: Mapped[str] = mapped_column(String(180), nullable=False)
+    inputs_json: Mapped[dict] = mapped_column(JSON, nullable=False)
+    results_json: Mapped[dict] = mapped_column(JSON, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    __table_args__ = (
+        CheckConstraint(
+            "calculator_type IN "
+            "('seed','irrigation','fertilizer','spraying','cost_profit',"
+            "'unit_conversion','pump_fuel')",
+            name="ck_farm_tool_calculations_type",
+        ),
+        Index(
+            "ix_farm_tool_calculations_farm_created", "farm_id", "created_at"
+        ),
+        Index(
+            "ix_farm_tool_calculations_plot_type_created",
+            "plot_id",
+            "calculator_type",
+            "created_at",
+        ),
+    )
+
+
+class FarmFinancialEntry(Base):
+    __tablename__ = "farm_financial_entries"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    farm_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farms.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    plot_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_plots.id", ondelete="RESTRICT"), nullable=True, index=True
+    )
+    cycle_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("farm_crop_cycles.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    entry_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    category: Mapped[str] = mapped_column(String(40), nullable=False)
+    amount_toman: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    occurred_on: Mapped[date] = mapped_column(Date, nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    void_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    __table_args__ = (
+        CheckConstraint("entry_type IN ('expense','revenue')", name="ck_farm_financial_type"),
+        CheckConstraint(
+            "category IN ('seed','irrigation','fertilizer','pesticide','labor',"
+            "'fuel','machinery','harvest_sale','other')",
+            name="ck_farm_financial_category",
+        ),
+        CheckConstraint("amount_toman > 0", name="ck_farm_financial_amount_positive"),
+        CheckConstraint(
+            "(voided_at IS NULL AND void_reason IS NULL) OR "
+            "(voided_at IS NOT NULL AND void_reason IS NOT NULL)",
+            name="ck_farm_financial_void_state",
+        ),
+        Index(
+            "ix_farm_financial_entries_farm_date_type",
+            "farm_id",
+            "occurred_on",
+            "entry_type",
+        ),
+    )
+
+
+class FarmPlanItem(Base):
+    __tablename__ = "farm_plan_items"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    farm_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("farms.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    plot_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("farm_plots.id", ondelete="RESTRICT"), nullable=True, index=True
+    )
+    cycle_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("farm_crop_cycles.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    operation_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    title: Mapped[str] = mapped_column(String(180), nullable=False)
+    planned_for: Mapped[date] = mapped_column(Date, nullable=False)
+    reminder_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(20), default=FarmPlanStatus.PLANNED.value, nullable=False
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    cancel_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    farm_operation_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("farm_operations.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+    __table_args__ = (
+        CheckConstraint(
+            "operation_type IN "
+            "('land_preparation','planting','irrigation','fertilizing','spraying',"
+            "'weeding','pruning','monitoring','other')",
+            name="ck_farm_plan_items_operation_type",
+        ),
+        CheckConstraint(
+            "status IN ('planned','completed','cancelled')",
+            name="ck_farm_plan_items_status",
+        ),
+        CheckConstraint(
+            "(status = 'planned' AND completed_at IS NULL AND cancelled_at IS NULL "
+            "AND cancel_reason IS NULL AND farm_operation_id IS NULL) OR "
+            "(status = 'completed' AND completed_at IS NOT NULL AND cancelled_at IS NULL "
+            "AND cancel_reason IS NULL) OR "
+            "(status = 'cancelled' AND completed_at IS NULL AND cancelled_at IS NOT NULL "
+            "AND farm_operation_id IS NULL)",
+            name="ck_farm_plan_items_lifecycle",
+        ),
+        CheckConstraint(
+            "reminder_sent_at IS NULL OR reminder_at IS NOT NULL",
+            name="ck_farm_plan_items_reminder_state",
+        ),
+        UniqueConstraint(
+            "farm_operation_id", name="uq_farm_plan_items_farm_operation"
+        ),
+        Index(
+            "ix_farm_plan_items_farm_status_date", "farm_id", "status", "planned_for"
+        ),
+        Index(
+            "ix_farm_plan_items_reminder_due", "status", "reminder_at", "reminder_sent_at"
+        ),
+    )
+
+
 class FarmAuditLog(Base):
     __tablename__ = "farm_audit_logs"
 
@@ -663,6 +831,40 @@ def _protect_closed_cycle_update(_mapper, _connection, target) -> None:
         raise RuntimeError("Closed farm crop cycle history is immutable")
 
 
+def _protect_financial_entry_update(_mapper, _connection, target) -> None:
+    state = inspect(target)
+    changed = {name for name, attr in state.attrs.items() if attr.history.has_changes()}
+    if not changed.issubset({"voided_at", "void_reason"}):
+        raise RuntimeError("Farm financial history only supports voiding")
+    previous_voided = state.attrs.voided_at.history.deleted
+    if previous_voided and previous_voided[0] is not None:
+        raise RuntimeError("Voided farm financial history is immutable")
+    if target.voided_at is None or not target.void_reason:
+        raise RuntimeError("Farm financial voiding requires a reason")
+
+
+def _protect_plan_update(_mapper, _connection, target) -> None:
+    state = inspect(target)
+    changed = {name for name, attr in state.attrs.items() if attr.history.has_changes()}
+    allowed = {
+        "status",
+        "completed_at",
+        "cancelled_at",
+        "cancel_reason",
+        "farm_operation_id",
+        "reminder_sent_at",
+        "updated_at",
+    }
+    if not changed.issubset(allowed):
+        raise RuntimeError("Farm plan content is immutable after creation")
+    status_history = state.attrs.status.history
+    previous_status = status_history.deleted[0] if status_history.deleted else target.status
+    if "status" in changed and previous_status != FarmPlanStatus.PLANNED.value:
+        raise RuntimeError("Closed farm plan history is immutable")
+    if "status" not in changed and changed - {"reminder_sent_at", "updated_at"}:
+        raise RuntimeError("Farm plan lifecycle fields require a status transition")
+
+
 for _retained_model in (
     FarmOperation,
     FarmOperationInput,
@@ -670,9 +872,14 @@ for _retained_model in (
     FarmRecordMedia,
     FarmLabObservation,
     FarmAuditLog,
+    FarmToolCalculation,
 ):
     event.listen(_retained_model, "before_update", _reject_retained_farm_record_mutation)
     event.listen(_retained_model, "before_delete", _reject_retained_farm_record_mutation)
 
 event.listen(FarmCropCycle, "before_update", _protect_closed_cycle_update)
 event.listen(FarmCropCycle, "before_delete", _reject_retained_farm_record_mutation)
+event.listen(FarmFinancialEntry, "before_update", _protect_financial_entry_update)
+event.listen(FarmFinancialEntry, "before_delete", _reject_retained_farm_record_mutation)
+event.listen(FarmPlanItem, "before_update", _protect_plan_update)
+event.listen(FarmPlanItem, "before_delete", _reject_retained_farm_record_mutation)

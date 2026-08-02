@@ -39,6 +39,8 @@ class NotificationEventType(str, Enum):
     WEATHER_ALERT_CREATED = "weather.alert_created"
     WEATHER_ALERT_RESOLVED = "weather.alert_resolved"
 
+    FARM_PLAN_REMINDER = "farm.plan_reminder"
+
     SOCIAL_COMMENT_CREATED = "social.comment_created"
     SOCIAL_REPLY_CREATED = "social.reply_created"
     SOCIAL_POST_REPORTED = "social.post_reported"

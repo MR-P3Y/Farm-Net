@@ -95,9 +95,19 @@ def main() -> int:
         )
         db = SessionLocal()
         try:
+            from app.modules.farms.toolbox_service import FarmToolboxService
+
+            reminder_count = FarmToolboxService(db).dispatch_due_reminders(
+                limit=args.limit
+            )
             result = dispatcher_for(args.channel, db).run_once(limit=args.limit)
             consecutive_failures = 0
-            emit("worker_batch", channel=args.channel, **result.__dict__)
+            emit(
+                "worker_batch",
+                channel=args.channel,
+                farm_plan_reminders=reminder_count,
+                **result.__dict__,
+            )
         except Exception as exc:
             db.rollback()
             consecutive_failures += 1

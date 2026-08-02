@@ -1562,3 +1562,19 @@ entries. Release moves an existing provider payable from pending to available;
 settlement reservation moves available to reserved. Rejection reverses that
 reservation. A simulated payout may move reserved to payout clearing but must
 never be labelled as an external bank payment.
+
+# Phase 24 Farm Toolbox Addendum
+
+The Farm toolbox adds three owner-scoped retained-record tables:
+
+- `farm_tool_calculations`: immutable formula inputs and authoritative result
+  snapshots, including formula version and optional Plot/Cycle context.
+- `farm_financial_entries`: positive `TOMAN` expense/revenue entries. Corrections
+  use `voided_at` plus a required `void_reason`; rows are not deleted.
+- `farm_plan_items`: scheduled operations and reminder delivery state. The
+  lifecycle is `planned` to either `completed` or `cancelled`; an optional
+  `farm_operation_id` links completion to the existing crop-cycle diary.
+
+All three tables use Farm/Plot/Cycle foreign keys and query indexes appropriate
+to owner context and chronological listing. Migration head:
+`m26a1b2c3d4e_add_farm_toolbox_foundation`.

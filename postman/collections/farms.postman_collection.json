@@ -40,6 +40,14 @@
     {
       "key": "subject_id",
       "value": "1"
+    },
+    {
+      "key": "financial_entry_id",
+      "value": "1"
+    },
+    {
+      "key": "plan_id",
+      "value": "1"
     }
   ],
   "item": [
@@ -758,6 +766,116 @@
         "url": "{{base_url}}/farms/:farm_id/plots/:plot_id/weather/alerts",
         "description": "Contract is defined by the live Farm Net OpenAPI schema."
       }
+    },
+    {
+      "name": "Farm toolbox",
+      "item": [
+        {
+          "name": "Save authoritative calculation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/calculations",
+            "description": "Backend recalculates formula version 1.0; it never accepts client result values.",
+            "body": {"mode": "raw", "raw": "{}"}
+          }
+        },
+        {
+          "name": "Calculation notebook",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/calculations?plot_id={{plot_id}}&cycle_id={{cycle_id}}"
+          }
+        },
+        {
+          "name": "Create financial entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/costs",
+            "body": {"mode": "raw", "raw": "{}"}
+          }
+        },
+        {
+          "name": "List financial entries",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/costs?plot_id={{plot_id}}&cycle_id={{cycle_id}}"
+          }
+        },
+        {
+          "name": "Financial summary",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/cost-summary?plot_id={{plot_id}}&cycle_id={{cycle_id}}"
+          }
+        },
+        {
+          "name": "Void financial entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/costs/:financial_entry_id/void",
+            "body": {"mode": "raw", "raw": "{}"}
+          }
+        },
+        {
+          "name": "Create operation plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/plans",
+            "body": {"mode": "raw", "raw": "{}"}
+          }
+        },
+        {
+          "name": "List operation plans",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/plans?plot_id={{plot_id}}&cycle_id={{cycle_id}}"
+          }
+        },
+        {
+          "name": "Complete operation plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/plans/:plan_id/complete",
+            "body": {"mode": "raw", "raw": "{}"}
+          }
+        },
+        {
+          "name": "Cancel operation plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{access_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/farms/:farm_id/toolbox/plans/:plan_id/cancel",
+            "body": {"mode": "raw", "raw": "{}"}
+          }
+        }
+      ]
     },
     {
       "name": "Measurement units",

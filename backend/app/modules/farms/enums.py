@@ -78,3 +78,36 @@ class FarmRecordSubjectType(str, Enum):
     CYCLE = "cycle"
     OPERATION = "operation"
     HARVEST = "harvest"
+
+
+class FarmCalculatorType(str, Enum):
+    SEED = "seed"
+    IRRIGATION = "irrigation"
+    FERTILIZER = "fertilizer"
+    SPRAYING = "spraying"
+    COST_PROFIT = "cost_profit"
+    UNIT_CONVERSION = "unit_conversion"
+    PUMP_FUEL = "pump_fuel"
+
+
+class FarmFinancialEntryType(str, Enum):
+    EXPENSE = "expense"
+    REVENUE = "revenue"
+
+
+class FarmFinancialCategory(str, Enum):
+    SEED = "seed"
+    IRRIGATION = "irrigation"
+    FERTILIZER = "fertilizer"
+    PESTICIDE = "pesticide"
+    LABOR = "labor"
+    FUEL = "fuel"
+    MACHINERY = "machinery"
+    HARVEST_SALE = "harvest_sale"
+    OTHER = "other"
+
+
+class FarmPlanStatus(str, Enum):
+    PLANNED = "planned"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
