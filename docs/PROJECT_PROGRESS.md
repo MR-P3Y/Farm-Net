@@ -2812,6 +2812,26 @@ Status: completed on 2026-08-02; project-owner accepted the visual fixes
   codes, with Persian labels and English Provider text retained.
 - Mobile focused analyze: OK; 9 focused tests passed; Web/Wasm build: OK.
 - Concurrent owner work was inspected immediately before staging and excluded.
+
+### Frontend Weather — Step 7 Release Gate
+
+Status: passed on 2026-08-02
+
+- Project-owner accepted GPS/manual/Farm Plot selection, persisted sources,
+  responsive forecasts, charts, daily detail, alerts, Farm operation windows,
+  Persian/English, Jalali/Gregorian dates, and light/dark presentation.
+- Full Mobile analyze: OK; all 122 tests passed.
+- Flutter Web/Wasm build: OK; Android debug APK build: OK.
+- Backend Weather Ruff and compileall: OK; 6 Farm Weather tests passed.
+- Runtime application, database, and Redis health: `ok`.
+- Runtime OpenAPI Weather and contextual Farm Weather paths: 20.
+- OpenWeather current/forecast integration was previously verified with real
+  Provider data and remains configuration-secret-safe.
+- Gradle 8.10.2 and AGP 8.6.1 emitted future Flutter support warnings but did
+  not affect the successful Android build; dependency uplift is deferred.
+- The shared Working Tree remained dirty only because of concurrent owner work;
+  all unrelated tracked and untracked files were excluded from this gate.
+- Professional Mobile Weather redesign is closed. Next: Consultants redesign.
 After every completed step:
 
 1. update this document with the commit and verification evidence;

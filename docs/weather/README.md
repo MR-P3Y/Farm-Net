@@ -19,6 +19,9 @@ Phase 12 - Weather Foundation
 - Automatic weather alert rules engine
 - Weather alert notification integration for admins/super-admins
 - Flutter mobile weather foundation
+- Professional bilingual Mobile weather experience with GPS, Iranian Geo
+  selection, saved cities, private Farm Plot sources, forecasts, alerts,
+  24-hour charts, daily detail, and rule-based Farm operation windows
 - Admin panel weather management foundation
 - API docs and Postman collection
 
@@ -57,14 +60,10 @@ api_key_ref=OPENWEATHER_API_KEY
 - User weather subscriptions are not implemented yet.
 - Weather alert notifications currently target admin/super_admin only.
 - SMS/email/push weather delivery is not connected yet.
-- Mobile/admin weather UI foundations are build-tested, but full manual UI QA may still be needed.
 - Redis weather cache is not required yet; DB cache is used.
 
 ## Next Improvements
 
 - User location/weather subscriptions
-- GPS permission integration in mobile
-- Real OpenWeather provider smoke in controlled environment
 - Weather alert delivery to subscribed users
-- Better localized weather text
 - Admin rule editor
