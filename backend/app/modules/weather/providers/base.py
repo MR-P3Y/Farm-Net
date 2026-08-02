@@ -14,6 +14,13 @@ class WeatherProviderLocation:
 
 
 @dataclass(frozen=True)
+class WeatherReverseGeocodeData:
+    name: str
+    state: str | None = None
+    country: str | None = None
+
+
+@dataclass(frozen=True)
 class WeatherCurrentData:
     provider: str
 
@@ -69,4 +76,13 @@ class WeatherProviderClient:
         *,
         location: WeatherProviderLocation,
     ) -> list[WeatherForecastData]:
+        raise NotImplementedError
+
+    def reverse_geocode(
+        self,
+        *,
+        latitude: Decimal,
+        longitude: Decimal,
+        language: str = "fa",
+    ) -> WeatherReverseGeocodeData:
         raise NotImplementedError

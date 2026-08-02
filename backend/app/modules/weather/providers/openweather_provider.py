@@ -16,6 +16,7 @@ from app.modules.weather.providers.base import (
     WeatherForecastData,
     WeatherProviderClient,
     WeatherProviderLocation,
+    WeatherReverseGeocodeData,
 )
 
 
@@ -152,6 +153,46 @@ class OpenWeatherProviderClient(WeatherProviderClient):
         if not rows:
             raise ValidationAuthError(message="Selected city coordinates were not found")
         return Decimal(str(rows[0]["lat"])), Decimal(str(rows[0]["lon"]))
+
+    def reverse_geocode(
+        self,
+        *,
+        latitude: Decimal,
+        longitude: Decimal,
+        language: str = "fa",
+    ) -> WeatherReverseGeocodeData:
+        params = urlencode(
+            {
+                "lat": str(latitude),
+                "lon": str(longitude),
+                "limit": "1",
+                "appid": self._api_key(),
+            }
+        )
+        request = Request(
+            f"https://api.openweathermap.org/geo/1.0/reverse?{params}",
+            headers={"Accept": "application/json"},
+        )
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                rows = json.loads(response.read().decode("utf-8"))
+        except (HTTPError, URLError) as error:
+            raise ValidationAuthError(
+                message="OpenWeather reverse geocoding request failed",
+                details={"reason": str(error)},
+            ) from error
+        if not rows:
+            raise ValidationAuthError(message="GPS place name was not found")
+        row = rows[0]
+        local_names = row.get("local_names") or {}
+        name = local_names.get(language) or row.get("name")
+        if not name:
+            raise ValidationAuthError(message="GPS place name was not found")
+        return WeatherReverseGeocodeData(
+            name=str(name),
+            state=str(row["state"]) if row.get("state") else None,
+            country=str(row["country"]) if row.get("country") else None,
+        )
 
     def _get_json(
         self,

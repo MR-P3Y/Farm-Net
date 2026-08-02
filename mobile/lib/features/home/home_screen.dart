@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/localization/app_localizations.dart';
+import '../../core/utils/digits.dart';
 import '../../core/widgets/farm_circular_glass_button.dart';
 import '../../core/widgets/farm_empty_view.dart';
 import '../../core/widgets/farm_error_view.dart';
@@ -11,6 +14,7 @@ import '../../core/widgets/farm_loading_view.dart';
 import '../auth/state/auth_controller.dart';
 import '../farms/data/farm_models.dart';
 import '../weather/data/weather_models.dart';
+import '../weather/domain/weather_condition_localizer.dart';
 import 'data/home_dashboard_models.dart';
 import 'state/home_dashboard_controller.dart';
 import 'state/home_dashboard_state.dart';
@@ -322,8 +326,128 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       (squareMeters / 10000).toStringAsFixed(2);
 }
 
-class _WeatherCard extends StatelessWidget {
+class _WeatherCard extends StatefulWidget {
   const _WeatherCard({required this.weather});
+  final HomeWeatherData weather;
+
+  @override
+  State<_WeatherCard> createState() => _WeatherCardState();
+}
+
+class _WeatherCardState extends State<_WeatherCard> {
+  late final PageController _controller;
+  Timer? _timer;
+  int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController();
+    _schedule();
+  }
+
+  @override
+  void didUpdateWidget(covariant _WeatherCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final count = widget.weather.effectiveSources.length;
+    if (_index >= count) _index = 0;
+    _schedule();
+  }
+
+  void _schedule() {
+    _timer?.cancel();
+    if (widget.weather.effectiveSources.length < 2) return;
+    _timer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (!mounted || !_controller.hasClients) return;
+      final count = widget.weather.effectiveSources.length;
+      final next = (_index + 1) % count;
+      _controller.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 550),
+        curve: Curves.easeInOutCubic,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sources = widget.weather.effectiveSources;
+    if (sources.isEmpty) {
+      return const _WeatherSourceCard(weather: HomeWeatherData());
+    }
+    if (sources.length == 1) {
+      return _WeatherSourceCard(weather: _sourceData(sources.single));
+    }
+    return Column(
+      children: [
+        SizedBox(
+          height: 238,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: sources.length,
+            onPageChanged: (value) => setState(() => _index = value),
+            itemBuilder:
+                (context, index) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 1),
+                  child: _WeatherSourceCard(
+                    weather: _sourceData(sources[index]),
+                  ),
+                ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            sources.length,
+            (index) => GestureDetector(
+              onTap:
+                  () => _controller.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOut,
+                  ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                width: index == _index ? 22 : 7,
+                height: 7,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                decoration: BoxDecoration(
+                  color:
+                      index == _index
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  HomeWeatherData _sourceData(HomeWeatherSource source) => HomeWeatherData(
+    location: source.location,
+    current: source.current,
+    forecasts: source.forecasts,
+    alerts: source.alerts,
+    farmPlot: source.farmPlot,
+    farmWeather: source.farmWeather,
+  );
+}
+
+class _WeatherSourceCard extends StatelessWidget {
+  const _WeatherSourceCard({required this.weather});
   final HomeWeatherData weather;
 
   @override
@@ -374,19 +498,22 @@ class _WeatherCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 14),
                         Text(
-                          '${_number(current.temperatureC)}°',
+                          '${_number(context, current.temperatureC)}°',
                           style: Theme.of(context).textTheme.displaySmall
                               ?.copyWith(fontWeight: FontWeight.w900),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            current.conditionText?.trim().isNotEmpty == true
-                                ? current.conditionText!
-                                : l10n.tr(
-                                  fa: 'وضعیت فعلی',
-                                  en: 'Current conditions',
-                                ),
+                            WeatherConditionLocalizer.label(
+                              isFa: l10n.isFa,
+                              code: current.conditionCode,
+                              text: current.conditionText,
+                              fallback: l10n.tr(
+                                fa: 'وضعیت فعلی',
+                                en: 'Current conditions',
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -399,22 +526,27 @@ class _WeatherCard extends StatelessWidget {
                         _Metric(
                           icon: Icons.water_drop_outlined,
                           text: l10n.tr(
-                            fa: 'رطوبت ${_number(current.humidityPercent)}٪',
-                            en: 'Humidity ${_number(current.humidityPercent)}%',
+                            fa:
+                                'رطوبت ${_number(context, current.humidityPercent)}٪',
+                            en:
+                                'Humidity ${_number(context, current.humidityPercent)}%',
                           ),
                         ),
                         _Metric(
                           icon: Icons.air_rounded,
                           text: l10n.tr(
-                            fa: 'باد ${_number(current.windSpeedMps)} متر/ثانیه',
-                            en: 'Wind ${_number(current.windSpeedMps)} m/s',
+                            fa:
+                                'باد ${_number(context, current.windSpeedMps)} متر/ثانیه',
+                            en:
+                                'Wind ${_number(context, current.windSpeedMps)} m/s',
                           ),
                         ),
                         if (weather.alerts.isNotEmpty)
                           _Metric(
                             icon: Icons.warning_amber_rounded,
                             text: l10n.tr(
-                              fa: '${weather.alerts.length} هشدار فعال',
+                              fa:
+                                  '${toPersianDigits(weather.alerts.length)} هشدار فعال',
                               en: '${weather.alerts.length} active alerts',
                             ),
                           ),
@@ -459,7 +591,7 @@ class _WeatherCard extends StatelessWidget {
           Text(
             value.temperatureC == null
                 ? '—°'
-                : '${value.temperatureC!.toStringAsFixed(1)}°',
+                : '${_localized(context, value.temperatureC!.toStringAsFixed(1))}°',
             style: Theme.of(
               context,
             ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900),
@@ -467,8 +599,15 @@ class _WeatherCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              value.conditionText ??
-                  context.l10n.tr(fa: 'وضعیت فعلی', en: 'Current conditions'),
+              WeatherConditionLocalizer.label(
+                isFa: context.l10n.isFa,
+                code: value.snapshot?['condition_code']?.toString(),
+                text: value.conditionText,
+                fallback: context.l10n.tr(
+                  fa: 'وضعیت فعلی',
+                  en: 'Current conditions',
+                ),
+              ),
             ),
           ),
         ],
@@ -478,7 +617,7 @@ class _WeatherCard extends StatelessWidget {
         _Metric(
           icon: Icons.warning_amber_rounded,
           text: context.l10n.tr(
-            fa: '${value.alerts.length} هشدار فعال',
+            fa: '${toPersianDigits(value.alerts.length)} هشدار فعال',
             en: '${value.alerts.length} active alerts',
           ),
         ),
@@ -565,13 +704,18 @@ class _WeatherCard extends StatelessWidget {
     ],
   );
 
-  static String _number(String? value) {
+  static String _number(BuildContext context, String? value) {
     final number = double.tryParse(value ?? '');
     if (number == null) return '—';
-    return number == number.roundToDouble()
-        ? number.toInt().toString()
-        : number.toStringAsFixed(1);
+    final result =
+        number == number.roundToDouble()
+            ? number.toInt().toString()
+            : number.toStringAsFixed(1);
+    return _localized(context, result);
   }
+
+  static String _localized(BuildContext context, String value) =>
+      context.l10n.isFa ? toPersianDigits(value) : value;
 
   static IconData _weatherIcon(String? code) {
     if (code?.startsWith('2') == true) return Icons.thunderstorm_rounded;

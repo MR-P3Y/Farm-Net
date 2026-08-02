@@ -255,9 +255,28 @@ class WeatherService:
         *,
         payload: WeatherGpsLocationIn,
     ) -> WeatherLocationOut:
-        display_name = payload.display_name or (
-            f"GPS {payload.latitude}, {payload.longitude}"
+        base_name = payload.display_name or "Current location"
+        display_name = base_name
+        try:
+            provider = self._provider(provider_override=None)
+            place = provider.reverse_geocode(
+                latitude=payload.latitude,
+                longitude=payload.longitude,
+                language="fa",
+            )
+            display_name = f"{base_name} — {place.name}"
+        except (ValidationAuthError, NotImplementedError):
+            pass
+
+        existing = self.repo.find_nearby_gps_location(
+            latitude=payload.latitude,
+            longitude=payload.longitude,
         )
+        if existing is not None:
+            existing.display_name = display_name
+            self.repo.commit()
+            self.repo.refresh(existing)
+            return WeatherLocationOut.model_validate(existing)
 
         return self.create_location(
             payload=WeatherLocationCreateIn(

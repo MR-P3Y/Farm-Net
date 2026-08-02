@@ -2832,6 +2832,27 @@ Status: passed on 2026-08-02
 - The shared Working Tree remained dirty only because of concurrent owner work;
   all unrelated tracked and untracked files were excluded from this gate.
 - Professional Mobile Weather redesign is closed. Next: Consultants redesign.
+
+### Weather/Home UX Follow-up — Multi-source Carousel and GPS Deduplication
+
+Status: completed on 2026-08-02 with one non-blocking Runtime gap
+
+- Localized Home weather condition text, temperature, humidity, wind, and alert
+  counts for Persian while retaining English output in the English locale.
+- Added an automatic six-second, manually swipeable Home carousel across saved
+  city/GPS sources and every coordinate-backed Farm Plot.
+- Collapsed historical GPS duplicates in Mobile and reused nearby coordinates
+  so repeated location reads do not degrade the saved-location experience.
+- Added OpenWeather reverse-geocoding support and nearby GPS record update so a
+  resolved city can appear as `Current location — City` without a new row.
+- Reverse-geocoding failure remains fail-open and never blocks Weather data.
+- Backend Ruff/compileall: OK; 8 Weather tests passed.
+- Mobile focused analyze: OK; 12 focused tests passed; Web/Wasm build: OK.
+- Project-owner accepted localization, carousel, and GPS deduplication. The
+  city name did not appear in the current Runtime, so Provider/reload behavior
+  remains an explicitly recorded non-blocking follow-up.
+- Concurrent owner files, including a separate Home navigation fix, were
+  inspected and excluded from this commit.
 After every completed step:
 
 1. update this document with the commit and verification evidence;

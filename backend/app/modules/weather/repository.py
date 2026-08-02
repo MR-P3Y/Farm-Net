@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import text
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from app.modules.weather.models import (
@@ -123,6 +123,26 @@ class WeatherRepository:
                 WeatherLocation.visibility == "public",
             )
             .one_or_none()
+        )
+
+    def find_nearby_gps_location(
+        self,
+        *,
+        latitude: Decimal,
+        longitude: Decimal,
+        tolerance: Decimal = Decimal("0.01"),
+    ) -> WeatherLocation | None:
+        return (
+            self.db.query(WeatherLocation)
+            .filter(
+                WeatherLocation.location_type == "gps",
+                WeatherLocation.is_active == True,  # noqa: E712
+                WeatherLocation.visibility == "public",
+                func.abs(WeatherLocation.latitude - latitude) <= tolerance,
+                func.abs(WeatherLocation.longitude - longitude) <= tolerance,
+            )
+            .order_by(WeatherLocation.id.desc())
+            .first()
         )
 
     def upsert_provider_config(

@@ -37,9 +37,13 @@ class WeatherController extends StateNotifier<WeatherState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      final locations = await _repository.listLocations();
+      final rawLocations = await _repository.listLocations();
       final preferences = await SharedPreferences.getInstance();
       final sourceKind = preferences.getString(_sourceKindKey);
+      final locations = _deduplicateLocations(
+        rawLocations,
+        preferredId: preferences.getInt(_locationIdKey),
+      );
 
       if (sourceKind == 'farm') {
         final farmId = preferences.getInt(_farmIdKey);
@@ -253,6 +257,15 @@ class WeatherController extends StateNotifier<WeatherState> {
     state = state.copyWith(isSaving: true, clearError: true);
 
     try {
+      final reusable =
+          state.locations
+              .where((item) => item.locationType == 'gps')
+              .where((item) => _isNearby(item, latitude, longitude))
+              .firstOrNull;
+      if (reusable != null && reusable.displayName.contains('—')) {
+        await loadLocation(reusable);
+        return;
+      }
       final location = await _repository.createGpsLocation(
         latitude: latitude,
         longitude: longitude,
@@ -260,7 +273,7 @@ class WeatherController extends StateNotifier<WeatherState> {
         timezone: 'Asia/Tehran',
       );
 
-      final locations = [location, ...state.locations];
+      final locations = _mergeLocation(state.locations, location);
 
       state = state.copyWith(
         isSaving: false,
@@ -292,7 +305,7 @@ class WeatherController extends StateNotifier<WeatherState> {
       );
       state = state.copyWith(
         isSaving: false,
-        locations: [location, ...state.locations],
+        locations: _mergeLocation(state.locations, location),
         selectedLocation: location,
       );
       await _repository.refresh(locationId: location.id);
@@ -305,5 +318,47 @@ class WeatherController extends StateNotifier<WeatherState> {
         errorMessage: 'خطا در ثبت شهر هواشناسی',
       );
     }
+  }
+
+  static List<WeatherLocationModel> _mergeLocation(
+    List<WeatherLocationModel> values,
+    WeatherLocationModel location,
+  ) => _deduplicateLocations([
+    location,
+    ...values.where((item) => item.id != location.id),
+  ], preferredId: location.id);
+
+  static List<WeatherLocationModel> _deduplicateLocations(
+    List<WeatherLocationModel> values, {
+    int? preferredId,
+  }) {
+    final result = <WeatherLocationModel>[];
+    final ids = <int>{};
+    final gpsValues = <WeatherLocationModel>[];
+    for (final value in values) {
+      if (!ids.add(value.id)) continue;
+      if (value.locationType == 'gps') {
+        gpsValues.add(value);
+      } else {
+        result.add(value);
+      }
+    }
+    final gps =
+        gpsValues.where((item) => item.id == preferredId).firstOrNull ??
+        gpsValues.firstOrNull;
+    if (gps != null) result.insert(0, gps);
+    return result;
+  }
+
+  static bool _isNearby(
+    WeatherLocationModel location,
+    double latitude,
+    double longitude,
+  ) {
+    final savedLatitude = double.tryParse(location.latitude);
+    final savedLongitude = double.tryParse(location.longitude);
+    if (savedLatitude == null || savedLongitude == null) return false;
+    return (savedLatitude - latitude).abs() <= 0.01 &&
+        (savedLongitude - longitude).abs() <= 0.01;
   }
 }
