@@ -16,6 +16,11 @@ class ServiceDiscoveryState {
     this.provinceId,
     this.cityId,
     this.pricingType,
+    this.sort = 'relevance',
+    this.viewMode = ServiceViewMode.list,
+    this.userLatitude,
+    this.userLongitude,
+    this.isLocating = false,
     this.errorMessage,
   });
 
@@ -30,6 +35,11 @@ class ServiceDiscoveryState {
   final int? provinceId;
   final int? cityId;
   final String? pricingType;
+  final String sort;
+  final ServiceViewMode viewMode;
+  final double? userLatitude;
+  final double? userLongitude;
+  final bool isLocating;
   final String? errorMessage;
 
   bool get hasFilters =>
@@ -51,6 +61,11 @@ class ServiceDiscoveryState {
     Object? provinceId = _unset,
     Object? cityId = _unset,
     Object? pricingType = _unset,
+    String? sort,
+    ServiceViewMode? viewMode,
+    Object? userLatitude = _unset,
+    Object? userLongitude = _unset,
+    bool? isLocating,
     String? errorMessage,
     bool clearError = false,
   }) => ServiceDiscoveryState(
@@ -70,6 +85,19 @@ class ServiceDiscoveryState {
         identical(pricingType, _unset)
             ? this.pricingType
             : pricingType as String?,
+    sort: sort ?? this.sort,
+    viewMode: viewMode ?? this.viewMode,
+    userLatitude:
+        identical(userLatitude, _unset)
+            ? this.userLatitude
+            : userLatitude as double?,
+    userLongitude:
+        identical(userLongitude, _unset)
+            ? this.userLongitude
+            : userLongitude as double?,
+    isLocating: isLocating ?? this.isLocating,
     errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
   );
 }
+
+enum ServiceViewMode { list, map }

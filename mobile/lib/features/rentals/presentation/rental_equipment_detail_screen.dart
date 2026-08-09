@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../../core/widgets/farm_primary_action_bar.dart';
+import '../../favorites/data/favorite_models.dart';
+import '../../favorites/presentation/favorite_button.dart';
 import '../../reviews/presentation/public_reviews_section.dart';
 import '../data/rental_models.dart';
 import '../state/rental_discovery_controller.dart';
@@ -15,8 +18,26 @@ class RentalEquipmentDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(rentalEquipmentDetailProvider(equipmentId));
+    final item = detail.asData?.value.equipment;
     return Scaffold(
-      appBar: const FarmAppBar(title: 'جزئیات تجهیز'),
+      appBar: FarmAppBar(
+        title: 'جزئیات تجهیز',
+        actions: [
+          FavoriteIconButton(
+            subjectType: FavoriteSubjectType.rentalEquipment,
+            subjectId: equipmentId,
+          ),
+        ],
+      ),
+      bottomNavigationBar:
+          item == null
+              ? null
+              : FarmPrimaryActionBar(
+                onPressed:
+                    () => context.push('/rentals/equipment/${item.id}/request'),
+                icon: Icons.calendar_month_outlined,
+                label: 'درخواست اجاره',
+              ),
       body: detail.when(
         loading: () => const FarmLoadingView(),
         error:
@@ -134,12 +155,6 @@ class _Detail extends StatelessWidget {
           subjectId: item.id,
         ),
         const SizedBox(height: 12),
-        FilledButton.icon(
-          onPressed:
-              () => context.push('/rentals/equipment/${item.id}/request'),
-          icon: const Icon(Icons.calendar_month_outlined),
-          label: const Text('درخواست اجاره'),
-        ),
       ],
     );
   }

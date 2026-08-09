@@ -33,6 +33,7 @@ class ServiceDiscoverySort(StrEnum):
     PRICE_ASC = "price_asc"
     PRICE_DESC = "price_desc"
     RATING = "rating"
+    DISTANCE = "distance"
 
 
 class ServiceRequestStatus(StrEnum):

@@ -9,6 +9,9 @@ import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_glass_card.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../../core/widgets/farm_primary_action_bar.dart';
+import '../../favorites/data/favorite_models.dart';
+import '../../favorites/presentation/favorite_button.dart';
 import '../../reviews/presentation/public_reviews_section.dart';
 import '../data/consultant_models.dart';
 import '../data/consultant_repository.dart';
@@ -31,6 +34,10 @@ class ConsultantDetailScreen extends ConsumerWidget {
       appBar: FarmAppBar(
         title: context.l10n.tr(fa: 'پروفایل مشاور', en: 'Consultant profile'),
         actions: [
+          FavoriteIconButton(
+            subjectType: FavoriteSubjectType.consultant,
+            subjectId: profileId,
+          ),
           IconButton(
             tooltip: context.l10n.tr(fa: 'درخواست‌های من', en: 'My requests'),
             onPressed: () => context.push('/consultants/requests'),
@@ -41,20 +48,15 @@ class ConsultantDetailScreen extends ConsumerWidget {
       bottomNavigationBar:
           detail.asData == null
               ? null
-              : SafeArea(
-                minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: FilledButton.icon(
-                  onPressed:
-                      () => context.push(
-                        '/consultants/${detail.asData!.value.id}/request',
-                      ),
-                  icon: const Icon(Icons.chat_bubble_outline_rounded),
-                  label: Text(
-                    context.l10n.tr(
-                      fa: 'درخواست مشاوره',
-                      en: 'Request consultation',
+              : FarmPrimaryActionBar(
+                onPressed:
+                    () => context.push(
+                      '/consultants/${detail.asData!.value.id}/request',
                     ),
-                  ),
+                icon: Icons.chat_bubble_outline_rounded,
+                label: context.l10n.tr(
+                  fa: 'درخواست مشاوره',
+                  en: 'Request consultation',
                 ),
               ),
       body: SafeArea(

@@ -15,18 +15,26 @@ void main() {
         'currency': 'TOMAN',
         'province_name': 'گلستان',
         'city_name': 'گرگان',
-        'category': {'id': 2, 'title': 'آزمایشگاهی'},
+        'category': {'id': 2, 'code': 'soil_testing', 'title': 'آزمایشگاهی'},
         'provider': {
           'id': 3,
           'display_name': 'آزمایشگاه سبز',
           'is_verified': true,
+          'experience_years': 8,
+          'rating_average': '4.75',
+          'reviews_count': 19,
+          'requests_count': 28,
           'completed_requests_count': 14,
+          'accepting_requests': true,
+          'availability_status': 'busy',
+          'typical_response_minutes': 45,
         },
         'media': [
           {
             'id': 9,
             'public_url': '/api/v1/media/public/soil.jpg',
             'is_primary': true,
+            'portfolio_stage': 'before',
           },
         ],
         'primary_media': {
@@ -40,8 +48,16 @@ void main() {
       expect(offer.priceAmount, 250000);
       expect(offer.location, 'گلستان، گرگان');
       expect(offer.category?.title, 'آزمایشگاهی');
+      expect(offer.category?.code, 'soil_testing');
       expect(offer.provider?.resolvedName, 'آزمایشگاه سبز');
       expect(offer.provider?.isVerified, isTrue);
+      expect(offer.provider?.experienceYears, 8);
+      expect(offer.provider?.ratingAverage, 4.75);
+      expect(offer.provider?.reviewsCount, 19);
+      expect(offer.provider?.requestsCount, 28);
+      expect(offer.provider?.availabilityStatus, 'busy');
+      expect(offer.provider?.typicalResponseMinutes, 45);
+      expect(offer.media.single.portfolioStage, 'before');
       expect(offer.primaryMedia?.publicUrl, contains('soil.jpg'));
     });
 
@@ -139,6 +155,9 @@ void main() {
       'status': 'rejected',
       'display_name': 'گروه خدمات سبز',
       'admin_note': 'تکمیل سوابق',
+      'accepting_requests': false,
+      'availability_status': 'unavailable',
+      'typical_response_minutes': 120,
       'categories': [
         {'id': 2, 'title': 'سم‌پاشی'},
       ],
@@ -149,6 +168,9 @@ void main() {
     expect(profile.statusLabelFa, 'ردشده');
     expect(profile.adminNote, 'تکمیل سوابق');
     expect(profile.categories.single.id, 2);
+    expect(profile.acceptingRequests, isFalse);
+    expect(profile.availabilityStatus, 'unavailable');
+    expect(profile.typicalResponseMinutes, 120);
   });
 
   test('provider profile input serializes category and media IDs', () {
@@ -156,9 +178,14 @@ void main() {
       categoryIds: [2, 5],
       displayName: 'خدمات سبز',
       avatarMediaFileId: 18,
+      acceptingRequests: false,
+      availabilityStatus: 'busy',
+      typicalResponseMinutes: 90,
     );
     expect(input.toJson()['category_ids'], [2, 5]);
     expect(input.toJson()['avatar_media_file_id'], 18);
+    expect(input.toJson()['accepting_requests'], isFalse);
+    expect(input.toJson()['availability_status'], 'busy');
   });
 
   test('owner offer parses media and submit eligibility', () {
@@ -188,11 +215,14 @@ void main() {
       pricingType: 'fixed',
       priceAmount: 100,
       mediaFileIds: [11, 12],
+      mediaStages: {11: 'before', 12: 'after'},
     );
     final media = input.toJson()['media_items'] as List;
     expect(media.first['media_file_id'], 11);
     expect(media.first['is_primary'], isTrue);
     expect(media.last['is_primary'], isFalse);
+    expect(media.first['portfolio_stage'], 'before');
+    expect(media.last['portfolio_stage'], 'after');
   });
 
   group('provider workbench', () {

@@ -100,7 +100,9 @@ The Step 17.6 mobile feature consumes `GET /services/categories`,
 `GET /services/offers`, and `GET /services/offers/{id}`. The list supports `q`,
 `category_id`, `province_id`, `city_id`, `pricing_type`, `min_price`,
 `max_price`, and allow-listed `sort` (`relevance`, `newest`, `price_asc`,
-`price_desc`, `rating`). Price range is canonical `TOMAN`; negotiable offers
+`price_desc`, `rating`, `distance`). Distance sorting requires a validated
+`latitude`/`longitude` pair; optional `radius_km` is bounded to 500 km. Price
+range is canonical `TOMAN`; negotiable offers
 without a price are excluded by a price range and remain last in price sorting.
 Category selection includes active descendants. Search uses the shared Persian
 normalizer across offer, provider, category, service-area, and geo names.
@@ -121,6 +123,15 @@ Step 17.8 consumes the owner profile endpoints under
 pricing modes (`fixed`, `hourly`, `daily`, `hectare`, `project`, `negotiable`).
 The existing public media uploader supplies `avatar_media_file_id` and offer
 `media_items[].media_file_id`; no parallel upload protocol was introduced.
+Profiles also expose `accepting_requests`, `availability_status`
+(`available|busy|unavailable`), and bounded `typical_response_minutes`.
+Offer media may set `portfolio_stage` to `before` or `after` so public detail
+can render real before/after portfolio labels.
+
+The Mobile discovery UI provides list/map modes, shared street/satellite map
+layers, location-permission-based nearest sorting, distance labels, price and
+rating sorting, an active-request badge, provider trust/availability summary,
+and a bottom primary request action consistent with consultation requests.
 
 ## Mobile provider workbench
 

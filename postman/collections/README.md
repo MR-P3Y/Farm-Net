@@ -7,6 +7,7 @@
 - `auth.postman_collection.json`
 - `consultants.postman_collection.json`
 - `geo-profile-verification.postman_collection.json`
+- `favorites.postman_collection.json`
 - `media.postman_collection.json`
 - `notifications.postman_collection.json`
 - `orders-payments-commission.postman_collection.json`
@@ -28,6 +29,9 @@
 offer ownership, category/provider/offer admin moderation, request creation,
 requester/provider/admin lists and details, controlled status transitions,
 requester cancellation, and role ownership.
+
+`favorites.postman_collection.json` covers owner-private cross-domain list,
+batch status, idempotent add, and idempotent remove contracts.
 
 `orders-payments-commission.postman_collection.json` covers 34 Phase 9 requests,
 including idempotent Checkout/payment, verify, full Refund, Admin Finance, and

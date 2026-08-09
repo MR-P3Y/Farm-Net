@@ -1,0 +1,56 @@
+{
+  "info": {
+    "_postman_id": "96c5e6f1-2f2d-4b10-9626-fab012340001",
+    "name": "Farm-Net Universal Favorites",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "user_token", "value": "" },
+    { "key": "subject_type", "value": "service_offer" },
+    { "key": "subject_id", "value": "1" },
+    { "key": "second_subject_id", "value": "2" }
+  ],
+  "item": [
+    {
+      "name": "List my favorites",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{user_token}}" }
+        ],
+        "url": "{{base_url}}/favorites?page=1&page_size=20"
+      }
+    },
+    {
+      "name": "Batch favorite status",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{user_token}}" }
+        ],
+        "url": "{{base_url}}/favorites/status/{{subject_type}}?subject_ids={{subject_id}}&subject_ids={{second_subject_id}}"
+      }
+    },
+    {
+      "name": "Add favorite idempotently",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{user_token}}" }
+        ],
+        "url": "{{base_url}}/favorites/{{subject_type}}/{{subject_id}}"
+      }
+    },
+    {
+      "name": "Remove favorite idempotently",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{user_token}}" }
+        ],
+        "url": "{{base_url}}/favorites/{{subject_type}}/{{subject_id}}"
+      }
+    }
+  ]
+}

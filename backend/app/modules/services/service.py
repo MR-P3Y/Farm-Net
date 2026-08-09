@@ -12,7 +12,11 @@ from app.modules.auth.models import AuthUser
 from app.modules.auth.repository import AuthRepository
 from app.common.money import BillableSourceType
 from app.modules.finance.final_price_service import FinalPriceContractError, FinalPriceService
-from app.modules.finance.schemas import FinalPriceDecisionIn, FinalPriceProposalIn, FinalPriceProposalOut
+from app.modules.finance.schemas import (
+    FinalPriceDecisionIn,
+    FinalPriceProposalIn,
+    FinalPriceProposalOut,
+)
 from app.modules.media.enums import MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType, NotificationPriority
 from app.modules.notifications.service import NotificationService
@@ -258,6 +262,9 @@ class ServicesService:
         min_price: Decimal | None,
         max_price: Decimal | None,
         sort: ServiceDiscoverySort | None,
+        latitude: float | None,
+        longitude: float | None,
+        radius_km: float | None,
         page: int,
         page_size: int,
     ) -> tuple[list[ServiceOfferPublicOut], int]:
@@ -280,6 +287,9 @@ class ServicesService:
             min_price=min_price,
             max_price=max_price,
             sort=sort,
+            latitude=latitude,
+            longitude=longitude,
+            radius_km=radius_km,
             page=page,
             page_size=page_size,
         )
@@ -656,6 +666,11 @@ class ServicesService:
         profile.service_area = payload.service_area
         profile.avatar_file_id = payload.avatar_file_id
         profile.avatar_media_file_id = payload.avatar_media_file_id
+        profile.accepting_requests = payload.accepting_requests
+        profile.availability_status = self._validate_availability_status(
+            payload.availability_status
+        )
+        profile.typical_response_minutes = payload.typical_response_minutes
 
         self.repo.replace_profile_categories(
             profile=profile,
@@ -1186,9 +1201,7 @@ class ServicesService:
             "offer_title": row.offer.title if row.offer is not None else None,
             "category_title": row.category.title if row.category is not None else None,
             "provider_display_name": (
-                row.provider_profile.display_name
-                if row.provider_profile is not None
-                else None
+                row.provider_profile.display_name if row.provider_profile is not None else None
             ),
             "title": row.title,
             "status": row.status,
@@ -1297,9 +1310,7 @@ class ServicesService:
 
     def _notify_request_created(self, row: ServiceRequest, *, actor_user_id: int) -> None:
         recipients = [
-            user_id
-            for user_id in self._provider_recipient_ids(row)
-            if user_id != actor_user_id
+            user_id for user_id in self._provider_recipient_ids(row) if user_id != actor_user_id
         ]
         if not recipients:
             return
@@ -1414,6 +1425,9 @@ class ServicesService:
             reviews_count=profile.reviews_count,
             requests_count=profile.requests_count,
             completed_requests_count=profile.completed_requests_count,
+            accepting_requests=profile.accepting_requests,
+            availability_status=profile.availability_status,
+            typical_response_minutes=profile.typical_response_minutes,
             categories=categories,
             admin_note=profile.admin_note,
             submitted_at=profile.submitted_at,
@@ -1545,6 +1559,7 @@ class ServicesService:
                     media_file_id=item.media_file_id,
                     file_path=item.file_path,
                     alt_text=item.alt_text,
+                    portfolio_stage=item.portfolio_stage,
                     sort_order=item.sort_order,
                     is_primary=item.is_primary,
                 )
@@ -1619,7 +1634,9 @@ class ServicesService:
             self._media_out(item)
             for item in sorted(row.media or [], key=lambda item: (item.sort_order, item.id))
         ]
-        primary_media = next((item for item in media if item.is_primary), media[0] if media else None)
+        primary_media = next(
+            (item for item in media if item.is_primary), media[0] if media else None
+        )
 
         category = None
         if row.category is not None:
@@ -1700,11 +1717,22 @@ class ServicesService:
             public_url=public_url,
             file_path=row.file_path,
             alt_text=row.alt_text,
+            portfolio_stage=row.portfolio_stage,
             sort_order=row.sort_order,
             is_primary=row.is_primary,
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
+
+    @staticmethod
+    def _validate_availability_status(value: str) -> str:
+        allowed = {"available", "busy", "unavailable"}
+        if value not in allowed:
+            raise ValidationAuthError(
+                message="Invalid provider availability status",
+                details={"allowed": sorted(allowed)},
+            )
+        return value
 
     def _normalize_slug(self, slug: str) -> str:
         clean = slug.strip().lower().replace(" ", "-")
@@ -1829,14 +1857,14 @@ class ServicesService:
         name = " ".join([part for part in parts if part])
         return name or None
 
-    def _validate_parent_category(
-        self, parent_id: int | None, *, category_id: int | None
-    ) -> None:
+    def _validate_parent_category(self, parent_id: int | None, *, category_id: int | None) -> None:
         if parent_id is None:
             return
         cursor = self.repo.get_category_by_id(parent_id)
         if cursor is None:
-            raise ValidationAuthError(message="Parent service category not found", details={"parent_id": parent_id})
+            raise ValidationAuthError(
+                message="Parent service category not found", details={"parent_id": parent_id}
+            )
         visited: set[int] = set()
         while cursor is not None and cursor.id not in visited:
             if cursor.id == category_id:

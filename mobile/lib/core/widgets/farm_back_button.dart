@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import '../localization/app_localizations.dart';
 import '../theme/app_icons.dart';
 import 'farm_circular_glass_button.dart';
 
 class FarmBackButton extends StatelessWidget {
-  const FarmBackButton({super.key, this.color});
+  const FarmBackButton({super.key, this.color, this.fallbackLocation});
 
   final Color? color;
+  final String? fallbackLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +18,16 @@ class FarmBackButton extends StatelessWidget {
       size: 18,
       padding: 8,
       tooltip: context.l10n.back,
-      onTap: () => Navigator.maybePop(context),
+      onTap: () {
+        if (Navigator.canPop(context)) {
+          Navigator.maybePop(context);
+          return;
+        }
+        final fallback = fallbackLocation;
+        if (fallback != null && fallback.isNotEmpty) {
+          context.go(fallback);
+        }
+      },
     );
   }
 }

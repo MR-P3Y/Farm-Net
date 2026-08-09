@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/utils/dates.dart';
+import '../../../core/widgets/farm_app_bar.dart';
 import '../../geo/data/geo_models.dart';
 import '../../geo/data/geo_repository.dart';
 import '../data/service_models.dart';
 import '../state/service_discovery_controller.dart';
 import '../state/service_request_controller.dart';
+import 'service_ui.dart';
 
 final _provincesProvider = FutureProvider(
   (ref) => ref.watch(geoRepositoryProvider).getProvinces(),
@@ -58,14 +61,22 @@ class _ServiceRequestCreateScreenState
             : (ref.watch(_citiesProvider(_provinceId!)).valueOrNull ??
                 const <GeoCity>[]);
     return Scaffold(
-      appBar: AppBar(title: const Text('درخواست خدمت')),
+      appBar: FarmAppBar(
+        title: context.l10n.tr(fa: 'درخواست خدمت', en: 'Service request'),
+        fallbackLocation: '/services/${widget.offerId}',
+      ),
       body: ResponsiveBuilder(
         builder:
             (context, constraints, r) => offerAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error:
-                  (_, __) => const Center(
-                    child: Text('دریافت اطلاعات خدمت ناموفق بود.'),
+                  (_, __) => Center(
+                    child: Text(
+                      context.l10n.tr(
+                        fa: 'دریافت اطلاعات خدمت ناموفق بود.',
+                        en: 'Could not load service information.',
+                      ),
+                    ),
                   ),
               data:
                   (offer) => ListView(
@@ -76,16 +87,18 @@ class _ServiceRequestCreateScreenState
                           leading: const Icon(Icons.agriculture_outlined),
                           title: Text(offer.title),
                           subtitle: Text(
-                            offer.provider?.resolvedName ?? 'خدمات‌دهنده',
+                            serviceProviderName(context, offer.provider),
                           ),
                         ),
                       ),
                       SizedBox(height: r.v(12)),
                       TextField(
                         controller: _title,
-                        decoration: const InputDecoration(
-                          labelText: 'عنوان درخواست',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.tr(
+                            fa: 'عنوان درخواست',
+                            en: 'Request title',
+                          ),
                         ),
                       ),
                       SizedBox(height: r.v(12)),
@@ -93,34 +106,58 @@ class _ServiceRequestCreateScreenState
                         controller: _description,
                         minLines: 4,
                         maxLines: 8,
-                        decoration: const InputDecoration(
-                          labelText: 'شرح نیاز',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.tr(
+                            fa: 'شرح نیاز',
+                            en: 'Describe your need',
+                          ),
                         ),
                       ),
                       SizedBox(height: r.v(12)),
                       DropdownButtonFormField<String>(
                         initialValue: _contactMethod,
-                        decoration: const InputDecoration(
-                          labelText: 'روش ارتباط',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.tr(
+                            fa: 'روش ارتباط',
+                            en: 'Contact method',
+                          ),
                         ),
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'in_app',
-                            child: Text('داخل اپلیکیشن'),
+                            child: Text(
+                              context.l10n.tr(
+                                fa: 'داخل اپلیکیشن',
+                                en: 'In app',
+                              ),
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'phone',
-                            child: Text('تماس تلفنی'),
+                            child: Text(
+                              context.l10n.tr(
+                                fa: 'تماس تلفنی',
+                                en: 'Phone call',
+                              ),
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'video',
-                            child: Text('تماس تصویری'),
+                            child: Text(
+                              context.l10n.tr(
+                                fa: 'تماس تصویری',
+                                en: 'Video call',
+                              ),
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'visit',
-                            child: Text('بازدید حضوری'),
+                            child: Text(
+                              context.l10n.tr(
+                                fa: 'بازدید حضوری',
+                                en: 'On-site visit',
+                              ),
+                            ),
                           ),
                         ],
                         onChanged:
@@ -132,22 +169,31 @@ class _ServiceRequestCreateScreenState
                       TextField(
                         controller: _budget,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'بودجه پیشنهادی (تومان) — اختیاری',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.tr(
+                            fa: 'بودجه پیشنهادی (تومان) — اختیاری',
+                            en: 'Suggested budget (Toman) — optional',
+                          ),
                         ),
                       ),
                       SizedBox(height: r.v(12)),
                       DropdownButtonFormField<int?>(
                         initialValue: _provinceId,
-                        decoration: const InputDecoration(
-                          labelText: 'استان — اختیاری',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.tr(
+                            fa: 'استان — اختیاری',
+                            en: 'Province — optional',
+                          ),
                         ),
                         items: [
-                          const DropdownMenuItem(
+                          DropdownMenuItem(
                             value: null,
-                            child: Text('انتخاب نشده'),
+                            child: Text(
+                              context.l10n.tr(
+                                fa: 'انتخاب نشده',
+                                en: 'Not selected',
+                              ),
+                            ),
                           ),
                           ...provinces.map(
                             (item) => DropdownMenuItem(
@@ -165,14 +211,21 @@ class _ServiceRequestCreateScreenState
                       SizedBox(height: r.v(12)),
                       DropdownButtonFormField<int?>(
                         initialValue: _cityId,
-                        decoration: const InputDecoration(
-                          labelText: 'شهر — اختیاری',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.tr(
+                            fa: 'شهر — اختیاری',
+                            en: 'City — optional',
+                          ),
                         ),
                         items: [
-                          const DropdownMenuItem(
+                          DropdownMenuItem(
                             value: null,
-                            child: Text('انتخاب نشده'),
+                            child: Text(
+                              context.l10n.tr(
+                                fa: 'انتخاب نشده',
+                                en: 'Not selected',
+                              ),
+                            ),
                           ),
                           ...cities.map(
                             (item) => DropdownMenuItem(
@@ -188,9 +241,11 @@ class _ServiceRequestCreateScreenState
                         controller: _address,
                         minLines: 2,
                         maxLines: 4,
-                        decoration: const InputDecoration(
-                          labelText: 'نشانی محل خدمت — اختیاری',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.tr(
+                            fa: 'نشانی محل خدمت — اختیاری',
+                            en: 'Service address — optional',
+                          ),
                         ),
                       ),
                       SizedBox(height: r.v(12)),
@@ -199,7 +254,10 @@ class _ServiceRequestCreateScreenState
                         icon: const Icon(Icons.event_outlined),
                         label: Text(
                           _scheduledAt == null
-                              ? 'انتخاب زمان پیشنهادی'
+                              ? context.l10n.tr(
+                                fa: 'انتخاب زمان پیشنهادی',
+                                en: 'Choose a preferred date',
+                              )
                               : _scheduledAt!.format(context),
                         ),
                       ),
@@ -220,7 +278,12 @@ class _ServiceRequestCreateScreenState
                                 ? null
                                 : () => _submit(offer, provinces, cities),
                         icon: const Icon(Icons.send_outlined),
-                        label: const Text('ثبت درخواست'),
+                        label: Text(
+                          context.l10n.tr(
+                            fa: 'ثبت درخواست',
+                            en: 'Submit request',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -246,7 +309,14 @@ class _ServiceRequestCreateScreenState
   ) async {
     if (_title.text.trim().length < 2 || _description.text.trim().length < 5) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('عنوان و شرح درخواست را کامل کنید.')),
+        SnackBar(
+          content: Text(
+            context.l10n.tr(
+              fa: 'عنوان و شرح درخواست را کامل کنید.',
+              en: 'Complete the request title and description.',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -271,7 +341,7 @@ class _ServiceRequestCreateScreenState
           ),
         );
     if (created != null && mounted) {
-      context.go('/services/requests/${created.id}');
+      context.pushReplacement('/services/requests/${created.id}');
     }
   }
 }

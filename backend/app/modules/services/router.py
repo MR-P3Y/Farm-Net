@@ -45,7 +45,7 @@ def list_service_categories(
     return success_response(
         data=[item.model_dump(mode="json") for item in items],
         message="OK",
-    meta={"total": len(items), "trace_id": request.state.trace_id},
+        meta={"total": len(items), "trace_id": request.state.trace_id},
     )
 
 
@@ -63,10 +63,19 @@ def list_public_service_offers(
     min_price: Decimal | None = Query(default=None, ge=0),
     max_price: Decimal | None = Query(default=None, ge=0),
     sort: ServiceDiscoverySort | None = Query(default=None),
+    latitude: float | None = Query(default=None, ge=-90, le=90),
+    longitude: float | None = Query(default=None, ge=-180, le=180),
+    radius_km: float | None = Query(default=None, gt=0, le=500),
     db: Session = Depends(get_db),
 ):
     if min_price is not None and max_price is not None and min_price > max_price:
         raise ValidationAuthError(message="min_price must be less than or equal to max_price")
+    if (latitude is None) != (longitude is None):
+        raise ValidationAuthError(message="latitude and longitude must be provided together")
+    if radius_km is not None and latitude is None:
+        raise ValidationAuthError(message="radius_km requires latitude and longitude")
+    if sort == ServiceDiscoverySort.DISTANCE and latitude is None:
+        raise ValidationAuthError(message="distance sort requires latitude and longitude")
     service = ServicesService(db)
     items, total = service.list_public_offers(
         category_id=category_id,
@@ -78,6 +87,9 @@ def list_public_service_offers(
         min_price=min_price,
         max_price=max_price,
         sort=sort,
+        latitude=latitude,
+        longitude=longitude,
+        radius_km=radius_km,
         page=page,
         page_size=page_size,
     )
@@ -273,9 +285,7 @@ def list_assigned_service_requests(
     offer_id: int | None = Query(default=None, ge=1),
     category_id: int | None = Query(default=None, ge=1),
     db: Session = Depends(get_db),
-    current_user: AuthUser = Depends(
-        require_permission("service_requests.manage_assigned")
-    ),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage_assigned")),
 ):
     items, total = ServicesService(db).list_assigned_service_requests(
         user=current_user,
@@ -306,9 +316,7 @@ def get_assigned_service_request_detail(
     request_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: AuthUser = Depends(
-        require_permission("service_requests.manage_assigned")
-    ),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage_assigned")),
 ):
     result = ServicesService(db).get_assigned_service_request_detail(
         request_id=request_id,
@@ -330,9 +338,7 @@ def update_assigned_service_request_status(
     payload: ServiceRequestStatusUpdateIn,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: AuthUser = Depends(
-        require_permission("service_requests.manage_assigned")
-    ),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage_assigned")),
 ):
     result = ServicesService(db).update_assigned_service_request_status(
         request_id=request_id,

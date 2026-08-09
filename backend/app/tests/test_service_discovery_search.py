@@ -95,9 +95,11 @@ def test_negotiable_service_result_does_not_invent_price() -> None:
         1,
     )
 
-    result = ServiceSearchProvider(None, repository).search(
-        UnifiedSearchQuery(q="مشاوره", types=["service"])
-    ).items[0]
+    result = (
+        ServiceSearchProvider(None, repository)
+        .search(UnifiedSearchQuery(q="مشاوره", types=["service"]))
+        .items[0]
+    )
 
     assert result.price is None
     assert result.currency is None
@@ -113,7 +115,14 @@ def test_service_openapi_exposes_hardened_discovery_filters() -> None:
     operation = schema["paths"]["/api/v1/services/offers"]["get"]
     parameters = {parameter["name"]: parameter for parameter in operation["parameters"]}
 
-    assert {"min_price", "max_price", "sort"}.issubset(parameters)
+    assert {
+        "min_price",
+        "max_price",
+        "sort",
+        "latitude",
+        "longitude",
+        "radius_km",
+    }.issubset(parameters)
     sort_schema = parameters["sort"]["schema"]
     enum_schema = schema["components"]["schemas"][sort_schema["anyOf"][0]["$ref"].split("/")[-1]]
     assert enum_schema["enum"] == [
@@ -122,4 +131,5 @@ def test_service_openapi_exposes_hardened_discovery_filters() -> None:
         "price_asc",
         "price_desc",
         "rating",
+        "distance",
     ]

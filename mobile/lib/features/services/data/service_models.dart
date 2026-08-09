@@ -2,17 +2,20 @@ class ServiceCategory {
   const ServiceCategory({
     required this.id,
     required this.title,
+    this.code,
     this.description,
   });
 
   final int id;
   final String title;
+  final String? code;
   final String? description;
 
   factory ServiceCategory.fromJson(Map<String, dynamic> json) =>
       ServiceCategory(
         id: (json['id'] as num?)?.toInt() ?? 0,
         title: json['title']?.toString() ?? '',
+        code: json['code']?.toString(),
         description: json['description']?.toString(),
       );
 }
@@ -25,6 +28,7 @@ class ServiceMedia {
     this.filePath,
     this.altText,
     this.isPrimary = false,
+    this.portfolioStage,
   });
 
   final int id;
@@ -33,6 +37,7 @@ class ServiceMedia {
   final String? filePath;
   final String? altText;
   final bool isPrimary;
+  final String? portfolioStage;
 
   String? get displayUrl => publicUrl ?? filePath;
 
@@ -43,6 +48,7 @@ class ServiceMedia {
     filePath: json['file_path']?.toString(),
     altText: json['alt_text']?.toString(),
     isPrimary: json['is_primary'] == true,
+    portfolioStage: json['portfolio_stage']?.toString(),
   );
 }
 
@@ -51,6 +57,10 @@ class ServiceProviderSummary {
     required this.id,
     required this.isVerified,
     required this.completedRequestsCount,
+    this.experienceYears,
+    this.ratingAverage = 0,
+    this.reviewsCount = 0,
+    this.requestsCount = 0,
     this.displayName,
     this.name,
     this.title,
@@ -58,6 +68,9 @@ class ServiceProviderSummary {
     this.provinceName,
     this.cityName,
     this.avatarUrl,
+    this.acceptingRequests = true,
+    this.availabilityStatus = 'available',
+    this.typicalResponseMinutes,
   });
 
   final int id;
@@ -68,7 +81,14 @@ class ServiceProviderSummary {
   final String? provinceName;
   final String? cityName;
   final String? avatarUrl;
+  final bool acceptingRequests;
+  final String availabilityStatus;
+  final int? typicalResponseMinutes;
   final bool isVerified;
+  final int? experienceYears;
+  final double ratingAverage;
+  final int reviewsCount;
+  final int requestsCount;
   final int completedRequestsCount;
 
   String get resolvedName =>
@@ -83,20 +103,28 @@ class ServiceProviderSummary {
     cityName,
   ].where((value) => value?.trim().isNotEmpty ?? false).join('، ');
 
-  factory ServiceProviderSummary.fromJson(Map<String, dynamic> json) =>
-      ServiceProviderSummary(
-        id: (json['id'] as num?)?.toInt() ?? 0,
-        displayName: json['display_name']?.toString(),
-        name: json['name']?.toString(),
-        title: json['title']?.toString(),
-        bio: json['bio']?.toString(),
-        provinceName: json['province_name']?.toString(),
-        cityName: json['city_name']?.toString(),
-        avatarUrl: json['avatar_url']?.toString(),
-        isVerified: json['is_verified'] == true,
-        completedRequestsCount:
-            (json['completed_requests_count'] as num?)?.toInt() ?? 0,
-      );
+  factory ServiceProviderSummary.fromJson(
+    Map<String, dynamic> json,
+  ) => ServiceProviderSummary(
+    id: (json['id'] as num?)?.toInt() ?? 0,
+    displayName: json['display_name']?.toString(),
+    name: json['name']?.toString(),
+    title: json['title']?.toString(),
+    bio: json['bio']?.toString(),
+    provinceName: json['province_name']?.toString(),
+    cityName: json['city_name']?.toString(),
+    avatarUrl: json['avatar_url']?.toString(),
+    acceptingRequests: json['accepting_requests'] != false,
+    availabilityStatus: json['availability_status']?.toString() ?? 'available',
+    typicalResponseMinutes: (json['typical_response_minutes'] as num?)?.toInt(),
+    isVerified: json['is_verified'] == true,
+    experienceYears: (json['experience_years'] as num?)?.toInt(),
+    ratingAverage: _toDouble(json['rating_average']) ?? 0,
+    reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
+    requestsCount: (json['requests_count'] as num?)?.toInt() ?? 0,
+    completedRequestsCount:
+        (json['completed_requests_count'] as num?)?.toInt() ?? 0,
+  );
 }
 
 class ServiceOffer {
@@ -115,6 +143,10 @@ class ServiceOffer {
     this.provinceName,
     this.cityName,
     this.serviceArea,
+    this.latitude,
+    this.longitude,
+    this.ratingAverage = 0,
+    this.reviewsCount = 0,
     this.category,
     this.provider,
     this.primaryMedia,
@@ -133,6 +165,10 @@ class ServiceOffer {
   final String? provinceName;
   final String? cityName;
   final String? serviceArea;
+  final double? latitude;
+  final double? longitude;
+  final double ratingAverage;
+  final int reviewsCount;
   final ServiceCategory? category;
   final ServiceProviderSummary? provider;
   final List<ServiceMedia> media;
@@ -164,6 +200,10 @@ class ServiceOffer {
       provinceName: json['province_name']?.toString(),
       cityName: json['city_name']?.toString(),
       serviceArea: json['service_area']?.toString(),
+      latitude: _toDouble(json['latitude']),
+      longitude: _toDouble(json['longitude']),
+      ratingAverage: _toDouble(json['rating_average']) ?? 0,
+      reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
       category:
           json['category'] is Map<String, dynamic>
               ? ServiceCategory.fromJson(
@@ -412,6 +452,9 @@ class ServiceProviderProfileOwner {
     this.avatarUrl,
     this.categories = const [],
     this.adminNote,
+    this.acceptingRequests = true,
+    this.availabilityStatus = 'available',
+    this.typicalResponseMinutes,
   });
   final int id;
   final int userId;
@@ -431,35 +474,42 @@ class ServiceProviderProfileOwner {
   final String? avatarUrl;
   final List<ServiceCategory> categories;
   final String? adminNote;
+  final bool acceptingRequests;
+  final String availabilityStatus;
+  final int? typicalResponseMinutes;
   bool get canEdit => status != 'suspended';
   bool get canSubmit => status == 'draft' || status == 'rejected';
   bool get isApproved => status == 'approved';
   String get statusLabelFa => serviceStatusLabel(status);
-  factory ServiceProviderProfileOwner.fromJson(Map<String, dynamic> json) =>
-      ServiceProviderProfileOwner(
-        id: (json['id'] as num?)?.toInt() ?? 0,
-        userId: (json['user_id'] as num?)?.toInt() ?? 0,
-        status: json['status']?.toString() ?? 'draft',
-        displayName: json['display_name']?.toString(),
-        title: json['title']?.toString(),
-        bio: json['bio']?.toString(),
-        experienceYears: (json['experience_years'] as num?)?.toInt(),
-        phone: json['phone']?.toString(),
-        email: json['email']?.toString(),
-        provinceId: (json['province_id'] as num?)?.toInt(),
-        cityId: (json['city_id'] as num?)?.toInt(),
-        provinceName: json['province_name']?.toString(),
-        cityName: json['city_name']?.toString(),
-        serviceArea: json['service_area']?.toString(),
-        avatarMediaFileId: (json['avatar_media_file_id'] as num?)?.toInt(),
-        avatarUrl: json['avatar_url']?.toString(),
-        categories:
-            (json['categories'] as List? ?? const [])
-                .whereType<Map<String, dynamic>>()
-                .map(ServiceCategory.fromJson)
-                .toList(),
-        adminNote: json['admin_note']?.toString(),
-      );
+  factory ServiceProviderProfileOwner.fromJson(
+    Map<String, dynamic> json,
+  ) => ServiceProviderProfileOwner(
+    id: (json['id'] as num?)?.toInt() ?? 0,
+    userId: (json['user_id'] as num?)?.toInt() ?? 0,
+    status: json['status']?.toString() ?? 'draft',
+    displayName: json['display_name']?.toString(),
+    title: json['title']?.toString(),
+    bio: json['bio']?.toString(),
+    experienceYears: (json['experience_years'] as num?)?.toInt(),
+    phone: json['phone']?.toString(),
+    email: json['email']?.toString(),
+    provinceId: (json['province_id'] as num?)?.toInt(),
+    cityId: (json['city_id'] as num?)?.toInt(),
+    provinceName: json['province_name']?.toString(),
+    cityName: json['city_name']?.toString(),
+    serviceArea: json['service_area']?.toString(),
+    avatarMediaFileId: (json['avatar_media_file_id'] as num?)?.toInt(),
+    avatarUrl: json['avatar_url']?.toString(),
+    categories:
+        (json['categories'] as List? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(ServiceCategory.fromJson)
+            .toList(),
+    adminNote: json['admin_note']?.toString(),
+    acceptingRequests: json['accepting_requests'] != false,
+    availabilityStatus: json['availability_status']?.toString() ?? 'available',
+    typicalResponseMinutes: (json['typical_response_minutes'] as num?)?.toInt(),
+  );
 }
 
 class ServiceProviderProfileInput {
@@ -477,6 +527,9 @@ class ServiceProviderProfileInput {
     this.cityName,
     this.serviceArea,
     this.avatarMediaFileId,
+    this.acceptingRequests = true,
+    this.availabilityStatus = 'available',
+    this.typicalResponseMinutes,
   });
   final List<int> categoryIds;
   final String? displayName;
@@ -491,6 +544,9 @@ class ServiceProviderProfileInput {
   final String? cityName;
   final String? serviceArea;
   final int? avatarMediaFileId;
+  final bool acceptingRequests;
+  final String availabilityStatus;
+  final int? typicalResponseMinutes;
   Map<String, dynamic> toJson() => {
     'display_name': displayName,
     'title': title,
@@ -504,6 +560,9 @@ class ServiceProviderProfileInput {
     'city_name': cityName,
     'service_area': serviceArea,
     'avatar_media_file_id': avatarMediaFileId,
+    'accepting_requests': acceptingRequests,
+    'availability_status': availabilityStatus,
+    'typical_response_minutes': typicalResponseMinutes,
     'category_ids': categoryIds,
   };
 }
@@ -525,6 +584,10 @@ class ServiceOfferOwner extends ServiceOffer {
     super.provinceName,
     super.cityName,
     super.serviceArea,
+    super.latitude,
+    super.longitude,
+    super.ratingAverage,
+    super.reviewsCount,
     super.category,
     super.provider,
     super.primaryMedia,
@@ -555,6 +618,10 @@ class ServiceOfferOwner extends ServiceOffer {
       serviceArea: base.serviceArea,
       category: base.category,
       provider: base.provider,
+      latitude: base.latitude,
+      longitude: base.longitude,
+      ratingAverage: base.ratingAverage,
+      reviewsCount: base.reviewsCount,
       primaryMedia: base.primaryMedia,
       adminNote: json['admin_note']?.toString(),
     );
@@ -576,6 +643,7 @@ class ServiceOfferInput {
     this.provinceName,
     this.cityName,
     this.serviceArea,
+    this.mediaStages = const {},
   });
   final int? categoryId;
   final String title;
@@ -590,6 +658,7 @@ class ServiceOfferInput {
   final String? cityName;
   final String? serviceArea;
   final List<int> mediaFileIds;
+  final Map<int, String?> mediaStages;
   Map<String, dynamic> toJson() => {
     'category_id': categoryId,
     'title': title,
@@ -614,6 +683,8 @@ class ServiceOfferInput {
                 'media_file_id': entry.value,
                 'sort_order': entry.key,
                 'is_primary': entry.key == 0,
+                if (mediaStages[entry.value] != null)
+                  'portfolio_stage': mediaStages[entry.value],
               },
             )
             .toList(),

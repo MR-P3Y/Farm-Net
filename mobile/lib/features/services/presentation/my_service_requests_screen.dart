@@ -3,10 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/dates.dart';
 import '../../../core/widgets/farm_empty_view.dart';
+import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/service_models.dart';
 import '../state/service_request_controller.dart';
+import 'service_ui.dart';
 
 class MyServiceRequestsScreen extends ConsumerStatefulWidget {
   const MyServiceRequestsScreen({super.key});
@@ -32,7 +36,13 @@ class _MyServiceRequestsScreenState
   Widget build(BuildContext context) {
     final state = ref.watch(serviceRequestControllerProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('درخواست‌های خدمات من')),
+      appBar: FarmAppBar(
+        title: context.l10n.tr(
+          fa: 'درخواست‌های خدمات من',
+          en: 'My service requests',
+        ),
+        fallbackLocation: '/services',
+      ),
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {
           if (state.isLoading) return const FarmLoadingView();
@@ -62,10 +72,13 @@ class _MyServiceRequestsScreenState
                     ),
                   ),
                 if (state.requests.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 100),
                     child: FarmEmptyView(
-                      message: 'هنوز درخواست خدمتی ثبت نکرده‌اید.',
+                      message: context.l10n.tr(
+                        fa: 'هنوز درخواست خدمتی ثبت نکرده‌اید.',
+                        en: 'You have not submitted a service request yet.',
+                      ),
                     ),
                   )
                 else
@@ -80,8 +93,9 @@ class _MyServiceRequestsScreenState
                               ),
                           title: Text(request.title),
                           subtitle: Text(
-                            '${request.offerTitle ?? 'خدمت'} • ${_statusLabel(request.status)}',
+                            '${request.offerTitle ?? context.l10n.tr(fa: 'خدمت', en: 'Service')} • ${serviceRequestStatusLabel(context, request.status)}\n${formatApiDate(context, request.createdAt, showTime: true)}',
                           ),
+                          isThreeLine: true,
                           trailing:
                               request.canCancel
                                   ? IconButton(
@@ -106,35 +120,38 @@ class _MyServiceRequestsScreenState
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('لغو درخواست'),
-            content: Text('درخواست «${request.title}» لغو شود؟'),
+            title: Text(
+              context.l10n.tr(fa: 'لغو درخواست', en: 'Cancel request'),
+            ),
+            content: Text(
+              context.l10n.tr(
+                fa: 'درخواست «${request.title}» لغو شود؟',
+                en: 'Cancel “${request.title}”?',
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('انصراف'),
+                child: Text(context.l10n.tr(fa: 'انصراف', en: 'Back')),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('لغو'),
+                child: Text(context.l10n.tr(fa: 'لغو', en: 'Cancel request')),
               ),
             ],
           ),
     );
     if (yes == true) {
+      if (!mounted) return;
       await ref
           .read(serviceRequestControllerProvider.notifier)
-          .cancel(request.id, reason: 'لغو توسط کاربر از اپلیکیشن موبایل');
+          .cancel(
+            request.id,
+            reason: context.l10n.tr(
+              fa: 'لغو توسط کاربر از اپلیکیشن موبایل',
+              en: 'Cancelled by the user from the mobile app',
+            ),
+          );
     }
   }
 }
-
-String _statusLabel(String status) =>
-    const {
-      'open': 'باز',
-      'accepted': 'پذیرفته‌شده',
-      'in_progress': 'در حال انجام',
-      'completed': 'تکمیل‌شده',
-      'cancelled': 'لغوشده',
-      'rejected': 'ردشده',
-    }[status] ??
-    status;

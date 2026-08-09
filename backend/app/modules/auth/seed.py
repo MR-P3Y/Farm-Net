@@ -288,6 +288,8 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("reviews.read_own", "Read own reviews", "reviews", "Read current user's marketplace reviews"),
     PermissionSeed("reviews.manage_own", "Manage own reviews", "reviews", "Update or delete current user's marketplace reviews"),
     PermissionSeed("review_reports.create", "Report reviews", "reviews", "Report marketplace reviews for moderation"),
+    PermissionSeed("favorites.read_own", "Read own favorites", "favorites", "View the authenticated user's private favorites"),
+    PermissionSeed("favorites.manage_own", "Manage own favorites", "favorites", "Add or remove the authenticated user's private favorites"),
     PermissionSeed("reviews.admin_read", "Admin read reviews", "reviews", "Inspect marketplace reviews"),
     PermissionSeed("reviews.admin_moderate", "Admin moderate reviews", "reviews", "Hide or restore marketplace reviews"),
     PermissionSeed("review_reports.admin_read", "Admin read review reports", "reviews", "Inspect marketplace review reports"),
@@ -1084,6 +1086,10 @@ def assign_default_permissions(
             "reports.read",
         ],
     }
+
+    for permission_codes in role_permissions.values():
+        if "social.bookmark" in permission_codes:
+            permission_codes.extend(["favorites.read_own", "favorites.manage_own"])
 
     for role_code, permission_codes in role_permissions.items():
         role = roles_by_code.get(role_code)

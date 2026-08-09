@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/money.dart';
 import '../../../core/widgets/farm_empty_view.dart';
+import '../../../core/widgets/farm_app_bar.dart';
+import '../data/service_models.dart';
 import '../state/service_management_controller.dart';
+import 'service_ui.dart';
 
 class MyOffersScreen extends ConsumerStatefulWidget {
   const MyOffersScreen({super.key});
@@ -28,11 +33,14 @@ class _State extends ConsumerState<MyOffersScreen> {
   Widget build(BuildContext context) {
     final s = ref.watch(serviceManagementProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('خدمات من')),
+      appBar: FarmAppBar(
+        title: context.l10n.tr(fa: 'خدمات من', en: 'My services'),
+        fallbackLocation: '/activity',
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/services/me/offers/new'),
         icon: const Icon(Icons.add),
-        label: const Text('خدمت جدید'),
+        label: Text(context.l10n.tr(fa: 'خدمت جدید', en: 'New service')),
       ),
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {
@@ -61,9 +69,14 @@ class _State extends ConsumerState<MyOffersScreen> {
                     ),
                   ),
                 if (s.offers.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 100),
-                    child: FarmEmptyView(message: 'هنوز خدمتی ثبت نکرده‌اید.'),
+                    child: FarmEmptyView(
+                      message: context.l10n.tr(
+                        fa: 'هنوز خدمتی ثبت نکرده‌اید.',
+                        en: 'You have not created a service yet.',
+                      ),
+                    ),
                   )
                 else
                   ...s.offers.map(
@@ -71,7 +84,7 @@ class _State extends ConsumerState<MyOffersScreen> {
                       child: ListTile(
                         title: Text(o.title),
                         subtitle: Text(
-                          '${o.statusLabelFa} • ${o.category?.title ?? '-'} • ${_price(o)}',
+                          '${serviceOfferStatusLabel(context, o.status)} • ${o.category?.title ?? '-'} • ${_price(context, o)}',
                         ),
                         leading:
                             o.primaryMedia == null
@@ -109,16 +122,23 @@ class _State extends ConsumerState<MyOffersScreen> {
       context: context,
       builder:
           (c) => AlertDialog(
-            title: const Text('ارسال خدمت'),
-            content: const Text('این خدمت برای بررسی ارسال شود؟'),
+            title: Text(
+              context.l10n.tr(fa: 'ارسال خدمت', en: 'Submit service'),
+            ),
+            content: Text(
+              context.l10n.tr(
+                fa: 'این خدمت برای بررسی ارسال شود؟',
+                en: 'Submit this service for review?',
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(c, false),
-                child: const Text('انصراف'),
+                child: Text(context.l10n.tr(fa: 'انصراف', en: 'Cancel')),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(c, true),
-                child: const Text('ارسال'),
+                child: Text(context.l10n.tr(fa: 'ارسال', en: 'Submit')),
               ),
             ],
           ),
@@ -128,8 +148,10 @@ class _State extends ConsumerState<MyOffersScreen> {
     }
   }
 
-  String _price(dynamic o) =>
+  String _price(BuildContext context, ServiceOfferOwner o) =>
       o.priceAmount == null
-          ? 'توافقی'
-          : '${o.priceAmount!.toStringAsFixed(0)} ${o.currency == 'TOMAN' ? 'تومان' : o.currency}';
+          ? context.l10n.tr(fa: 'توافقی', en: 'Negotiable')
+          : o.currency == 'TOMAN'
+          ? formatToman(context, o.priceAmount!)
+          : '${o.priceAmount!.toStringAsFixed(0)} ${o.currency}';
 }

@@ -7,6 +7,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.expert.service import ExpertAnswerService
+from app.modules.favorites.enums import FavoriteSubjectType
+from app.modules.favorites.models import UserFavorite
+from app.modules.favorites.repository import FavoritesRepository
 from app.modules.media.enums import MediaPurpose, MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType
 from app.modules.notifications.service import NotificationService
@@ -137,7 +140,9 @@ class SocialService:
         self.repo.refresh(row)
         return self._category_out(row)
 
-    def update_category(self, *, category_id: int, payload: SocialCategoryUpdateIn) -> SocialCategoryOut:
+    def update_category(
+        self, *, category_id: int, payload: SocialCategoryUpdateIn
+    ) -> SocialCategoryOut:
         row = self.repo.get_category_by_id(category_id=category_id)
         if row is None:
             raise ValidationAuthError(message="Social category not found")
@@ -155,7 +160,9 @@ class SocialService:
             self.repo.commit()
         except IntegrityError as exc:
             self.db.rollback()
-            raise ValidationAuthError(message="Social category code already exists", details={"code": code}) from exc
+            raise ValidationAuthError(
+                message="Social category code already exists", details={"code": code}
+            ) from exc
 
     def _category_out(self, row: SocialCategory) -> SocialCategoryOut:
         data = SocialCategoryOut.model_validate(row).model_dump()
@@ -648,8 +655,24 @@ class SocialService:
             )
 
         existing = self.repo.get_bookmark(post_id=post_id, user_id=user_id)
+        favorites_repo = FavoritesRepository(self.db)
+        favorite = favorites_repo.get_existing(
+            user_id=user_id,
+            subject_type=FavoriteSubjectType.SOCIAL_POST.value,
+            subject_id=post_id,
+            for_update=True,
+        )
+        if favorite is None:
+            favorites_repo.add_exact_once(
+                UserFavorite(
+                    user_id=user_id,
+                    subject_type=FavoriteSubjectType.SOCIAL_POST.value,
+                    subject_id=post_id,
+                )
+            )
 
         if existing is not None:
+            self.repo.commit()
             return SocialBookmarkOut.model_validate(existing), False
 
         row = SocialBookmark(
@@ -670,8 +693,18 @@ class SocialService:
         post_id: int,
     ) -> dict:
         existing = self.repo.get_bookmark(post_id=post_id, user_id=user_id)
+        favorites_repo = FavoritesRepository(self.db)
+        favorite = favorites_repo.get_existing(
+            user_id=user_id,
+            subject_type=FavoriteSubjectType.SOCIAL_POST.value,
+            subject_id=post_id,
+            for_update=True,
+        )
+        if favorite is not None:
+            favorites_repo.delete(favorite)
 
         if existing is None:
+            self.repo.commit()
             return {
                 "deleted": False,
                 "post_id": post_id,

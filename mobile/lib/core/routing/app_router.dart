@@ -20,6 +20,7 @@ import '../../features/farms/presentation/cycle_diary_screen.dart';
 import '../../features/farms/presentation/farm_detail_screen.dart';
 import '../../features/farms/presentation/my_farms_screen.dart';
 import '../../features/farms/presentation/plot_detail_screen.dart';
+import '../../features/favorites/presentation/favorites_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/notifications/presentation/notification_preferences_screen.dart';
 import '../../features/orders/presentation/cart_screen.dart';
@@ -51,6 +52,7 @@ import '../../features/social/presentation/social_create_post_screen.dart';
 import '../../features/social/presentation/social_feed_screen.dart';
 import '../../features/social/presentation/social_post_detail_screen.dart';
 import '../../features/search/presentation/unified_search_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/service_list_screen.dart';
 import '../../features/services/presentation/my_service_requests_screen.dart';
@@ -215,9 +217,19 @@ final GoRouter appRouter = GoRouter(
               protectedRoute(const NotificationPreferencesScreen()),
     ),
     GoRoute(
+      path: '/settings',
+      name: 'settings',
+      builder: (context, state) => protectedRoute(const SettingsScreen()),
+    ),
+    GoRoute(
       path: '/reviews',
       name: 'my-reviews',
       builder: (context, state) => protectedRoute(const MyReviewsScreen()),
+    ),
+    GoRoute(
+      path: '/favorites',
+      name: 'favorites',
+      builder: (context, state) => protectedRoute(const FavoritesScreen()),
     ),
     GoRoute(
       path: '/reviews/create',

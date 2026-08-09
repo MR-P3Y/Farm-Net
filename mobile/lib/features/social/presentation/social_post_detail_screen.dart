@@ -8,6 +8,8 @@ import '../../../core/utils/dates.dart';
 import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../favorites/data/favorite_models.dart';
+import '../../favorites/presentation/favorite_button.dart';
 import '../data/social_models.dart';
 import '../state/social_controller.dart';
 
@@ -55,16 +57,9 @@ class _SocialPostDetailScreenState
       appBar: FarmAppBar(
         title: 'جزئیات پست',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.bookmark_border),
-            onPressed:
-                post == null
-                    ? null
-                    : () {
-                      ref
-                          .read(socialControllerProvider.notifier)
-                          .bookmarkPost(post.id);
-                    },
+          FavoriteIconButton(
+            subjectType: FavoriteSubjectType.socialPost,
+            subjectId: widget.postId,
           ),
           PopupMenuButton<String>(
             onSelected: (value) {

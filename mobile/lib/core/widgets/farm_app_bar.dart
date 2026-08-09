@@ -8,11 +8,13 @@ class FarmAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.actions,
     this.showBack = true,
+    this.fallbackLocation,
   });
 
   final String title;
   final List<Widget>? actions;
   final bool showBack;
+  final String? fallbackLocation;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -24,7 +26,10 @@ class FarmAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       centerTitle: true,
       title: Text(title),
-      leading: showBack && canPop ? const FarmBackButton() : null,
+      leading:
+          showBack && (canPop || fallbackLocation != null)
+              ? FarmBackButton(fallbackLocation: fallbackLocation)
+              : null,
       actions: actions,
     );
   }

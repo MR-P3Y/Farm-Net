@@ -263,6 +263,20 @@ String formatLocalizedDate(
       .format(date);
 }
 
+/// Formats an ISO API timestamp through the same Jalali/Gregorian policy used
+/// everywhere else in the application.
+String formatApiDate(
+  BuildContext context,
+  String? value, {
+  bool showTime = false,
+  String fallback = '-',
+}) {
+  if (value == null || value.trim().isEmpty) return fallback;
+  final parsed = DateTime.tryParse(value.trim());
+  if (parsed == null) return fallback;
+  return formatDate(context, parsed.toLocal(), showTime: showTime);
+}
+
 extension DateTimeX on DateTime {
   String format(
     BuildContext context, {

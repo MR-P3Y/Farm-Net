@@ -145,6 +145,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                           ),
                         ),
+                        SizedBox(height: r.v(12)),
+                        OutlinedButton.icon(
+                          onPressed: () => context.push('/favorites'),
+                          icon: const Icon(Icons.favorite_border_rounded),
+                          label: Text(
+                            l10n.tr(
+                              fa: 'علاقه‌مندی‌های من',
+                              en: 'My favorites',
+                            ),
+                          ),
+                        ),
                         const Divider(height: 40),
                         Text(
                           l10n.settings,
@@ -155,8 +166,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           title: Text(l10n.darkMode),
                           value:
                               Theme.of(context).brightness == Brightness.dark,
-                          onChanged: (_) {
-                            ref.read(themeControllerProvider.notifier).toggle();
+                          onChanged: (enabled) {
+                            ref
+                                .read(themeControllerProvider.notifier)
+                                .setThemeMode(
+                                  enabled ? ThemeMode.dark : ThemeMode.light,
+                                );
                           },
                         ),
                         ListTile(

@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_empty_view.dart';
-import '../data/service_models.dart';
 import '../state/service_workbench_controller.dart';
+import 'service_ui.dart';
 
 class ServiceWorkbenchScreen extends ConsumerStatefulWidget {
   const ServiceWorkbenchScreen({super.key});
@@ -30,7 +32,13 @@ class _State extends ConsumerState<ServiceWorkbenchScreen> {
   Widget build(BuildContext context) {
     final s = ref.watch(serviceWorkbenchProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('میزکار خدمات‌دهنده')),
+      appBar: FarmAppBar(
+        title: context.l10n.tr(
+          fa: 'میزکار خدمات‌دهنده',
+          en: 'Service provider workbench',
+        ),
+        fallbackLocation: '/activity',
+      ),
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {
           if (s.isLoading) {
@@ -55,14 +63,18 @@ class _State extends ConsumerState<ServiceWorkbenchScreen> {
               children: [
                 DropdownButtonFormField<String?>(
                   initialValue: _status,
-                  decoration: const InputDecoration(
-                    labelText: 'فیلتر وضعیت',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.tr(
+                      fa: 'فیلتر وضعیت',
+                      en: 'Status filter',
+                    ),
                   ),
                   items: [
-                    const DropdownMenuItem(
+                    DropdownMenuItem(
                       value: null,
-                      child: Text('همه وضعیت‌ها'),
+                      child: Text(
+                        context.l10n.tr(fa: 'همه وضعیت‌ها', en: 'All statuses'),
+                      ),
                     ),
                     ...[
                       'open',
@@ -74,7 +86,7 @@ class _State extends ConsumerState<ServiceWorkbenchScreen> {
                     ].map(
                       (v) => DropdownMenuItem(
                         value: v,
-                        child: Text(requestStatusLabel(v)),
+                        child: Text(serviceRequestStatusLabel(context, v)),
                       ),
                     ),
                   ],
@@ -94,10 +106,13 @@ class _State extends ConsumerState<ServiceWorkbenchScreen> {
                     ),
                   ),
                 if (s.requests.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 100),
                     child: FarmEmptyView(
-                      message: 'درخواست واگذارشده‌ای وجود ندارد.',
+                      message: context.l10n.tr(
+                        fa: 'درخواست واگذارشده‌ای وجود ندارد.',
+                        en: 'There are no assigned requests.',
+                      ),
                     ),
                   )
                 else
@@ -110,10 +125,14 @@ class _State extends ConsumerState<ServiceWorkbenchScreen> {
                             ),
                         title: Text(q.title),
                         subtitle: Text(
-                          '${q.offerTitle ?? 'خدمت'} • ${q.categoryTitle ?? '-'}\nدرخواست‌دهنده #${q.requesterUserId ?? '-'}',
+                          '${q.offerTitle ?? context.l10n.tr(fa: 'خدمت', en: 'Service')} • ${q.categoryTitle ?? '-'}\n${context.l10n.tr(fa: 'درخواست‌دهنده', en: 'Requester')} #${q.requesterUserId ?? '-'}',
                         ),
                         isThreeLine: true,
-                        trailing: Chip(label: Text(q.statusLabelFa)),
+                        trailing: Chip(
+                          label: Text(
+                            serviceRequestStatusLabel(context, q.status),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -138,11 +157,16 @@ class _Denied extends StatelessWidget {
         children: [
           const Icon(Icons.lock_outline, size: 48),
           const SizedBox(height: 12),
-          const Text(
-            'برای استفاده از میزکار، پروفایل خدمات‌دهنده شما باید تأیید شده باشد.',
+          Text(
+            context.l10n.tr(
+              fa:
+                  'برای استفاده از میزکار، پروفایل خدمات‌دهنده شما باید تأیید شده باشد.',
+              en:
+                  'Your service provider profile must be approved to use the workbench.',
+            ),
             textAlign: TextAlign.center,
           ),
-          TextButton(onPressed: onRetry, child: const Text('تلاش دوباره')),
+          TextButton(onPressed: onRetry, child: Text(context.l10n.retry)),
         ],
       ),
     ),

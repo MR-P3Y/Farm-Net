@@ -3,10 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/responsive/responsive.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/dates.dart';
+import '../../../core/utils/money.dart';
+import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
 import '../data/service_models.dart';
 import '../state/service_request_controller.dart';
 import '../../reviews/data/review_models.dart';
+import 'service_ui.dart';
 
 class ServiceRequestDetailScreen extends ConsumerStatefulWidget {
   const ServiceRequestDetailScreen({required this.requestId, super.key});
@@ -35,7 +40,13 @@ class _State extends ConsumerState<ServiceRequestDetailScreen> {
     final request =
         state.selected?.id == widget.requestId ? state.selected : null;
     return Scaffold(
-      appBar: AppBar(title: const Text('جزئیات درخواست خدمت')),
+      appBar: FarmAppBar(
+        title: context.l10n.tr(
+          fa: 'جزئیات درخواست خدمت',
+          en: 'Service request details',
+        ),
+        fallbackLocation: '/services/requests',
+      ),
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {
           if (state.isLoading) return const FarmLoadingView();
@@ -64,9 +75,16 @@ class _State extends ConsumerState<ServiceRequestDetailScreen> {
                     ),
                   ),
                 if (request == null)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 80),
-                    child: Center(child: Text('درخواست پیدا نشد.')),
+                    child: Center(
+                      child: Text(
+                        context.l10n.tr(
+                          fa: 'درخواست پیدا نشد.',
+                          en: 'Request not found.',
+                        ),
+                      ),
+                    ),
                   )
                 else ...[
                   Card(
@@ -83,7 +101,14 @@ class _State extends ConsumerState<ServiceRequestDetailScreen> {
                                   style: Theme.of(context).textTheme.titleLarge,
                                 ),
                               ),
-                              Chip(label: Text(_statusLabel(request.status))),
+                              Chip(
+                                label: Text(
+                                  serviceRequestStatusLabel(
+                                    context,
+                                    request.status,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           if (request.description != null) ...[
@@ -91,26 +116,72 @@ class _State extends ConsumerState<ServiceRequestDetailScreen> {
                             Text(request.description!),
                           ],
                           const Divider(height: 28),
-                          _Info('خدمت', request.offerTitle ?? '-'),
                           _Info(
-                            'خدمات‌دهنده',
+                            context.l10n.tr(fa: 'خدمت', en: 'Service'),
+                            request.offerTitle ?? '-',
+                          ),
+                          _Info(
+                            context.l10n.tr(fa: 'خدمات‌دهنده', en: 'Provider'),
                             request.providerDisplayName ?? '-',
                           ),
                           _Info(
-                            'روش ارتباط',
-                            _contactLabel(request.contactMethod),
+                            context.l10n.tr(
+                              fa: 'روش ارتباط',
+                              en: 'Contact method',
+                            ),
+                            serviceContactMethodLabel(
+                              context,
+                              request.contactMethod,
+                            ),
                           ),
+                          _Info(
+                            context.l10n.tr(fa: 'تاریخ ثبت', en: 'Created at'),
+                            formatApiDate(
+                              context,
+                              request.createdAt,
+                              showTime: true,
+                            ),
+                          ),
+                          if (request.scheduledAt != null)
+                            _Info(
+                              context.l10n.tr(
+                                fa: 'زمان پیشنهادی',
+                                en: 'Preferred date',
+                              ),
+                              formatApiDate(
+                                context,
+                                request.scheduledAt,
+                                showTime: true,
+                              ),
+                            ),
                           if (request.budgetAmount != null)
                             _Info(
-                              'بودجه',
-                              '${request.budgetAmount!.toStringAsFixed(0)} ${request.currency == 'TOMAN' ? 'تومان' : request.currency}',
+                              context.l10n.tr(fa: 'بودجه', en: 'Budget'),
+                              request.currency == 'TOMAN'
+                                  ? formatToman(context, request.budgetAmount!)
+                                  : '${request.budgetAmount!.toStringAsFixed(0)} ${request.currency}',
                             ),
                           if ((request.addressText ?? '').isNotEmpty)
-                            _Info('نشانی', request.addressText!),
+                            _Info(
+                              context.l10n.tr(fa: 'نشانی', en: 'Address'),
+                              request.addressText!,
+                            ),
                           if ((request.providerNote ?? '').isNotEmpty)
-                            _Info('یادداشت خدمات‌دهنده', request.providerNote!),
+                            _Info(
+                              context.l10n.tr(
+                                fa: 'یادداشت خدمات‌دهنده',
+                                en: 'Provider note',
+                              ),
+                              request.providerNote!,
+                            ),
                           if ((request.cancelReason ?? '').isNotEmpty)
-                            _Info('دلیل لغو', request.cancelReason!),
+                            _Info(
+                              context.l10n.tr(
+                                fa: 'دلیل لغو',
+                                en: 'Cancellation reason',
+                              ),
+                              request.cancelReason!,
+                            ),
                         ],
                       ),
                     ),
@@ -123,22 +194,45 @@ class _State extends ConsumerState<ServiceRequestDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'تاریخچه وضعیت',
+                            context.l10n.tr(
+                              fa: 'تاریخچه وضعیت',
+                              en: 'Status history',
+                            ),
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 10),
                           if (request.statusLogs.isEmpty)
-                            const Text('تغییر وضعیتی ثبت نشده است.')
+                            Text(
+                              context.l10n.tr(
+                                fa: 'تغییر وضعیتی ثبت نشده است.',
+                                en: 'No status changes have been recorded.',
+                              ),
+                            )
                           else
                             ...request.statusLogs.map(
                               (log) => ListTile(
                                 contentPadding: EdgeInsets.zero,
                                 leading: const Icon(Icons.circle, size: 12),
-                                title: Text(_statusLabel(log.newStatus)),
+                                title: Text(
+                                  serviceRequestStatusLabel(
+                                    context,
+                                    log.newStatus,
+                                  ),
+                                ),
                                 subtitle: Text(
                                   [
                                     if (log.oldStatus != null)
-                                      'از ${_statusLabel(log.oldStatus!)}',
+                                      context.l10n.tr(
+                                        fa:
+                                            'از ${serviceRequestStatusLabel(context, log.oldStatus!)}',
+                                        en:
+                                            'From ${serviceRequestStatusLabel(context, log.oldStatus!)}',
+                                      ),
+                                    formatApiDate(
+                                      context,
+                                      log.createdAt,
+                                      showTime: true,
+                                    ),
                                     if ((log.note ?? '').isNotEmpty) log.note!,
                                   ].join(' • '),
                                 ),
@@ -153,25 +247,41 @@ class _State extends ConsumerState<ServiceRequestDetailScreen> {
                     OutlinedButton.icon(
                       onPressed: state.isSaving ? null : () => _cancel(request),
                       icon: const Icon(Icons.cancel_outlined),
-                      label: const Text('لغو درخواست'),
+                      label: Text(
+                        context.l10n.tr(
+                          fa: 'لغو درخواست',
+                          en: 'Cancel request',
+                        ),
+                      ),
                     ),
                   ],
                   if (request.status == 'completed' &&
                       request.offerId != null) ...[
                     SizedBox(height: r.v(16)),
                     FilledButton.icon(
-                      onPressed: () => context.push(
-                        '/reviews/create',
-                        extra: ReviewCreateTarget(
-                          sourceType: 'service_request',
-                          sourceId: request.id,
-                          subjectType: 'service_offer',
-                          subjectId: request.offerId!,
-                          title: request.offerTitle ?? 'خدمت دریافت‌شده',
+                      onPressed:
+                          () => context.push(
+                            '/reviews/create',
+                            extra: ReviewCreateTarget(
+                              sourceType: 'service_request',
+                              sourceId: request.id,
+                              subjectType: 'service_offer',
+                              subjectId: request.offerId!,
+                              title:
+                                  request.offerTitle ??
+                                  context.l10n.tr(
+                                    fa: 'خدمت دریافت‌شده',
+                                    en: 'Received service',
+                                  ),
+                            ),
+                          ),
+                      icon: const Icon(Icons.rate_review_outlined),
+                      label: Text(
+                        context.l10n.tr(
+                          fa: 'ثبت نظر برای این خدمت',
+                          en: 'Review this service',
                         ),
                       ),
-                      icon: const Icon(Icons.rate_review_outlined),
-                      label: const Text('ثبت نظر برای این خدمت'),
                     ),
                   ],
                 ],
@@ -189,21 +299,28 @@ class _State extends ConsumerState<ServiceRequestDetailScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('لغو درخواست'),
+            title: Text(
+              context.l10n.tr(fa: 'لغو درخواست', en: 'Cancel request'),
+            ),
             content: TextField(
               controller: reason,
-              decoration: const InputDecoration(
-                labelText: 'دلیل لغو — اختیاری',
+              decoration: InputDecoration(
+                labelText: context.l10n.tr(
+                  fa: 'دلیل لغو — اختیاری',
+                  en: 'Reason — optional',
+                ),
               ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('انصراف'),
+                child: Text(context.l10n.tr(fa: 'انصراف', en: 'Back')),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('تأیید لغو'),
+                child: Text(
+                  context.l10n.tr(fa: 'تأیید لغو', en: 'Confirm cancellation'),
+                ),
               ),
             ],
           ),
@@ -233,23 +350,3 @@ class _Info extends StatelessWidget {
     ),
   );
 }
-
-String _contactLabel(String? method) =>
-    const {
-      'in_app': 'داخل اپلیکیشن',
-      'phone': 'تلفنی',
-      'video': 'تصویری',
-      'visit': 'حضوری',
-    }[method] ??
-    '-';
-
-String _statusLabel(String status) =>
-    const {
-      'open': 'باز',
-      'accepted': 'پذیرفته‌شده',
-      'in_progress': 'در حال انجام',
-      'completed': 'تکمیل‌شده',
-      'cancelled': 'لغوشده',
-      'rejected': 'ردشده',
-    }[status] ??
-    status;

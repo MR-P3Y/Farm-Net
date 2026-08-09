@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/utils/api_urls.dart';
 import '../../../core/widgets/farm_loading_view.dart';
+import '../../favorites/data/favorite_models.dart';
+import '../../favorites/presentation/favorite_button.dart';
 import '../../reviews/presentation/public_reviews_section.dart';
 import '../state/store_controller.dart';
 
@@ -48,6 +50,13 @@ class _PublicStoreDetailScreenState
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          if (store != null)
+            FavoriteIconButton(
+              subjectType: FavoriteSubjectType.store,
+              subjectId: store.id,
+            ),
+        ],
       ),
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {

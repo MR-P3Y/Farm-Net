@@ -77,6 +77,9 @@ class ServiceProviderProfileCreateIn(BaseModel):
     service_area: str | None = Field(default=None, max_length=255)
     avatar_file_id: str | None = Field(default=None, max_length=255)
     avatar_media_file_id: int | None = Field(default=None, ge=1)
+    accepting_requests: bool = True
+    availability_status: str = Field(default="available", max_length=30)
+    typical_response_minutes: int | None = Field(default=None, ge=1, le=43200)
     category_ids: list[int] = Field(default_factory=list, max_length=20)
 
     @field_validator(
@@ -90,6 +93,7 @@ class ServiceProviderProfileCreateIn(BaseModel):
         "village_name",
         "service_area",
         "avatar_file_id",
+        "availability_status",
         mode="before",
     )
     @classmethod
@@ -145,6 +149,9 @@ class ServiceProviderProfileOut(BaseModel):
     reviews_count: int
     requests_count: int
     completed_requests_count: int
+    accepting_requests: bool = True
+    availability_status: str = "available"
+    typical_response_minutes: int | None = None
     categories: list[ServiceCategoryOut] = Field(default_factory=list)
     admin_note: str | None = None
     submitted_at: datetime | None = None
@@ -184,6 +191,9 @@ class ServiceProviderProfilePublicOut(BaseModel):
     reviews_count: int
     requests_count: int
     completed_requests_count: int
+    accepting_requests: bool = True
+    availability_status: str = "available"
+    typical_response_minutes: int | None = None
     categories: list[ServiceCategoryOut] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
@@ -196,6 +206,7 @@ class ServiceOfferMediaIn(BaseModel):
     alt_text: str | None = Field(default=None, max_length=255)
     sort_order: int = Field(default=0, ge=0)
     is_primary: bool = False
+    portfolio_stage: str | None = Field(default=None, pattern="^(before|after)$")
 
     @field_validator("file_id", "file_path", "alt_text", mode="before")
     @classmethod
@@ -322,6 +333,7 @@ class ServiceOfferMediaOut(BaseModel):
     alt_text: str | None = None
     sort_order: int
     is_primary: bool
+    portfolio_stage: str | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -121,6 +121,11 @@ class ServiceProviderProfile(Base):
     reviews_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
     requests_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
     completed_requests_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
+    accepting_requests: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    availability_status: Mapped[str] = mapped_column(
+        String(30), default="available", nullable=False
+    )
+    typical_response_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     admin_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -333,6 +338,7 @@ class ServiceOfferMedia(Base):
     file_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     file_path: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     alt_text: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    portfolio_stage: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
@@ -476,6 +482,4 @@ class ServiceRequestStatusLog(Base):
 
     request: Mapped["ServiceRequest"] = relationship(back_populates="status_logs")
 
-    __table_args__ = (
-        Index("ix_service_request_logs_request_created", "request_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_service_request_logs_request_created", "request_id", "created_at"),)

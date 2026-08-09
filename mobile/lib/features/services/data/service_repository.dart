@@ -21,6 +21,9 @@ class ServiceRepository {
     num? minPrice,
     num? maxPrice,
     String? sort,
+    double? latitude,
+    double? longitude,
+    double? radiusKm,
   }) => _api.offers(
     query: query,
     categoryId: categoryId,
@@ -30,6 +33,9 @@ class ServiceRepository {
     minPrice: minPrice,
     maxPrice: maxPrice,
     sort: sort,
+    latitude: latitude,
+    longitude: longitude,
+    radiusKm: radiusKm,
   );
   Future<ServiceOffer> detail(int id) async => (await _api.detail(id)).offer;
   Future<ServiceRequest> createRequest(ServiceRequestInput input) =>

@@ -29,12 +29,21 @@ class ServiceApi {
     num? minPrice,
     num? maxPrice,
     String? sort,
+    double? latitude,
+    double? longitude,
+    double? radiusKm,
   }) => listPublic(
     query: query,
     categoryId: categoryId,
     provinceId: provinceId,
     cityId: cityId,
     pricingType: pricingType,
+    minPrice: minPrice,
+    maxPrice: maxPrice,
+    sort: sort,
+    latitude: latitude,
+    longitude: longitude,
+    radiusKm: radiusKm,
   );
 
   Future<List<ServiceOffer>> listPublic({
@@ -43,6 +52,12 @@ class ServiceApi {
     int? provinceId,
     int? cityId,
     String? pricingType,
+    num? minPrice,
+    num? maxPrice,
+    String? sort,
+    double? latitude,
+    double? longitude,
+    double? radiusKm,
   }) async {
     final params = <String, dynamic>{};
     if (query != null && query.isNotEmpty) params['q'] = query;
@@ -50,6 +65,15 @@ class ServiceApi {
     if (provinceId != null) params['province_id'] = provinceId;
     if (cityId != null) params['city_id'] = cityId;
     if (pricingType != null) params['pricing_type'] = pricingType;
+    if (minPrice != null) params['min_price'] = minPrice;
+    if (maxPrice != null) params['max_price'] = maxPrice;
+    if (sort != null && sort != 'distance') params['sort'] = sort;
+    if (latitude != null && longitude != null) {
+      params['latitude'] = latitude;
+      params['longitude'] = longitude;
+    }
+    if (radiusKm != null) params['radius_km'] = radiusKm;
+    if (sort == 'distance') params['sort'] = sort;
 
     try {
       final response = await _client.get(

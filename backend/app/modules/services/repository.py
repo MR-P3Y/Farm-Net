@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import math
 from decimal import Decimal
 
-from sqlalchemy import case, or_, text
+from sqlalchemy import Float, case, cast, or_, text
 from sqlalchemy.orm import Session, joinedload
 
 from app.common.money import CurrencyCode
@@ -35,17 +36,11 @@ class ServicesRepository:
 
     def get_category_by_id(self, category_id: int) -> ServiceCategory | None:
         return (
-            self.db.query(ServiceCategory)
-            .filter(ServiceCategory.id == category_id)
-            .one_or_none()
+            self.db.query(ServiceCategory).filter(ServiceCategory.id == category_id).one_or_none()
         )
 
     def get_category_by_code(self, code: str) -> ServiceCategory | None:
-        return (
-            self.db.query(ServiceCategory)
-            .filter(ServiceCategory.code == code)
-            .one_or_none()
-        )
+        return self.db.query(ServiceCategory).filter(ServiceCategory.code == code).one_or_none()
 
     def list_categories(
         self,
@@ -68,20 +63,29 @@ class ServicesRepository:
                 )
             )
 
-        return (
-            query.order_by(
-                ServiceCategory.sort_order.asc(),
-                ServiceCategory.title.asc(),
-                ServiceCategory.id.asc(),
-            )
-            .all()
-        )
+        return query.order_by(
+            ServiceCategory.sort_order.asc(),
+            ServiceCategory.title.asc(),
+            ServiceCategory.id.asc(),
+        ).all()
 
     def category_usage_counts(self, category_id: int) -> tuple[int, int, int, int]:
-        children = self.db.query(ServiceCategory).filter(ServiceCategory.parent_id == category_id).count()
-        provider_links = self.db.query(ServiceProviderCategory).filter(ServiceProviderCategory.category_id == category_id).count()
-        offers = self.db.query(ServiceOffer).filter(ServiceOffer.category_id == category_id, ServiceOffer.deleted_at.is_(None)).count()
-        requests = self.db.query(ServiceRequest).filter(ServiceRequest.category_id == category_id).count()
+        children = (
+            self.db.query(ServiceCategory).filter(ServiceCategory.parent_id == category_id).count()
+        )
+        provider_links = (
+            self.db.query(ServiceProviderCategory)
+            .filter(ServiceProviderCategory.category_id == category_id)
+            .count()
+        )
+        offers = (
+            self.db.query(ServiceOffer)
+            .filter(ServiceOffer.category_id == category_id, ServiceOffer.deleted_at.is_(None))
+            .count()
+        )
+        requests = (
+            self.db.query(ServiceRequest).filter(ServiceRequest.category_id == category_id).count()
+        )
         return children, provider_links, offers, requests
 
     def add_profile(self, row: ServiceProviderProfile) -> ServiceProviderProfile:
@@ -221,9 +225,9 @@ class ServicesRepository:
             .options(
                 joinedload(ServiceOffer.category),
                 joinedload(ServiceOffer.media),
-                joinedload(ServiceOffer.provider_profile).joinedload(
-                    ServiceProviderProfile.category_links
-                ).joinedload(ServiceProviderCategory.category),
+                joinedload(ServiceOffer.provider_profile)
+                .joinedload(ServiceProviderProfile.category_links)
+                .joinedload(ServiceProviderCategory.category),
             )
             .filter(ServiceOffer.id == offer_id)
             .one_or_none()
@@ -236,9 +240,9 @@ class ServicesRepository:
             .options(
                 joinedload(ServiceOffer.category),
                 joinedload(ServiceOffer.media),
-                joinedload(ServiceOffer.provider_profile).joinedload(
-                    ServiceProviderProfile.category_links
-                ).joinedload(ServiceProviderCategory.category),
+                joinedload(ServiceOffer.provider_profile)
+                .joinedload(ServiceProviderProfile.category_links)
+                .joinedload(ServiceProviderCategory.category),
             )
             .filter(
                 ServiceOffer.id == offer_id,
@@ -265,6 +269,9 @@ class ServicesRepository:
         sort: ServiceDiscoverySort | None = None,
         page: int = 1,
         page_size: int = 20,
+        latitude: float | None = None,
+        longitude: float | None = None,
+        radius_km: float | None = None,
     ) -> tuple[list[ServiceOffer], int]:
         query = (
             self.db.query(ServiceOffer)
@@ -273,9 +280,9 @@ class ServicesRepository:
             .options(
                 joinedload(ServiceOffer.category),
                 joinedload(ServiceOffer.media),
-                joinedload(ServiceOffer.provider_profile).joinedload(
-                    ServiceProviderProfile.category_links
-                ).joinedload(ServiceProviderCategory.category),
+                joinedload(ServiceOffer.provider_profile)
+                .joinedload(ServiceProviderProfile.category_links)
+                .joinedload(ServiceProviderCategory.category),
             )
             .filter(
                 ServiceOffer.status == "approved",
@@ -331,10 +338,38 @@ class ServicesRepository:
                 ServiceOffer.price_amount <= max_price,
             )
 
+        distance_score = None
+        if latitude is not None and longitude is not None:
+            offer_latitude = cast(ServiceOffer.latitude, Float)
+            offer_longitude = cast(ServiceOffer.longitude, Float)
+            longitude_scale = max(abs(math.cos(math.radians(latitude))), 0.1)
+            distance_score = (offer_latitude - latitude) * (offer_latitude - latitude) + (
+                (offer_longitude - longitude) * longitude_scale
+            ) * ((offer_longitude - longitude) * longitude_scale)
+            query = query.filter(
+                ServiceOffer.latitude.is_not(None),
+                ServiceOffer.longitude.is_not(None),
+            )
+            if radius_km is not None:
+                latitude_delta = radius_km / 111.0
+                longitude_delta = radius_km / (111.0 * longitude_scale)
+                query = query.filter(
+                    offer_latitude.between(
+                        latitude - latitude_delta,
+                        latitude + latitude_delta,
+                    ),
+                    offer_longitude.between(
+                        longitude - longitude_delta,
+                        longitude + longitude_delta,
+                    ),
+                )
+
         total = query.count()
 
         null_price = case((ServiceOffer.price_amount.is_(None), 1), else_=0)
-        if sort == ServiceDiscoverySort.PRICE_ASC:
+        if sort == ServiceDiscoverySort.DISTANCE and distance_score is not None:
+            ordering = (distance_score.asc(), ServiceOffer.id.desc())
+        elif sort == ServiceDiscoverySort.PRICE_ASC:
             ordering = (null_price.asc(), ServiceOffer.price_amount.asc(), ServiceOffer.id.desc())
         elif sort == ServiceDiscoverySort.PRICE_DESC:
             ordering = (null_price.asc(), ServiceOffer.price_amount.desc(), ServiceOffer.id.desc())
@@ -370,19 +405,16 @@ class ServicesRepository:
                 ServiceOffer.id.desc(),
             )
 
-        rows = (
-            query.order_by(*ordering)
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-            .all()
-        )
+        rows = query.order_by(*ordering).offset((page - 1) * page_size).limit(page_size).all()
 
         return rows, total
 
     def _category_scope(self, category_id: int) -> set[int]:
-        rows = self.db.query(ServiceCategory.id, ServiceCategory.parent_id).filter(
-            ServiceCategory.is_active.is_(True)
-        ).all()
+        rows = (
+            self.db.query(ServiceCategory.id, ServiceCategory.parent_id)
+            .filter(ServiceCategory.is_active.is_(True))
+            .all()
+        )
         children: dict[int, list[int]] = {}
         known_ids = set()
         for row_id, parent_id in rows:
@@ -415,9 +447,9 @@ class ServicesRepository:
             .options(
                 joinedload(ServiceOffer.category),
                 joinedload(ServiceOffer.media),
-                joinedload(ServiceOffer.provider_profile).joinedload(
-                    ServiceProviderProfile.category_links
-                ).joinedload(ServiceProviderCategory.category),
+                joinedload(ServiceOffer.provider_profile)
+                .joinedload(ServiceProviderProfile.category_links)
+                .joinedload(ServiceProviderCategory.category),
             )
             .filter(
                 ServiceOffer.provider_profile_id == provider_profile_id,
@@ -469,9 +501,9 @@ class ServicesRepository:
             .options(
                 joinedload(ServiceOffer.category),
                 joinedload(ServiceOffer.media),
-                joinedload(ServiceOffer.provider_profile).joinedload(
-                    ServiceProviderProfile.category_links
-                ).joinedload(ServiceProviderCategory.category),
+                joinedload(ServiceOffer.provider_profile)
+                .joinedload(ServiceProviderProfile.category_links)
+                .joinedload(ServiceProviderCategory.category),
             )
             .filter(ServiceOffer.deleted_at.is_(None))
         )
@@ -532,11 +564,7 @@ class ServicesRepository:
         return self.db.query(AuthUser).filter(AuthUser.id == user_id).one_or_none()
 
     def get_user_profile(self, user_id: int) -> UserProfile | None:
-        return (
-            self.db.query(UserProfile)
-            .filter(UserProfile.user_id == user_id)
-            .one_or_none()
-        )
+        return self.db.query(UserProfile).filter(UserProfile.user_id == user_id).one_or_none()
 
     def get_media_file_by_id(self, media_file_id: int) -> MediaFile | None:
         return self.db.query(MediaFile).filter(MediaFile.id == media_file_id).one_or_none()

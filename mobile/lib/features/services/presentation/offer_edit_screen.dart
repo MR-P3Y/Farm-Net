@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/widgets/farm_app_bar.dart';
 import '../../media/presentation/media_upload_button.dart';
 import '../data/service_models.dart';
 import '../state/service_management_controller.dart';
@@ -25,6 +27,7 @@ class _State extends ConsumerState<OfferEditScreen> {
   int? _categoryId;
   String _pricing = 'negotiable';
   final List<int> _mediaIds = [];
+  final Map<int, String?> _mediaStages = {};
   bool _loaded = false;
   @override
   void initState() {
@@ -42,6 +45,11 @@ class _State extends ConsumerState<OfferEditScreen> {
       _categoryId = o.categoryId;
       _pricing = o.pricingType;
       _mediaIds.addAll(o.media.map((m) => m.mediaFileId).whereType<int>());
+      for (final media in o.media) {
+        if (media.mediaFileId != null) {
+          _mediaStages[media.mediaFileId!] = media.portfolioStage;
+        }
+      }
     }
   }
 
@@ -78,8 +86,12 @@ class _State extends ConsumerState<OfferEditScreen> {
   Widget build(BuildContext context) {
     final s = ref.watch(serviceManagementProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.offer == null ? 'خدمت جدید' : 'ویرایش خدمت'),
+      appBar: FarmAppBar(
+        title:
+            widget.offer == null
+                ? context.l10n.tr(fa: 'خدمت جدید', en: 'New service')
+                : context.l10n.tr(fa: 'ویرایش خدمت', en: 'Edit service'),
+        fallbackLocation: '/services/me/offers',
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -89,15 +101,20 @@ class _State extends ConsumerState<OfferEditScreen> {
               s.errorMessage!,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
-          _f(_title, 'عنوان'),
+          _f(_title, context.l10n.tr(fa: 'عنوان', en: 'Title')),
           const SizedBox(height: 12),
-          _f(_slug, 'نامک انگلیسی (مثال: soil-test)'),
+          _f(
+            _slug,
+            context.l10n.tr(
+              fa: 'نامک انگلیسی (مثال: soil-test)',
+              en: 'English slug (example: soil-test)',
+            ),
+          ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int?>(
             initialValue: _categoryId,
-            decoration: const InputDecoration(
-              labelText: 'دسته‌بندی',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: context.l10n.tr(fa: 'دسته‌بندی', en: 'Category'),
             ),
             items:
                 s.categories
@@ -109,51 +126,140 @@ class _State extends ConsumerState<OfferEditScreen> {
             onChanged: (v) => setState(() => _categoryId = v),
           ),
           const SizedBox(height: 12),
-          _f(_short, 'توضیح کوتاه'),
+          _f(
+            _short,
+            context.l10n.tr(fa: 'توضیح کوتاه', en: 'Short description'),
+          ),
           const SizedBox(height: 12),
-          _f(_description, 'توضیحات کامل', lines: 5),
+          _f(
+            _description,
+            context.l10n.tr(fa: 'توضیحات کامل', en: 'Full description'),
+            lines: 5,
+          ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _pricing,
-            decoration: const InputDecoration(
-              labelText: 'روش قیمت‌گذاری',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: context.l10n.tr(
+                fa: 'روش قیمت‌گذاری',
+                en: 'Pricing method',
+              ),
             ),
-            items: const [
-              DropdownMenuItem(value: 'fixed', child: Text('ثابت')),
-              DropdownMenuItem(value: 'hourly', child: Text('ساعتی')),
-              DropdownMenuItem(value: 'daily', child: Text('روزانه')),
-              DropdownMenuItem(value: 'hectare', child: Text('هکتاری')),
-              DropdownMenuItem(value: 'project', child: Text('پروژه‌ای')),
-              DropdownMenuItem(value: 'negotiable', child: Text('توافقی')),
+            items: [
+              for (final type in const [
+                'fixed',
+                'hourly',
+                'daily',
+                'hectare',
+                'project',
+                'negotiable',
+              ])
+                DropdownMenuItem(
+                  value: type,
+                  child: Text(switch (type) {
+                    'fixed' => context.l10n.tr(fa: 'ثابت', en: 'Fixed'),
+                    'hourly' => context.l10n.tr(fa: 'ساعتی', en: 'Hourly'),
+                    'daily' => context.l10n.tr(fa: 'روزانه', en: 'Daily'),
+                    'hectare' => context.l10n.tr(
+                      fa: 'هکتاری',
+                      en: 'Per hectare',
+                    ),
+                    'project' => context.l10n.tr(
+                      fa: 'پروژه‌ای',
+                      en: 'Per project',
+                    ),
+                    _ => context.l10n.tr(fa: 'توافقی', en: 'Negotiable'),
+                  }),
+                ),
             ],
             onChanged: (v) => setState(() => _pricing = v ?? 'negotiable'),
           ),
           if (_pricing != 'negotiable') ...[
             const SizedBox(height: 12),
-            _f(_price, 'قیمت (تومان)', number: true),
+            _f(
+              _price,
+              context.l10n.tr(fa: 'قیمت (تومان)', en: 'Price (Toman)'),
+              number: true,
+            ),
           ],
           const SizedBox(height: 12),
-          _f(_province, 'استان'),
+          _f(_province, context.l10n.tr(fa: 'استان', en: 'Province')),
           const SizedBox(height: 12),
-          _f(_city, 'شهر'),
+          _f(_city, context.l10n.tr(fa: 'شهر', en: 'City')),
           const SizedBox(height: 12),
-          _f(_area, 'محدوده خدمت'),
+          _f(_area, context.l10n.tr(fa: 'محدوده خدمت', en: 'Service area')),
           const SizedBox(height: 12),
           MediaUploadButton(
-            label: 'افزودن تصویر خدمت',
+            label: context.l10n.tr(
+              fa: 'افزودن تصویر خدمت',
+              en: 'Add service image',
+            ),
             purpose: 'general',
             visibility: 'public',
             allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
-            onUploaded: (m) => setState(() => _mediaIds.add(m.id)),
+            onUploaded:
+                (m) => setState(() {
+                  _mediaIds.add(m.id);
+                  _mediaStages[m.id] = null;
+                }),
           ),
           if (_mediaIds.isNotEmpty)
-            Text('${_mediaIds.length} تصویر انتخاب شده'),
+            ..._mediaIds.map(
+              (mediaId) => Card(
+                child: ListTile(
+                  leading: const Icon(Icons.photo_outlined),
+                  title: Text(
+                    context.l10n.tr(fa: 'تصویر $mediaId', en: 'Image $mediaId'),
+                  ),
+                  subtitle: DropdownButton<String?>(
+                    value: _mediaStages[mediaId],
+                    isExpanded: true,
+                    hint: Text(
+                      context.l10n.tr(
+                        fa: 'نمونه‌کار عادی',
+                        en: 'Regular portfolio image',
+                      ),
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(context.l10n.tr(fa: 'عادی', en: 'Regular')),
+                      ),
+                      DropdownMenuItem(
+                        value: 'before',
+                        child: Text(context.l10n.tr(fa: 'قبل', en: 'Before')),
+                      ),
+                      DropdownMenuItem(
+                        value: 'after',
+                        child: Text(context.l10n.tr(fa: 'بعد', en: 'After')),
+                      ),
+                    ],
+                    onChanged:
+                        (value) =>
+                            setState(() => _mediaStages[mediaId] = value),
+                  ),
+                  trailing: IconButton(
+                    tooltip: context.l10n.tr(
+                      fa: 'حذف تصویر',
+                      en: 'Remove image',
+                    ),
+                    onPressed:
+                        () => setState(() {
+                          _mediaIds.remove(mediaId);
+                          _mediaStages.remove(mediaId);
+                        }),
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: s.isSaving ? null : _save,
             icon: const Icon(Icons.save_outlined),
-            label: const Text('ذخیره پیش‌نویس'),
+            label: Text(
+              context.l10n.tr(fa: 'ذخیره پیش‌نویس', en: 'Save draft'),
+            ),
           ),
         ],
       ),
@@ -178,7 +284,14 @@ class _State extends ConsumerState<OfferEditScreen> {
   Future<void> _save() async {
     if (_title.text.trim().length < 2 || _slug.text.trim().length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('عنوان و نامک را کامل کنید.')),
+        SnackBar(
+          content: Text(
+            context.l10n.tr(
+              fa: 'عنوان و نامک را کامل کنید.',
+              en: 'Complete the title and slug.',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -198,9 +311,16 @@ class _State extends ConsumerState<OfferEditScreen> {
             cityName: _city.text.trim(),
             serviceArea: _area.text.trim(),
             mediaFileIds: _mediaIds,
+            mediaStages: _mediaStages,
           ),
           offerId: widget.offer?.id,
         );
-    if (result != null && mounted) context.pop();
+    if (result != null && mounted) {
+      if (Navigator.canPop(context)) {
+        context.pop();
+      } else {
+        context.go('/services/me/offers');
+      }
+    }
   }
 }
