@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/dates.dart';
 import '../../../core/widgets/admin_empty_view.dart';
 import '../../../core/widgets/admin_error_view.dart';
 import '../../../core/widgets/admin_loading_view.dart';
@@ -140,9 +141,7 @@ class _AdminFinancePageState extends State<AdminFinancePage>
                       DataCell(Text(row.status)),
                       DataCell(Text(row.amount?.toString() ?? '-')),
                       DataCell(Text(row.reference ?? '-')),
-                      DataCell(
-                        Text(row.createdAt?.toLocal().toString() ?? '-'),
-                      ),
+                      DataCell(Text(formatAdminDate(context, row.createdAt))),
                       DataCell(_actions(row)),
                     ],
                   ),

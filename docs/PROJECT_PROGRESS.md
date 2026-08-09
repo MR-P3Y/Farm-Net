@@ -2984,3 +2984,18 @@ Status: completed and regression-verified on 2026-08-02; manually accepted on
 - The owner confirmed the real-phone, emulator, and Chrome manual checklist on
   2026-08-09.
 - Evidence: `docs/mobile-localized-date-and-map-layers.md`.
+
+### Admin — Locale-aware Jalali/Gregorian Date Display
+
+Status: completed, regression-verified, and manually accepted on 2026-08-09
+
+- Added one shared Admin date formatter under `core/utils`.
+- Persian Admin UI renders Solar Hijri dates with Persian digits; English UI
+  remains Gregorian with English digits. API `DateTime`/ISO contracts are
+  unchanged.
+- Removed every raw `DateTime.toLocal().toString()` presentation from the
+  Finance and Subscription screens, covering four user-visible date fields.
+- Admin analyze passed with no diagnostics; all 33 tests and the Web release
+  build/Wasm dry run passed.
+- The owner confirmed the Persian/English Finance and Subscription date
+  displays on 2026-08-09.

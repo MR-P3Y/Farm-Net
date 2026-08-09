@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/admin_auth_state.dart';
+import '../../../core/utils/dates.dart';
 import '../../../core/widgets/admin_empty_view.dart';
 import '../../../core/widgets/admin_error_view.dart';
 import '../../../core/widgets/admin_loading_view.dart';
@@ -381,7 +382,7 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
                   DataCell(Text('${item.userLabel}\n#${item.userId}')),
                   DataCell(Text(item.planName)),
                   DataCell(Text(item.status)),
-                  DataCell(Text(_date(item.periodEndsAt))),
+                  DataCell(Text(formatAdminDate(context, item.periodEndsAt))),
                   DataCell(Text(item.activationSource)),
                   DataCell(
                     Wrap(
@@ -503,7 +504,11 @@ class _AdminSubscriptionsPageState extends ConsumerState<AdminSubscriptionsPage>
                                 ),
                                 DataCell(Text(item.reason ?? '-')),
                                 DataCell(Text(item.traceId ?? '-')),
-                                DataCell(Text(_date(item.createdAt))),
+                                DataCell(
+                                  Text(
+                                    formatAdminDate(context, item.createdAt),
+                                  ),
+                                ),
                               ],
                             ),
                         ],
@@ -816,7 +821,10 @@ class _SubscriptionDetailDialog extends StatelessWidget {
               Text('پلن: ${subscription.planName} (${subscription.planCode})'),
               Text('وضعیت: ${subscription.status}'),
               Text('قیمت: ${_money(subscription.priceToman)} تومان'),
-              Text('پایان دوره: ${_date(subscription.periodEndsAt)}'),
+              Text(
+                'پایان دوره: '
+                '${formatAdminDate(context, subscription.periodEndsAt)}',
+              ),
               Text('منبع فعال‌سازی: ${subscription.activationSource}'),
               if (subscription.activationReason != null)
                 Text('دلیل فعال‌سازی: ${subscription.activationReason}'),
@@ -876,6 +884,3 @@ String _money(num value) {
     (_) => '٬',
   );
 }
-
-String _date(DateTime? value) =>
-    value == null ? '-' : value.toLocal().toString().split('.').first;
