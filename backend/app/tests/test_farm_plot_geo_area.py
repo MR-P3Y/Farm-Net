@@ -147,3 +147,36 @@ def test_plot_routes_are_private_owner_routes() -> None:
     }
     assert expected <= set(paths)
     assert not any("/public/farms" in path for path in paths)
+
+
+def test_plot_output_builds_a_stable_label_from_internal_geo_ids() -> None:
+    service = _service()
+    service.repo.get_province.return_value = SimpleNamespace(name="فارس")
+    service.repo.get_county.return_value = SimpleNamespace(name="شیراز")
+    service.repo.get_city.return_value = None
+    service.repo.get_village.return_value = SimpleNamespace(name="قلات")
+    row = SimpleNamespace(
+        id=5,
+        farm_id=3,
+        name="قطعه یک",
+        description=None,
+        area_sqm=Decimal("100"),
+        province_id=1,
+        county_id=2,
+        district_id=3,
+        rural_district_id=4,
+        city_id=None,
+        village_id=6,
+        latitude=Decimal("29.8051000"),
+        longitude=Decimal("52.4897000"),
+        boundary=None,
+        status="active",
+        archived_at=None,
+        archive_reason=None,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+    )
+
+    result = service._out(row)
+
+    assert result.location_label == "فارس، شیراز، قلات"

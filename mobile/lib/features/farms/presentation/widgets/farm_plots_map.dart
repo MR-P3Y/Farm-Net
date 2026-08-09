@@ -95,7 +95,10 @@ class _FarmPlotsMapState extends State<FarmPlotsMap> {
                         height: 58,
                         alignment: Alignment.topCenter,
                         child: Tooltip(
-                          message: plot.name,
+                          message:
+                              plot.locationLabel == null || !context.l10n.isFa
+                                  ? plot.name
+                                  : '${plot.name}\n${plot.locationLabel}',
                           child: GestureDetector(
                             key: ValueKey('farm-plot-map-${plot.id}'),
                             onTap: () => widget.onPlotTap(plot),

@@ -8,8 +8,10 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/utils/digits.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_glass_card.dart';
+import '../data/farm_models.dart';
 import '../data/farm_repository.dart';
 import '../domain/plot_geometry.dart';
+import 'widgets/farm_location_search_sheet.dart';
 import 'widgets/farm_map_layers.dart';
 
 class CreatePlotScreen extends ConsumerStatefulWidget {
@@ -45,6 +47,8 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
   var _submitting = false;
   var _mapReady = false;
   var _mapStyle = FarmMapStyle.satellite;
+  var _resolvingLocation = false;
+  FarmLocationResult? _selectedPlace;
 
   @override
   void initState() {
@@ -104,8 +108,11 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
             onPositionChanged: (camera, hasGesture) {
               if (!drawing && hasGesture) {
                 _selectedCenter = camera.center;
-                if (!_locationChosen && mounted) {
-                  setState(() => _locationChosen = true);
+                if (mounted && (!_locationChosen || _selectedPlace != null)) {
+                  setState(() {
+                    _locationChosen = true;
+                    _selectedPlace = null;
+                  });
                 }
               }
             },
@@ -238,13 +245,37 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: FarmMapLayerToggle(
-                    value: _mapStyle,
-                    onChanged: (value) => setState(() => _mapStyle = value),
-                  ),
+                Row(
+                  children: [
+                    FarmMapLayerToggle(
+                      value: _mapStyle,
+                      onChanged: (value) => setState(() => _mapStyle = value),
+                    ),
+                    if (!drawing) ...[
+                      const SizedBox(width: 8),
+                      IconButton.filledTonal(
+                        key: const ValueKey('farm-location-search-open'),
+                        tooltip: l10n.tr(
+                          fa: 'جست‌وجوی شهر یا روستا',
+                          en: 'Search city or village',
+                        ),
+                        onPressed: _openLocationSearch,
+                        icon: const Icon(Icons.travel_explore_rounded),
+                      ),
+                    ],
+                  ],
                 ),
+                if (!drawing && _selectedPlace != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _selectedPlace!.displayName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -375,6 +406,13 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
                                 en: 'Only the center point will be saved.',
                               ),
                         ),
+                        if (_selectedPlace != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            _selectedPlace!.displayName,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -469,7 +507,7 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
   Widget _buildBottomActions(AppLocalizations l10n) {
     final canContinue =
         _step == 0
-            ? _locationChosen
+            ? _locationChosen && !_resolvingLocation
             : _step == 1
             ? _vertices.isEmpty || _boundaryIsValid
             : !_submitting;
@@ -498,13 +536,9 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
                 child: FilledButton.icon(
                   key: const ValueKey('plot-next-action'),
                   onPressed:
-                      canContinue
-                          ? _step == 2
-                              ? _submit
-                              : _next
-                          : null,
+                      canContinue ? (_step == 2 ? _submit : _next) : null,
                   icon:
-                      _submitting
+                      _submitting || _resolvingLocation
                           ? const SizedBox.square(
                             dimension: 20,
                             child: CircularProgressIndicator(
@@ -536,8 +570,10 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
     );
   }
 
-  void _next() {
+  Future<void> _next() async {
     if (_step == 0) {
+      await _resolveSelectedLocation();
+      if (!mounted) return;
       setState(() => _step = 1);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_mapReady) _mapController.move(_selectedCenter, 16);
@@ -601,6 +637,7 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
       setState(() {
         _selectedCenter = point;
         _locationChosen = true;
+        _selectedPlace = null;
       });
       _mapController.move(point, 17);
     } catch (error) {
@@ -622,6 +659,56 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
     }
   }
 
+  Future<void> _openLocationSearch() async {
+    final language = context.l10n.isFa ? 'fa' : 'en';
+    final result = await showFarmLocationSearchSheet(
+      context,
+      onSearch:
+          (query) => ref
+              .read(farmRepositoryProvider)
+              .searchLocations(query: query, language: language),
+    );
+    if (!mounted || result == null) return;
+    final point = LatLng(result.latitude, result.longitude);
+    setState(() {
+      _selectedCenter = point;
+      _selectedPlace = result;
+      _locationChosen = true;
+    });
+    _mapController.move(point, 15.5);
+  }
+
+  Future<void> _resolveSelectedLocation() async {
+    if (_selectedPlace != null || !_locationChosen) return;
+    final l10n = context.l10n;
+    setState(() => _resolvingLocation = true);
+    try {
+      final result = await ref
+          .read(farmRepositoryProvider)
+          .reverseLocation(
+            latitude: _selectedCenter.latitude,
+            longitude: _selectedCenter.longitude,
+            language: l10n.isFa ? 'fa' : 'en',
+          );
+      if (mounted) setState(() => _selectedPlace = result);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.tr(
+              fa: 'نام مکان پیدا نشد؛ مختصات انتخاب‌شده همچنان ذخیره می‌شود.',
+              en:
+                  'No place name was found; the selected coordinates will still be saved.',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _resolvingLocation = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
     final l10n = context.l10n;
@@ -632,22 +719,24 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
     final center = PlotGeometry.center(_vertices, fallback: _selectedCenter);
     setState(() => _submitting = true);
     try {
+      final payload = <String, dynamic>{
+        'name': _nameController.text.trim(),
+        'description':
+            _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+        'area_sqm': double.parse(area.toStringAsFixed(2)),
+        'latitude': double.parse(center.latitude.toStringAsFixed(7)),
+        'longitude': double.parse(center.longitude.toStringAsFixed(7)),
+        'boundary':
+            _vertices.length >= 3
+                ? PlotGeometry.closedBoundaryPayload(_vertices)
+                : null,
+        ...?_selectedPlace?.geoPayload,
+      };
       final created = await ref
           .read(farmRepositoryProvider)
-          .createPlot(widget.farmId, {
-            'name': _nameController.text.trim(),
-            'description':
-                _descriptionController.text.trim().isEmpty
-                    ? null
-                    : _descriptionController.text.trim(),
-            'area_sqm': double.parse(area.toStringAsFixed(2)),
-            'latitude': double.parse(center.latitude.toStringAsFixed(7)),
-            'longitude': double.parse(center.longitude.toStringAsFixed(7)),
-            'boundary':
-                _vertices.length >= 3
-                    ? PlotGeometry.closedBoundaryPayload(_vertices)
-                    : null,
-          });
+          .createPlot(widget.farmId, payload);
       if (mounted) Navigator.pop(context, created);
     } catch (error) {
       if (!mounted) return;

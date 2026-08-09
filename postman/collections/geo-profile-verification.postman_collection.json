@@ -2,7 +2,7 @@
   "info": {
     "name": "Farm Net - Geo Profile Verification",
     "_postman_id": "7b29a7c3-8b2c-4a11-9a11-geo-profile-verification",
-    "description": "Manual tests for Farm Net Phase 6: Geo, Profile, Documents, Verification, Admin Verification.",
+    "description": "Manual tests for Farm Net Geo, controlled Farm location search, Profile, Documents, Verification, and Admin Verification.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -46,6 +46,58 @@
         "body": {
           "mode": "raw",
           "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"change-me\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Geo - Farm Location Search",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/geo/search?q=قلات%20شیراز&language=fa&limit=5",
+          "host": ["{{base_url}}"],
+          "path": ["geo", "search"],
+          "query": [
+            {"key": "q", "value": "قلات شیراز"},
+            {"key": "language", "value": "fa"},
+            {"key": "limit", "value": "5"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Geo - Reverse Selected Farm Point",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/geo/reverse?latitude=29.8051000&longitude=52.4897000&language=fa",
+          "host": ["{{base_url}}"],
+          "path": ["geo", "reverse"],
+          "query": [
+            {"key": "latitude", "value": "29.8051000"},
+            {"key": "longitude", "value": "52.4897000"},
+            {"key": "language", "value": "fa"}
+          ]
         }
       }
     },

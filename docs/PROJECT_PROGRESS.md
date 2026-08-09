@@ -2999,3 +2999,35 @@ Status: completed, regression-verified, and manually accepted on 2026-08-09
   build/Wasm dry run passed.
 - The owner confirmed the Persian/English Finance and Subscription date
   displays on 2026-08-09.
+
+### Farm Plot — Controlled Place Search and Internal Geo Linking
+
+Status: completed, regression/runtime-verified, and accepted by the project
+owner on 2026-08-10
+
+- Added private, permission-scoped Geo search and reverse endpoints backed by a
+  configurable Nominatim adapter.
+- Enforced explicit-submit search, Iran result bounding, visible OpenStreetMap
+  attribution, hashed bounded caching, per-client search limits, and a global
+  upstream interval above one second.
+- Mapped unambiguous Provider address names to the existing Province/County/
+  District/Rural District/City/Village records; no migration was required.
+- Added stable internal-ID-derived Plot location labels without persisting the
+  Provider's free-form response.
+- Added a compact bilingual search sheet to Plot creation while retaining
+  satellite/street switching, manual panning, GPS, and fail-open coordinate
+  saving.
+- Backend Ruff/compileall and all 408 tests passed. All 138 Mobile tests,
+  focused Farm analysis, Web release/Wasm dry run, and Android debug APK build
+  passed. A policy-compliant live Provider search returned an Iran result. Full
+  Mobile analysis has one unrelated owner-file unused-import warning.
+- Runtime health is HTTP 200, Chrome and the real phone remain active, and the
+  phone `tcp:8000` reverse is intact. The emulator was not connected.
+- After explicit approval, only `farmnet_backend` was restarted. A missing
+  runtime-only HTTP dependency was eliminated by using Python's standard
+  library; the same container recovered without rebuild. MySQL, Redis, and
+  Qdrant IDs/start times were unchanged. Both new OpenAPI paths are active,
+  return `401` rather than `404` without a token, and the in-container live
+  Provider probe returned an Iran result.
+- Evidence: `docs/farms/phase-24-farm-location-search.md`.
+- Project-owner acceptance: confirmed on 2026-08-10.

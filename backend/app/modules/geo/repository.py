@@ -1,6 +1,8 @@
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.common.search import normalize_search_text
+from app.common.search_sql import normalized_search_expression
 from app.modules.geo.models import (
     GeoCity,
     GeoCounty,
@@ -22,6 +24,30 @@ class GeoRepository:
             .order_by(GeoProvince.name.asc())
             .all()
         )
+
+    def find_unique_by_names(
+        self,
+        model,
+        *,
+        names: list[str],
+        province_id: int | None = None,
+        county_id: int | None = None,
+    ):
+        normalized_names = sorted(
+            {normalized for item in names if (normalized := normalize_geo_name(item))}
+        )
+        if not normalized_names:
+            return None
+        query = self.db.query(model).filter(
+            model.is_active.is_(True),
+            normalized_search_expression(model.name).in_(normalized_names),
+        )
+        if province_id is not None and hasattr(model, "province_id"):
+            query = query.filter(model.province_id == province_id)
+        if county_id is not None and hasattr(model, "county_id"):
+            query = query.filter(model.county_id == county_id)
+        rows = query.order_by(model.id.asc()).limit(2).all()
+        return rows[0] if len(rows) == 1 else None
 
     def list_counties(self, *, province_id: int | None = None) -> list[GeoCounty]:
         query = self.db.query(GeoCounty).filter(GeoCounty.is_active.is_(True))
@@ -138,3 +164,34 @@ class GeoRepository:
         )
 
         return items, total
+
+
+_GEO_PREFIXES = (
+    "استان ",
+    "شهرستان ",
+    "بخش ",
+    "دهستان ",
+    "روستای ",
+    "روستا ",
+    "province of ",
+    "province ",
+    "county ",
+    "district ",
+    "rural district ",
+    "city of ",
+)
+
+
+def normalize_geo_name(value: str) -> str:
+    normalized = " ".join(value.split()).strip()
+    lowered = normalized.casefold()
+    for prefix in _GEO_PREFIXES:
+        if lowered.startswith(prefix):
+            normalized = normalized[len(prefix) :].strip()
+            break
+    lowered = normalized.casefold()
+    for suffix in (" province", " county", " district"):
+        if lowered.endswith(suffix):
+            normalized = normalized[: -len(suffix)].strip()
+            break
+    return normalize_search_text(normalized).replace("آ", "ا")

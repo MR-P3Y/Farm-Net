@@ -51,6 +51,7 @@ class FarmPlotModel {
     required this.areaSqm,
     required this.status,
     this.description,
+    this.locationLabel,
     this.latitude,
     this.longitude,
     this.boundary = const [],
@@ -62,6 +63,7 @@ class FarmPlotModel {
   final double areaSqm;
   final String status;
   final String? description;
+  final String? locationLabel;
   final double? latitude;
   final double? longitude;
   final List<FarmGeoPointModel> boundary;
@@ -77,6 +79,7 @@ class FarmPlotModel {
     areaSqm: _double(json['area_sqm']) ?? 0,
     status: json['status'] as String,
     description: json['description'] as String?,
+    locationLabel: json['location_label'] as String?,
     latitude: _double(json['latitude']),
     longitude: _double(json['longitude']),
     boundary: (json['boundary'] as List? ?? const [])
@@ -84,6 +87,67 @@ class FarmPlotModel {
         .map((point) => FarmGeoPointModel.fromJson(point.cast()))
         .toList(growable: false),
   );
+}
+
+class FarmLocationResult {
+  const FarmLocationResult({
+    required this.reference,
+    required this.displayName,
+    required this.shortName,
+    required this.latitude,
+    required this.longitude,
+    required this.provider,
+    required this.attribution,
+    this.provinceId,
+    this.countyId,
+    this.districtId,
+    this.ruralDistrictId,
+    this.cityId,
+    this.villageId,
+  });
+
+  final String reference;
+  final String displayName;
+  final String shortName;
+  final double latitude;
+  final double longitude;
+  final String provider;
+  final String attribution;
+  final int? provinceId;
+  final int? countyId;
+  final int? districtId;
+  final int? ruralDistrictId;
+  final int? cityId;
+  final int? villageId;
+
+  bool get hasInternalGeoMatch => provinceId != null;
+
+  Map<String, int> get geoPayload => {
+    if (provinceId != null) 'province_id': provinceId!,
+    if (countyId != null) 'county_id': countyId!,
+    if (districtId != null) 'district_id': districtId!,
+    if (ruralDistrictId != null) 'rural_district_id': ruralDistrictId!,
+    if (cityId != null) 'city_id': cityId!,
+    if (villageId != null) 'village_id': villageId!,
+  };
+
+  factory FarmLocationResult.fromJson(Map<String, dynamic> json) =>
+      FarmLocationResult(
+        reference: json['reference']?.toString() ?? '',
+        displayName: json['display_name']?.toString() ?? '',
+        shortName: json['short_name']?.toString() ?? '',
+        latitude: _double(json['latitude']) ?? 0,
+        longitude: _double(json['longitude']) ?? 0,
+        provider: json['provider']?.toString() ?? 'openstreetmap',
+        attribution:
+            json['attribution']?.toString() ?? '© OpenStreetMap contributors',
+        provinceId: _int(json['province_id']),
+        countyId: _int(json['county_id']),
+        districtId: _int(json['district_id']),
+        ruralDistrictId: _int(json['rural_district_id']),
+        cityId: _int(json['city_id']),
+        villageId: _int(json['village_id']),
+      );
 }
 
 class FarmGeoPointModel {
@@ -255,6 +319,9 @@ class FarmWeatherModel {
 
 double? _double(Object? value) =>
     value == null ? null : double.tryParse(value.toString());
+
+int? _int(Object? value) =>
+    value == null ? null : int.tryParse(value.toString());
 
 DateTime? _date(Object? value) =>
     value == null ? null : DateTime.tryParse(value.toString());

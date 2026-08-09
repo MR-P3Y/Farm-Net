@@ -198,6 +198,11 @@ def create_rate_limit_middleware(
         "/api/v1/auth/otp/verify",
         "/api/v1/auth/refresh",
     }
+    search_paths = {
+        "/api/v1/search",
+        "/api/v1/geo/search",
+        "/api/v1/geo/reverse",
+    }
 
     def limited_response(
         request: Request,
@@ -258,7 +263,7 @@ def create_rate_limit_middleware(
                 limit=max_requests,
             )
 
-        if request.url.path == "/api/v1/search":
+        if request.url.path in search_paths:
             try:
                 search_allowed = search_limiter.is_allowed(key)
                 if isawaitable(search_allowed):

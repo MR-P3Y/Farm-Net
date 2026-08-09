@@ -465,8 +465,7 @@ class FarmPlotService:
             return None
         return [point.model_dump(mode="json") for point in boundary]
 
-    @staticmethod
-    def _out(row) -> FarmPlotOut:
+    def _out(self, row) -> FarmPlotOut:
         return FarmPlotOut(
             id=row.id,
             farm_id=row.farm_id,
@@ -479,6 +478,7 @@ class FarmPlotService:
             rural_district_id=row.rural_district_id,
             city_id=row.city_id,
             village_id=row.village_id,
+            location_label=self._location_label(row),
             latitude=row.latitude,
             longitude=row.longitude,
             boundary=row.boundary,
@@ -488,6 +488,23 @@ class FarmPlotService:
             created_at=row.created_at,
             updated_at=row.updated_at,
         )
+
+    def _location_label(self, row) -> str | None:
+        province = self.repo.get_province(row.province_id) if row.province_id else None
+        county = self.repo.get_county(row.county_id) if row.county_id else None
+        city = self.repo.get_city(row.city_id) if row.city_id else None
+        village = self.repo.get_village(row.village_id) if row.village_id else None
+        candidates = (
+            (province.name if province is not None else None),
+            (city.name if city is not None else None),
+            (county.name if city is None and county is not None else None),
+            (village.name if village is not None else None),
+        )
+        parts: list[str] = []
+        for value in candidates:
+            if value and value not in parts:
+                parts.append(value)
+        return "، ".join(parts) if parts else None
 
 
 class FarmCropReferenceService:

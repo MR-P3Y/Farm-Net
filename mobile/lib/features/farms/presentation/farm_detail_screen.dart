@@ -234,11 +234,11 @@ class _FarmDetailScreenState extends ConsumerState<FarmDetailScreen> {
                                       ),
                                       title: Text(plot.name),
                                       subtitle: Text(
-                                        '${_formatArea(context, plot.areaSqm)} • ${plot.hasBoundary
-                                            ? l10n.tr(fa: 'مرز ثبت‌شده', en: 'Boundary saved')
-                                            : plot.hasLocation
-                                            ? l10n.tr(fa: 'موقعیت ثبت‌شده', en: 'Location saved')
-                                            : l10n.tr(fa: 'بدون موقعیت', en: 'No location')}',
+                                        '${_formatArea(context, plot.areaSqm)} • ${(l10n.isFa ? plot.locationLabel : null) ?? (plot.hasBoundary
+                                                ? l10n.tr(fa: 'مرز ثبت‌شده', en: 'Boundary saved')
+                                                : plot.hasLocation
+                                                ? l10n.tr(fa: 'موقعیت ثبت‌شده', en: 'Location saved')
+                                                : l10n.tr(fa: 'بدون موقعیت', en: 'No location'))}',
                                       ),
                                       trailing: const Icon(Icons.chevron_left),
                                       onTap: () => _openPlot(plot),

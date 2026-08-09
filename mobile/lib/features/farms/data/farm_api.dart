@@ -54,6 +54,30 @@ class FarmApi {
   ) async =>
       FarmPlotModel.fromJson(await _write('farms/$farmId/plots', payload));
 
+  Future<List<FarmLocationResult>> searchLocations({
+    required String query,
+    required String language,
+  }) => _list(
+    'geo/search',
+    FarmLocationResult.fromJson,
+    queryParameters: {'q': query, 'language': language, 'limit': 5},
+  );
+
+  Future<FarmLocationResult> reverseLocation({
+    required double latitude,
+    required double longitude,
+    required String language,
+  }) async => FarmLocationResult.fromJson(
+    await _read(
+      'geo/reverse',
+      queryParameters: {
+        'latitude': latitude.toStringAsFixed(7),
+        'longitude': longitude.toStringAsFixed(7),
+        'language': language,
+      },
+    ),
+  );
+
   Future<List<CropReference>> crops() async =>
       _list('farm-references/crops', CropReference.fromJson);
 
@@ -187,10 +211,16 @@ class FarmApi {
     }
   }
 
-  Future<Map<String, dynamic>> _read(String path) async {
+  Future<Map<String, dynamic>> _read(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     await _auth();
     try {
-      final response = await _client.get(path);
+      final response = await _client.get(
+        path,
+        queryParameters: queryParameters,
+      );
       return response.data?['data'] as Map<String, dynamic>;
     } on DioException catch (error) {
       throw FarmApiException(_error(error));

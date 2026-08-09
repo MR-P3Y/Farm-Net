@@ -66,6 +66,16 @@ class Settings(BaseSettings):
     auth_rate_limit_window_seconds: int = 60
     trusted_proxy_hosts: str = ""
 
+    geocoding_enabled: bool = True
+    geocoding_provider: str = "nominatim"
+    geocoding_base_url: str = "https://nominatim.openstreetmap.org"
+    geocoding_user_agent: str = "FarmNet/0.28 (+https://farmnet.ir)"
+    geocoding_country_codes: str = "ir"
+    geocoding_timeout_seconds: int = 8
+    geocoding_cache_ttl_seconds: int = 604800
+    geocoding_max_results: int = 5
+    geocoding_min_interval_ms: int = 1100
+
     log_level: str = "INFO"
 
     email_enabled: bool = False
@@ -204,6 +214,21 @@ class Settings(BaseSettings):
                 errors.append("OPENAI_BASE_URL_INSECURE")
             if not 1 <= self.openai_timeout_seconds <= 600:
                 errors.append("OPENAI_TIMEOUT_INVALID")
+        if self.geocoding_enabled:
+            if self.geocoding_provider != "nominatim":
+                errors.append("GEOCODING_PROVIDER_UNSUPPORTED")
+            if not self._is_https_url(self.geocoding_base_url):
+                errors.append("GEOCODING_BASE_URL_INSECURE")
+            if len(self.geocoding_user_agent.strip()) < 12:
+                errors.append("GEOCODING_USER_AGENT_INVALID")
+            if not 1 <= self.geocoding_timeout_seconds <= 30:
+                errors.append("GEOCODING_TIMEOUT_INVALID")
+            if not 60 <= self.geocoding_cache_ttl_seconds <= 2592000:
+                errors.append("GEOCODING_CACHE_TTL_INVALID")
+            if not 1 <= self.geocoding_max_results <= 10:
+                errors.append("GEOCODING_MAX_RESULTS_INVALID")
+            if self.geocoding_min_interval_ms < 1000:
+                errors.append("GEOCODING_INTERVAL_TOO_SHORT")
         return errors
 
     def _production_like_errors(self, *, environment: str) -> list[str]:

@@ -74,6 +74,20 @@ def test_enabled_providers_fail_closed_on_incomplete_or_insecure_config() -> Non
         runtime.validate_runtime_safety()
 
 
+def test_geocoding_rejects_insecure_endpoint_and_policy_interval() -> None:
+    runtime = settings(
+        geocoding_base_url="http://nominatim.invalid",
+        geocoding_min_interval_ms=500,
+    )
+
+    with pytest.raises(ValueError) as exc_info:
+        runtime.validate_runtime_safety()
+
+    message = str(exc_info.value)
+    assert "GEOCODING_BASE_URL_INSECURE" in message
+    assert "GEOCODING_INTERVAL_TOO_SHORT" in message
+
+
 def test_production_rejects_enabled_payment_sandbox() -> None:
     runtime = secure_production_settings(
         payment_gateway_enabled=True,

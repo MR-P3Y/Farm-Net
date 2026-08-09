@@ -1,17 +1,74 @@
+from decimal import Decimal
 from math import ceil
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.core.responses import success_response
 from app.db.session import get_db
-from app.modules.geo.service import GeoService
+from app.modules.auth.dependencies import require_permission
+from app.modules.auth.models import AuthUser
+from app.modules.geo.geocoding import GeocodingGateway, get_geocoding_gateway
+from app.modules.geo.schemas import GeoPlaceReverseResponse, GeoPlaceSearchResponse
+from app.modules.geo.service import GeoLocationSearchService, GeoService
 
 
 router = APIRouter(
     prefix="/geo",
     tags=["Geo"],
 )
+
+
+@router.get("/search", response_model=GeoPlaceSearchResponse)
+def search_places(
+    request: Request,
+    response: Response,
+    q: str = Query(min_length=2, max_length=120),
+    language: str = Query(default="fa", pattern="^(fa|en)$"),
+    limit: int = Query(default=5, ge=1, le=5),
+    db: Session = Depends(get_db),
+    gateway: GeocodingGateway = Depends(get_geocoding_gateway),
+    _user: AuthUser = Depends(require_permission("farms.manage_own")),
+):
+    items, cached = GeoLocationSearchService(db, gateway=gateway).search(
+        query=q,
+        language=language,
+        limit=limit,
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return success_response(
+        data=[item.model_dump(mode="json") for item in items],
+        message="OK",
+        meta={
+            "count": len(items),
+            "cached": cached,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.get("/reverse", response_model=GeoPlaceReverseResponse)
+def reverse_place(
+    request: Request,
+    response: Response,
+    latitude: Decimal = Query(ge=-90, le=90, decimal_places=7),
+    longitude: Decimal = Query(ge=-180, le=180, decimal_places=7),
+    language: str = Query(default="fa", pattern="^(fa|en)$"),
+    db: Session = Depends(get_db),
+    gateway: GeocodingGateway = Depends(get_geocoding_gateway),
+    _user: AuthUser = Depends(require_permission("farms.manage_own")),
+):
+    item, cached = GeoLocationSearchService(db, gateway=gateway).reverse(
+        latitude=latitude,
+        longitude=longitude,
+        language=language,
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return success_response(
+        data=item.model_dump(mode="json"),
+        message="OK",
+        meta={"cached": cached, "trace_id": request.state.trace_id},
+    )
 
 
 @router.get("/provinces")

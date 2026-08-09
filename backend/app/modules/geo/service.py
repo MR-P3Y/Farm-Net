@@ -1,5 +1,11 @@
+from decimal import Decimal
+
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
+from app.core.exceptions import AppException
+from app.modules.geo.geocoding import GeocodingGateway, GeocodingPlace
+from app.modules.geo.models import GeoCity, GeoCounty, GeoProvince, GeoVillage
 from app.modules.geo.repository import GeoRepository
 from app.modules.geo.schemas import (
     GeoCityOut,
@@ -8,6 +14,7 @@ from app.modules.geo.schemas import (
     GeoProvinceOut,
     GeoRuralDistrictOut,
     GeoVillageOut,
+    GeoPlaceOut,
 )
 
 
@@ -140,3 +147,113 @@ class GeoService:
             )
             for item in items
         ], total
+
+
+class GeoLocationSearchService:
+    def __init__(self, db: Session, *, gateway: GeocodingGateway) -> None:
+        self.repo = GeoRepository(db)
+        self.gateway = gateway
+        self.settings = get_settings()
+
+    def search(
+        self,
+        *,
+        query: str,
+        language: str,
+        limit: int,
+    ) -> tuple[list[GeoPlaceOut], bool]:
+        results, cached = self.gateway.search(
+            query=" ".join(query.split()).strip(),
+            language=language,
+            limit=min(limit, self.settings.geocoding_max_results),
+        )
+        return [self._out(item) for item in results], cached
+
+    def reverse(
+        self,
+        *,
+        latitude: Decimal,
+        longitude: Decimal,
+        language: str,
+    ) -> tuple[GeoPlaceOut, bool]:
+        result, cached = self.gateway.reverse(
+            latitude=latitude,
+            longitude=longitude,
+            language=language,
+        )
+        if result is None:
+            raise AppException(
+                "GEO_LOCATION_NOT_FOUND",
+                "No readable location was found for this point",
+                404,
+            )
+        return self._out(result), cached
+
+    def _out(self, place: GeocodingPlace) -> GeoPlaceOut:
+        hierarchy = self._resolve_hierarchy(place.address)
+        return GeoPlaceOut(
+            reference=place.reference,
+            display_name=place.display_name,
+            short_name=place.short_name,
+            latitude=str(place.latitude),
+            longitude=str(place.longitude),
+            category=place.category,
+            place_type=place.place_type,
+            country_code=place.country_code,
+            provider=place.provider,
+            attribution=place.attribution,
+            **hierarchy,
+        )
+
+    def _resolve_hierarchy(self, address: dict[str, str]) -> dict[str, int | None]:
+        province = self.repo.find_unique_by_names(
+            GeoProvince,
+            names=_address_values(address, "state", "province"),
+        )
+        county = self.repo.find_unique_by_names(
+            GeoCounty,
+            names=_address_values(address, "county", "state_district"),
+            province_id=province.id if province is not None else None,
+        )
+        village = self.repo.find_unique_by_names(
+            GeoVillage,
+            names=_address_values(address, "village", "hamlet"),
+            province_id=province.id if province is not None else None,
+            county_id=county.id if county is not None else None,
+        )
+        if village is not None:
+            return {
+                "province_id": village.province_id,
+                "county_id": village.county_id,
+                "district_id": village.district_id,
+                "rural_district_id": village.rural_district_id,
+                "city_id": None,
+                "village_id": village.id,
+            }
+        city = self.repo.find_unique_by_names(
+            GeoCity,
+            names=_address_values(address, "city", "town", "municipality"),
+            province_id=province.id if province is not None else None,
+            county_id=county.id if county is not None else None,
+        )
+        if city is not None:
+            return {
+                "province_id": city.province_id,
+                "county_id": city.county_id,
+                "district_id": city.district_id,
+                "rural_district_id": None,
+                "city_id": city.id,
+                "village_id": None,
+            }
+        return {
+            "province_id": province.id if province is not None else None,
+            "county_id": county.id if county is not None else None,
+            "district_id": None,
+            "rural_district_id": None,
+            "city_id": None,
+            "village_id": None,
+        }
+
+
+def _address_values(address: dict[str, str], *keys: str) -> list[str]:
+    return [value for key in keys if (value := address.get(key))]

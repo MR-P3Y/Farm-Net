@@ -2,7 +2,8 @@
 
 Implemented: 2026-08-02
 
-Status: completed and manually accepted on 2026-08-02
+Status: completed and manually accepted on 2026-08-02; controlled place-search
+follow-up completed and accepted on 2026-08-10
 
 ## Outcome
 
@@ -46,19 +47,25 @@ their detail journey.
   Imagery and can be replaced with `MAP_SATELLITE_TILE_URL`; its visible credit
   can be replaced with `MAP_SATELLITE_ATTRIBUTION`.
 - Provider attribution stays visibly rendered over the map for both layers.
+- Plot creation also exposes one compact search action. It searches only after
+  explicit submit, shows OpenStreetMap attribution, moves the existing map to
+  the selected result, and keeps manual pan/GPS selection available.
 - Exact Plot points and boundaries continue through authenticated owner-scoped
   Farm APIs only; no public Farm route was introduced.
-- No public reverse-geocoding service or hidden location upload was added.
+- Search and reverse geocoding go through authenticated Backend routes. The
+  external provider receives only the submitted query or selected coordinate;
+  the app performs no hidden autocomplete requests.
 - As with every remote tile layer, the selected Provider receives ordinary
   tile requests for the visible viewport. Exact saved Plot geometry is still
   sent only to the authenticated Farm API.
 
 ## Deliberate boundaries
 
-This map step does not yet include province/city/village text search, offline
-tile packs, boundary dragging, or cadastral import. Search should be connected
-to a controlled Backend geocoder. Satellite imagery is a visual positioning
-aid and is not represented as current survey-grade or cadastral evidence.
+This map step does not include offline tile packs, boundary dragging, or
+cadastral import. Satellite imagery is a visual positioning aid and is not
+represented as current survey-grade or cadastral evidence. The public
+Nominatim default is a replaceable development/low-volume provider boundary,
+not a promise of unrestricted production capacity.
 
 ## Verification
 

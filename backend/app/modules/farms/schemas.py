@@ -171,6 +171,7 @@ class FarmPlotOut(BaseModel):
     rural_district_id: int | None
     city_id: int | None
     village_id: int | None
+    location_label: str | None
     latitude: Decimal | None
     longitude: Decimal | None
     boundary: list[FarmGeoPoint] | None

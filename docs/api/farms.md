@@ -15,6 +15,9 @@ that hierarchy.
   boundaries, laboratory values, diary notes, and media/storage details are
   excluded.
 - Archive/restore is used instead of destructive Farm and Plot deletion.
+- Plot place search never makes the Farm geometry public. Plot creation stores
+  the existing coordinate/boundary fields plus only unambiguous internal Geo
+  IDs returned by the private `/geo/search` or `/geo/reverse` boundary.
 
 ## Endpoint groups
 
@@ -33,6 +36,10 @@ that hierarchy.
 The exact field names, enums, validation limits, request bodies, and response
 schemas are authoritative in `/openapi.json`. All API responses use the common
 `success`, `data`, `message`, and `meta` envelope.
+
+`FarmPlotOut.location_label` is a read-only label derived from stored internal
+Province/County/City/Village IDs. The external provider's free-form display
+name and raw response are not persisted with a Plot.
 
 ## Lifecycle rules
 

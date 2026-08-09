@@ -24,6 +24,19 @@ class FarmRepository {
   Future<List<FarmPlotModel>> plots(int farmId) => _api.plots(farmId);
   Future<FarmPlotModel> createPlot(int farmId, Map<String, dynamic> value) =>
       _api.createPlot(farmId, value);
+  Future<List<FarmLocationResult>> searchLocations({
+    required String query,
+    required String language,
+  }) => _api.searchLocations(query: query, language: language);
+  Future<FarmLocationResult> reverseLocation({
+    required double latitude,
+    required double longitude,
+    required String language,
+  }) => _api.reverseLocation(
+    latitude: latitude,
+    longitude: longitude,
+    language: language,
+  );
   Future<List<CropReference>> crops() => _api.crops();
   Future<List<MeasurementUnitModel>> harvestUnits() => _api.harvestUnits();
   Future<List<CropCycleModel>> cycles(int farmId, int plotId) =>

@@ -57,3 +57,26 @@ def test_forwarded_client_is_used_only_for_allow_listed_immediate_proxy() -> Non
     client = TestClient(app)
     assert client.get("/resource", headers={"X-Forwarded-For": "1.1.1.1"}).status_code == 200
     assert client.get("/resource", headers={"X-Forwarded-For": "2.2.2.2"}).status_code == 200
+
+
+def test_geo_search_uses_the_dedicated_search_limit() -> None:
+    app = FastAPI()
+    app.middleware("http")(
+        create_rate_limit_middleware(
+            enabled=True,
+            max_requests=10,
+            window_seconds=60,
+            search_max_requests=1,
+            search_window_seconds=30,
+        )
+    )
+
+    @app.get("/api/v1/geo/search")
+    def geo_search():
+        return {"ok": True}
+
+    client = TestClient(app)
+    assert client.get("/api/v1/geo/search").status_code == 200
+    limited = client.get("/api/v1/geo/search")
+    assert limited.status_code == 429
+    assert limited.headers["cache-control"] == "no-store"
