@@ -39,25 +39,36 @@ their detail journey.
 
 - The tile URL and application user agent are configurable with
   `MAP_TILE_URL` and `MAP_USER_AGENT` build-time values.
-- The default map uses OpenStreetMap tiles and keeps visible contributor
-  attribution.
+- Both map surfaces expose a shared Street/Satellite switch. Plot creation
+  starts with satellite imagery because field boundaries are easier to
+  recognize, while the Farm overview starts with the street layer.
+- The street layer uses OpenStreetMap. The satellite layer uses ArcGIS World
+  Imagery and can be replaced with `MAP_SATELLITE_TILE_URL`; its visible credit
+  can be replaced with `MAP_SATELLITE_ATTRIBUTION`.
+- Provider attribution stays visibly rendered over the map for both layers.
 - Exact Plot points and boundaries continue through authenticated owner-scoped
   Farm APIs only; no public Farm route was introduced.
 - No public reverse-geocoding service or hidden location upload was added.
+- As with every remote tile layer, the selected Provider receives ordinary
+  tile requests for the visible viewport. Exact saved Plot geometry is still
+  sent only to the authenticated Farm API.
 
 ## Deliberate boundaries
 
-This first map step does not yet include province/city/village text search,
-satellite imagery, offline tile packs, boundary dragging, or cadastral import.
-Search should be connected to a controlled Backend geocoder, and satellite
-imagery requires an approved provider and key instead of a hard-coded public
-endpoint.
+This map step does not yet include province/city/village text search, offline
+tile packs, boundary dragging, or cadastral import. Search should be connected
+to a controlled Backend geocoder. Satellite imagery is a visual positioning
+aid and is not represented as current survey-grade or cadastral evidence.
 
 ## Verification
 
 - `flutter analyze`: passed with no diagnostics.
-- Full Mobile tests: 99 passed.
+- Full Mobile tests: 133 passed after the shared Jalali picker and
+  Street/Satellite layer addition.
 - Focused Farm model/geometry tests: 8 passed.
+- Focused Street/Satellite source, attribution, toggle, and locale tests:
+  passed.
+- OpenStreetMap and ArcGIS World Imagery live tile probes returned HTTP 200.
 - Flutter Web release build and Wasm dry run: passed.
 - Android debug APK build: passed.
 - Existing real-phone connection and API reverse remained active.

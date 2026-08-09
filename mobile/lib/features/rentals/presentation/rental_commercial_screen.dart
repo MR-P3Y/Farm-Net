@@ -219,14 +219,14 @@ class _State extends ConsumerState<RentalCommercialScreen> {
   }
 
   Future<void> _addBlock() async {
-    final start = await showDatePicker(
+    final start = await showLocalizedDatePicker(
       context: context,
       initialDate: DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 730)),
     );
     if (start == null || !mounted) return;
-    final end = await showDatePicker(
+    final end = await showLocalizedDatePicker(
       context: context,
       initialDate: start.add(const Duration(days: 1)),
       firstDate: start.add(const Duration(days: 1)),
@@ -276,14 +276,14 @@ class _State extends ConsumerState<RentalCommercialScreen> {
   }
 
   Future<void> _editBlock(RentalAvailabilityBlock block) async {
-    final start = await showDatePicker(
+    final start = await showLocalizedDatePicker(
       context: context,
       initialDate: block.startsAt,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 730)),
     );
     if (start == null || !mounted) return;
-    final end = await showDatePicker(
+    final end = await showLocalizedDatePicker(
       context: context,
       initialDate:
           block.endsAt.isAfter(start)

@@ -124,7 +124,7 @@ class _PlotDetailScreenState extends ConsumerState<PlotDetailScreen> {
                         title: const Text('شروع برنامه‌ریزی‌شده'),
                         subtitle: Text(starts.format(context)),
                         onTap: () async {
-                          final value = await showDatePicker(
+                          final value = await showLocalizedDatePicker(
                             context: context,
                             firstDate: DateTime(2020),
                             lastDate: DateTime(2040),
@@ -139,7 +139,7 @@ class _PlotDetailScreenState extends ConsumerState<PlotDetailScreen> {
                         title: const Text('پایان برنامه‌ریزی‌شده'),
                         subtitle: Text(ends.format(context)),
                         onTap: () async {
-                          final value = await showDatePicker(
+                          final value = await showLocalizedDatePicker(
                             context: context,
                             firstDate: starts,
                             lastDate: DateTime(2040),

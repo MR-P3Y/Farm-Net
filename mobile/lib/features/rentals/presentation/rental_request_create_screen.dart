@@ -96,7 +96,9 @@ class _State extends ConsumerState<RentalRequestCreateScreen> {
                         onPressed: () => _pick(true),
                         icon: const Icon(Icons.event),
                         label: Text(
-                          _start == null ? 'زمان شروع' : _start!.format(context, showTime: true),
+                          _start == null
+                              ? 'زمان شروع'
+                              : _start!.format(context, showTime: true),
                         ),
                       ),
                     ),
@@ -105,7 +107,11 @@ class _State extends ConsumerState<RentalRequestCreateScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => _pick(false),
                         icon: const Icon(Icons.event_available),
-                        label: Text(_end == null ? 'زمان پایان' : _end!.format(context, showTime: true)),
+                        label: Text(
+                          _end == null
+                              ? 'زمان پایان'
+                              : _end!.format(context, showTime: true),
+                        ),
                       ),
                     ),
                   ],
@@ -167,7 +173,7 @@ class _State extends ConsumerState<RentalRequestCreateScreen> {
   }
 
   Future<void> _pick(bool start) async {
-    final date = await showDatePicker(
+    final date = await showLocalizedDatePicker(
       context: context,
       initialDate: DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),

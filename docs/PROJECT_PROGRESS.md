@@ -2957,3 +2957,30 @@ Status: completed, locally activated, and manually accepted on 2026-08-02
   untouched.
 - Full Mobile analyze and all 131 tests passed; Web release/Wasm dry-run and
   Android debug APK builds passed again.
+
+### Mobile — Real Jalali Date Picker + Farm Street/Satellite Layers
+
+Status: completed and regression-verified on 2026-08-02; manually accepted on
+2026-08-09
+
+- Audited every Flutter calendar selector and found ten direct Mobile Date
+  Picker calls; Admin has no direct Date Picker.
+- Added one common `showLocalizedDatePicker` entry point backed by a real
+  Jalali `CalendarDelegate` for Persian and the standard Gregorian delegate for
+  English.
+- Preserved Gregorian `DateTime`/ISO values at API boundaries while rendering
+  Persian months, weekdays, years, digits, leap days, and typed input in the
+  picker.
+- Replaced all ten feature-level picker calls and added focused conversion,
+  parsing, widget, and locale tests.
+- Added a shared Street/Satellite layer control to Plot creation and the Farm
+  Plot overview. Plot creation defaults to satellite imagery.
+- Kept street/satellite tile URLs and attribution configurable, permanently
+  rendered the active Provider credit, and retained the authenticated geometry
+  privacy boundary.
+- Full Mobile analyze passed with no diagnostics; all 133 tests passed; Web
+  release/Wasm dry run and Android debug APK builds passed. Android build
+  excluded `setupDebugApiReverse`, so no running device mapping was changed.
+- The owner confirmed the real-phone, emulator, and Chrome manual checklist on
+  2026-08-09.
+- Evidence: `docs/mobile-localized-date-and-map-layers.md`.

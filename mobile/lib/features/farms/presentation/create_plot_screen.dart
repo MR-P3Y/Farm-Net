@@ -44,6 +44,7 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
   var _locating = false;
   var _submitting = false;
   var _mapReady = false;
+  var _mapStyle = FarmMapStyle.satellite;
 
   @override
   void initState() {
@@ -117,7 +118,7 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
                     : null,
           ),
           children: [
-            const FarmMapTiles(),
+            FarmMapTiles(style: _mapStyle),
             if (_vertices.length >= 2)
               PolylineLayer(
                 polylines: [
@@ -183,7 +184,10 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
                     ),
                 ],
               ),
-            const FarmMapAttribution(),
+            FarmMapAttribution(
+              style: _mapStyle,
+              bottomPadding: drawing ? 82 : 6,
+            ),
           ],
         ),
         if (!drawing)
@@ -206,26 +210,39 @@ class _CreatePlotScreenState extends ConsumerState<CreatePlotScreen> {
           end: 14,
           child: FarmGlassCard(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(
-                  drawing ? Icons.gesture_rounded : Icons.map_rounded,
-                  color: const Color(0xFF0F4D2E),
+                Row(
+                  children: [
+                    Icon(
+                      drawing ? Icons.gesture_rounded : Icons.map_rounded,
+                      color: const Color(0xFF0F4D2E),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        drawing
+                            ? l10n.tr(
+                              fa: 'گوشه‌های زمین را به‌ترتیب لمس کنید.',
+                              en: 'Tap the plot corners in order.',
+                            )
+                            : l10n.tr(
+                              fa:
+                                  'نقشه را جابه‌جا کنید تا نشانگر روی زمین قرار بگیرد.',
+                              en: 'Move the map until the pin is over the plot.',
+                            ),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    drawing
-                        ? l10n.tr(
-                          fa: 'گوشه‌های زمین را به‌ترتیب لمس کنید.',
-                          en: 'Tap the plot corners in order.',
-                        )
-                        : l10n.tr(
-                          fa:
-                              'نقشه را جابه‌جا کنید تا نشانگر روی زمین قرار بگیرد.',
-                          en: 'Move the map until the pin is over the plot.',
-                        ),
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: FarmMapLayerToggle(
+                    value: _mapStyle,
+                    onChanged: (value) => setState(() => _mapStyle = value),
                   ),
                 ),
               ],

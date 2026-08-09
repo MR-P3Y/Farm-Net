@@ -1265,7 +1265,7 @@ class _CostEntrySheetState extends State<_CostEntrySheet> {
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () async {
-                final value = await showDatePicker(
+                final value = await showLocalizedDatePicker(
                   context: context,
                   initialDate: _date,
                   firstDate: DateTime(2000),
@@ -1396,7 +1396,7 @@ class _PlanEntrySheetState extends State<_PlanEntrySheet> {
             ),
             OutlinedButton.icon(
               onPressed: () async {
-                final value = await showDatePicker(
+                final value = await showLocalizedDatePicker(
                   context: context,
                   initialDate: _date,
                   firstDate: DateTime.now().subtract(const Duration(days: 1)),

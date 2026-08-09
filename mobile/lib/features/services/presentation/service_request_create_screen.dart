@@ -230,7 +230,7 @@ class _ServiceRequestCreateScreenState
   }
 
   Future<void> _pickDate() async {
-    final value = await showDatePicker(
+    final value = await showLocalizedDatePicker(
       context: context,
       initialDate: DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now(),
