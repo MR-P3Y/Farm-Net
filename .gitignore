@@ -71,6 +71,8 @@ ssl/
 certs/
 /infra/production.env
 /infra/secrets/
+/infra/demo.env
+/infra/secrets-demo/
 
 # Node / Web
 node_modules/

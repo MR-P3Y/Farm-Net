@@ -1,0 +1,180 @@
+name: ${COMPOSE_PROJECT_NAME:-farmnet-demo}
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+x-backend-environment: &backend-environment
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_VERSION: ${APP_VERSION:?APP_VERSION is required}
+  PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?PUBLIC_BASE_URL is required}
+  ADMIN_BASE_URL: ${ADMIN_BASE_URL:?ADMIN_BASE_URL is required}
+  MEDIA_BASE_URL: ${MEDIA_BASE_URL:?MEDIA_BASE_URL is required}
+  CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+  MEDIA_STORAGE_DIR: /srv/farmnet/media
+  AUTH_DEV_OTP_ENABLED: "false"
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_BACKEND: redis
+  TRUSTED_PROXY_HOSTS: ${TRUSTED_PROXY_HOSTS:?TRUSTED_PROXY_HOSTS is required}
+  DATABASE_URL_FILE: /run/secrets/database_url
+  REDIS_URL_FILE: /run/secrets/redis_url
+  JWT_SECRET_KEY_FILE: /run/secrets/jwt_secret_key
+  SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:?SUPER_ADMIN_EMAIL is required}
+  SUPER_ADMIN_PHONE: ${SUPER_ADMIN_PHONE:?SUPER_ADMIN_PHONE is required}
+  SUPER_ADMIN_PASSWORD_FILE: /run/secrets/super_admin_password
+
+x-backend-secrets: &backend-secrets
+  - database_url
+  - redis_url
+  - jwt_secret_key
+  - super_admin_password
+
+x-backend-service: &backend-service
+  image: farmnet-backend:${APP_VERSION:?APP_VERSION is required}
+  build:
+    context: ../backend
+    target: runtime
+  environment: *backend-environment
+  secrets: *backend-secrets
+  user: "10001:10001"
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  pids_limit: 192
+  mem_limit: 768m
+  cpus: 1.0
+  init: true
+  logging: *default-logging
+  networks:
+    - demo
+
+services:
+  mysql:
+    image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
+      MYSQL_USER: ${MYSQL_USER:?MYSQL_USER is required}
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    secrets:
+      - mysql_password
+      - mysql_root_password
+    volumes:
+      - mysql_demo_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - MYSQL_PWD="$$(cat /run/secrets/mysql_root_password)" mysqladmin ping -h 127.0.0.1 -uroot --silent
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 384
+    mem_limit: 768m
+    cpus: 1.0
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - demo
+
+  redis:
+    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    command:
+      - sh
+      - -c
+      - exec redis-server --appendonly yes --maxmemory 96mb --maxmemory-policy allkeys-lru --requirepass "$$(cat /run/secrets/redis_password)"
+    secrets:
+      - redis_password
+    volumes:
+      - redis_demo_data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli --no-auth-warning -a "$$(cat /run/secrets/redis_password)" ping | grep -q PONG
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    pids_limit: 96
+    mem_limit: 128m
+    cpus: 0.25
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - demo
+
+  migration:
+    <<: *backend-service
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  backend:
+    <<: *backend-service
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-18100}:8000"
+    volumes:
+      - media_demo_data:/srv/farmnet/media
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3).read()
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+secrets:
+  database_url:
+    file: ${SECRETS_DIR:-./secrets-demo}/database_url
+  redis_url:
+    file: ${SECRETS_DIR:-./secrets-demo}/redis_url
+  jwt_secret_key:
+    file: ${SECRETS_DIR:-./secrets-demo}/jwt_secret_key
+  super_admin_password:
+    file: ${SECRETS_DIR:-./secrets-demo}/super_admin_password
+  mysql_password:
+    file: ${SECRETS_DIR:-./secrets-demo}/mysql_password
+  mysql_root_password:
+    file: ${SECRETS_DIR:-./secrets-demo}/mysql_root_password
+  redis_password:
+    file: ${SECRETS_DIR:-./secrets-demo}/redis_password
+
+volumes:
+  mysql_demo_data:
+  redis_demo_data:
+  media_demo_data:
+
+networks:
+  demo:
+    ipam:
+      config:
+        - subnet: ${FARMNET_DEMO_SUBNET:-172.29.0.0/24}

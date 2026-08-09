@@ -14,8 +14,8 @@ class AdminLoginPage extends ConsumerStatefulWidget {
 }
 
 class _AdminLoginPageState extends ConsumerState<AdminLoginPage> {
-  final _emailController = TextEditingController(text: 'admin@example.com');
-  final _passwordController = TextEditingController(text: 'change-me');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
