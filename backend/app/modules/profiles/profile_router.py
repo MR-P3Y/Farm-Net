@@ -43,6 +43,29 @@ def update_my_profile(
     result = service.update_my_profile(
         user=current_user,
         payload=payload,
+        partial=False,
+    )
+
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Profile updated",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.patch("/me")
+def patch_my_profile(
+    payload: ProfileUpdateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(get_current_active_user),
+):
+    service = ProfileService(db)
+
+    result = service.update_my_profile(
+        user=current_user,
+        payload=payload,
+        partial=True,
     )
 
     return success_response(

@@ -83,3 +83,97 @@ class OtpRequestResult {
     );
   }
 }
+
+class PasswordResetRequestResult {
+  const PasswordResetRequestResult({
+    required this.expiresInSeconds,
+    this.devCode,
+  });
+
+  final int expiresInSeconds;
+  final String? devCode;
+
+  factory PasswordResetRequestResult.fromJson(Map<String, dynamic> json) {
+    return PasswordResetRequestResult(
+      expiresInSeconds: (json['expires_in_seconds'] as num?)?.toInt() ?? 0,
+      devCode: json['dev_code'] as String?,
+    );
+  }
+}
+
+class EmailRegistrationInput {
+  const EmailRegistrationInput({
+    required this.email,
+    required this.password,
+    required this.firstName,
+    required this.lastName,
+    required this.nationalId,
+    required this.provinceId,
+    required this.countyId,
+    required this.address,
+    this.displayName,
+    this.cityId,
+    this.postalCode,
+  });
+
+  final String email;
+  final String password;
+  final String firstName;
+  final String lastName;
+  final String? displayName;
+  final String nationalId;
+  final int provinceId;
+  final int countyId;
+  final int? cityId;
+  final String address;
+  final String? postalCode;
+
+  Map<String, dynamic> toJson() => {
+    'email': email,
+    'password': password,
+    'first_name': firstName,
+    'last_name': lastName,
+    if (displayName?.isNotEmpty == true) 'display_name': displayName,
+    'national_id': nationalId,
+    'province_id': provinceId,
+    'county_id': countyId,
+    if (cityId != null) 'city_id': cityId,
+    'address': address,
+    if (postalCode?.isNotEmpty == true) 'postal_code': postalCode,
+  };
+}
+
+class AuthSessionModel {
+  const AuthSessionModel({
+    required this.id,
+    required this.status,
+    required this.isCurrent,
+    required this.createdAt,
+    this.ipAddress,
+    this.userAgent,
+    this.lastSeenAt,
+    this.expiresAt,
+  });
+
+  final int id;
+  final String status;
+  final String? ipAddress;
+  final String? userAgent;
+  final bool isCurrent;
+  final String createdAt;
+  final String? lastSeenAt;
+  final String? expiresAt;
+
+  factory AuthSessionModel.fromJson(Map<String, dynamic> json) {
+    return AuthSessionModel(
+      id: (json['id'] as num).toInt(),
+      status: json['status']?.toString() ?? 'unknown',
+      ipAddress: json['ip_address']?.toString(),
+      userAgent: json['user_agent']?.toString(),
+      isCurrent: json['is_current'] == true,
+      createdAt: json['created_at']?.toString() ?? '',
+      lastSeenAt: json['last_seen_at']?.toString(),
+      expiresAt: json['expires_at']?.toString(),
+    );
+  }
+}

@@ -16,14 +16,8 @@ class AuthRepository {
   final AuthApi _api;
   final TokenStorage _tokenStorage;
 
-  Future<AuthTokenPair> registerWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    final result = await _api.registerWithEmail(
-      email: email,
-      password: password,
-    );
+  Future<AuthTokenPair> registerWithEmail(EmailRegistrationInput input) async {
+    final result = await _api.registerWithEmail(input);
 
     await _saveTokenPair(result);
     return result;
@@ -90,6 +84,34 @@ class AuthRepository {
     await _tokenStorage.clear();
     _api.setToken(null);
   }
+
+  Future<List<AuthSessionModel>> listSessions() => _api.listSessions();
+
+  Future<void> revokeSession(int sessionId) => _api.revokeSession(sessionId);
+
+  Future<int> revokeOtherSessions() => _api.revokeOtherSessions();
+
+  Future<int> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) => _api.changePassword(
+    currentPassword: currentPassword,
+    newPassword: newPassword,
+  );
+
+  Future<PasswordResetRequestResult> requestPasswordReset({
+    required String identifier,
+  }) => _api.requestPasswordReset(identifier: identifier);
+
+  Future<int> confirmPasswordReset({
+    required String identifier,
+    required String code,
+    required String newPassword,
+  }) => _api.confirmPasswordReset(
+    identifier: identifier,
+    code: code,
+    newPassword: newPassword,
+  );
 
   Future<AuthTokenPair?> _tryRefresh() async {
     final refreshToken = await _tokenStorage.getRefreshToken();

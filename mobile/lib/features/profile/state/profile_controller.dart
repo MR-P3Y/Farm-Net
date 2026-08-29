@@ -7,7 +7,7 @@ import '../data/profile_repository.dart';
 import 'profile_state.dart';
 
 final profileControllerProvider =
-    StateNotifierProvider<ProfileController, ProfileState>((ref) {
+    StateNotifierProvider.autoDispose<ProfileController, ProfileState>((ref) {
       return ProfileController(
         profileRepository: ref.watch(profileRepositoryProvider),
         geoRepository: ref.watch(geoRepositoryProvider),
@@ -26,7 +26,7 @@ class ProfileController extends StateNotifier<ProfileState> {
   final GeoRepository _geoRepository;
 
   Future<void> load() async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = ProfileState.initial();
 
     try {
       final profileFuture = _profileRepository.getMe();
@@ -55,11 +55,16 @@ class ProfileController extends StateNotifier<ProfileState> {
       state = state.copyWith(
         isLoading: false,
         errorMessage: error.error.message,
+        errorCode: error.error.code,
+        errorDetails: error.error.details,
+        errorTraceId: error.error.traceId,
       );
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'خطا در دریافت اطلاعات پروفایل',
+        errorMessage: 'Could not load profile.',
+        errorCode: 'PROFILE_LOAD_FAILED',
+        clearProfile: true,
       );
     }
   }
@@ -74,7 +79,10 @@ class ProfileController extends StateNotifier<ProfileState> {
         clearError: true,
       );
     } catch (_) {
-      state = state.copyWith(errorMessage: 'خطا در دریافت شهرستان‌ها');
+      state = state.copyWith(
+        errorMessage: 'Could not load counties.',
+        errorCode: 'PROFILE_COUNTIES_LOAD_FAILED',
+      );
     }
   }
 
@@ -88,7 +96,10 @@ class ProfileController extends StateNotifier<ProfileState> {
 
       state = state.copyWith(cities: cities, clearError: true);
     } catch (_) {
-      state = state.copyWith(errorMessage: 'خطا در دریافت شهرها');
+      state = state.copyWith(
+        errorMessage: 'Could not load cities.',
+        errorCode: 'PROFILE_CITIES_LOAD_FAILED',
+      );
     }
   }
 
@@ -105,14 +116,22 @@ class ProfileController extends StateNotifier<ProfileState> {
       state = state.copyWith(
         isSaving: false,
         errorMessage: error.error.message,
+        errorCode: error.error.code,
+        errorDetails: error.error.details,
+        errorTraceId: error.error.traceId,
       );
       return false;
     } catch (_) {
       state = state.copyWith(
         isSaving: false,
-        errorMessage: 'خطا در ذخیره پروفایل',
+        errorMessage: 'Could not save profile.',
+        errorCode: 'PROFILE_SAVE_FAILED',
       );
       return false;
     }
+  }
+
+  void reset() {
+    state = ProfileState.initial();
   }
 }

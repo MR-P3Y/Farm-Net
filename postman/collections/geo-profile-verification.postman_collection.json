@@ -189,7 +189,7 @@
       }
     },
     {
-      "name": "Profile - Update Me",
+      "name": "Profile - Patch Me",
       "request": {
         "auth": {
           "type": "bearer",
@@ -201,7 +201,7 @@
             }
           ]
         },
-        "method": "PUT",
+        "method": "PATCH",
         "header": [
           {
             "key": "Content-Type",
@@ -215,7 +215,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"first_name\": \"Peyman\",\n  \"last_name\": \"FarmNet\",\n  \"display_name\": \"Peyman FarmNet\",\n  \"national_id\": \"1234567890\",\n  \"birth_date\": \"1995-01-01\",\n  \"gender\": \"male\",\n  \"province_id\": 1,\n  \"county_id\": 307,\n  \"city_id\": 1,\n  \"address\": \"Test address\",\n  \"postal_code\": \"1234567890\",\n  \"bio\": \"Farm Net test profile\"\n}"
+          "raw": "{\n  \"first_name\": \"Peyman\",\n  \"last_name\": \"FarmNet\",\n  \"display_name\": \"Peyman FarmNet\",\n  \"national_id\": \"1234567890\",\n  \"birth_date\": \"1995-01-01\",\n  \"gender\": \"male\",\n  \"province_id\": 1,\n  \"county_id\": 307,\n  \"city_id\": 1,\n  \"address\": \"Test address\",\n  \"postal_code\": \"1234567890\",\n  \"avatar_file_id\": null,\n  \"bio\": \"Farm Net test profile\"\n}"
         }
       }
     },

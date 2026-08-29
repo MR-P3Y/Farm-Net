@@ -70,6 +70,12 @@ class AuthUser(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    password_reset_challenges: Mapped[list["AuthPasswordResetChallenge"]] = (
+        relationship(
+            back_populates="user",
+            cascade="all, delete-orphan",
+        )
+    )
 
     __table_args__ = (
         Index("ix_auth_users_status_created_at", "status", "created_at"),
@@ -313,4 +319,53 @@ class AuthOtpCode(Base):
 
     __table_args__ = (
         Index("ix_auth_otp_codes_phone_purpose_status", "phone", "purpose", "status"),
+    )
+
+
+class AuthPasswordResetChallenge(Base):
+    __tablename__ = "auth_password_reset_challenges"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    identifier_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    channel: Mapped[str] = mapped_column(String(20), nullable=False)
+    code_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(50),
+        default=OtpStatus.PENDING.value,
+        index=True,
+        nullable=False,
+    )
+    attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    max_attempts: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    user: Mapped["AuthUser"] = relationship(
+        back_populates="password_reset_challenges",
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_auth_password_reset_challenges_identifier_status_created",
+            "identifier_hash",
+            "status",
+            "created_at",
+        ),
+        Index(
+            "ix_auth_password_reset_challenges_user_status",
+            "user_id",
+            "status",
+        ),
     )

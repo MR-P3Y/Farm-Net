@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/widgets/farm_loading_view.dart';
+import '../../splash/splash_screen.dart';
 import '../state/auth_controller.dart';
 import 'login_screen.dart';
 
@@ -33,7 +33,7 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     final state = ref.watch(authControllerProvider);
 
     if (state.isLoading) {
-      return const Scaffold(body: FarmLoadingView());
+      return const SplashScreen();
     }
 
     if (state.isAuthenticated) {
@@ -65,6 +65,5 @@ class _AuthenticatedRedirectState extends State<_AuthenticatedRedirect> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: FarmLoadingView(compact: true));
+  Widget build(BuildContext context) => const SplashScreen(compact: true);
 }

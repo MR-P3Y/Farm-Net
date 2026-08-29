@@ -7,6 +7,7 @@ Media foundation provides safe file upload, storage, access control, and admin r
 Supported use cases:
 
 - Product images
+- User profile images
 - Store logo
 - Store banner
 - Profile / verification documents
@@ -43,6 +44,7 @@ GET /api/v1/media/public/{file_key}
 Used for:
 
 - product_image
+- profile_image
 - store_logo
 - store_banner
 
@@ -101,6 +103,7 @@ Example purposes:
 
 ```text
 product_image
+profile_image
 store_logo
 store_banner
 profile_document
@@ -110,7 +113,7 @@ general
 
 Rules:
 
-- Product/store images must be public.
+- Profile/product/store images must be public.
 - Verification/profile documents must be private.
 - Invalid MIME types are rejected.
 - Oversized files are rejected.

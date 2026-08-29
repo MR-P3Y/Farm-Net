@@ -18,6 +18,7 @@ class UserProfile {
     this.address,
     this.postalCode,
     this.avatarFileId,
+    this.avatarUrl,
     this.bio,
   });
 
@@ -38,6 +39,7 @@ class UserProfile {
   final String? address;
   final String? postalCode;
   final String? avatarFileId;
+  final String? avatarUrl;
   final String? bio;
   final bool profileCompleted;
 
@@ -73,6 +75,7 @@ class UserProfile {
       address: json['address']?.toString(),
       postalCode: json['postal_code']?.toString(),
       avatarFileId: json['avatar_file_id']?.toString(),
+      avatarUrl: json['avatar_url']?.toString(),
       bio: json['bio']?.toString(),
       profileCompleted: json['profile_completed'] == true,
     );
@@ -89,10 +92,7 @@ class ProfileUpdateInput {
     this.gender,
     this.provinceId,
     this.countyId,
-    this.districtId,
-    this.ruralDistrictId,
     this.cityId,
-    this.villageId,
     this.address,
     this.postalCode,
     this.avatarFileId,
@@ -107,10 +107,7 @@ class ProfileUpdateInput {
   final String? gender;
   final int? provinceId;
   final int? countyId;
-  final int? districtId;
-  final int? ruralDistrictId;
   final int? cityId;
-  final int? villageId;
   final String? address;
   final String? postalCode;
   final String? avatarFileId;
@@ -126,10 +123,7 @@ class ProfileUpdateInput {
       'gender': gender,
       'province_id': provinceId,
       'county_id': countyId,
-      'district_id': districtId,
-      'rural_district_id': ruralDistrictId,
       'city_id': cityId,
-      'village_id': villageId,
       'address': address,
       'postal_code': postalCode,
       'avatar_file_id': avatarFileId,

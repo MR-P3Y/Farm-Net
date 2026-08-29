@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.modules.auth.models import (
+    AuthPasswordResetChallenge,
     AuthOtpCode,
     AuthPermission,
     AuthRefreshToken,
@@ -175,6 +176,43 @@ class AuthRepository:
             .one_or_none()
         )
 
+    def list_active_sessions_for_user(
+        self,
+        *,
+        user_id: int,
+        now: datetime,
+    ) -> list[AuthSession]:
+        return (
+            self.db.query(AuthSession)
+            .filter(
+                AuthSession.user_id == user_id,
+                AuthSession.status == "active",
+                AuthSession.expires_at.is_not(None),
+                AuthSession.expires_at > now,
+            )
+            .order_by(
+                AuthSession.last_seen_at.desc(),
+                AuthSession.created_at.desc(),
+                AuthSession.id.desc(),
+            )
+            .all()
+        )
+
+    def get_session_by_id_for_user(
+        self,
+        *,
+        session_id: int,
+        user_id: int,
+    ) -> AuthSession | None:
+        return (
+            self.db.query(AuthSession)
+            .filter(
+                AuthSession.id == session_id,
+                AuthSession.user_id == user_id,
+            )
+            .one_or_none()
+        )
+
     def revoke_active_refresh_tokens_for_session(
         self,
         session_id: int,
@@ -257,6 +295,66 @@ class AuthRepository:
                 AuthOtpCode.status == "pending",
             )
             .order_by(AuthOtpCode.created_at.desc())
+            .first()
+        )
+
+    def expire_pending_password_resets(
+        self,
+        *,
+        identifier_hash: str,
+        exclude_id: int | None = None,
+    ) -> int:
+        query = self.db.query(AuthPasswordResetChallenge).filter(
+            AuthPasswordResetChallenge.identifier_hash == identifier_hash,
+            AuthPasswordResetChallenge.status == "pending",
+        )
+        if exclude_id is not None:
+            query = query.filter(AuthPasswordResetChallenge.id != exclude_id)
+        rows = query.all()
+        for row in rows:
+            row.status = "expired"
+        return len(rows)
+
+    def create_password_reset_challenge(
+        self,
+        *,
+        user_id: int,
+        identifier_hash: str,
+        channel: str,
+        code_hash: str,
+        max_attempts: int,
+        expires_at: datetime,
+        ip_address: str | None,
+        user_agent: str | None,
+    ) -> AuthPasswordResetChallenge:
+        challenge = AuthPasswordResetChallenge(
+            user_id=user_id,
+            identifier_hash=identifier_hash,
+            channel=channel,
+            code_hash=code_hash,
+            status="pending",
+            max_attempts=max_attempts,
+            expires_at=expires_at,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        self.db.add(challenge)
+        self.db.flush()
+        return challenge
+
+    def get_latest_pending_password_reset_for_update(
+        self,
+        *,
+        identifier_hash: str,
+    ) -> AuthPasswordResetChallenge | None:
+        return (
+            self.db.query(AuthPasswordResetChallenge)
+            .filter(
+                AuthPasswordResetChallenge.identifier_hash == identifier_hash,
+                AuthPasswordResetChallenge.status == "pending",
+            )
+            .order_by(AuthPasswordResetChallenge.created_at.desc())
+            .with_for_update()
             .first()
         )
 

@@ -6,10 +6,16 @@ import '../theme/app_icons.dart';
 import 'farm_circular_glass_button.dart';
 
 class FarmBackButton extends StatelessWidget {
-  const FarmBackButton({super.key, this.color, this.fallbackLocation});
+  const FarmBackButton({
+    super.key,
+    this.color,
+    this.fallbackLocation,
+    this.onPressed,
+  });
 
   final Color? color;
   final String? fallbackLocation;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -17,17 +23,20 @@ class FarmBackButton extends StatelessWidget {
       icon: AppIcons.back,
       size: 18,
       padding: 8,
+      color: color,
       tooltip: context.l10n.back,
-      onTap: () {
-        if (Navigator.canPop(context)) {
-          Navigator.maybePop(context);
-          return;
-        }
-        final fallback = fallbackLocation;
-        if (fallback != null && fallback.isNotEmpty) {
-          context.go(fallback);
-        }
-      },
+      onTap:
+          onPressed ??
+          () {
+            if (Navigator.canPop(context)) {
+              Navigator.maybePop(context);
+              return;
+            }
+            final fallback = fallbackLocation;
+            if (fallback != null && fallback.isNotEmpty) {
+              context.go(fallback);
+            }
+          },
     );
   }
 }

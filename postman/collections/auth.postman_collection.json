@@ -35,12 +35,24 @@
       "value": "111111"
     },
     {
+      "key": "reset_code",
+      "value": "111111"
+    },
+    {
       "key": "access_token",
       "value": ""
     },
     {
       "key": "refresh_token",
       "value": ""
+    },
+    {
+      "key": "remote_session_id",
+      "value": ""
+    },
+    {
+      "key": "new_password",
+      "value": "Test@1234567"
     },
     {
       "key": "admin_access_token",
@@ -73,7 +85,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"{{$timestamp}}-{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+          "raw": "{\n  \"email\": \"{{$timestamp}}-{{email}}\",\n  \"password\": \"{{password}}\",\n  \"first_name\": \"Postman\",\n  \"last_name\": \"Farmer\",\n  \"display_name\": \"Postman Farmer\",\n  \"national_id\": \"{{$timestamp}}\",\n  \"province_id\": 1,\n  \"county_id\": 307,\n  \"city_id\": 1,\n  \"address\": \"Farm Net registration contract test\",\n  \"postal_code\": \"1234567890\"\n}"
         }
       }
     },
@@ -454,6 +466,137 @@
               "value": "users"
             }
           ]
+        }
+      }
+    },
+    {
+      "name": "Auth - Active Sessions",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/sessions",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "sessions"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Revoke Remote Session",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/sessions/{{remote_session_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "sessions", "{{remote_session_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Revoke Other Sessions",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/sessions/revoke-others",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "sessions", "revoke-others"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Change Password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/password/change",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "password", "change"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"current_password\": \"{{password}}\",\n  \"new_password\": \"{{new_password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Request Password Reset",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.success && json.data && json.data.dev_code) {",
+              "  pm.collectionVariables.set('reset_code', json.data.dev_code);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/password/reset/request",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "password", "reset", "request"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"identifier\": \"{{email}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Confirm Password Reset",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/password/reset/confirm",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "password", "reset", "confirm"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"identifier\": \"{{email}}\",\n  \"code\": \"{{reset_code}}\",\n  \"new_password\": \"{{new_password}}\"\n}"
         }
       }
     },

@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import date, datetime
 import re
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import AppException
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.notifications.enums import NotificationEventType
@@ -48,47 +49,82 @@ class ProfileService:
 
         return self._profile_out(profile)
 
+    def prepare_registration_profile(
+        self,
+        *,
+        user: AuthUser,
+        payload: ProfileUpdateIn,
+    ) -> UserProfile:
+        """Create a complete profile without committing the surrounding transaction."""
+        if self.repo.get_profile_by_user_id(user.id) is not None:
+            raise AppException(
+                code="PROFILE_ALREADY_EXISTS",
+                message="A profile already exists for this account",
+                status_code=409,
+            )
+
+        self._validate_payload(payload)
+        self._validate_national_id_availability(
+            user_id=user.id,
+            national_id=payload.national_id,
+        )
+        self._validate_geo_consistency(payload)
+
+        profile = self.repo.create_profile(user_id=user.id)
+        for field_name in ProfileUpdateIn.model_fields:
+            setattr(profile, field_name, getattr(payload, field_name))
+        return profile
+
     def update_my_profile(
         self,
         *,
         user: AuthUser,
         payload: ProfileUpdateIn,
+        partial: bool = False,
     ) -> ProfileMeOut:
         profile = self.repo.get_profile_by_user_id(user.id)
 
         if profile is None:
             profile = self.repo.create_profile(user_id=user.id)
 
-        self._validate_payload(payload)
-        self._validate_geo_consistency(payload)
+        fields_to_update = (
+            set(payload.model_fields_set)
+            if partial
+            else set(ProfileUpdateIn.model_fields)
+        )
+        effective_values = {
+            field_name: (
+                getattr(payload, field_name)
+                if field_name in fields_to_update
+                else getattr(profile, field_name)
+            )
+            for field_name in ProfileUpdateIn.model_fields
+        }
+        effective_payload = ProfileUpdateIn(**effective_values)
 
-        profile.first_name = payload.first_name
-        profile.last_name = payload.last_name
-        profile.display_name = payload.display_name
+        self._validate_payload(effective_payload)
+        self._validate_national_id_availability(
+            user_id=user.id,
+            national_id=effective_payload.national_id,
+        )
+        self._validate_geo_consistency(effective_payload)
+        if "avatar_file_id" in fields_to_update:
+            self._validate_avatar_file(
+                user_id=user.id,
+                file_key=payload.avatar_file_id,
+            )
 
-        profile.national_id = payload.national_id
-        profile.birth_date = payload.birth_date
-        profile.gender = payload.gender
-
-        profile.province_id = payload.province_id
-        profile.county_id = payload.county_id
-        profile.district_id = payload.district_id
-        profile.rural_district_id = payload.rural_district_id
-        profile.city_id = payload.city_id
-        profile.village_id = payload.village_id
-
-        profile.address = payload.address
-        profile.postal_code = payload.postal_code
-
-        profile.avatar_file_id = payload.avatar_file_id
-        profile.bio = payload.bio
+        for field_name in fields_to_update:
+            setattr(profile, field_name, getattr(payload, field_name))
 
         try:
             self.repo.commit()
         except IntegrityError as exc:
             self.db.rollback()
-            raise ValidationAuthError(
+            raise AppException(
+                code="PROFILE_DATA_CONFLICT",
                 message="Profile data conflicts with existing data",
+                status_code=409,
                 details={"field": "national_id"},
             ) from exc
 
@@ -389,6 +425,7 @@ class ProfileService:
                     "required": [
                         "first_name",
                         "last_name",
+                        "national_id",
                         "province_id",
                         "county_id",
                         "address",
@@ -491,6 +528,30 @@ class ProfileService:
                     message="Invalid postal_code",
                     details={"format": "10 digits"},
                 )
+
+        if payload.birth_date is not None and payload.birth_date > date.today():
+            raise ValidationAuthError(
+                message="Invalid birth_date",
+                details={"constraint": "must not be in the future"},
+            )
+
+    def _validate_national_id_availability(
+        self,
+        *,
+        user_id: int,
+        national_id: str | None,
+    ) -> None:
+        if national_id is None:
+            return
+
+        existing_profile = self.repo.get_profile_by_national_id(national_id)
+        if existing_profile is not None and existing_profile.user_id != user_id:
+            raise AppException(
+                code="PROFILE_NATIONAL_ID_CONFLICT",
+                message="National ID is already linked to another account",
+                status_code=409,
+                details={"field": "national_id"},
+            )
 
     def _validate_geo_consistency(self, payload: ProfileUpdateIn) -> None:
         province = None
@@ -675,6 +736,20 @@ class ProfileService:
             size_bytes=payload.size_bytes,
         )
 
+    def _validate_avatar_file(self, *, user_id: int, file_key: str | None) -> None:
+        if file_key is None:
+            return
+
+        media = self.repo.get_active_profile_image_media(
+            file_key=file_key,
+            owner_user_id=user_id,
+        )
+        if media is None:
+            raise ValidationAuthError(
+                message="Profile image media file not found",
+                details={"avatar_file_id": file_key},
+            )
+
     def _validate_document_file_metadata(
         self,
         *,
@@ -710,6 +785,15 @@ class ProfileService:
         return target_role
 
     def _profile_out(self, profile: UserProfile) -> ProfileMeOut:
+        avatar_url = None
+        if profile.avatar_file_id:
+            avatar_media = self.repo.get_active_profile_image_media(
+                file_key=profile.avatar_file_id,
+                owner_user_id=profile.user_id,
+            )
+            if avatar_media is not None:
+                avatar_url = f"/api/v1/media/public/{avatar_media.file_key}"
+
         return ProfileMeOut(
             id=profile.id,
             user_id=profile.user_id,
@@ -728,16 +812,18 @@ class ProfileService:
             address=profile.address,
             postal_code=profile.postal_code,
             avatar_file_id=profile.avatar_file_id,
+            avatar_url=avatar_url,
             bio=profile.bio,
             profile_completed=self._is_profile_completed(profile),
         )
 
     def _is_profile_completed(self, profile: UserProfile) -> bool:
         has_name = bool(profile.first_name and profile.last_name)
+        has_identity = bool(profile.national_id)
         has_location = bool(profile.province_id and profile.county_id)
         has_address = bool(profile.address)
 
-        return has_name and has_location and has_address
+        return has_name and has_identity and has_location and has_address
 
     def _document_out(self, document: UserDocument) -> DocumentOut:
         media = (

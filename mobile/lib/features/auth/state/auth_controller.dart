@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/auth_api.dart';
+import '../data/auth_models.dart';
 import '../data/auth_repository.dart';
 import 'auth_state.dart';
 
@@ -62,6 +63,9 @@ class AuthController extends StateNotifier<AuthState> {
         isLoading: false,
         isAuthenticated: false,
         errorMessage: error.error.message,
+        errorCode: error.error.code,
+        errorDetails: error.error.details,
+        errorTraceId: error.error.traceId,
       );
       return false;
     } catch (_) {
@@ -69,22 +73,17 @@ class AuthController extends StateNotifier<AuthState> {
         isLoading: false,
         isAuthenticated: false,
         errorMessage: 'خطای ارتباط با سرور',
+        errorCode: 'NETWORK_ERROR',
       );
       return false;
     }
   }
 
-  Future<bool> registerWithEmail({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> registerWithEmail(EmailRegistrationInput input) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      final result = await _repository.registerWithEmail(
-        email: email,
-        password: password,
-      );
+      final result = await _repository.registerWithEmail(input);
 
       state = AuthState(
         isLoading: false,
@@ -98,6 +97,9 @@ class AuthController extends StateNotifier<AuthState> {
         isLoading: false,
         isAuthenticated: false,
         errorMessage: error.error.message,
+        errorCode: error.error.code,
+        errorDetails: error.error.details,
+        errorTraceId: error.error.traceId,
       );
       return false;
     } catch (_) {
@@ -105,6 +107,7 @@ class AuthController extends StateNotifier<AuthState> {
         isLoading: false,
         isAuthenticated: false,
         errorMessage: 'خطای ارتباط با سرور',
+        errorCode: 'NETWORK_ERROR',
       );
       return false;
     }
@@ -131,12 +134,16 @@ class AuthController extends StateNotifier<AuthState> {
       state = state.copyWith(
         isLoading: false,
         errorMessage: error.error.message,
+        errorCode: error.error.code,
+        errorDetails: error.error.details,
+        errorTraceId: error.error.traceId,
       );
       return false;
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'خطای ارتباط با سرور',
+        errorCode: 'NETWORK_ERROR',
       );
       return false;
     }
@@ -159,12 +166,16 @@ class AuthController extends StateNotifier<AuthState> {
       state = state.copyWith(
         isLoading: false,
         errorMessage: error.error.message,
+        errorCode: error.error.code,
+        errorDetails: error.error.details,
+        errorTraceId: error.error.traceId,
       );
       return false;
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'خطای ارتباط با سرور',
+        errorCode: 'NETWORK_ERROR',
       );
       return false;
     }
@@ -176,5 +187,9 @@ class AuthController extends StateNotifier<AuthState> {
     await _repository.logout();
 
     state = state.unauthenticated();
+  }
+
+  void clearError() {
+    state = state.copyWith(clearError: true);
   }
 }

@@ -19,6 +19,14 @@ class InvalidCredentialsError(AuthError):
         )
 
 
+class CurrentPasswordInvalidError(AuthError):
+    def __init__(self) -> None:
+        super().__init__(
+            code="AUTH_CURRENT_PASSWORD_INVALID",
+            message="Current password is invalid",
+        )
+
+
 class UserAlreadyExistsError(AuthError):
     def __init__(self) -> None:
         super().__init__(
@@ -64,6 +72,30 @@ class OtpTooManyAttemptsError(AuthError):
         super().__init__(
             code="AUTH_OTP_TOO_MANY_ATTEMPTS",
             message="Too many OTP attempts",
+        )
+
+
+class PasswordResetInvalidError(AuthError):
+    def __init__(self) -> None:
+        super().__init__(
+            code="AUTH_PASSWORD_RESET_INVALID",
+            message="Invalid password reset code",
+        )
+
+
+class PasswordResetExpiredError(AuthError):
+    def __init__(self) -> None:
+        super().__init__(
+            code="AUTH_PASSWORD_RESET_EXPIRED",
+            message="Password reset code has expired",
+        )
+
+
+class PasswordResetTooManyAttemptsError(AuthError):
+    def __init__(self) -> None:
+        super().__init__(
+            code="AUTH_PASSWORD_RESET_TOO_MANY_ATTEMPTS",
+            message="Too many password reset attempts",
         )
 
 

@@ -16,6 +16,20 @@ from app.modules.auth.repository import AuthRepository
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
+def get_current_session_id(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> int:
+    if credentials is None or not credentials.credentials:
+        raise TokenInvalidError()
+
+    try:
+        payload = decode_token(credentials.credentials)
+        ensure_token_type(payload, "access")
+        return int(payload["sid"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise TokenInvalidError() from exc
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
@@ -23,10 +37,8 @@ def get_current_user(
     if credentials is None or not credentials.credentials:
         raise TokenInvalidError()
 
-    token = credentials.credentials
-
     try:
-        payload = decode_token(token)
+        payload = decode_token(credentials.credentials)
         ensure_token_type(payload, "access")
         user_id = int(payload["sub"])
         session_id = int(payload["sid"])

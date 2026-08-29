@@ -30,6 +30,13 @@ class ProfileRepository:
             .one_or_none()
         )
 
+    def get_profile_by_national_id(self, national_id: str) -> UserProfile | None:
+        return (
+            self.db.query(UserProfile)
+            .filter(UserProfile.national_id == national_id)
+            .one_or_none()
+        )
+
     def create_profile(self, *, user_id: int) -> UserProfile:
         profile = UserProfile(user_id=user_id)
         self.db.add(profile)
@@ -133,6 +140,24 @@ class ProfileRepository:
                 MediaFile.file_key == file_key,
                 MediaFile.purpose == MediaPurpose.PROFILE_DOCUMENT.value,
                 MediaFile.visibility == MediaVisibility.PRIVATE.value,
+                MediaFile.status == MediaStatus.ACTIVE.value,
+            )
+            .one_or_none()
+        )
+
+    def get_active_profile_image_media(
+        self,
+        *,
+        file_key: str,
+        owner_user_id: int,
+    ) -> MediaFile | None:
+        return (
+            self.db.query(MediaFile)
+            .filter(
+                MediaFile.file_key == file_key,
+                MediaFile.owner_user_id == owner_user_id,
+                MediaFile.purpose == MediaPurpose.PROFILE_IMAGE.value,
+                MediaFile.visibility == MediaVisibility.PUBLIC.value,
                 MediaFile.status == MediaStatus.ACTIVE.value,
             )
             .one_or_none()

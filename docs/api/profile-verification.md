@@ -49,6 +49,7 @@ Response:
     "address": null,
     "postal_code": null,
     "avatar_file_id": null,
+    "avatar_url": null,
     "bio": null,
     "profile_completed": false
   },
@@ -59,11 +60,30 @@ Response:
 }
 ```
 
-### Update my profile
+### Replace my profile
 
 ```http
 PUT /api/v1/profile/me
 ```
+
+`PUT` keeps the original full-replacement contract. Clients editing only part
+of a profile should use the non-destructive operation below so fields they do
+not manage (for example lower-level Geo data or an avatar reference) remain
+unchanged.
+
+### Partially update my profile
+
+```http
+PATCH /api/v1/profile/me
+```
+
+`PATCH` only changes fields explicitly included in the request. A National ID
+already linked to another account returns HTTP `409` with error code
+`PROFILE_NATIONAL_ID_CONFLICT`; every account, including test accounts, must
+use a distinct National ID.
+
+Only keys explicitly present in the request are changed. An explicit `null`
+clears a nullable field; an omitted key preserves its current value.
 
 Request:
 
@@ -81,6 +101,7 @@ Request:
   "city_id": 10,
   "address": "Test address",
   "postal_code": "1234567890",
+  "avatar_file_id": "owned-profile-image-file-key",
   "bio": "Farm Net test profile"
 }
 ```
@@ -90,6 +111,12 @@ Validation rules:
 * `gender`: `male`, `female`, `other`
 * `national_id`: 10 digits if provided
 * `postal_code`: 10 digits if provided
+* `birth_date`: cannot be in the future
+* `avatar_file_id` is a Media `file_key`, not a path or numeric Media ID.
+* An avatar must be active, public, uploaded with `purpose=profile_image`, and
+  owned by the current user. Any other user's file is rejected.
+* The response exposes `avatar_url` only while the referenced Media remains
+  active and publicly accessible.
 * Geo IDs must exist.
 * Geo IDs must be consistent:
   * county must belong to province
@@ -102,12 +129,11 @@ Validation rules:
 ```text
 first_name
 last_name
+national_id
 province_id
 county_id
 address
 ```
-
-For verification submit, `national_id` is also required.
 
 ---
 

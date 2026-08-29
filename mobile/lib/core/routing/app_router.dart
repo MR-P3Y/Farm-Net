@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../features/activity/presentation/activity_center_screen.dart';
 import '../../features/auth/presentation/auth_gate.dart';
 import '../../features/auth/presentation/authenticated_route_guard.dart';
+import '../../features/auth/presentation/account_security_screen.dart';
+import '../../features/auth/presentation/forgot_password_screen.dart';
+import '../../features/auth/presentation/registration_screen.dart';
 import '../../features/barzegar/presentation/barzegar_screen.dart';
 import '../../features/consultants/presentation/consultant_detail_screen.dart';
 import '../../features/consultants/presentation/consultant_list_screen.dart';
@@ -33,6 +36,7 @@ import '../../features/products/presentation/public_product_detail_screen.dart';
 import '../../features/products/presentation/public_products_screen.dart';
 import '../../features/products/presentation/store_products_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/rentals/presentation/rental_equipment_detail_screen.dart';
 import '../../features/rentals/presentation/rental_equipment_list_screen.dart';
 import '../../features/rentals/presentation/my_rental_requests_screen.dart';
@@ -81,6 +85,21 @@ final GoRouter appRouter = GoRouter(
       path: '/',
       name: 'auth-gate',
       builder: (context, state) => const AuthGate(),
+    ),
+    GoRoute(
+      path: '/login',
+      name: 'login',
+      builder: (context, state) => const AuthGate(),
+    ),
+    GoRoute(
+      path: '/register',
+      name: 'register',
+      builder: (context, state) => const RegistrationScreen(),
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      name: 'forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
     ),
     StatefulShellRoute.indexedStack(
       builder:
@@ -215,6 +234,17 @@ final GoRouter appRouter = GoRouter(
       builder:
           (context, state) =>
               protectedRoute(const NotificationPreferencesScreen()),
+    ),
+    GoRoute(
+      path: '/profile/edit',
+      name: 'edit-profile',
+      builder: (context, state) => protectedRoute(const EditProfileScreen()),
+    ),
+    GoRoute(
+      path: '/profile/security',
+      name: 'account-security',
+      builder:
+          (context, state) => protectedRoute(const AccountSecurityScreen()),
     ),
     GoRoute(
       path: '/settings',

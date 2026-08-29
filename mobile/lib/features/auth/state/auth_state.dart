@@ -6,6 +6,9 @@ class AuthState {
     required this.isAuthenticated,
     this.user,
     this.errorMessage,
+    this.errorCode,
+    this.errorDetails = const {},
+    this.errorTraceId,
     this.devOtpCode,
     this.pendingPhone,
   });
@@ -14,6 +17,9 @@ class AuthState {
   final bool isAuthenticated;
   final AuthUser? user;
   final String? errorMessage;
+  final String? errorCode;
+  final Map<String, dynamic> errorDetails;
+  final String? errorTraceId;
   final String? devOtpCode;
   final String? pendingPhone;
 
@@ -26,6 +32,9 @@ class AuthState {
     bool? isAuthenticated,
     AuthUser? user,
     String? errorMessage,
+    String? errorCode,
+    Map<String, dynamic>? errorDetails,
+    String? errorTraceId,
     String? devOtpCode,
     String? pendingPhone,
     bool clearError = false,
@@ -36,6 +45,9 @@ class AuthState {
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       user: user ?? this.user,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+      errorCode: clearError ? null : errorCode ?? this.errorCode,
+      errorDetails: clearError ? const {} : errorDetails ?? this.errorDetails,
+      errorTraceId: clearError ? null : errorTraceId ?? this.errorTraceId,
       devOtpCode: clearDevOtp ? null : devOtpCode ?? this.devOtpCode,
       pendingPhone: pendingPhone ?? this.pendingPhone,
     );

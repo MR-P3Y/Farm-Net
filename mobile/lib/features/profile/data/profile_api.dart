@@ -23,8 +23,10 @@ class ProfileApi {
   Future<UserProfile> getMe() async {
     await _auth();
     try {
-      final response = await _client.get('profiles/me');
-      return UserProfile.fromJson(response.data?['data'] as Map<String, dynamic>);
+      final response = await _client.get('profile/me');
+      return UserProfile.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw ProfileApiException(_error(e));
     }
@@ -33,8 +35,10 @@ class ProfileApi {
   Future<UserProfile> updateMe(ProfileUpdateInput input) async {
     await _auth();
     try {
-      final response = await _client.patch('profiles/me', data: input.toJson());
-      return UserProfile.fromJson(response.data?['data'] as Map<String, dynamic>);
+      final response = await _client.patch('profile/me', data: input.toJson());
+      return UserProfile.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw ProfileApiException(_error(e));
     }
@@ -47,6 +51,9 @@ class ProfileApi {
   ApiError _error(DioException error) {
     final data = error.response?.data;
     if (data is Map<String, dynamic>) return ApiError.fromJson(data);
-    return ApiError(code: 'NETWORK_ERROR', message: error.message ?? 'خطا در عملیات پروفایل');
+    return ApiError(
+      code: 'NETWORK_ERROR',
+      message: error.message ?? 'خطا در عملیات پروفایل',
+    );
   }
 }

@@ -9,6 +9,7 @@ class FarmCircularGlassButton extends StatelessWidget {
     this.size = 24,
     this.padding = 10,
     this.tooltip,
+    this.color,
   });
 
   final IconData icon;
@@ -16,6 +17,7 @@ class FarmCircularGlassButton extends StatelessWidget {
   final double size;
   final double padding;
   final String? tooltip;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,7 @@ class FarmCircularGlassButton extends StatelessWidget {
           blur: 10,
           opacity: 0.1,
           padding: EdgeInsets.all(padding),
-          child: Icon(icon, size: size),
+          child: Icon(icon, size: size, color: color),
         ),
       ),
     );

@@ -24,14 +24,8 @@ class AuthApi {
     _client.setToken(token);
   }
 
-  Future<AuthTokenPair> registerWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    final json = await _post(
-      'auth/register/email',
-      data: {'email': email, 'password': password},
-    );
+  Future<AuthTokenPair> registerWithEmail(EmailRegistrationInput input) async {
+    final json = await _post('auth/register/email', data: input.toJson());
 
     return AuthTokenPair.fromJson(json['data'] as Map<String, dynamic>);
   }
@@ -92,9 +86,77 @@ class AuthApi {
     await _post('auth/logout', data: {'refresh_token': refreshToken});
   }
 
-  Future<Map<String, dynamic>> _get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<List<AuthSessionModel>> listSessions() async {
+    final json = await _get('auth/sessions');
+    final rows = json['data'] as List? ?? const [];
+    return rows
+        .map(
+          (item) =>
+              AuthSessionModel.fromJson((item as Map).cast<String, dynamic>()),
+        )
+        .toList();
+  }
+
+  Future<void> revokeSession(int sessionId) async {
+    await _delete('auth/sessions/$sessionId');
+  }
+
+  Future<int> revokeOtherSessions() async {
+    final json = await _post('auth/sessions/revoke-others', data: const {});
+    final data = (json['data'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return (data['revoked_count'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<int> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final json = await _post(
+      'auth/password/change',
+      data: {'current_password': currentPassword, 'new_password': newPassword},
+    );
+    final data = (json['data'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return (data['revoked_sessions'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<PasswordResetRequestResult> requestPasswordReset({
+    required String identifier,
+  }) async {
+    final json = await _post(
+      'auth/password/reset/request',
+      data: {'identifier': identifier},
+    );
+    return PasswordResetRequestResult.fromJson(
+      (json['data'] as Map).cast<String, dynamic>(),
+    );
+  }
+
+  Future<int> confirmPasswordReset({
+    required String identifier,
+    required String code,
+    required String newPassword,
+  }) async {
+    final json = await _post(
+      'auth/password/reset/confirm',
+      data: {
+        'identifier': identifier,
+        'code': code,
+        'new_password': newPassword,
+      },
+    );
+    final data = (json['data'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return (data['revoked_sessions'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<Map<String, dynamic>> _get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     try {
-      final response = await _client.get(path, queryParameters: queryParameters);
+      final response = await _client.get(
+        path,
+        queryParameters: queryParameters,
+      );
       return (response.data as Map?)?.cast<String, dynamic>() ?? {};
     } on DioException catch (error) {
       throw AuthApiException(_mapDioError(error));
@@ -113,6 +175,15 @@ class AuthApi {
         queryParameters: queryParameters,
       );
 
+      return (response.data as Map?)?.cast<String, dynamic>() ?? {};
+    } on DioException catch (error) {
+      throw AuthApiException(_mapDioError(error));
+    }
+  }
+
+  Future<Map<String, dynamic>> _delete(String path) async {
+    try {
+      final response = await _client.delete(path);
       return (response.data as Map?)?.cast<String, dynamic>() ?? {};
     } on DioException catch (error) {
       throw AuthApiException(_mapDioError(error));

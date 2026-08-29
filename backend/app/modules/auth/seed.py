@@ -50,252 +50,800 @@ BASE_ROLES: list[RoleSeed] = [
 
 BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("dashboard.read", "Read dashboard", "dashboard", "View admin dashboard"),
-
     PermissionSeed("users.read", "Read users", "users", "View users list"),
     PermissionSeed("users.read_detail", "Read user detail", "users", "View user details"),
     PermissionSeed("users.update_status", "Update user status", "users", "Suspend/restore users"),
     PermissionSeed("users.manage_roles", "Manage user roles", "users", "Assign/remove user roles"),
-
     PermissionSeed("roles.read", "Read roles", "roles", "View roles"),
     PermissionSeed("roles.create", "Create roles", "roles", "Create roles"),
     PermissionSeed("roles.update", "Update roles", "roles", "Update roles"),
     PermissionSeed("roles.delete", "Delete roles", "roles", "Delete roles"),
     PermissionSeed("permissions.read", "Read permissions", "permissions", "View permissions"),
-    PermissionSeed("permissions.assign", "Assign permissions", "permissions", "Assign permissions to roles"),
-
+    PermissionSeed(
+        "permissions.assign", "Assign permissions", "permissions", "Assign permissions to roles"
+    ),
     PermissionSeed("profiles.read", "Read profiles", "profiles", "View profiles"),
     PermissionSeed("profiles.update", "Update profiles", "profiles", "Update own profile"),
-    PermissionSeed("profiles.read_private", "Read private profiles", "profiles", "View private profile fields"),
-
-    PermissionSeed("farms.read_own", "Read own farms", "farms", "Read current user's farms and nested records"),
-    PermissionSeed("farms.manage_own", "Manage own farms", "farms", "Create, update, and archive current user's farms"),
-    PermissionSeed("farms.admin_read", "Admin read farms", "farms", "Inspect private farm records with explicit admin access"),
-    PermissionSeed("farms.admin_manage", "Admin manage farms", "farms", "Perform audited administrative farm actions"),
-    PermissionSeed("farm_references.read", "Read farm references", "farms", "Read active crop and measurement references"),
-    PermissionSeed("farm_references.manage", "Manage farm references", "farms", "Manage crop and measurement references"),
-
+    PermissionSeed(
+        "profiles.read_private", "Read private profiles", "profiles", "View private profile fields"
+    ),
+    PermissionSeed(
+        "farms.read_own", "Read own farms", "farms", "Read current user's farms and nested records"
+    ),
+    PermissionSeed(
+        "farms.manage_own",
+        "Manage own farms",
+        "farms",
+        "Create, update, and archive current user's farms",
+    ),
+    PermissionSeed(
+        "farms.admin_read",
+        "Admin read farms",
+        "farms",
+        "Inspect private farm records with explicit admin access",
+    ),
+    PermissionSeed(
+        "farms.admin_manage",
+        "Admin manage farms",
+        "farms",
+        "Perform audited administrative farm actions",
+    ),
+    PermissionSeed(
+        "farm_references.read",
+        "Read farm references",
+        "farms",
+        "Read active crop and measurement references",
+    ),
+    PermissionSeed(
+        "farm_references.manage",
+        "Manage farm references",
+        "farms",
+        "Manage crop and measurement references",
+    ),
     PermissionSeed("consultants.read", "Read consultants", "consultants", "View consultants"),
-    PermissionSeed("consultants.profile_manage", "Manage own consultant profile", "consultants", "Create and update own consultant profile"),
-    PermissionSeed("consultants.approve", "Approve consultants", "consultants", "Approve consultants"),
+    PermissionSeed(
+        "consultants.profile_manage",
+        "Manage own consultant profile",
+        "consultants",
+        "Create and update own consultant profile",
+    ),
+    PermissionSeed(
+        "consultants.approve", "Approve consultants", "consultants", "Approve consultants"
+    ),
     PermissionSeed("consultants.reject", "Reject consultants", "consultants", "Reject consultants"),
-    PermissionSeed("consultants.suspend", "Suspend consultants", "consultants", "Suspend consultants"),
-    PermissionSeed("consult_specialties.read", "Read consult specialties", "consultants", "View specialties"),
-    PermissionSeed("consult_specialties.create", "Create consult specialties", "consultants", "Create specialties"),
-    PermissionSeed("consult_specialties.update", "Update consult specialties", "consultants", "Update specialties"),
-    PermissionSeed("consult_specialties.delete", "Delete consult specialties", "consultants", "Delete specialties"),
-    PermissionSeed("consult_requests.create", "Create consult requests", "consultants", "Create consult requests"),
-    PermissionSeed("consult_requests.read_own", "Read own consult requests", "consultants", "Read own consult requests"),
-    PermissionSeed("consult_requests.manage_own", "Manage own consult requests", "consultants", "Cancel own consult requests"),
-    PermissionSeed("consult_requests.manage_assigned", "Manage assigned consult requests", "consultants", "Manage assigned consultant requests"),
-    PermissionSeed("consult_requests.read", "Read consult requests", "consultants", "View consult requests"),
-    PermissionSeed("consult_requests.manage", "Manage consult requests", "consultants", "Manage consult requests"),
-
+    PermissionSeed(
+        "consultants.suspend", "Suspend consultants", "consultants", "Suspend consultants"
+    ),
+    PermissionSeed(
+        "consult_specialties.read", "Read consult specialties", "consultants", "View specialties"
+    ),
+    PermissionSeed(
+        "consult_specialties.create",
+        "Create consult specialties",
+        "consultants",
+        "Create specialties",
+    ),
+    PermissionSeed(
+        "consult_specialties.update",
+        "Update consult specialties",
+        "consultants",
+        "Update specialties",
+    ),
+    PermissionSeed(
+        "consult_specialties.delete",
+        "Delete consult specialties",
+        "consultants",
+        "Delete specialties",
+    ),
+    PermissionSeed(
+        "consult_requests.create",
+        "Create consult requests",
+        "consultants",
+        "Create consult requests",
+    ),
+    PermissionSeed(
+        "consult_requests.read_own",
+        "Read own consult requests",
+        "consultants",
+        "Read own consult requests",
+    ),
+    PermissionSeed(
+        "consult_requests.manage_own",
+        "Manage own consult requests",
+        "consultants",
+        "Cancel own consult requests",
+    ),
+    PermissionSeed(
+        "consult_requests.manage_assigned",
+        "Manage assigned consult requests",
+        "consultants",
+        "Manage assigned consultant requests",
+    ),
+    PermissionSeed(
+        "consult_requests.read", "Read consult requests", "consultants", "View consult requests"
+    ),
+    PermissionSeed(
+        "consult_requests.manage",
+        "Manage consult requests",
+        "consultants",
+        "Manage consult requests",
+    ),
     PermissionSeed("geo.read", "Read geo data", "geo", "View geo data"),
     PermissionSeed("geo.manage", "Manage geo data", "geo", "Manage geo data"),
     PermissionSeed("geo.seed", "Seed geo data", "geo", "Seed provinces/cities/villages"),
-
-    PermissionSeed("notifications.read", "Read own notifications", "notifications", "Allows user to read own in-app notifications."),
-    PermissionSeed("notifications.manage", "Manage own notifications", "notifications", "Allows user to mark, archive, or delete own notifications."),
-    PermissionSeed("notifications.admin_read", "Admin read notifications", "notifications", "Allows admin to read notification records."),
-    PermissionSeed("notifications.admin_manage", "Admin manage notifications", "notifications", "Allows admin to manage notification records."),
-    PermissionSeed("notifications.system_message", "Send system notification", "notifications", "Allows admin to send system messages through notifications."),
-
+    PermissionSeed(
+        "notifications.read",
+        "Read own notifications",
+        "notifications",
+        "Allows user to read own in-app notifications.",
+    ),
+    PermissionSeed(
+        "notifications.manage",
+        "Manage own notifications",
+        "notifications",
+        "Allows user to mark, archive, or delete own notifications.",
+    ),
+    PermissionSeed(
+        "notifications.admin_read",
+        "Admin read notifications",
+        "notifications",
+        "Allows admin to read notification records.",
+    ),
+    PermissionSeed(
+        "notifications.admin_manage",
+        "Admin manage notifications",
+        "notifications",
+        "Allows admin to manage notification records.",
+    ),
+    PermissionSeed(
+        "notifications.system_message",
+        "Send system notification",
+        "notifications",
+        "Allows admin to send system messages through notifications.",
+    ),
     PermissionSeed("media.upload", "Upload media", "media", "Upload files to media storage"),
     PermissionSeed("media.read", "Read own media", "media", "Read current user's media files"),
     PermissionSeed("media.public_read", "Read public media", "media", "Read public media files"),
-    PermissionSeed("media.private_read", "Read private media", "media", "Read private media files owned by the current user"),
-    PermissionSeed("media.delete", "Delete own media", "media", "Soft delete current user's media files"),
-    PermissionSeed("media.admin_read", "Admin read media", "media", "Admin can list and inspect media files"),
-    PermissionSeed("media.admin_manage", "Admin manage media", "media", "Admin can manage media files and moderation status"),
-
+    PermissionSeed(
+        "media.private_read",
+        "Read private media",
+        "media",
+        "Read private media files owned by the current user",
+    ),
+    PermissionSeed(
+        "media.delete", "Delete own media", "media", "Soft delete current user's media files"
+    ),
+    PermissionSeed(
+        "media.admin_read", "Admin read media", "media", "Admin can list and inspect media files"
+    ),
+    PermissionSeed(
+        "media.admin_manage",
+        "Admin manage media",
+        "media",
+        "Admin can manage media files and moderation status",
+    ),
     PermissionSeed("documents.read", "Read documents", "documents", "View documents"),
     PermissionSeed("documents.review", "Review documents", "documents", "Review documents"),
     PermissionSeed("documents.approve", "Approve documents", "documents", "Approve documents"),
     PermissionSeed("documents.reject", "Reject documents", "documents", "Reject documents"),
-
-    PermissionSeed("verification.read", "Read verification", "verification", "View verification requests"),
-    PermissionSeed("verification.review", "Review verification", "verification", "Review verification requests"),
-    PermissionSeed("verification.approve", "Approve verification", "verification", "Approve verification requests"),
-    PermissionSeed("verification.reject", "Reject verification", "verification", "Reject verification requests"),
-    PermissionSeed("verification.needs_revision", "Needs revision verification", "verification", "Mark verification as needs revision"),
-
+    PermissionSeed(
+        "verification.read", "Read verification", "verification", "View verification requests"
+    ),
+    PermissionSeed(
+        "verification.review", "Review verification", "verification", "Review verification requests"
+    ),
+    PermissionSeed(
+        "verification.approve",
+        "Approve verification",
+        "verification",
+        "Approve verification requests",
+    ),
+    PermissionSeed(
+        "verification.reject", "Reject verification", "verification", "Reject verification requests"
+    ),
+    PermissionSeed(
+        "verification.needs_revision",
+        "Needs revision verification",
+        "verification",
+        "Mark verification as needs revision",
+    ),
     PermissionSeed("stores.read", "Read stores", "stores", "Read own store data"),
     PermissionSeed("stores.create", "Create store", "stores", "Create own store"),
     PermissionSeed("stores.update", "Update store", "stores", "Update own store"),
     PermissionSeed("stores.submit", "Submit store", "stores", "Submit store for admin review"),
-    PermissionSeed("stores.manage_members", "Manage store members", "stores", "Manage own store members"),
-    PermissionSeed("stores.admin_read", "Admin read stores", "stores", "Admin can list and read stores"),
-    PermissionSeed("stores.admin_review", "Admin review stores", "stores", "Admin can review stores"),
+    PermissionSeed(
+        "stores.manage_members", "Manage store members", "stores", "Manage own store members"
+    ),
+    PermissionSeed(
+        "stores.admin_read", "Admin read stores", "stores", "Admin can list and read stores"
+    ),
+    PermissionSeed(
+        "stores.admin_review", "Admin review stores", "stores", "Admin can review stores"
+    ),
     PermissionSeed("stores.approve", "Approve stores", "stores", "Admin can approve stores"),
     PermissionSeed("stores.reject", "Reject stores", "stores", "Admin can reject stores"),
     PermissionSeed("stores.suspend", "Suspend stores", "stores", "Admin can suspend stores"),
-    PermissionSeed("stores.public_read", "Public read stores", "stores", "Read public approved stores"),
-
+    PermissionSeed(
+        "stores.public_read", "Public read stores", "stores", "Read public approved stores"
+    ),
     PermissionSeed("contracts.read", "Read contracts", "contracts", "View contracts"),
-    PermissionSeed("contracts.create", "Create contracts", "contracts", "Create contract templates"),
-    PermissionSeed("contracts.update", "Update contracts", "contracts", "Update contract templates"),
-    PermissionSeed("contracts.activate", "Activate contracts", "contracts", "Activate contract templates"),
-    PermissionSeed("contracts.deactivate", "Deactivate contracts", "contracts", "Deactivate contract templates"),
-    PermissionSeed("contracts.review_signed_pdf", "Review signed PDF", "contracts", "Review signed contract PDFs"),
-
+    PermissionSeed(
+        "contracts.create", "Create contracts", "contracts", "Create contract templates"
+    ),
+    PermissionSeed(
+        "contracts.update", "Update contracts", "contracts", "Update contract templates"
+    ),
+    PermissionSeed(
+        "contracts.activate", "Activate contracts", "contracts", "Activate contract templates"
+    ),
+    PermissionSeed(
+        "contracts.deactivate", "Deactivate contracts", "contracts", "Deactivate contract templates"
+    ),
+    PermissionSeed(
+        "contracts.review_signed_pdf",
+        "Review signed PDF",
+        "contracts",
+        "Review signed contract PDFs",
+    ),
     PermissionSeed("billing.plans.read", "Read billing plans", "billing", "View billing plans"),
-    PermissionSeed("billing.plans.create", "Create billing plans", "billing", "Create billing plans"),
-    PermissionSeed("billing.plans.update", "Update billing plans", "billing", "Update billing plans"),
-    PermissionSeed("billing.plans.delete", "Delete billing plans", "billing", "Delete billing plans"),
-    PermissionSeed("billing.subscriptions.read", "Read subscriptions", "billing", "View subscriptions"),
-    PermissionSeed("billing.subscriptions.activate", "Activate subscriptions", "billing", "Activate subscriptions"),
-    PermissionSeed("billing.subscriptions.cancel", "Cancel subscriptions", "billing", "Cancel subscriptions"),
+    PermissionSeed(
+        "billing.plans.create", "Create billing plans", "billing", "Create billing plans"
+    ),
+    PermissionSeed(
+        "billing.plans.update", "Update billing plans", "billing", "Update billing plans"
+    ),
+    PermissionSeed(
+        "billing.plans.delete", "Delete billing plans", "billing", "Delete billing plans"
+    ),
+    PermissionSeed(
+        "billing.subscriptions.read", "Read subscriptions", "billing", "View subscriptions"
+    ),
+    PermissionSeed(
+        "billing.subscriptions.activate",
+        "Activate subscriptions",
+        "billing",
+        "Activate subscriptions",
+    ),
+    PermissionSeed(
+        "billing.subscriptions.cancel", "Cancel subscriptions", "billing", "Cancel subscriptions"
+    ),
     PermissionSeed("billing.usage.read", "Read billing usage", "billing", "View feature usage"),
-    PermissionSeed("billing.plans.public_read", "Read active plans", "billing", "View active plans"),
-    PermissionSeed("billing.subscription.read_own", "Read own subscription", "billing", "View own subscription"),
-    PermissionSeed("billing.subscription.manage_own", "Manage own subscription", "billing", "Manage own subscription"),
+    PermissionSeed(
+        "billing.plans.public_read", "Read active plans", "billing", "View active plans"
+    ),
+    PermissionSeed(
+        "billing.subscription.read_own", "Read own subscription", "billing", "View own subscription"
+    ),
+    PermissionSeed(
+        "billing.subscription.manage_own",
+        "Manage own subscription",
+        "billing",
+        "Manage own subscription",
+    ),
     PermissionSeed("billing.usage.read_own", "Read own usage", "billing", "View own feature usage"),
-    PermissionSeed("billing.entitlements.read", "Read entitlements", "billing", "View resolved entitlements"),
-    PermissionSeed("billing.audit.read", "Read billing audit", "billing", "View billing audit history"),
-    PermissionSeed("billing.reconciliation.read", "Reconcile billing", "billing", "Inspect billing consistency"),
-
+    PermissionSeed(
+        "billing.entitlements.read", "Read entitlements", "billing", "View resolved entitlements"
+    ),
+    PermissionSeed(
+        "billing.audit.read", "Read billing audit", "billing", "View billing audit history"
+    ),
+    PermissionSeed(
+        "billing.reconciliation.read", "Reconcile billing", "billing", "Inspect billing consistency"
+    ),
     PermissionSeed("cart.read", "Read cart", "cart", "Read current user's cart"),
     PermissionSeed("cart.update", "Update cart", "cart", "Add, update or remove cart items"),
-
     PermissionSeed("orders.read", "Read own orders", "orders", "Read current user's orders"),
     PermissionSeed("orders.create", "Create orders", "orders", "Create order from cart checkout"),
-    PermissionSeed("orders.cancel", "Cancel own orders", "orders", "Cancel current user's pending orders"),
-    PermissionSeed("orders.seller_read", "Seller read orders", "orders", "Seller can read orders for own store"),
-    PermissionSeed("orders.seller_update", "Seller update orders", "orders", "Seller can update operational order status"),
-    PermissionSeed("orders.admin_read", "Admin read orders", "orders", "Admin can list and inspect all orders"),
-    PermissionSeed("orders.admin_update", "Admin update orders", "orders", "Admin can update order status and admin notes"),
-
-    PermissionSeed("payments.read", "Read own payments", "payments", "Read current user's payments"),
-    PermissionSeed("payments.create", "Create payments", "payments", "Create payment attempt for own order"),
-    PermissionSeed("payments.admin_read", "Admin read payments", "payments", "Admin can list and inspect payments"),
-    PermissionSeed("payments.admin_update", "Admin update payments", "payments", "Admin can update payment status in supported flows"),
-
-    PermissionSeed("commission.read", "Read commission settings", "commission", "Read platform commission settings"),
-    PermissionSeed("commission.update", "Update commission settings", "commission", "Update platform commission settings"),
-
+    PermissionSeed(
+        "orders.cancel", "Cancel own orders", "orders", "Cancel current user's pending orders"
+    ),
+    PermissionSeed(
+        "orders.seller_read", "Seller read orders", "orders", "Seller can read orders for own store"
+    ),
+    PermissionSeed(
+        "orders.seller_update",
+        "Seller update orders",
+        "orders",
+        "Seller can update operational order status",
+    ),
+    PermissionSeed(
+        "orders.admin_read", "Admin read orders", "orders", "Admin can list and inspect all orders"
+    ),
+    PermissionSeed(
+        "orders.admin_update",
+        "Admin update orders",
+        "orders",
+        "Admin can update order status and admin notes",
+    ),
+    PermissionSeed(
+        "payments.read", "Read own payments", "payments", "Read current user's payments"
+    ),
+    PermissionSeed(
+        "payments.create", "Create payments", "payments", "Create payment attempt for own order"
+    ),
+    PermissionSeed(
+        "payments.admin_read",
+        "Admin read payments",
+        "payments",
+        "Admin can list and inspect payments",
+    ),
+    PermissionSeed(
+        "payments.admin_update",
+        "Admin update payments",
+        "payments",
+        "Admin can update payment status in supported flows",
+    ),
+    PermissionSeed(
+        "commission.read",
+        "Read commission settings",
+        "commission",
+        "Read platform commission settings",
+    ),
+    PermissionSeed(
+        "commission.update",
+        "Update commission settings",
+        "commission",
+        "Update platform commission settings",
+    ),
     PermissionSeed("finance.invoices.read", "Read invoices", "finance", "View invoices"),
-    PermissionSeed("finance.invoices.read_detail", "Read invoice detail", "finance", "View invoice details"),
-    PermissionSeed("finance.transactions.read", "Read transactions", "finance", "View transactions"),
+    PermissionSeed(
+        "finance.invoices.read_detail", "Read invoice detail", "finance", "View invoice details"
+    ),
+    PermissionSeed(
+        "finance.transactions.read", "Read transactions", "finance", "View transactions"
+    ),
     PermissionSeed("finance.payments.read", "Read payments", "finance", "View payment attempts"),
-    PermissionSeed("finance.payments.verify_manual", "Manual payment verify", "finance", "Manually verify payments"),
+    PermissionSeed(
+        "finance.payments.verify_manual",
+        "Manual payment verify",
+        "finance",
+        "Manually verify payments",
+    ),
     PermissionSeed("finance.refunds.create", "Create refunds", "finance", "Create refunds"),
     PermissionSeed("finance.settlements.read", "Read settlements", "finance", "View settlements"),
-    PermissionSeed("finance.settlements.manage", "Manage settlements", "finance", "Manage settlements"),
-    PermissionSeed("wallet.read_own", "Read own wallet", "finance", "View own wallet accounts and entries"),
-    PermissionSeed("settlements.read_own", "Read own settlements", "finance", "View own settlement requests"),
-    PermissionSeed("settlements.create_own", "Create own settlements", "finance", "Request settlement from available balance"),
+    PermissionSeed(
+        "finance.settlements.manage", "Manage settlements", "finance", "Manage settlements"
+    ),
+    PermissionSeed(
+        "wallet.read_own", "Read own wallet", "finance", "View own wallet accounts and entries"
+    ),
+    PermissionSeed(
+        "settlements.read_own", "Read own settlements", "finance", "View own settlement requests"
+    ),
+    PermissionSeed(
+        "settlements.create_own",
+        "Create own settlements",
+        "finance",
+        "Request settlement from available balance",
+    ),
     PermissionSeed("finance.wallets.read", "Read wallets", "finance", "View wallet accounts"),
-    PermissionSeed("finance.ledger.read", "Read ledger", "finance", "View ledger journals and entries"),
-    PermissionSeed("finance.ledger.post_internal", "Post ledger", "finance", "Post internal balanced ledger journals"),
-    PermissionSeed("finance.adjustments.create", "Create adjustments", "finance", "Create audited provider wallet adjustments"),
-    PermissionSeed("finance.ledger.reconcile", "Reconcile ledger", "finance", "Run and review ledger reconciliation"),
-
+    PermissionSeed(
+        "finance.ledger.read", "Read ledger", "finance", "View ledger journals and entries"
+    ),
+    PermissionSeed(
+        "finance.ledger.post_internal",
+        "Post ledger",
+        "finance",
+        "Post internal balanced ledger journals",
+    ),
+    PermissionSeed(
+        "finance.adjustments.create",
+        "Create adjustments",
+        "finance",
+        "Create audited provider wallet adjustments",
+    ),
+    PermissionSeed(
+        "finance.ledger.reconcile",
+        "Reconcile ledger",
+        "finance",
+        "Run and review ledger reconciliation",
+    ),
     PermissionSeed("shops.read", "Read shops", "store", "View shops"),
     PermissionSeed("shops.read_detail", "Read shop detail", "store", "View shop details"),
     PermissionSeed("shops.approve", "Approve shops", "store", "Approve shops"),
     PermissionSeed("shops.reject", "Reject shops", "store", "Reject shops"),
     PermissionSeed("shops.suspend", "Suspend shops", "store", "Suspend shops"),
     PermissionSeed("shops.restore", "Restore shops", "store", "Restore shops"),
-
     PermissionSeed("shop_members.read", "Read shop members", "store", "View shop members"),
     PermissionSeed("shop_members.manage", "Manage shop members", "store", "Manage shop members"),
-
-    PermissionSeed("store_categories.read", "Read store categories", "store", "View store categories"),
-    PermissionSeed("store_categories.create", "Create store categories", "store", "Create store categories"),
-    PermissionSeed("store_categories.update", "Update store categories", "store", "Update store categories"),
-    PermissionSeed("store_categories.delete", "Delete store categories", "store", "Delete store categories"),
-
+    PermissionSeed(
+        "store_categories.read", "Read store categories", "store", "View store categories"
+    ),
+    PermissionSeed(
+        "store_categories.create", "Create store categories", "store", "Create store categories"
+    ),
+    PermissionSeed(
+        "store_categories.update", "Update store categories", "store", "Update store categories"
+    ),
+    PermissionSeed(
+        "store_categories.delete", "Delete store categories", "store", "Delete store categories"
+    ),
     PermissionSeed("products.read", "Read products", "products", "Read own store products"),
-    PermissionSeed("products.create", "Create products", "products", "Create products for own approved store"),
+    PermissionSeed(
+        "products.create", "Create products", "products", "Create products for own approved store"
+    ),
     PermissionSeed("products.update", "Update products", "products", "Update own store products"),
-    PermissionSeed("products.delete", "Delete products", "products", "Soft delete or archive own store products"),
-    PermissionSeed("products.publish", "Publish products", "products", "Publish own store products"),
-    PermissionSeed("products.unpublish", "Unpublish products", "products", "Unpublish own store products"),
-    PermissionSeed("products.manage_images", "Manage product images", "products", "Manage product image metadata"),
-    PermissionSeed("products.admin_read", "Admin read products", "products", "Admin can list and inspect products"),
-    PermissionSeed("products.suspend", "Suspend products", "products", "Admin can suspend products for violations"),
-    PermissionSeed("products.restore", "Restore products", "products", "Admin can restore suspended products"),
-    PermissionSeed("products.public_read", "Public read products", "products", "Read public published products"),
-    PermissionSeed("product_categories.admin_read", "Admin read product categories", "products", "Admin can list product categories"),
-    PermissionSeed("product_categories.create", "Create product categories", "products", "Admin can create product categories"),
-    PermissionSeed("product_categories.update", "Update product categories", "products", "Admin can update product categories"),
-
+    PermissionSeed(
+        "products.delete",
+        "Delete products",
+        "products",
+        "Soft delete or archive own store products",
+    ),
+    PermissionSeed(
+        "products.publish", "Publish products", "products", "Publish own store products"
+    ),
+    PermissionSeed(
+        "products.unpublish", "Unpublish products", "products", "Unpublish own store products"
+    ),
+    PermissionSeed(
+        "products.manage_images",
+        "Manage product images",
+        "products",
+        "Manage product image metadata",
+    ),
+    PermissionSeed(
+        "products.admin_read",
+        "Admin read products",
+        "products",
+        "Admin can list and inspect products",
+    ),
+    PermissionSeed(
+        "products.suspend",
+        "Suspend products",
+        "products",
+        "Admin can suspend products for violations",
+    ),
+    PermissionSeed(
+        "products.restore", "Restore products", "products", "Admin can restore suspended products"
+    ),
+    PermissionSeed(
+        "products.public_read", "Public read products", "products", "Read public published products"
+    ),
+    PermissionSeed(
+        "product_categories.admin_read",
+        "Admin read product categories",
+        "products",
+        "Admin can list product categories",
+    ),
+    PermissionSeed(
+        "product_categories.create",
+        "Create product categories",
+        "products",
+        "Admin can create product categories",
+    ),
+    PermissionSeed(
+        "product_categories.update",
+        "Update product categories",
+        "products",
+        "Admin can update product categories",
+    ),
     PermissionSeed("promotions.read", "Read promotions", "promotion", "View promotions"),
     PermissionSeed("promotions.create", "Create promotions", "promotion", "Create promotions"),
     PermissionSeed("promotions.update", "Update promotions", "promotion", "Update promotions"),
-    PermissionSeed("promotions.activate", "Activate promotions", "promotion", "Activate promotions"),
+    PermissionSeed(
+        "promotions.activate", "Activate promotions", "promotion", "Activate promotions"
+    ),
     PermissionSeed("promotions.cancel", "Cancel promotions", "promotion", "Cancel promotions"),
-    PermissionSeed("promotion_packages.read", "Read promotion packages", "promotion", "View promotion packages"),
-    PermissionSeed("promotion_packages.create", "Create promotion packages", "promotion", "Create promotion packages"),
-    PermissionSeed("promotion_packages.update", "Update promotion packages", "promotion", "Update promotion packages"),
-    PermissionSeed("promotion_packages.delete", "Delete promotion packages", "promotion", "Delete promotion packages"),
-
+    PermissionSeed(
+        "promotion_packages.read", "Read promotion packages", "promotion", "View promotion packages"
+    ),
+    PermissionSeed(
+        "promotion_packages.create",
+        "Create promotion packages",
+        "promotion",
+        "Create promotion packages",
+    ),
+    PermissionSeed(
+        "promotion_packages.update",
+        "Update promotion packages",
+        "promotion",
+        "Update promotion packages",
+    ),
+    PermissionSeed(
+        "promotion_packages.delete",
+        "Delete promotion packages",
+        "promotion",
+        "Delete promotion packages",
+    ),
     PermissionSeed("services.read", "Read services", "services", "View services"),
     PermissionSeed("services.approve", "Approve services", "services", "Approve services"),
     PermissionSeed("services.reject", "Reject services", "services", "Reject services"),
     PermissionSeed("services.suspend", "Suspend services", "services", "Suspend services"),
-    PermissionSeed("service_categories.read", "Read service categories", "services", "View service categories"),
-    PermissionSeed("service_categories.create", "Create service categories", "services", "Create service categories"),
-    PermissionSeed("service_categories.update", "Update service categories", "services", "Update service categories"),
-    PermissionSeed("service_categories.delete", "Delete service categories", "services", "Delete service categories"),
-    PermissionSeed("service_categories.admin_read", "Admin read service categories", "services", "Admin can list and inspect service categories"),
-    PermissionSeed("service_providers.read", "Read service providers", "services", "View service provider profiles"),
-    PermissionSeed("service_providers.profile_manage", "Manage own service provider profile", "services", "Create and update own service provider profile"),
-    PermissionSeed("service_providers.admin_read", "Admin read service providers", "services", "Admin can list and inspect service provider profiles"),
-    PermissionSeed("service_providers.approve", "Approve service providers", "services", "Approve service provider profiles"),
-    PermissionSeed("service_providers.reject", "Reject service providers", "services", "Reject service provider profiles"),
-    PermissionSeed("service_providers.suspend", "Suspend service providers", "services", "Suspend service provider profiles"),
+    PermissionSeed(
+        "service_categories.read", "Read service categories", "services", "View service categories"
+    ),
+    PermissionSeed(
+        "service_categories.create",
+        "Create service categories",
+        "services",
+        "Create service categories",
+    ),
+    PermissionSeed(
+        "service_categories.update",
+        "Update service categories",
+        "services",
+        "Update service categories",
+    ),
+    PermissionSeed(
+        "service_categories.delete",
+        "Delete service categories",
+        "services",
+        "Delete service categories",
+    ),
+    PermissionSeed(
+        "service_categories.admin_read",
+        "Admin read service categories",
+        "services",
+        "Admin can list and inspect service categories",
+    ),
+    PermissionSeed(
+        "service_providers.read",
+        "Read service providers",
+        "services",
+        "View service provider profiles",
+    ),
+    PermissionSeed(
+        "service_providers.profile_manage",
+        "Manage own service provider profile",
+        "services",
+        "Create and update own service provider profile",
+    ),
+    PermissionSeed(
+        "service_providers.admin_read",
+        "Admin read service providers",
+        "services",
+        "Admin can list and inspect service provider profiles",
+    ),
+    PermissionSeed(
+        "service_providers.approve",
+        "Approve service providers",
+        "services",
+        "Approve service provider profiles",
+    ),
+    PermissionSeed(
+        "service_providers.reject",
+        "Reject service providers",
+        "services",
+        "Reject service provider profiles",
+    ),
+    PermissionSeed(
+        "service_providers.suspend",
+        "Suspend service providers",
+        "services",
+        "Suspend service provider profiles",
+    ),
     PermissionSeed("service_offers.read", "Read service offers", "services", "View service offers"),
-    PermissionSeed("service_offers.create", "Create service offers", "services", "Create own service offers"),
-    PermissionSeed("service_offers.update", "Update service offers", "services", "Update own service offers"),
-    PermissionSeed("service_offers.delete", "Delete service offers", "services", "Delete own service offers"),
-    PermissionSeed("service_offers.submit", "Submit service offers", "services", "Submit service offers for review"),
-    PermissionSeed("service_offers.admin_read", "Admin read service offers", "services", "Admin can list and inspect service offers"),
-    PermissionSeed("service_offers.admin_moderate", "Admin moderate service offers", "services", "Admin can approve, reject, suspend, or restore service offers"),
-    PermissionSeed("service_requests.create", "Create service requests", "services", "Create service requests"),
-    PermissionSeed("service_requests.read_own", "Read own service requests", "services", "Read own service requests"),
-    PermissionSeed("service_requests.manage_own", "Manage own service requests", "services", "Cancel own service requests"),
-    PermissionSeed("service_requests.manage_assigned", "Manage assigned service requests", "services", "Manage assigned service requests"),
-    PermissionSeed("service_requests.read", "Read service requests", "services", "Admin can read service requests"),
-    PermissionSeed("service_requests.manage", "Manage service requests", "services", "Admin can manage service requests"),
-
-    PermissionSeed("rental_categories.read", "Read rental categories", "rental", "View active rental categories"),
-    PermissionSeed("rental_categories.admin_read", "Admin read rental categories", "rental", "List all rental categories"),
-    PermissionSeed("rental_categories.create", "Create rental categories", "rental", "Create rental categories"),
-    PermissionSeed("rental_categories.update", "Update rental categories", "rental", "Update rental categories"),
-    PermissionSeed("rental_lessors.profile_manage", "Manage own lessor profile", "rental", "Create and update own lessor profile"),
-    PermissionSeed("rental_lessors.admin_read", "Admin read lessors", "rental", "Inspect lessor profiles"),
-    PermissionSeed("rental_lessors.admin_moderate", "Admin moderate lessors", "rental", "Approve, reject, or suspend lessors"),
-    PermissionSeed("rental_equipment.read", "Read rental equipment", "rental", "View approved rental equipment"),
-    PermissionSeed("rental_equipment.create", "Create rental equipment", "rental", "Create own rental equipment"),
-    PermissionSeed("rental_equipment.update", "Update rental equipment", "rental", "Update own rental equipment"),
-    PermissionSeed("rental_equipment.submit", "Submit rental equipment", "rental", "Submit own rental equipment for review"),
-    PermissionSeed("rental_equipment.manage_media", "Manage rental equipment media", "rental", "Manage own equipment media"),
-    PermissionSeed("rental_equipment.manage_pricing", "Manage rental pricing", "rental", "Manage own equipment pricing"),
-    PermissionSeed("rental_equipment.manage_availability", "Manage rental availability", "rental", "Manage own equipment availability"),
-    PermissionSeed("rental_equipment.admin_read", "Admin read rental equipment", "rental", "Inspect all rental equipment"),
-    PermissionSeed("rental_equipment.approve", "Approve rental equipment", "rental", "Approve rental equipment"),
-    PermissionSeed("rental_equipment.reject", "Reject rental equipment", "rental", "Reject rental equipment"),
-    PermissionSeed("rental_equipment.suspend", "Suspend rental equipment", "rental", "Suspend rental equipment"),
-    PermissionSeed("rental_requests.create", "Create rental requests", "rental", "Request equipment rental"),
-    PermissionSeed("rental_requests.read_own", "Read own rental requests", "rental", "Read requester-owned rental requests"),
-    PermissionSeed("rental_requests.manage_own", "Manage own rental requests", "rental", "Cancel requester-owned rental requests"),
-    PermissionSeed("rental_requests.manage_assigned", "Manage assigned rental requests", "rental", "Manage lessor rental requests"),
-    PermissionSeed("rental_requests.admin_read", "Admin read rental requests", "rental", "Inspect all rental requests"),
-    PermissionSeed("rental_requests.admin_manage", "Admin manage rental requests", "rental", "Manage rental request status"),
-
-    PermissionSeed("reviews.create", "Create reviews", "reviews", "Create an eligible marketplace review"),
-    PermissionSeed("reviews.read_own", "Read own reviews", "reviews", "Read current user's marketplace reviews"),
-    PermissionSeed("reviews.manage_own", "Manage own reviews", "reviews", "Update or delete current user's marketplace reviews"),
-    PermissionSeed("review_reports.create", "Report reviews", "reviews", "Report marketplace reviews for moderation"),
-    PermissionSeed("favorites.read_own", "Read own favorites", "favorites", "View the authenticated user's private favorites"),
-    PermissionSeed("favorites.manage_own", "Manage own favorites", "favorites", "Add or remove the authenticated user's private favorites"),
-    PermissionSeed("reviews.admin_read", "Admin read reviews", "reviews", "Inspect marketplace reviews"),
-    PermissionSeed("reviews.admin_moderate", "Admin moderate reviews", "reviews", "Hide or restore marketplace reviews"),
-    PermissionSeed("review_reports.admin_read", "Admin read review reports", "reviews", "Inspect marketplace review reports"),
-    PermissionSeed("review_reports.admin_resolve", "Admin resolve review reports", "reviews", "Resolve marketplace review reports"),
-
-
+    PermissionSeed(
+        "service_offers.create", "Create service offers", "services", "Create own service offers"
+    ),
+    PermissionSeed(
+        "service_offers.update", "Update service offers", "services", "Update own service offers"
+    ),
+    PermissionSeed(
+        "service_offers.delete", "Delete service offers", "services", "Delete own service offers"
+    ),
+    PermissionSeed(
+        "service_offers.submit",
+        "Submit service offers",
+        "services",
+        "Submit service offers for review",
+    ),
+    PermissionSeed(
+        "service_offers.admin_read",
+        "Admin read service offers",
+        "services",
+        "Admin can list and inspect service offers",
+    ),
+    PermissionSeed(
+        "service_offers.admin_moderate",
+        "Admin moderate service offers",
+        "services",
+        "Admin can approve, reject, suspend, or restore service offers",
+    ),
+    PermissionSeed(
+        "service_requests.create", "Create service requests", "services", "Create service requests"
+    ),
+    PermissionSeed(
+        "service_requests.read_own",
+        "Read own service requests",
+        "services",
+        "Read own service requests",
+    ),
+    PermissionSeed(
+        "service_requests.manage_own",
+        "Manage own service requests",
+        "services",
+        "Cancel own service requests",
+    ),
+    PermissionSeed(
+        "service_requests.manage_assigned",
+        "Manage assigned service requests",
+        "services",
+        "Manage assigned service requests",
+    ),
+    PermissionSeed(
+        "service_requests.read",
+        "Read service requests",
+        "services",
+        "Admin can read service requests",
+    ),
+    PermissionSeed(
+        "service_requests.manage",
+        "Manage service requests",
+        "services",
+        "Admin can manage service requests",
+    ),
+    PermissionSeed(
+        "rental_categories.read",
+        "Read rental categories",
+        "rental",
+        "View active rental categories",
+    ),
+    PermissionSeed(
+        "rental_categories.admin_read",
+        "Admin read rental categories",
+        "rental",
+        "List all rental categories",
+    ),
+    PermissionSeed(
+        "rental_categories.create", "Create rental categories", "rental", "Create rental categories"
+    ),
+    PermissionSeed(
+        "rental_categories.update", "Update rental categories", "rental", "Update rental categories"
+    ),
+    PermissionSeed(
+        "rental_lessors.profile_manage",
+        "Manage own lessor profile",
+        "rental",
+        "Create and update own lessor profile",
+    ),
+    PermissionSeed(
+        "rental_lessors.admin_read", "Admin read lessors", "rental", "Inspect lessor profiles"
+    ),
+    PermissionSeed(
+        "rental_lessors.admin_moderate",
+        "Admin moderate lessors",
+        "rental",
+        "Approve, reject, or suspend lessors",
+    ),
+    PermissionSeed(
+        "rental_equipment.read", "Read rental equipment", "rental", "View approved rental equipment"
+    ),
+    PermissionSeed(
+        "rental_equipment.create",
+        "Create rental equipment",
+        "rental",
+        "Create own rental equipment",
+    ),
+    PermissionSeed(
+        "rental_equipment.update",
+        "Update rental equipment",
+        "rental",
+        "Update own rental equipment",
+    ),
+    PermissionSeed(
+        "rental_equipment.submit",
+        "Submit rental equipment",
+        "rental",
+        "Submit own rental equipment for review",
+    ),
+    PermissionSeed(
+        "rental_equipment.manage_media",
+        "Manage rental equipment media",
+        "rental",
+        "Manage own equipment media",
+    ),
+    PermissionSeed(
+        "rental_equipment.manage_pricing",
+        "Manage rental pricing",
+        "rental",
+        "Manage own equipment pricing",
+    ),
+    PermissionSeed(
+        "rental_equipment.manage_availability",
+        "Manage rental availability",
+        "rental",
+        "Manage own equipment availability",
+    ),
+    PermissionSeed(
+        "rental_equipment.admin_read",
+        "Admin read rental equipment",
+        "rental",
+        "Inspect all rental equipment",
+    ),
+    PermissionSeed(
+        "rental_equipment.approve", "Approve rental equipment", "rental", "Approve rental equipment"
+    ),
+    PermissionSeed(
+        "rental_equipment.reject", "Reject rental equipment", "rental", "Reject rental equipment"
+    ),
+    PermissionSeed(
+        "rental_equipment.suspend", "Suspend rental equipment", "rental", "Suspend rental equipment"
+    ),
+    PermissionSeed(
+        "rental_requests.create", "Create rental requests", "rental", "Request equipment rental"
+    ),
+    PermissionSeed(
+        "rental_requests.read_own",
+        "Read own rental requests",
+        "rental",
+        "Read requester-owned rental requests",
+    ),
+    PermissionSeed(
+        "rental_requests.manage_own",
+        "Manage own rental requests",
+        "rental",
+        "Cancel requester-owned rental requests",
+    ),
+    PermissionSeed(
+        "rental_requests.manage_assigned",
+        "Manage assigned rental requests",
+        "rental",
+        "Manage lessor rental requests",
+    ),
+    PermissionSeed(
+        "rental_requests.admin_read",
+        "Admin read rental requests",
+        "rental",
+        "Inspect all rental requests",
+    ),
+    PermissionSeed(
+        "rental_requests.admin_manage",
+        "Admin manage rental requests",
+        "rental",
+        "Manage rental request status",
+    ),
+    PermissionSeed(
+        "reviews.create", "Create reviews", "reviews", "Create an eligible marketplace review"
+    ),
+    PermissionSeed(
+        "reviews.read_own", "Read own reviews", "reviews", "Read current user's marketplace reviews"
+    ),
+    PermissionSeed(
+        "reviews.manage_own",
+        "Manage own reviews",
+        "reviews",
+        "Update or delete current user's marketplace reviews",
+    ),
+    PermissionSeed(
+        "review_reports.create",
+        "Report reviews",
+        "reviews",
+        "Report marketplace reviews for moderation",
+    ),
+    PermissionSeed(
+        "favorites.read_own",
+        "Read own favorites",
+        "favorites",
+        "View the authenticated user's private favorites",
+    ),
+    PermissionSeed(
+        "favorites.manage_own",
+        "Manage own favorites",
+        "favorites",
+        "Add or remove the authenticated user's private favorites",
+    ),
+    PermissionSeed(
+        "reviews.admin_read", "Admin read reviews", "reviews", "Inspect marketplace reviews"
+    ),
+    PermissionSeed(
+        "reviews.admin_moderate",
+        "Admin moderate reviews",
+        "reviews",
+        "Hide or restore marketplace reviews",
+    ),
+    PermissionSeed(
+        "review_reports.admin_read",
+        "Admin read review reports",
+        "reviews",
+        "Inspect marketplace review reports",
+    ),
+    PermissionSeed(
+        "review_reports.admin_resolve",
+        "Admin resolve review reports",
+        "reviews",
+        "Resolve marketplace review reports",
+    ),
     PermissionSeed(
         "weather.public_read",
         "Public read weather",
@@ -332,62 +880,238 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
         "weather",
         "Allows admin users to manage weather provider configuration.",
     ),
-
     PermissionSeed("ai.requests.read", "Read AI requests", "ai", "View AI requests"),
     PermissionSeed("ai.feedback.read", "Read AI feedback", "ai", "View AI feedback"),
-    PermissionSeed("ai.knowledge_sources.read", "Read AI knowledge sources", "ai", "View knowledge sources"),
-    PermissionSeed("ai.knowledge_sources.create", "Create AI knowledge sources", "ai", "Create knowledge sources"),
-    PermissionSeed("ai.knowledge_sources.update", "Update AI knowledge sources", "ai", "Update knowledge sources"),
-    PermissionSeed("ai.knowledge_sources.review", "Review AI knowledge sources", "ai", "Approve, reject, or withdraw governed knowledge sources"),
-    PermissionSeed("ai.knowledge_ingestion.manage", "Manage AI knowledge ingestion", "ai", "Run and review governed knowledge extraction jobs"),
-    PermissionSeed("ai.retrieval.manage", "Manage AI retrieval index", "ai", "Build, remove, and reconcile approved knowledge indexes"),
+    PermissionSeed(
+        "ai.knowledge_sources.read", "Read AI knowledge sources", "ai", "View knowledge sources"
+    ),
+    PermissionSeed(
+        "ai.knowledge_sources.create",
+        "Create AI knowledge sources",
+        "ai",
+        "Create knowledge sources",
+    ),
+    PermissionSeed(
+        "ai.knowledge_sources.update",
+        "Update AI knowledge sources",
+        "ai",
+        "Update knowledge sources",
+    ),
+    PermissionSeed(
+        "ai.knowledge_sources.review",
+        "Review AI knowledge sources",
+        "ai",
+        "Approve, reject, or withdraw governed knowledge sources",
+    ),
+    PermissionSeed(
+        "ai.knowledge_ingestion.manage",
+        "Manage AI knowledge ingestion",
+        "ai",
+        "Run and review governed knowledge extraction jobs",
+    ),
+    PermissionSeed(
+        "ai.retrieval.manage",
+        "Manage AI retrieval index",
+        "ai",
+        "Build, remove, and reconcile approved knowledge indexes",
+    ),
     PermissionSeed("ai.usage.read", "Read AI usage", "ai", "View AI usage"),
-    PermissionSeed("ai.conversations.create", "Create AI conversations", "ai", "Create own AI conversations"),
-    PermissionSeed("ai.conversations.read_own", "Read own AI conversations", "ai", "View own AI conversations"),
-    PermissionSeed("ai.conversations.manage_own", "Manage own AI conversations", "ai", "Archive and manage own AI conversations"),
+    PermissionSeed(
+        "ai.conversations.create", "Create AI conversations", "ai", "Create own AI conversations"
+    ),
+    PermissionSeed(
+        "ai.conversations.read_own", "Read own AI conversations", "ai", "View own AI conversations"
+    ),
+    PermissionSeed(
+        "ai.conversations.manage_own",
+        "Manage own AI conversations",
+        "ai",
+        "Archive and manage own AI conversations",
+    ),
     PermissionSeed("ai.requests.create", "Create AI requests", "ai", "Submit own AI requests"),
-    PermissionSeed("ai.requests.read_own", "Read own AI requests", "ai", "View own AI request results"),
-    PermissionSeed("ai.requests.cancel_own", "Cancel own AI requests", "ai", "Cancel eligible own AI requests"),
-    PermissionSeed("ai.context.use_own", "Use own Farm AI context", "ai", "Consent to selected own Farm context"),
+    PermissionSeed(
+        "ai.requests.read_own", "Read own AI requests", "ai", "View own AI request results"
+    ),
+    PermissionSeed(
+        "ai.requests.cancel_own", "Cancel own AI requests", "ai", "Cancel eligible own AI requests"
+    ),
+    PermissionSeed(
+        "ai.context.use_own",
+        "Use own Farm AI context",
+        "ai",
+        "Consent to selected own Farm context",
+    ),
     PermissionSeed("ai.feedback.create_own", "Create own AI feedback", "ai", "Rate own AI answers"),
-    PermissionSeed("ai.data.delete_own", "Delete own AI data", "ai", "Request deletion of own AI data"),
+    PermissionSeed(
+        "ai.data.delete_own", "Delete own AI data", "ai", "Request deletion of own AI data"
+    ),
     PermissionSeed("ai.audit.read", "Read AI audit", "ai", "View safe AI audit events"),
-    PermissionSeed("ai.evaluation.manage", "Manage AI evaluation", "ai", "Manage versioned AI quality and safety release gates"),
-    PermissionSeed("ai.retention.manage", "Manage AI retention", "ai", "Process AI retention and deletion work"),
-
-    PermissionSeed("social.public_read", "Public read social", "social", "Allows public users to read published public social posts."),
-    PermissionSeed("social.read", "Read social", "social", "Allows authenticated users to read social community content."),
-    PermissionSeed("social.post_create", "Create social posts", "social", "Allows users to create social posts."),
-    PermissionSeed("social.post_manage_own", "Manage own social posts", "social", "Allows users to edit or delete their own social posts."),
-    PermissionSeed("social.comment_create", "Create social comments", "social", "Allows users to create comments on social posts."),
-    PermissionSeed("social.comment_manage_own", "Manage own social comments", "social", "Allows users to edit or delete their own comments."),
-    PermissionSeed("social.react", "React to social content", "social", "Allows users to react to posts and comments."),
-    PermissionSeed("social.bookmark", "Bookmark social posts", "social", "Allows users to bookmark social posts."),
-    PermissionSeed("social.report", "Report social content", "social", "Allows users to report posts and comments."),
-    PermissionSeed("social.admin_read", "Admin read social", "social", "Allows admins to read social content and reports."),
-    PermissionSeed("social.admin_moderate", "Moderate social content", "social", "Allows admins to moderate posts, comments, and reports."),
-    PermissionSeed("social.admin_manage", "Admin manage social", "social", "Allows admins to manage social categories and settings."),
-    PermissionSeed("social_categories.admin_read", "Admin read social categories", "social", "Admin can list social categories"),
-    PermissionSeed("social_categories.create", "Create social categories", "social", "Admin can create social categories"),
-    PermissionSeed("social_categories.update", "Update social categories", "social", "Admin can update social categories"),
-
-    PermissionSeed("expert_answer.read", "Read expert answers", "expert_answer", "Read published expert answers"),
-    PermissionSeed("expert_answer.create", "Create expert answers", "expert_answer", "Create expert answers for social posts"),
-    PermissionSeed("expert_answer.manage_own", "Manage own expert answers", "expert_answer", "Manage own expert answers"),
-    PermissionSeed("expert_answer.admin_read", "Admin read expert answers", "expert_answer", "Read expert answers in admin panel"),
-    PermissionSeed("expert_answer.admin_moderate", "Admin moderate expert answers", "expert_answer", "Hide or restore expert answers"),
-    PermissionSeed("expert_answer.admin_manage", "Admin manage expert answers", "expert_answer", "Advanced expert answer management"),
-
+    PermissionSeed(
+        "ai.evaluation.manage",
+        "Manage AI evaluation",
+        "ai",
+        "Manage versioned AI quality and safety release gates",
+    ),
+    PermissionSeed(
+        "ai.retention.manage", "Manage AI retention", "ai", "Process AI retention and deletion work"
+    ),
+    PermissionSeed(
+        "social.public_read",
+        "Public read social",
+        "social",
+        "Allows public users to read published public social posts.",
+    ),
+    PermissionSeed(
+        "social.read",
+        "Read social",
+        "social",
+        "Allows authenticated users to read social community content.",
+    ),
+    PermissionSeed(
+        "social.post_create",
+        "Create social posts",
+        "social",
+        "Allows users to create social posts.",
+    ),
+    PermissionSeed(
+        "social.post_manage_own",
+        "Manage own social posts",
+        "social",
+        "Allows users to edit or delete their own social posts.",
+    ),
+    PermissionSeed(
+        "social.comment_create",
+        "Create social comments",
+        "social",
+        "Allows users to create comments on social posts.",
+    ),
+    PermissionSeed(
+        "social.comment_manage_own",
+        "Manage own social comments",
+        "social",
+        "Allows users to edit or delete their own comments.",
+    ),
+    PermissionSeed(
+        "social.react",
+        "React to social content",
+        "social",
+        "Allows users to react to posts and comments.",
+    ),
+    PermissionSeed(
+        "social.bookmark",
+        "Bookmark social posts",
+        "social",
+        "Allows users to bookmark social posts.",
+    ),
+    PermissionSeed(
+        "social.report",
+        "Report social content",
+        "social",
+        "Allows users to report posts and comments.",
+    ),
+    PermissionSeed(
+        "social.admin_read",
+        "Admin read social",
+        "social",
+        "Allows admins to read social content and reports.",
+    ),
+    PermissionSeed(
+        "social.admin_moderate",
+        "Moderate social content",
+        "social",
+        "Allows admins to moderate posts, comments, and reports.",
+    ),
+    PermissionSeed(
+        "social.admin_manage",
+        "Admin manage social",
+        "social",
+        "Allows admins to manage social categories and settings.",
+    ),
+    PermissionSeed(
+        "social_categories.admin_read",
+        "Admin read social categories",
+        "social",
+        "Admin can list social categories",
+    ),
+    PermissionSeed(
+        "social_categories.create",
+        "Create social categories",
+        "social",
+        "Admin can create social categories",
+    ),
+    PermissionSeed(
+        "social_categories.update",
+        "Update social categories",
+        "social",
+        "Admin can update social categories",
+    ),
+    PermissionSeed(
+        "expert_answer.read",
+        "Read expert answers",
+        "expert_answer",
+        "Read published expert answers",
+    ),
+    PermissionSeed(
+        "expert_answer.create",
+        "Create expert answers",
+        "expert_answer",
+        "Create expert answers for social posts",
+    ),
+    PermissionSeed(
+        "expert_answer.manage_own",
+        "Manage own expert answers",
+        "expert_answer",
+        "Manage own expert answers",
+    ),
+    PermissionSeed(
+        "expert_answer.admin_read",
+        "Admin read expert answers",
+        "expert_answer",
+        "Read expert answers in admin panel",
+    ),
+    PermissionSeed(
+        "expert_answer.admin_moderate",
+        "Admin moderate expert answers",
+        "expert_answer",
+        "Hide or restore expert answers",
+    ),
+    PermissionSeed(
+        "expert_answer.admin_manage",
+        "Admin manage expert answers",
+        "expert_answer",
+        "Advanced expert answer management",
+    ),
     PermissionSeed("data_clients.read", "Read data clients", "data_access", "View data clients"),
-    PermissionSeed("data_clients.create", "Create data clients", "data_access", "Create data clients"),
-    PermissionSeed("data_clients.update", "Update data clients", "data_access", "Update data clients"),
-    PermissionSeed("data_clients.suspend", "Suspend data clients", "data_access", "Suspend data clients"),
-    PermissionSeed("data_access.contracts.read", "Read data contracts", "data_access", "View data access contracts"),
-    PermissionSeed("data_access.contracts.manage", "Manage data contracts", "data_access", "Manage data access contracts"),
-    PermissionSeed("data_access.exports.read", "Read data exports", "data_access", "View data exports"),
-    PermissionSeed("data_access.exports.approve", "Approve data exports", "data_access", "Approve data exports"),
-    PermissionSeed("data_access.logs.read", "Read data access logs", "data_access", "View data access logs"),
-
+    PermissionSeed(
+        "data_clients.create", "Create data clients", "data_access", "Create data clients"
+    ),
+    PermissionSeed(
+        "data_clients.update", "Update data clients", "data_access", "Update data clients"
+    ),
+    PermissionSeed(
+        "data_clients.suspend", "Suspend data clients", "data_access", "Suspend data clients"
+    ),
+    PermissionSeed(
+        "data_access.contracts.read",
+        "Read data contracts",
+        "data_access",
+        "View data access contracts",
+    ),
+    PermissionSeed(
+        "data_access.contracts.manage",
+        "Manage data contracts",
+        "data_access",
+        "Manage data access contracts",
+    ),
+    PermissionSeed(
+        "data_access.exports.read", "Read data exports", "data_access", "View data exports"
+    ),
+    PermissionSeed(
+        "data_access.exports.approve", "Approve data exports", "data_access", "Approve data exports"
+    ),
+    PermissionSeed(
+        "data_access.logs.read", "Read data access logs", "data_access", "View data access logs"
+    ),
     PermissionSeed("reports.read", "Read reports", "reports", "View reports"),
     PermissionSeed("reports.export", "Export reports", "reports", "Export reports"),
     PermissionSeed("reports.finance", "Finance reports", "reports", "View finance reports"),
@@ -395,11 +1119,12 @@ BASE_PERMISSIONS: list[PermissionSeed] = [
     PermissionSeed("reports.store", "Store reports", "reports", "View store reports"),
     PermissionSeed("reports.ai", "AI reports", "reports", "View AI reports"),
     PermissionSeed("reports.social", "Social reports", "reports", "View social reports"),
-
     PermissionSeed("settings.read", "Read settings", "settings", "View settings"),
     PermissionSeed("settings.update", "Update settings", "settings", "Update settings"),
     PermissionSeed("feature_flags.read", "Read feature flags", "settings", "View feature flags"),
-    PermissionSeed("feature_flags.update", "Update feature flags", "settings", "Update feature flags"),
+    PermissionSeed(
+        "feature_flags.update", "Update feature flags", "settings", "Update feature flags"
+    ),
 ]
 
 RETIRED_PERMISSION_CODES = {
@@ -471,11 +1196,7 @@ def seed_permissions(db: Session) -> dict[str, AuthPermission]:
     permissions_by_code: dict[str, AuthPermission] = {}
 
     for item in BASE_PERMISSIONS:
-        permission = (
-            db.query(AuthPermission)
-            .filter(AuthPermission.code == item.code)
-            .one_or_none()
-        )
+        permission = db.query(AuthPermission).filter(AuthPermission.code == item.code).one_or_none()
 
         if permission is None:
             permission = AuthPermission(
@@ -526,9 +1247,7 @@ def assign_all_permissions_to_super_admin(
 
 def retire_permissions(db: Session) -> None:
     retired = (
-        db.query(AuthPermission)
-        .filter(AuthPermission.code.in_(RETIRED_PERMISSION_CODES))
-        .all()
+        db.query(AuthPermission).filter(AuthPermission.code.in_(RETIRED_PERMISSION_CODES)).all()
     )
 
     if not retired:
@@ -559,9 +1278,7 @@ def remove_retired_role_permissions(
         permission_ids = [
             row[0]
             for row in (
-                db.query(AuthPermission.id)
-                .filter(AuthPermission.code.in_(permission_codes))
-                .all()
+                db.query(AuthPermission.id).filter(AuthPermission.code.in_(permission_codes)).all()
             )
         ]
 
@@ -1101,9 +1818,7 @@ def assign_default_permissions(
             permission = permissions_by_code.get(permission_code)
 
             if permission is None:
-                raise RuntimeError(
-                    f"Permission '{permission_code}' is referenced but not seeded"
-                )
+                raise RuntimeError(f"Permission '{permission_code}' is referenced but not seeded")
 
             exists = (
                 db.query(AuthRolePermission)

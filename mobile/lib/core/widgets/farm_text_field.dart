@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class FarmTextField extends StatelessWidget {
   const FarmTextField({
@@ -14,6 +15,11 @@ class FarmTextField extends StatelessWidget {
     this.suffixIcon,
     this.onChanged,
     this.textInputAction,
+    this.inputFormatters,
+    this.autofillHints,
+    this.maxLength,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
     this.enabled = true,
   });
 
@@ -28,6 +34,11 @@ class FarmTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final ValueChanged<String>? onChanged;
   final TextInputAction? textInputAction;
+  final List<TextInputFormatter>? inputFormatters;
+  final Iterable<String>? autofillHints;
+  final int? maxLength;
+  final bool autocorrect;
+  final bool enableSuggestions;
   final bool enabled;
 
   @override
@@ -40,6 +51,11 @@ class FarmTextField extends StatelessWidget {
       maxLines: maxLines,
       onChanged: onChanged,
       textInputAction: textInputAction,
+      inputFormatters: inputFormatters,
+      autofillHints: autofillHints,
+      maxLength: maxLength,
+      autocorrect: autocorrect,
+      enableSuggestions: enableSuggestions,
       enabled: enabled,
       decoration: InputDecoration(
         labelText: label,

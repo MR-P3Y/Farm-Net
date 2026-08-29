@@ -26,6 +26,7 @@ class ProfileMeOut(BaseModel):
     postal_code: str | None = None
 
     avatar_file_id: str | None = None
+    avatar_url: str | None = None
     bio: str | None = None
 
     profile_completed: bool = False

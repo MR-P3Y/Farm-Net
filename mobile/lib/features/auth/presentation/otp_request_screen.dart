@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_localizations.dart';
-import '../../../core/responsive/responsive.dart';
+import '../../../core/widgets/farm_back_button.dart';
 import '../../../core/widgets/farm_button.dart';
 import '../../../core/widgets/farm_glass_card.dart';
 import '../../../core/widgets/farm_text_field.dart';
 import '../state/auth_controller.dart';
+import 'auth_page_shell.dart';
 import 'otp_verify_screen.dart';
 
 class OtpRequestScreen extends ConsumerStatefulWidget {
@@ -17,7 +18,8 @@ class OtpRequestScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
-  final _phoneController = TextEditingController(text: '09123456789');
+  final _formKey = GlobalKey<FormState>();
+  final _phoneController = TextEditingController();
 
   @override
   void dispose() {
@@ -26,16 +28,16 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
   }
 
   Future<void> _requestOtp() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    final phone = _phoneController.text.trim();
     final ok = await ref
         .read(authControllerProvider.notifier)
-        .requestOtp(phone: _phoneController.text.trim());
-
+        .requestOtp(phone: phone);
     if (!ok || !mounted) return;
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => OtpVerifyScreen(phone: _phoneController.text.trim()),
-      ),
+      MaterialPageRoute<void>(builder: (_) => OtpVerifyScreen(phone: phone)),
     );
   }
 
@@ -44,148 +46,132 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
     final auth = ref.watch(authControllerProvider);
     final l10n = context.l10n;
 
-    return Scaffold(
-      body: ResponsiveBuilder(
-        builder: (context, constraints, r) {
-          final isWide = r.width > 900;
-          final bgImage =
-              r.isDesktop
-                  ? 'assets/images/login_bg_web.webp'
-                  : r.isTablet
-                  ? 'assets/images/login_bg_tablet.webp'
-                  : 'assets/images/login_bg_mobile.webp';
-
-          return Stack(
+    return AuthPageShell(
+      maxWidth: 400,
+      desktopAlignment: AlignmentDirectional.centerStart,
+      child: FarmGlassCard(
+        key: const Key('otp-request-card'),
+        borderRadius: 28,
+        opacity: .1,
+        blur: 16,
+        padding: const EdgeInsetsDirectional.fromSTEB(24, 12, 24, 28),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // پس‌زمینه
-              Positioned.fill(
-                child: Image.asset(
-                  bgImage,
-                  fit: BoxFit.cover,
-                  alignment: isWide ? Alignment.centerLeft : Alignment.center,
+              const Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FarmBackButton(
+                  color: Colors.white,
+                  fallbackLocation: '/login',
                 ),
               ),
-              // لایه تیره کننده ملایم
-              Positioned.fill(
-                child: Container(color: Colors.black.withValues(alpha: 0.15)),
+              const Icon(
+                Icons.phone_android_rounded,
+                color: Colors.white,
+                size: 48,
               ),
-              // محتوا
-              Align(
-                alignment:
-                    isWide
-                        ? AlignmentDirectional.centerStart
-                        : const Alignment(0, -0.6),
-                child: Padding(
-                  padding:
-                      isWide
-                          ? EdgeInsetsDirectional.only(start: r.width * 0.08)
-                          : EdgeInsets.symmetric(horizontal: r.s(40)),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: isWide ? 400 : 330),
-                    child: SingleChildScrollView(
-                      child: FarmGlassCard(
-                        borderRadius: 28,
-                        opacity: 0.1,
-                        blur: 16,
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                          24,
-                          12,
-                          24,
-                          32,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // دکمه برگشت داخل باکس (سمت راست برای RTL)
-                            Align(
-                              alignment: AlignmentDirectional.centerStart,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  color: Colors.white70,
-                                  size: 20,
-                                ),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                            ),
-                            const Icon(
-                              Icons.phone_android_rounded,
-                              color: Colors.white,
-                              size: 48,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              l10n.loginWithMobile,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 32),
-                            Theme(
-                              data: Theme.of(context).copyWith(
-                                inputDecorationTheme: InputDecorationTheme(
-                                  filled: true,
-                                  fillColor: Colors.white.withValues(
-                                    alpha: 0.05,
-                                  ),
-                                  labelStyle: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 13,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    borderSide: BorderSide(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    borderSide: const BorderSide(
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              child: FarmTextField(
-                                controller: _phoneController,
-                                label: l10n.mobileNumber,
-                                keyboardType: TextInputType.phone,
-                              ),
-                            ),
-                            if (auth.errorMessage != null) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                auth.errorMessage!,
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 11,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                            const SizedBox(height: 32),
-                            FarmButton(
-                              label: l10n.getOtpCode,
-                              isLoading: auth.isLoading,
-                              onPressed: auth.isLoading ? null : _requestOtp,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+              const SizedBox(height: 14),
+              Text(
+                l10n.loginWithMobile,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.tr(
+                  fa: 'شماره موبایل خود را وارد کنید تا کد ورود ارسال شود.',
+                  en: 'Enter your mobile number to receive a sign-in code.',
+                ),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 24),
+              Theme(
+                data: _inputTheme(context),
+                child: FarmTextField(
+                  key: const Key('otp-phone'),
+                  controller: _phoneController,
+                  label: l10n.mobileNumber,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.done,
+                  prefixIcon: Icons.phone_iphone_rounded,
+                  autofillHints: const [AutofillHints.telephoneNumber],
+                  validator: (value) => _validatePhone(l10n, value),
+                ),
+              ),
+              if (auth.errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  l10n.tr(
+                    fa: 'ارسال کد انجام نشد. شماره و اتصال را بررسی کنید.',
+                    en:
+                        'Could not send the code. Check the number and connection.',
+                  ),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFFFB4AB),
+                    fontSize: 12,
                   ),
                 ),
+              ],
+              const SizedBox(height: 24),
+              FarmButton(
+                key: const Key('otp-request-action'),
+                label: l10n.getOtpCode,
+                icon: Icons.sms_outlined,
+                isLoading: auth.isLoading,
+                onPressed: auth.isLoading ? null : _requestOtp,
               ),
             ],
-          );
-        },
+          ),
+        ),
       ),
     );
+  }
+
+  ThemeData _inputTheme(BuildContext context) {
+    return Theme.of(context).copyWith(
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: .06),
+        labelStyle: const TextStyle(color: Colors.white70),
+        prefixIconColor: Colors.white70,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: .18)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.white),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.redAccent),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.redAccent),
+        ),
+        errorStyle: const TextStyle(color: Color(0xFFFFB4AB)),
+      ),
+    );
+  }
+
+  String? _validatePhone(AppLocalizations l10n, String? value) {
+    final digits = (value ?? '').replaceAll(RegExp(r'[^0-9۰-۹٠-٩]'), '');
+    if (digits.length < 10 || digits.length > 14) {
+      return l10n.tr(
+        fa: 'شماره موبایل معتبر وارد کنید',
+        en: 'Enter a valid mobile number',
+      );
+    }
+    return null;
   }
 }
