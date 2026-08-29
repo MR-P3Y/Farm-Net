@@ -77,6 +77,184 @@ class LedgerMovementService:
             ),
         )
 
+    def post_billable_invoice_payment(
+        self, *, invoice: BillingInvoice, actor_user_id: int, trace_id: str
+    ) -> LedgerTransaction:
+        if invoice.source_type not in {
+            BillableSourceType.SERVICE_REQUEST.value,
+            BillableSourceType.CONSULTATION_REQUEST.value,
+        }:
+            raise SettlementContractError("Invoice source is not payable through this flow")
+        if invoice.status != "paid":
+            raise SettlementContractError("Only a paid invoice can be posted")
+        if invoice.provider_user_id is None:
+            raise SettlementContractError("Billable provider is required")
+        return self._post(
+            event_type=FinancialEventType.PAYMENT.value,
+            source_type=invoice.source_type,
+            source_id=invoice.source_id,
+            idempotency_key=f"payment:billing_invoice:{invoice.id}",
+            actor_user_id=actor_user_id,
+            trace_id=trace_id,
+            description=f"Verified billing invoice {invoice.id} payment",
+            lines=(
+                (
+                    AccountPurpose.PLATFORM_CASH,
+                    None,
+                    EntrySide.DEBIT,
+                    invoice.total_amount,
+                ),
+                (
+                    AccountPurpose.PROVIDER_PENDING,
+                    invoice.provider_user_id,
+                    EntrySide.CREDIT,
+                    invoice.provider_amount,
+                ),
+                (
+                    AccountPurpose.PLATFORM_REVENUE,
+                    None,
+                    EntrySide.CREDIT,
+                    invoice.platform_amount,
+                ),
+            ),
+        )
+
+    def release_completed_billable_invoice(
+        self, *, invoice: BillingInvoice, actor_user_id: int, trace_id: str
+    ) -> LedgerTransaction:
+        if invoice.source_type not in {
+            BillableSourceType.SERVICE_REQUEST.value,
+            BillableSourceType.CONSULTATION_REQUEST.value,
+        }:
+            raise SettlementContractError("Invoice source does not support completion release")
+        if invoice.status != "paid":
+            raise SettlementContractError("Only a paid invoice can release provider balance")
+        if invoice.provider_user_id is None:
+            raise SettlementContractError("Billable provider is required")
+        return self._post(
+            event_type=FinancialEventType.RELEASE.value,
+            source_type=invoice.source_type,
+            source_id=invoice.source_id,
+            idempotency_key=f"release:billing_invoice:{invoice.id}",
+            actor_user_id=actor_user_id,
+            trace_id=trace_id,
+            description=f"Release completed billing invoice {invoice.id} provider balance",
+            lines=(
+                (
+                    AccountPurpose.PROVIDER_PENDING,
+                    invoice.provider_user_id,
+                    EntrySide.DEBIT,
+                    invoice.provider_amount,
+                ),
+                (
+                    AccountPurpose.PROVIDER_AVAILABLE,
+                    invoice.provider_user_id,
+                    EntrySide.CREDIT,
+                    invoice.provider_amount,
+                ),
+            ),
+        )
+
+    def reverse_billable_release_for_refund(
+        self, *, invoice: BillingInvoice, actor_user_id: int, trace_id: str
+    ) -> LedgerTransaction | None:
+        release = (
+            self.db.query(LedgerTransaction)
+            .filter(
+                LedgerTransaction.idempotency_key
+                == f"release:billing_invoice:{invoice.id}"
+            )
+            .with_for_update()
+            .one_or_none()
+        )
+        if release is None:
+            return None
+        existing = (
+            self.db.query(LedgerTransaction)
+            .filter(LedgerTransaction.reversal_of_id == release.id)
+            .one_or_none()
+        )
+        if existing is not None:
+            return existing
+        if invoice.provider_user_id is None:
+            raise SettlementContractError("Billable provider is required")
+        self._lock_account(AccountPurpose.PROVIDER_AVAILABLE, invoice.provider_user_id)
+        if self.balance(invoice.provider_user_id).available_amount < invoice.provider_amount:
+            raise SettlementContractError(
+                "Refund is blocked because released provider funds are reserved or settled"
+            )
+        return self._post(
+            event_type=FinancialEventType.REVERSAL.value,
+            source_type=invoice.source_type,
+            source_id=invoice.source_id,
+            idempotency_key=f"reversal:release:billing_invoice:{invoice.id}",
+            actor_user_id=actor_user_id,
+            trace_id=trace_id,
+            description=f"Reverse billing invoice {invoice.id} release before refund",
+            reversal_of_id=release.id,
+            lines=(
+                (
+                    AccountPurpose.PROVIDER_AVAILABLE,
+                    invoice.provider_user_id,
+                    EntrySide.DEBIT,
+                    invoice.provider_amount,
+                ),
+                (
+                    AccountPurpose.PROVIDER_PENDING,
+                    invoice.provider_user_id,
+                    EntrySide.CREDIT,
+                    invoice.provider_amount,
+                ),
+            ),
+        )
+
+    def post_billable_invoice_refund(
+        self, *, invoice: BillingInvoice, actor_user_id: int, trace_id: str
+    ) -> LedgerTransaction:
+        if invoice.source_type not in {
+            BillableSourceType.SERVICE_REQUEST.value,
+            BillableSourceType.CONSULTATION_REQUEST.value,
+        }:
+            raise SettlementContractError("Invoice source does not support this refund")
+        if invoice.status != "refund_pending":
+            raise SettlementContractError("Refund-pending invoice is required")
+        if invoice.provider_user_id is None:
+            raise SettlementContractError("Billable provider is required")
+        self.reverse_billable_release_for_refund(
+            invoice=invoice,
+            actor_user_id=actor_user_id,
+            trace_id=trace_id,
+        )
+        return self._post(
+            event_type=FinancialEventType.REFUND.value,
+            source_type=invoice.source_type,
+            source_id=invoice.source_id,
+            idempotency_key=f"refund:billing_invoice:{invoice.id}",
+            actor_user_id=actor_user_id,
+            trace_id=trace_id,
+            description=f"Refund billing invoice {invoice.id}",
+            lines=(
+                (
+                    AccountPurpose.PROVIDER_PENDING,
+                    invoice.provider_user_id,
+                    EntrySide.DEBIT,
+                    invoice.provider_amount,
+                ),
+                (
+                    AccountPurpose.PLATFORM_REVENUE,
+                    None,
+                    EntrySide.DEBIT,
+                    invoice.platform_amount,
+                ),
+                (
+                    AccountPurpose.PLATFORM_CASH,
+                    None,
+                    EntrySide.CREDIT,
+                    invoice.total_amount,
+                ),
+            ),
+        )
+
     def post_settlement_reserve(
         self, *, user_id: int, amount: Decimal, key: str, trace_id: str
     ) -> LedgerTransaction:
@@ -155,14 +333,17 @@ class LedgerMovementService:
         )
 
     def reverse_order_release_for_refund(
-        self, *, order_id: int, provider_user_id: int, amount: Decimal,
-        actor_user_id: int, trace_id: str,
+        self,
+        *,
+        order_id: int,
+        provider_user_id: int,
+        amount: Decimal,
+        actor_user_id: int,
+        trace_id: str,
     ) -> LedgerTransaction | None:
         release = (
             self.db.query(LedgerTransaction)
-            .filter(
-                LedgerTransaction.idempotency_key == f"release:product_order:{order_id}"
-            )
+            .filter(LedgerTransaction.idempotency_key == f"release:product_order:{order_id}")
             .with_for_update()
             .one_or_none()
         )
@@ -196,12 +377,21 @@ class LedgerMovementService:
         )
 
     def post_adjustment(
-        self, *, provider_user_id: int, amount: Decimal, direction: str,
-        idempotency_key: str, reason: str, actor_user_id: int, trace_id: str,
+        self,
+        *,
+        provider_user_id: int,
+        amount: Decimal,
+        direction: str,
+        idempotency_key: str,
+        reason: str,
+        actor_user_id: int,
+        trace_id: str,
     ) -> LedgerTransaction:
-        existing = self.db.query(LedgerTransaction).filter(
-            LedgerTransaction.idempotency_key == f"adjustment:{idempotency_key}"
-        ).one_or_none()
+        existing = (
+            self.db.query(LedgerTransaction)
+            .filter(LedgerTransaction.idempotency_key == f"adjustment:{idempotency_key}")
+            .one_or_none()
+        )
         if existing is not None:
             expected_description = f"{direction}: {reason}"
             if (
@@ -217,9 +407,12 @@ class LedgerMovementService:
         provider_side = EntrySide.CREDIT if direction == "credit" else EntrySide.DEBIT
         clearing_side = EntrySide.DEBIT if direction == "credit" else EntrySide.CREDIT
         return self._post(
-            event_type="adjustment", source_type="provider_wallet",
-            source_id=provider_user_id, idempotency_key=f"adjustment:{idempotency_key}",
-            actor_user_id=actor_user_id, trace_id=trace_id,
+            event_type="adjustment",
+            source_type="provider_wallet",
+            source_id=provider_user_id,
+            idempotency_key=f"adjustment:{idempotency_key}",
+            actor_user_id=actor_user_id,
+            trace_id=trace_id,
             description=f"{direction}: {reason}",
             lines=(
                 (AccountPurpose.ADJUSTMENT_CLEARING, None, clearing_side, amount),
@@ -342,7 +535,10 @@ class LedgerMovementService:
         )
         if row is not None:
             return row
-        kind = AccountKind.LIABILITY.value
+        kind = {
+            AccountPurpose.PLATFORM_CASH: AccountKind.ASSET.value,
+            AccountPurpose.PLATFORM_REVENUE: AccountKind.REVENUE.value,
+        }.get(purpose, AccountKind.LIABILITY.value)
         try:
             with self.db.begin_nested():
                 row = WalletAccount(
@@ -407,7 +603,8 @@ class SettlementService:
         self.db.add(row)
         self.db.flush()
         self._notify(
-            row=row, event_type=NotificationEventType.SETTLEMENT_REQUESTED.value,
+            row=row,
+            event_type=NotificationEventType.SETTLEMENT_REQUESTED.value,
             title="Settlement requested",
             body="Your settlement request was recorded and its balance reserved.",
             actor_user_id=user_id,
@@ -441,12 +638,14 @@ class SettlementService:
             row=row,
             event_type=(
                 NotificationEventType.SETTLEMENT_APPROVED.value
-                if approve else NotificationEventType.SETTLEMENT_REJECTED.value
+                if approve
+                else NotificationEventType.SETTLEMENT_REJECTED.value
             ),
             title="Settlement approved" if approve else "Settlement rejected",
             body=(
                 "Your settlement request was approved."
-                if approve else "Your settlement request was rejected and balance returned."
+                if approve
+                else "Your settlement request was rejected and balance returned."
             ),
             actor_user_id=admin_user_id,
         )
@@ -467,7 +666,8 @@ class SettlementService:
         row.status = SettlementStatus.SIMULATED_COMPLETED.value
         row.simulated_completed_at = datetime.utcnow()
         self._notify(
-            row=row, event_type=NotificationEventType.SETTLEMENT_SIMULATED.value,
+            row=row,
+            event_type=NotificationEventType.SETTLEMENT_SIMULATED.value,
             title="Settlement simulation completed",
             body="Your settlement moved to simulated clearing; no bank transfer occurred.",
             actor_user_id=admin_user_id,
@@ -475,16 +675,26 @@ class SettlementService:
         return row
 
     def _notify(
-        self, *, row: SettlementRequest, event_type: str, title: str,
-        body: str, actor_user_id: int,
+        self,
+        *,
+        row: SettlementRequest,
+        event_type: str,
+        title: str,
+        body: str,
+        actor_user_id: int,
     ) -> None:
         NotificationService(self.db).create_event_and_notify_user(
             event_type=event_type,
             recipient_user_id=row.requester_user_id,
-            title=title, body=body, actor_user_id=actor_user_id,
-            source_type="settlement_request", source_id=str(row.id),
+            title=title,
+            body=body,
+            actor_user_id=actor_user_id,
+            source_type="settlement_request",
+            source_id=str(row.id),
             payload_json={
-                "settlement_id": row.id, "status": row.status, "currency": row.currency,
+                "settlement_id": row.id,
+                "status": row.status,
+                "currency": row.currency,
             },
             action_url="/finance/settlements",
             priority="high",

@@ -10,6 +10,7 @@ class ServiceWorkbenchState {
     this.isSaving = false,
     this.requests = const [],
     this.selected,
+    this.finalPrice,
     this.statusFilter,
     this.errorMessage,
     this.successMessage,
@@ -18,23 +19,27 @@ class ServiceWorkbenchState {
   final bool isLoading, isSaving, isProviderUnapproved;
   final List<ServiceRequest> requests;
   final ServiceRequest? selected;
+  final ServiceFinalPrice? finalPrice;
   final String? statusFilter, errorMessage, successMessage;
   ServiceWorkbenchState copyWith({
     bool? isLoading,
     bool? isSaving,
     List<ServiceRequest>? requests,
     ServiceRequest? selected,
+    ServiceFinalPrice? finalPrice,
     String? statusFilter,
     String? errorMessage,
     String? successMessage,
     bool? isProviderUnapproved,
     bool clearError = false,
     bool clearSuccess = false,
+    bool clearFinalPrice = false,
   }) => ServiceWorkbenchState(
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     requests: requests ?? this.requests,
     selected: selected ?? this.selected,
+    finalPrice: clearFinalPrice ? null : finalPrice ?? this.finalPrice,
     statusFilter: statusFilter ?? this.statusFilter,
     errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
@@ -81,10 +86,16 @@ class ServiceWorkbenchController extends StateNotifier<ServiceWorkbenchState> {
       clearError: true,
       clearSuccess: true,
       isProviderUnapproved: false,
+      clearFinalPrice: true,
     );
     try {
       final row = await _repository.assignedRequestDetail(id);
-      state = state.copyWith(isLoading: false, selected: row);
+      final finalPrice = await _repository.assignedRequestFinalPrice(id);
+      state = state.copyWith(
+        isLoading: false,
+        selected: row,
+        finalPrice: finalPrice,
+      );
     } on ServiceApiException catch (e) {
       _error(e, isLoading: false);
     } catch (_) {
@@ -92,6 +103,41 @@ class ServiceWorkbenchController extends StateNotifier<ServiceWorkbenchState> {
         isLoading: false,
         errorMessage: 'دریافت جزئیات درخواست ناموفق بود.',
       );
+    }
+  }
+
+  Future<bool> proposeFinalPrice({
+    required int requestId,
+    required double amount,
+    required String description,
+  }) async {
+    if (state.isSaving) return false;
+    state = state.copyWith(
+      isSaving: true,
+      clearError: true,
+      clearSuccess: true,
+    );
+    try {
+      final finalPrice = await _repository.proposeFinalPrice(
+        requestId: requestId,
+        amount: amount,
+        description: description,
+      );
+      state = state.copyWith(
+        isSaving: false,
+        finalPrice: finalPrice,
+        successMessage: 'پیشنهاد قیمت نهایی ارسال شد.',
+      );
+      return true;
+    } on ServiceApiException catch (e) {
+      _error(e, isSaving: false);
+      return false;
+    } catch (_) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: 'ارسال قیمت نهایی ناموفق بود.',
+      );
+      return false;
     }
   }
 
@@ -110,10 +156,12 @@ class ServiceWorkbenchController extends StateNotifier<ServiceWorkbenchState> {
       final list = await _repository.assignedRequests(
         status: state.statusFilter,
       );
+      final finalPrice = await _repository.assignedRequestFinalPrice(id);
       state = state.copyWith(
         isSaving: false,
         selected: row,
         requests: list,
+        finalPrice: finalPrice,
         successMessage: 'وضعیت درخواست به‌روزرسانی شد.',
       );
       return true;

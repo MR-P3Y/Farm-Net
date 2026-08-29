@@ -8,7 +8,6 @@ import '../../../core/utils/dates.dart';
 import '../../../core/widgets/farm_empty_view.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../../../core/widgets/farm_loading_view.dart';
-import '../data/service_models.dart';
 import '../state/service_request_controller.dart';
 import 'service_ui.dart';
 
@@ -96,13 +95,7 @@ class _MyServiceRequestsScreenState
                             '${request.offerTitle ?? context.l10n.tr(fa: 'خدمت', en: 'Service')} • ${serviceRequestStatusLabel(context, request.status)}\n${formatApiDate(context, request.createdAt, showTime: true)}',
                           ),
                           isThreeLine: true,
-                          trailing:
-                              request.canCancel
-                                  ? IconButton(
-                                    icon: const Icon(Icons.cancel_outlined),
-                                    onPressed: () => _cancel(request),
-                                  )
-                                  : const Icon(Icons.chevron_left),
+                          trailing: const Icon(Icons.chevron_right),
                         ),
                       ),
                     ),
@@ -113,45 +106,5 @@ class _MyServiceRequestsScreenState
         },
       ),
     );
-  }
-
-  Future<void> _cancel(ServiceRequest request) async {
-    final yes = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(
-              context.l10n.tr(fa: 'لغو درخواست', en: 'Cancel request'),
-            ),
-            content: Text(
-              context.l10n.tr(
-                fa: 'درخواست «${request.title}» لغو شود؟',
-                en: 'Cancel “${request.title}”?',
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(context.l10n.tr(fa: 'انصراف', en: 'Back')),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(context.l10n.tr(fa: 'لغو', en: 'Cancel request')),
-              ),
-            ],
-          ),
-    );
-    if (yes == true) {
-      if (!mounted) return;
-      await ref
-          .read(serviceRequestControllerProvider.notifier)
-          .cancel(
-            request.id,
-            reason: context.l10n.tr(
-              fa: 'لغو توسط کاربر از اپلیکیشن موبایل',
-              en: 'Cancelled by the user from the mobile app',
-            ),
-          );
-    }
   }
 }

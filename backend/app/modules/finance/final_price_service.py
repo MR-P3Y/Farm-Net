@@ -10,6 +10,7 @@ from app.modules.finance.enums import (
     FinalPriceProposalStatus,
 )
 from app.modules.finance.models import (
+    BillingRefund,
     BillingCommissionSnapshot,
     BillingInvoice,
     BillingInvoiceItem,
@@ -133,16 +134,36 @@ class FinalPriceService:
             raise FinalPriceContractError("Accepted final price is required before work starts")
         return row
 
+    def require_paid(self, *, source_type: str, source_id: int) -> BillingInvoice:
+        self.require_accepted(source_type=source_type, source_id=source_id)
+        invoice = (
+            self.db.query(BillingInvoice)
+            .filter(
+                BillingInvoice.source_type == source_type,
+                BillingInvoice.source_id == source_id,
+            )
+            .with_for_update()
+            .one_or_none()
+        )
+        if invoice is None or invoice.status != BillingInvoiceStatus.PAID.value:
+            raise FinalPriceContractError("Paid invoice is required before work starts")
+        return invoice
+
     def cancel_unpaid_invoice(self, *, source_type: str, source_id: int) -> None:
         active = self._active(source_type, source_id)
         if active is not None:
             active.status = FinalPriceProposalStatus.SUPERSEDED.value
             active.active_scope = None
             active.decided_at = datetime.utcnow()
-        row = self.db.query(BillingInvoice).filter(
-            BillingInvoice.source_type == source_type,
-            BillingInvoice.source_id == source_id,
-        ).with_for_update().one_or_none()
+        row = (
+            self.db.query(BillingInvoice)
+            .filter(
+                BillingInvoice.source_type == source_type,
+                BillingInvoice.source_id == source_id,
+            )
+            .with_for_update()
+            .one_or_none()
+        )
         if row is None:
             return
         if row.status != BillingInvoiceStatus.PAYMENT_PENDING.value:
@@ -151,10 +172,21 @@ class FinalPriceService:
         row.cancelled_at = datetime.utcnow()
 
     def output(self, row: FinalPriceProposal) -> FinalPriceProposalOut:
-        invoice_id = self.db.query(BillingInvoice.id).filter(
-            BillingInvoice.source_type == row.source_type,
-            BillingInvoice.source_id == row.source_id,
-        ).scalar()
+        invoice = (
+            self.db.query(BillingInvoice.id, BillingInvoice.status)
+            .filter(
+                BillingInvoice.source_type == row.source_type,
+                BillingInvoice.source_id == row.source_id,
+            )
+            .one_or_none()
+        )
+        refund = None
+        if invoice is not None:
+            refund = (
+                self.db.query(BillingRefund)
+                .filter(BillingRefund.invoice_id == invoice.id)
+                .one_or_none()
+            )
         return FinalPriceProposalOut(
             id=row.id,
             source_type=row.source_type,
@@ -168,16 +200,26 @@ class FinalPriceService:
             decided_by_user_id=row.decided_by_user_id,
             proposed_at=row.proposed_at,
             decided_at=row.decided_at,
-            invoice_id=invoice_id,
+            invoice_id=invoice.id if invoice is not None else None,
+            invoice_status=invoice.status if invoice is not None else None,
+            refund_id=refund.id if refund is not None else None,
+            refund_status=refund.status if refund is not None else None,
+            refund_review_required=(
+                refund.review_required if refund is not None else None
+            ),
         )
 
     def _create_invoice(
         self, *, row: FinalPriceProposal, policy: CommissionPolicy, title: str
     ) -> BillingInvoice:
-        existing = self.db.query(BillingInvoice).filter(
-            BillingInvoice.source_type == row.source_type,
-            BillingInvoice.source_id == row.source_id,
-        ).one_or_none()
+        existing = (
+            self.db.query(BillingInvoice)
+            .filter(
+                BillingInvoice.source_type == row.source_type,
+                BillingInvoice.source_id == row.source_id,
+            )
+            .one_or_none()
+        )
         if existing is not None:
             return existing
         platform = (row.amount * policy.percent / Decimal("100")).quantize(
@@ -231,12 +273,17 @@ class FinalPriceService:
         return invoice
 
     def _default_policy(self, source_type: str) -> CommissionPolicy:
-        row = self.db.query(CommissionPolicy).filter(
-            CommissionPolicy.source_type == source_type,
-            CommissionPolicy.default_scope == source_type,
-            CommissionPolicy.is_default.is_(True),
-            CommissionPolicy.status == CommissionPolicyStatus.ACTIVE.value,
-        ).with_for_update().one_or_none()
+        row = (
+            self.db.query(CommissionPolicy)
+            .filter(
+                CommissionPolicy.source_type == source_type,
+                CommissionPolicy.default_scope == source_type,
+                CommissionPolicy.is_default.is_(True),
+                CommissionPolicy.status == CommissionPolicyStatus.ACTIVE.value,
+            )
+            .with_for_update()
+            .one_or_none()
+        )
         if row is None:
             raise FinalPriceContractError(
                 f"Active default commission policy is required for {source_type}"
@@ -244,14 +291,20 @@ class FinalPriceService:
         return row
 
     def _active(self, source_type: str, source_id: int) -> FinalPriceProposal | None:
-        return self.db.query(FinalPriceProposal).filter(
-            FinalPriceProposal.active_scope == f"{source_type}:{source_id}"
-        ).with_for_update().one_or_none()
+        return (
+            self.db.query(FinalPriceProposal)
+            .filter(FinalPriceProposal.active_scope == f"{source_type}:{source_id}")
+            .with_for_update()
+            .one_or_none()
+        )
 
     def _accepted(self, source_type: str, source_id: int) -> FinalPriceProposal | None:
-        return self.db.query(FinalPriceProposal).filter(
-            FinalPriceProposal.accepted_scope == f"{source_type}:{source_id}"
-        ).with_for_update().one_or_none()
+        return (
+            self.db.query(FinalPriceProposal)
+            .filter(FinalPriceProposal.accepted_scope == f"{source_type}:{source_id}")
+            .with_for_update()
+            .one_or_none()
+        )
 
     def _validate_source(self, source_type: str) -> None:
         if source_type not in self.ALLOWED_SOURCES:

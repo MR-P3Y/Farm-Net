@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../data/media_models.dart';
 import '../state/media_controller.dart';
 
@@ -55,11 +56,22 @@ class MediaUploadButton extends ConsumerWidget {
 
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('فایل با موفقیت آپلود شد.')),
+                      SnackBar(
+                        content: Text(
+                          context.l10n.tr(
+                            fa: 'فایل با موفقیت بارگذاری شد.',
+                            en: 'File uploaded successfully.',
+                          ),
+                        ),
+                      ),
                     );
                   },
           icon: Icon(icon),
-          label: Text(state.isUploading ? 'در حال آپلود...' : label),
+          label: Text(
+            state.isUploading
+                ? context.l10n.tr(fa: 'در حال بارگذاری...', en: 'Uploading...')
+                : label,
+          ),
         ),
         if (state.errorMessage != null) ...[
           const SizedBox(height: 8),

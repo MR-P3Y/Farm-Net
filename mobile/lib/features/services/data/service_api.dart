@@ -175,6 +175,105 @@ class ServiceApi {
     }
   }
 
+  Future<ServiceBillingRefund> requestRefund({
+    required int requestId,
+    required String reason,
+    required String idempotencyKey,
+  }) async {
+    await _auth();
+    try {
+      final response = await _client.post(
+        'services/requests/$requestId/refund',
+        data: {'reason': reason, 'idempotency_key': idempotencyKey},
+      );
+      return ServiceBillingRefund.fromJson(
+        (response.data?['data'] as Map).cast<String, dynamic>(),
+      );
+    } on DioException catch (e) {
+      throw ServiceApiException(_error(e));
+    }
+  }
+
+  Future<ServiceRequest> confirmCompletion(int requestId) async {
+    await _auth();
+    try {
+      final response = await _client.post(
+        'services/requests/$requestId/confirm-completion',
+        data: const {},
+      );
+      return ServiceRequest.fromJson(
+        (response.data?['data'] as Map).cast<String, dynamic>(),
+      );
+    } on DioException catch (e) {
+      throw ServiceApiException(_error(e));
+    }
+  }
+
+  Future<ServiceFinalPrice?> requestFinalPrice(int id) async {
+    await _auth();
+    try {
+      final response = await _client.get('services/requests/$id/final-price');
+      return ServiceFinalPrice.tryFromJson(response.data?['data']);
+    } on DioException catch (e) {
+      throw ServiceApiException(_error(e));
+    }
+  }
+
+  Future<ServiceFinalPrice> decideFinalPrice(int id, String decision) async {
+    await _auth();
+    try {
+      final response = await _client.patch(
+        'services/requests/$id/final-price',
+        data: {'decision': decision},
+      );
+      return ServiceFinalPrice.fromJson(
+        (response.data?['data'] as Map).cast<String, dynamic>(),
+      );
+    } on DioException catch (e) {
+      throw ServiceApiException(_error(e));
+    }
+  }
+
+  Future<BillingPaymentAttempt> checkoutInvoice({
+    required int invoiceId,
+    required String provider,
+    required String idempotencyKey,
+  }) async {
+    await _auth();
+    try {
+      final response = await _client.post(
+        'finance/invoices/$invoiceId/checkout',
+        data: {'provider': provider, 'idempotency_key': idempotencyKey},
+      );
+      return BillingPaymentAttempt.fromJson(
+        (response.data?['data'] as Map).cast<String, dynamic>(),
+      );
+    } on DioException catch (e) {
+      throw ServiceApiException(_error(e));
+    }
+  }
+
+  Future<BillingPaymentAttempt> verifyInvoicePayment({
+    required int attemptId,
+    required String providerToken,
+  }) async {
+    await _auth();
+    try {
+      final response = await _client.post(
+        'finance/payments/verify',
+        data: {
+          'payment_attempt_id': attemptId,
+          'provider_token': providerToken,
+        },
+      );
+      return BillingPaymentAttempt.fromJson(
+        (response.data?['data'] as Map).cast<String, dynamic>(),
+      );
+    } on DioException catch (e) {
+      throw ServiceApiException(_error(e));
+    }
+  }
+
   // Management
   Future<ServiceProviderProfileOwner?> myProviderProfile() async {
     await _auth();
@@ -309,6 +408,41 @@ class ServiceApi {
       final response = await _client.get('services/requests/assigned/$id');
       return ServiceRequest.fromJson(
         response.data?['data'] as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      throw ServiceApiException(_error(e));
+    }
+  }
+
+  Future<ServiceFinalPrice?> assignedRequestFinalPrice(int id) async {
+    await _auth();
+    try {
+      final response = await _client.get(
+        'services/requests/assigned/$id/final-price',
+      );
+      return ServiceFinalPrice.tryFromJson(response.data?['data']);
+    } on DioException catch (e) {
+      throw ServiceApiException(_error(e));
+    }
+  }
+
+  Future<ServiceFinalPrice> proposeFinalPrice({
+    required int requestId,
+    required double amount,
+    required String description,
+  }) async {
+    await _auth();
+    try {
+      final response = await _client.post(
+        'services/requests/assigned/$requestId/final-price',
+        data: {
+          'amount': amount,
+          'currency': 'TOMAN',
+          'description': description,
+        },
+      );
+      return ServiceFinalPrice.fromJson(
+        (response.data?['data'] as Map).cast<String, dynamic>(),
       );
     } on DioException catch (e) {
       throw ServiceApiException(_error(e));

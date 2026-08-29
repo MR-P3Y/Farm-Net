@@ -131,6 +131,20 @@ void main() {
       expect(request.canCancel, isFalse);
     });
 
+    test('parses completion confirmation used for balance release', () {
+      final request = ServiceRequest.fromJson({
+        'id': 23,
+        'title': 'برداشت',
+        'status': 'completed',
+        'currency': 'TOMAN',
+        'created_at': '2026-08-10T10:00:00',
+        'completion_confirmed_at': '2026-08-10T12:00:00',
+        'completion_confirmed_by_user_id': 9,
+      });
+      expect(request.completionConfirmedAt, isNotNull);
+      expect(request.completionConfirmedByUserId, 9);
+    });
+
     test('serializes only populated create fields', () {
       const input = ServiceRequestInput(
         offerId: 7,
@@ -282,6 +296,94 @@ void main() {
       );
       expect(empty.toJson(), {'status': 'accepted'});
       expect(noted.toJson(), {'status': 'rejected', 'note': 'نامناسب'});
+    });
+  });
+
+  group('service final price and payment', () {
+    test('treats an empty success envelope as no final price', () {
+      expect(ServiceFinalPrice.tryFromJson(null), isNull);
+      expect(ServiceFinalPrice.tryFromJson(const <String, dynamic>{}), isNull);
+      expect(
+        ServiceFinalPrice.tryFromJson(const {
+          'id': 0,
+          'source_id': 0,
+          'amount': 0,
+          'status': '',
+        }),
+        isNull,
+      );
+    });
+
+    test('parses payable accepted proposal and paid state', () {
+      final pending = ServiceFinalPrice.fromJson({
+        'id': 5,
+        'source_id': 91,
+        'version': 2,
+        'amount': '1250000.00',
+        'currency': 'TOMAN',
+        'description': 'سم‌پاشی کامل باغ',
+        'status': 'accepted',
+        'proposed_at': '2026-08-10T10:00:00',
+        'invoice_id': 44,
+        'invoice_status': 'payment_pending',
+      });
+      expect(pending.amount, 1250000);
+      expect(pending.isAccepted, isTrue);
+      expect(pending.canPay, isTrue);
+      expect(pending.isPaid, isFalse);
+
+      final paid = ServiceFinalPrice.fromJson({
+        'id': 5,
+        'source_id': 91,
+        'version': 2,
+        'amount': 1250000,
+        'currency': 'TOMAN',
+        'description': 'سم‌پاشی کامل باغ',
+        'status': 'accepted',
+        'proposed_at': '2026-08-10T10:00:00',
+        'invoice_id': 44,
+        'invoice_status': 'paid',
+      });
+      expect(paid.canPay, isFalse);
+      expect(paid.isPaid, isTrue);
+    });
+
+    test('parses refund state and review policy', () {
+      final refund = ServiceFinalPrice.fromJson({
+        'id': 6,
+        'source_id': 92,
+        'version': 1,
+        'amount': 900000,
+        'currency': 'TOMAN',
+        'description': 'شخم کامل',
+        'status': 'accepted',
+        'proposed_at': '2026-08-10T10:00:00',
+        'invoice_id': 45,
+        'invoice_status': 'refund_pending',
+        'refund_id': 3,
+        'refund_status': 'requested',
+        'refund_review_required': true,
+      });
+      expect(refund.hasActiveRefund, isTrue);
+      expect(refund.canRequestRefund, isFalse);
+      expect(refund.refundReviewRequired, isTrue);
+    });
+
+    test('parses universal billing payment attempt', () {
+      final attempt = BillingPaymentAttempt.fromJson({
+        'id': 7,
+        'invoice_id': 44,
+        'source_id': 91,
+        'provider': 'mock',
+        'status': 'succeeded',
+        'amount_toman': '1250000.00',
+        'currency': 'TOMAN',
+        'redirect_url': 'farmnet://finance/mock/7',
+      });
+      expect(attempt.invoiceId, 44);
+      expect(attempt.sourceId, 91);
+      expect(attempt.amount, 1250000);
+      expect(attempt.isSucceeded, isTrue);
     });
   });
 }

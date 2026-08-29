@@ -35,6 +35,7 @@ DOCUMENT_PURPOSES = {
 }
 
 PUBLIC_PURPOSES = {
+    MediaPurpose.PROFILE_IMAGE.value,
     MediaPurpose.PRODUCT_IMAGE.value,
     MediaPurpose.SOCIAL_POST_IMAGE.value,
     MediaPurpose.STORE_LOGO.value,
@@ -156,12 +157,9 @@ class LocalMediaStorage:
                 details={"purpose": purpose, "visibility": visibility},
             )
 
-        if (
-            purpose == MediaPurpose.SOCIAL_POST_IMAGE.value
-            and visibility != MediaVisibility.PUBLIC.value
-        ):
+        if purpose in PUBLIC_PURPOSES and visibility != MediaVisibility.PUBLIC.value:
             raise ValidationAuthError(
-                message="Social post image media must be public",
+                message="Public image media must be public",
                 details={"purpose": purpose, "visibility": visibility},
             )
 
@@ -222,6 +220,9 @@ class LocalMediaStorage:
             )
 
     def _relative_dir_for_purpose(self, purpose: str) -> str:
+        if purpose == MediaPurpose.PROFILE_IMAGE.value:
+            return "profiles/images"
+
         if purpose == MediaPurpose.PRODUCT_IMAGE.value:
             return "products/images"
 

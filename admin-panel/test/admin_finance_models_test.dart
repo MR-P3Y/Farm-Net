@@ -27,6 +27,23 @@ void main() {
     expect(row.reference, 'trace-9');
   });
 
+  test('service billing refund exposes review state', () {
+    final row =
+        AdminFinanceRecord.fromJson(AdminFinanceResource.billingRefunds, {
+          'id': 12,
+          'source_id': 44,
+          'status': 'requested',
+          'amount_toman': 750000,
+          'reason': 'Service issue',
+          'review_required': true,
+          'requested_at': '2026-08-10T11:00:00',
+        });
+    expect(row.title, contains('44'));
+    expect(row.status, 'requested');
+    expect(row.reviewRequired, isTrue);
+    expect(row.sourceId, 44);
+  });
+
   test('ledger and settlement responses stay typed', () {
     final journal = AdminFinanceRecord.fromJson(AdminFinanceResource.ledger, {
       'id': 10,

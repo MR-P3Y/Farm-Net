@@ -10,7 +10,10 @@ class NotificationEventType(str, Enum):
     PAYMENT_FAILED = "payment.failed"
     PAYMENT_RECEIPT_UPLOADED = "payment.receipt_uploaded"
     REFUND_REQUESTED = "finance.refund_requested"
+    REFUND_APPROVED = "finance.refund_approved"
+    REFUND_REJECTED = "finance.refund_rejected"
     REFUND_COMPLETED = "finance.refund_completed"
+    SERVICE_COMPLETION_CONFIRMED = "service_request.completion_confirmed"
     SETTLEMENT_REQUESTED = "finance.settlement_requested"
     SETTLEMENT_APPROVED = "finance.settlement_approved"
     SETTLEMENT_REJECTED = "finance.settlement_rejected"
@@ -70,6 +73,11 @@ class NotificationEventType(str, Enum):
     SERVICE_REQUEST_IN_PROGRESS = "service_request.in_progress"
     SERVICE_REQUEST_COMPLETED = "service_request.completed"
     SERVICE_REQUEST_CANCELLED = "service_request.cancelled"
+    SERVICE_FINAL_PRICE_PROPOSED = "service_request.final_price_proposed"
+    SERVICE_FINAL_PRICE_ACCEPTED = "service_request.final_price_accepted"
+    SERVICE_FINAL_PRICE_REJECTED = "service_request.final_price_rejected"
+
+    FINANCE_INVOICE_PAID = "finance.invoice_paid"
 
     RENTAL_REQUEST_CREATED = "rental_request.created"
     RENTAL_REQUEST_ACCEPTED = "rental_request.accepted"

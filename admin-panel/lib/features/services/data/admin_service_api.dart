@@ -136,4 +136,9 @@ class AdminServiceApi {
     '/admin/services/requests/$id/status',
     data: {'status': status, 'note': note},
   );
+  Future<void> confirmRequestCompletion(int id) => _call(
+    'POST',
+    '/admin/services/requests/$id/confirm-completion',
+    data: const {},
+  );
 }

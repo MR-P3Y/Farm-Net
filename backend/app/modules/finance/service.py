@@ -35,9 +35,27 @@ class OrderLedgerBridge:
             trace_id=trace_id,
             event_type=FinancialEventType.PAYMENT.value,
             lines=(
-                (AccountPurpose.PLATFORM_CASH, None, AccountKind.ASSET, EntrySide.DEBIT, invoice.total_amount),
-                (AccountPurpose.PROVIDER_PENDING, self._provider_id(invoice), AccountKind.LIABILITY, EntrySide.CREDIT, invoice.provider_amount),
-                (AccountPurpose.PLATFORM_REVENUE, None, AccountKind.REVENUE, EntrySide.CREDIT, invoice.platform_amount),
+                (
+                    AccountPurpose.PLATFORM_CASH,
+                    None,
+                    AccountKind.ASSET,
+                    EntrySide.DEBIT,
+                    invoice.total_amount,
+                ),
+                (
+                    AccountPurpose.PROVIDER_PENDING,
+                    self._provider_id(invoice),
+                    AccountKind.LIABILITY,
+                    EntrySide.CREDIT,
+                    invoice.provider_amount,
+                ),
+                (
+                    AccountPurpose.PLATFORM_REVENUE,
+                    None,
+                    AccountKind.REVENUE,
+                    EntrySide.CREDIT,
+                    invoice.platform_amount,
+                ),
             ),
         )
         UniversalBillingService(self.db).mark_paid(
@@ -68,9 +86,27 @@ class OrderLedgerBridge:
             trace_id=trace_id,
             event_type=FinancialEventType.REFUND.value,
             lines=(
-                (AccountPurpose.PROVIDER_PENDING, provider_id, AccountKind.LIABILITY, EntrySide.DEBIT, invoice.provider_amount),
-                (AccountPurpose.PLATFORM_REVENUE, None, AccountKind.REVENUE, EntrySide.DEBIT, invoice.platform_amount),
-                (AccountPurpose.PLATFORM_CASH, None, AccountKind.ASSET, EntrySide.CREDIT, invoice.total_amount),
+                (
+                    AccountPurpose.PROVIDER_PENDING,
+                    provider_id,
+                    AccountKind.LIABILITY,
+                    EntrySide.DEBIT,
+                    invoice.provider_amount,
+                ),
+                (
+                    AccountPurpose.PLATFORM_REVENUE,
+                    None,
+                    AccountKind.REVENUE,
+                    EntrySide.DEBIT,
+                    invoice.platform_amount,
+                ),
+                (
+                    AccountPurpose.PLATFORM_CASH,
+                    None,
+                    AccountKind.ASSET,
+                    EntrySide.CREDIT,
+                    invoice.total_amount,
+                ),
             ),
         )
         UniversalBillingService(self.db).mark_refunded(
@@ -85,12 +121,17 @@ class OrderLedgerBridge:
         return owner_id
 
     def _post(self, *, invoice, transaction, actor_user_id, trace_id, event_type, lines):
-        existing = self.db.query(LedgerTransaction).filter(
-            LedgerTransaction.legacy_transaction_id == transaction.id
-        ).one_or_none()
+        existing = (
+            self.db.query(LedgerTransaction)
+            .filter(LedgerTransaction.legacy_transaction_id == transaction.id)
+            .one_or_none()
+        )
         if existing is not None:
             return existing
-        if invoice.currency != CurrencyCode.TOMAN.value or transaction.currency != CurrencyCode.TOMAN.value:
+        if (
+            invoice.currency != CurrencyCode.TOMAN.value
+            or transaction.currency != CurrencyCode.TOMAN.value
+        ):
             raise ValueError("Order ledger bridge accepts TOMAN only")
         lines = tuple(line for line in lines if Decimal(line[-1]) > 0)
         debit = sum(
@@ -123,29 +164,48 @@ class OrderLedgerBridge:
         self.db.flush()
         for sequence, (purpose, owner_id, kind, side, amount) in enumerate(lines, 1):
             account = self._account(purpose=purpose.value, owner_id=owner_id, kind=kind.value)
-            self.db.add(LedgerEntry(
-                transaction_id=journal.id, account_id=account.id, sequence=sequence,
-                side=side.value, amount=amount, currency=CurrencyCode.TOMAN.value,
-            ))
+            self.db.add(
+                LedgerEntry(
+                    transaction_id=journal.id,
+                    account_id=account.id,
+                    sequence=sequence,
+                    side=side.value,
+                    amount=amount,
+                    currency=CurrencyCode.TOMAN.value,
+                )
+            )
         self.db.flush()
         return journal
 
     def _account(self, *, purpose: str, owner_id: int | None, kind: str) -> WalletAccount:
         code = f"{'system' if owner_id is None else f'user:{owner_id}'}:{purpose}:TOMAN"
-        row = self.db.query(WalletAccount).filter(WalletAccount.account_code == code).with_for_update().one_or_none()
+        row = (
+            self.db.query(WalletAccount)
+            .filter(WalletAccount.account_code == code)
+            .with_for_update()
+            .one_or_none()
+        )
         if row is not None:
             return row
         try:
             with self.db.begin_nested():
                 row = WalletAccount(
-                    owner_user_id=owner_id, account_code=code, account_kind=kind,
-                    purpose=purpose, currency=CurrencyCode.TOMAN.value,
+                    owner_user_id=owner_id,
+                    account_code=code,
+                    account_kind=kind,
+                    purpose=purpose,
+                    currency=CurrencyCode.TOMAN.value,
                 )
                 self.db.add(row)
                 self.db.flush()
             return row
         except IntegrityError:
-            return self.db.query(WalletAccount).filter(WalletAccount.account_code == code).with_for_update().one()
+            return (
+                self.db.query(WalletAccount)
+                .filter(WalletAccount.account_code == code)
+                .with_for_update()
+                .one()
+            )
 
 
 class LedgerReconciliationService:
@@ -156,23 +216,43 @@ class LedgerReconciliationService:
         successful = self.db.query(FinancialTransaction).filter(
             FinancialTransaction.status == FinancialTransactionStatus.SUCCEEDED.value
         )
-        payment_ids = [row[0] for row in successful.with_entities(FinancialTransaction.id).filter(
-            FinancialTransaction.transaction_type == FinancialTransactionType.PAYMENT.value
-        ).all()]
-        refund_ids = [row[0] for row in successful.with_entities(FinancialTransaction.id).filter(
-            FinancialTransaction.transaction_type == FinancialTransactionType.REFUND.value
-        ).all()]
-        linked = {row[0] for row in self.db.query(LedgerTransaction.legacy_transaction_id).filter(
-            LedgerTransaction.legacy_transaction_id.is_not(None)
-        ).all()}
-        unbalanced = [row[0] for row in self.db.query(LedgerTransaction.id).filter(
-            LedgerTransaction.total_debit != LedgerTransaction.total_credit
-        ).all()]
-        debit_sum = func.sum(case((LedgerEntry.side == EntrySide.DEBIT.value, LedgerEntry.amount), else_=0))
-        credit_sum = func.sum(case((LedgerEntry.side == EntrySide.CREDIT.value, LedgerEntry.amount), else_=0))
-        mismatch = [row[0] for row in self.db.query(LedgerEntry.transaction_id).group_by(
-            LedgerEntry.transaction_id
-        ).having((debit_sum != credit_sum) | (func.count(LedgerEntry.id) < 2)).all()]
+        payment_ids = [
+            row[0]
+            for row in successful.with_entities(FinancialTransaction.id)
+            .filter(FinancialTransaction.transaction_type == FinancialTransactionType.PAYMENT.value)
+            .all()
+        ]
+        refund_ids = [
+            row[0]
+            for row in successful.with_entities(FinancialTransaction.id)
+            .filter(FinancialTransaction.transaction_type == FinancialTransactionType.REFUND.value)
+            .all()
+        ]
+        linked = {
+            row[0]
+            for row in self.db.query(LedgerTransaction.legacy_transaction_id)
+            .filter(LedgerTransaction.legacy_transaction_id.is_not(None))
+            .all()
+        }
+        unbalanced = [
+            row[0]
+            for row in self.db.query(LedgerTransaction.id)
+            .filter(LedgerTransaction.total_debit != LedgerTransaction.total_credit)
+            .all()
+        ]
+        debit_sum = func.sum(
+            case((LedgerEntry.side == EntrySide.DEBIT.value, LedgerEntry.amount), else_=0)
+        )
+        credit_sum = func.sum(
+            case((LedgerEntry.side == EntrySide.CREDIT.value, LedgerEntry.amount), else_=0)
+        )
+        mismatch = [
+            row[0]
+            for row in self.db.query(LedgerEntry.transaction_id)
+            .group_by(LedgerEntry.transaction_id)
+            .having((debit_sum != credit_sum) | (func.count(LedgerEntry.id) < 2))
+            .all()
+        ]
         return LedgerReconciliationOut(
             successful_payment_transactions=len(payment_ids),
             successful_refund_transactions=len(refund_ids),

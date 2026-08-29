@@ -45,6 +45,37 @@ class ServiceRepository {
   Future<ServiceRequest> requestDetail(int id) => _api.requestDetail(id);
   Future<ServiceRequest> cancelRequest(int id, {String? reason}) =>
       _api.cancelRequest(id, reason: reason ?? '');
+  Future<ServiceBillingRefund> requestRefund({
+    required int requestId,
+    required String reason,
+    required String idempotencyKey,
+  }) => _api.requestRefund(
+    requestId: requestId,
+    reason: reason,
+    idempotencyKey: idempotencyKey,
+  );
+  Future<ServiceRequest> confirmCompletion(int requestId) =>
+      _api.confirmCompletion(requestId);
+  Future<ServiceFinalPrice?> requestFinalPrice(int id) =>
+      _api.requestFinalPrice(id);
+  Future<ServiceFinalPrice> decideFinalPrice(int id, String decision) =>
+      _api.decideFinalPrice(id, decision);
+  Future<BillingPaymentAttempt> checkoutInvoice({
+    required int invoiceId,
+    required String provider,
+    required String idempotencyKey,
+  }) => _api.checkoutInvoice(
+    invoiceId: invoiceId,
+    provider: provider,
+    idempotencyKey: idempotencyKey,
+  );
+  Future<BillingPaymentAttempt> verifyInvoicePayment({
+    required int attemptId,
+    required String providerToken,
+  }) => _api.verifyInvoicePayment(
+    attemptId: attemptId,
+    providerToken: providerToken,
+  );
   Future<ServiceProviderProfileOwner?> myProviderProfile() =>
       _api.myProviderProfile();
   Future<ServiceProviderProfileOwner> saveProviderProfile(
@@ -70,6 +101,17 @@ class ServiceRepository {
   );
   Future<ServiceRequest> assignedRequestDetail(int id) =>
       _api.assignedRequestDetail(id);
+  Future<ServiceFinalPrice?> assignedRequestFinalPrice(int id) =>
+      _api.assignedRequestFinalPrice(id);
+  Future<ServiceFinalPrice> proposeFinalPrice({
+    required int requestId,
+    required double amount,
+    required String description,
+  }) => _api.proposeFinalPrice(
+    requestId: requestId,
+    amount: amount,
+    description: description,
+  );
   Future<ServiceRequest> updateAssignedRequest(
     int id,
     ServiceRequestStatusUpdateInput input,

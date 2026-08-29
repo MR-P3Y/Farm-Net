@@ -13,4 +13,8 @@ class AdminFinanceRepository {
   Future<void> decideSettlement(int id, String decision) =>
       _api.decideSettlement(id, decision);
   Future<void> simulatePayout(int id) => _api.simulatePayout(id);
+  Future<void> decideBillingRefund(int id, String decision) =>
+      _api.decideBillingRefund(id, decision);
+  Future<void> completeMockBillingRefund(int id) =>
+      _api.completeMockBillingRefund(id);
 }

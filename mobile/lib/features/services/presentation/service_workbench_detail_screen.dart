@@ -4,10 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/utils/dates.dart';
+import '../../../core/utils/digits.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/widgets/farm_app_bar.dart';
+import '../../../core/widgets/farm_button.dart';
 import '../data/service_models.dart';
 import '../state/service_workbench_controller.dart';
+import 'service_final_price_card.dart';
+import 'service_floating_action_bar.dart';
 import 'service_ui.dart';
 
 class ServiceWorkbenchDetailScreen extends ConsumerStatefulWidget {
@@ -43,6 +47,7 @@ class _State extends ConsumerState<ServiceWorkbenchDetailScreen> {
         ),
         fallbackLocation: '/services/workbench',
       ),
+      bottomNavigationBar: q == null ? null : _bottomActions(context, s, q),
       body: ResponsiveBuilder(
         builder: (context, constraints, r) {
           if (s.isLoading) {
@@ -190,18 +195,19 @@ class _State extends ConsumerState<ServiceWorkbenchDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _Timeline(logs: q.statusLogs),
-                  const SizedBox(height: 16),
-                  ...q.providerNextStatuses.map(
-                    (status) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: FilledButton(
-                        onPressed:
-                            s.isSaving ? null : () => _confirm(q, status),
-                        child: Text(_action(context, status)),
-                      ),
+                  if ({
+                    'accepted',
+                    'in_progress',
+                    'completed',
+                  }.contains(q.status)) ...[
+                    ServiceFinalPriceCard(
+                      finalPrice: s.finalPrice,
+                      providerView: true,
+                      isSaving: s.isSaving,
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                  ],
+                  _Timeline(logs: q.statusLogs),
                 ],
               ],
             ),
@@ -209,6 +215,245 @@ class _State extends ConsumerState<ServiceWorkbenchDetailScreen> {
         },
       ),
     );
+  }
+
+  Widget? _bottomActions(
+    BuildContext context,
+    ServiceWorkbenchState state,
+    ServiceRequest request,
+  ) {
+    final saving = state.isSaving;
+    final price = state.finalPrice;
+    if (price?.hasActiveRefund == true) {
+      return ServiceFloatingActionBar(
+        primary: ServiceAction(
+          label:
+              price!.refundStatus == 'requested'
+                  ? context.l10n.tr(
+                    fa: 'بازپرداخت در انتظار بررسی ادمین',
+                    en: 'Refund awaiting admin review',
+                  )
+                  : context.l10n.tr(
+                    fa: 'بازپرداخت تأیید شد؛ در انتظار پردازش',
+                    en: 'Refund approved; awaiting processing',
+                  ),
+          icon: Icons.currency_exchange_rounded,
+          onPressed: null,
+        ),
+      );
+    }
+    if (request.status == 'open') {
+      return ServiceFloatingActionBar(
+        primary: ServiceAction(
+          label: context.l10n.tr(
+            fa: 'پذیرش و تعیین قیمت',
+            en: 'Accept and set price',
+          ),
+          icon: Icons.price_check_rounded,
+          isLoading: saving,
+          onPressed: saving ? null : () => _propose(request, acceptFirst: true),
+        ),
+        secondary: ServiceAction(
+          label: context.l10n.tr(fa: 'رد درخواست', en: 'Reject request'),
+          icon: Icons.close_rounded,
+          variant: FarmButtonVariant.outline,
+          onPressed: saving ? null : () => _confirm(request, 'rejected'),
+        ),
+      );
+    }
+
+    if (request.status == 'accepted') {
+      if (price == null || price.isRejected || price.isProposed) {
+        return ServiceFloatingActionBar(
+          primary: ServiceAction(
+            label:
+                price == null
+                    ? context.l10n.tr(
+                      fa: 'تعیین قیمت نهایی',
+                      en: 'Set final price',
+                    )
+                    : price.isRejected
+                    ? context.l10n.tr(
+                      fa: 'ارسال قیمت جدید',
+                      en: 'Send a new price',
+                    )
+                    : context.l10n.tr(
+                      fa: 'ویرایش قیمت پیشنهادی',
+                      en: 'Revise proposed price',
+                    ),
+            icon: Icons.request_quote_outlined,
+            isLoading: saving,
+            onPressed: saving ? null : () => _propose(request),
+          ),
+        );
+      }
+      if (price.isAccepted && price.isPaid) {
+        return ServiceFloatingActionBar(
+          primary: ServiceAction(
+            label: context.l10n.tr(fa: 'شروع انجام خدمت', en: 'Start service'),
+            icon: Icons.play_arrow_rounded,
+            isLoading: saving,
+            onPressed: saving ? null : () => _confirm(request, 'in_progress'),
+          ),
+        );
+      }
+      return ServiceFloatingActionBar(
+        primary: ServiceAction(
+          label: context.l10n.tr(
+            fa: 'در انتظار پرداخت مشتری',
+            en: 'Waiting for customer payment',
+          ),
+          icon: Icons.hourglass_bottom_rounded,
+          onPressed: null,
+        ),
+      );
+    }
+
+    if (request.status == 'in_progress') {
+      return ServiceFloatingActionBar(
+        primary: ServiceAction(
+          label: context.l10n.tr(
+            fa: 'تکمیل انجام خدمت',
+            en: 'Complete service',
+          ),
+          icon: Icons.task_alt_rounded,
+          isLoading: saving,
+          onPressed: saving ? null : () => _confirm(request, 'completed'),
+        ),
+      );
+    }
+    if (request.status == 'completed') {
+      return ServiceFloatingActionBar(
+        primary: ServiceAction(
+          label:
+              request.completionConfirmedAt == null
+                  ? context.l10n.tr(
+                    fa: 'در انتظار تأیید درخواست‌کننده',
+                    en: 'Awaiting requester confirmation',
+                  )
+                  : context.l10n.tr(
+                    fa: 'اتمام تأیید شد؛ وجه آزاد است',
+                    en: 'Completion confirmed; funds released',
+                  ),
+          icon:
+              request.completionConfirmedAt == null
+                  ? Icons.hourglass_top_rounded
+                  : Icons.account_balance_wallet_outlined,
+          onPressed: null,
+        ),
+      );
+    }
+    return null;
+  }
+
+  Future<void> _propose(
+    ServiceRequest request, {
+    bool acceptFirst = false,
+  }) async {
+    final current = ref.read(serviceWorkbenchProvider).finalPrice;
+    final amount = TextEditingController(
+      text:
+          current == null || current.amount <= 0
+              ? ''
+              : current.amount.toStringAsFixed(0),
+    );
+    final description = TextEditingController(
+      text: current?.description ?? request.title,
+    );
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(
+              context.l10n.tr(
+                fa: 'پیشنهاد قیمت نهایی',
+                en: 'Propose final price',
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: amount,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: context.l10n.tr(
+                      fa: 'مبلغ قطعی به تومان',
+                      en: 'Final amount in Toman',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: description,
+                  minLines: 2,
+                  maxLines: 4,
+                  maxLength: 500,
+                  decoration: InputDecoration(
+                    labelText: context.l10n.tr(
+                      fa: 'شرح مبلغ و محدوده کار',
+                      en: 'Amount and work scope description',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(context.l10n.tr(fa: 'انصراف', en: 'Cancel')),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(context.l10n.tr(fa: 'ارسال', en: 'Send')),
+              ),
+            ],
+          ),
+    );
+    if (accepted != true || !mounted) {
+      amount.dispose();
+      description.dispose();
+      return;
+    }
+    final value = double.tryParse(
+      toEnglishDigits(amount.text).replaceAll(',', '').trim(),
+    );
+    final note = description.text.trim();
+    if (value == null ||
+        value <= 0 ||
+        value != value.roundToDouble() ||
+        note.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n.tr(
+              fa: 'مبلغ کامل و شرح حداقل سه‌حرفی وارد کنید.',
+              en:
+                  'Enter a whole Toman amount and a description of at least three characters.',
+            ),
+          ),
+        ),
+      );
+      amount.dispose();
+      description.dispose();
+      return;
+    }
+    final controller = ref.read(serviceWorkbenchProvider.notifier);
+    if (acceptFirst) {
+      final didAccept = await controller.update(request.id, 'accepted');
+      if (!didAccept || !mounted) {
+        amount.dispose();
+        description.dispose();
+        return;
+      }
+    }
+    await controller.proposeFinalPrice(
+      requestId: request.id,
+      amount: value,
+      description: note,
+    );
+    amount.dispose();
+    description.dispose();
   }
 
   Future<void> _confirm(ServiceRequest q, String status) async {
@@ -299,7 +544,8 @@ class _Timeline extends StatelessWidget {
                 subtitle: Text(
                   [
                     formatApiDate(context, log.createdAt, showTime: true),
-                    if ((log.note ?? '').isNotEmpty) log.note!,
+                    if ((log.note ?? '').isNotEmpty)
+                      serviceStatusNoteLabel(context, log.note!),
                   ].join(' • '),
                 ),
               ),

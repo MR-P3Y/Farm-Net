@@ -545,6 +545,8 @@ class ServiceRequestDetailOut(ServiceRequestListOut):
     cancel_reason: str | None = None
     accepted_at: datetime | None = None
     completed_at: datetime | None = None
+    completion_confirmed_at: datetime | None = None
+    completion_confirmed_by_user_id: int | None = None
     cancelled_at: datetime | None = None
     status_logs: list[ServiceRequestStatusLogOut] = Field(default_factory=list)
 

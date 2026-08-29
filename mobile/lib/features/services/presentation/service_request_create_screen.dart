@@ -6,6 +6,7 @@ import '../../../core/responsive/responsive.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/utils/dates.dart';
 import '../../../core/widgets/farm_app_bar.dart';
+import '../../../core/widgets/farm_primary_action_bar.dart';
 import '../../geo/data/geo_models.dart';
 import '../../geo/data/geo_repository.dart';
 import '../data/service_models.dart';
@@ -60,11 +61,25 @@ class _ServiceRequestCreateScreenState
             ? const <GeoCity>[]
             : (ref.watch(_citiesProvider(_provinceId!)).valueOrNull ??
                 const <GeoCity>[]);
+    final offer = offerAsync.valueOrNull;
     return Scaffold(
       appBar: FarmAppBar(
         title: context.l10n.tr(fa: 'درخواست خدمت', en: 'Service request'),
         fallbackLocation: '/services/${widget.offerId}',
       ),
+      bottomNavigationBar:
+          offer == null
+              ? null
+              : FarmPrimaryActionBar(
+                label: context.l10n.tr(fa: 'ثبت درخواست', en: 'Submit request'),
+                loadingLabel: context.l10n.tr(
+                  fa: 'در حال ثبت درخواست…',
+                  en: 'Submitting request…',
+                ),
+                icon: Icons.send_outlined,
+                isLoading: requestState.isSaving,
+                onPressed: () => _submit(offer, provinces, cities),
+              ),
       body: ResponsiveBuilder(
         builder:
             (context, constraints, r) => offerAsync.when(
@@ -271,20 +286,7 @@ class _ServiceRequestCreateScreenState
                             ),
                           ),
                         ),
-                      SizedBox(height: r.v(16)),
-                      FilledButton.icon(
-                        onPressed:
-                            requestState.isSaving
-                                ? null
-                                : () => _submit(offer, provinces, cities),
-                        icon: const Icon(Icons.send_outlined),
-                        label: Text(
-                          context.l10n.tr(
-                            fa: 'ثبت درخواست',
-                            en: 'Submit request',
-                          ),
-                        ),
-                      ),
+                      SizedBox(height: r.v(12)),
                     ],
                   ),
             ),

@@ -46,6 +46,22 @@ class BillingInvoiceStatus(StrEnum):
     REFUNDED = "refunded"
 
 
+class BillingPaymentAttemptStatus(StrEnum):
+    PENDING = "pending"
+    REDIRECTED = "redirected"
+    VERIFYING = "verifying"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class BillingRefundStatus(StrEnum):
+    REQUESTED = "requested"
+    APPROVED = "approved"
+    SUCCEEDED = "succeeded"
+    REJECTED = "rejected"
+
+
 class CommissionPolicyStatus(StrEnum):
     ACTIVE = "active"
     INACTIVE = "inactive"

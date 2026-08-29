@@ -284,6 +284,8 @@ class ServiceRequest {
     this.cancelReason,
     this.acceptedAt,
     this.completedAt,
+    this.completionConfirmedAt,
+    this.completionConfirmedByUserId,
     this.cancelledAt,
     this.statusLogs = const [],
   });
@@ -309,6 +311,8 @@ class ServiceRequest {
   final String? cancelReason;
   final String? acceptedAt;
   final String? completedAt;
+  final String? completionConfirmedAt;
+  final int? completionConfirmedByUserId;
   final String? cancelledAt;
   final List<ServiceRequestStatusLog> statusLogs;
 
@@ -337,6 +341,9 @@ class ServiceRequest {
     cancelReason: json['cancel_reason']?.toString(),
     acceptedAt: json['accepted_at']?.toString(),
     completedAt: json['completed_at']?.toString(),
+    completionConfirmedAt: json['completion_confirmed_at']?.toString(),
+    completionConfirmedByUserId:
+        (json['completion_confirmed_by_user_id'] as num?)?.toInt(),
     cancelledAt: json['cancelled_at']?.toString(),
     statusLogs:
         (json['status_logs'] as List? ?? const [])
@@ -377,6 +384,157 @@ class ServiceRequestStatusUpdateInput {
     'status': status,
     if (note?.trim().isNotEmpty ?? false) 'note': note!.trim(),
   };
+}
+
+class ServiceFinalPrice {
+  const ServiceFinalPrice({
+    required this.id,
+    required this.sourceId,
+    required this.version,
+    required this.amount,
+    required this.currency,
+    required this.description,
+    required this.status,
+    required this.proposedAt,
+    this.decidedAt,
+    this.invoiceId,
+    this.invoiceStatus,
+    this.refundId,
+    this.refundStatus,
+    this.refundReviewRequired,
+  });
+
+  final int id;
+  final int sourceId;
+  final int version;
+  final double amount;
+  final String currency;
+  final String description;
+  final String status;
+  final String proposedAt;
+  final String? decidedAt;
+  final int? invoiceId;
+  final String? invoiceStatus;
+  final int? refundId;
+  final String? refundStatus;
+  final bool? refundReviewRequired;
+
+  bool get isProposed => status == 'proposed';
+  bool get isAccepted => status == 'accepted';
+  bool get isRejected => status == 'rejected';
+  bool get isPaid => invoiceStatus == 'paid';
+  bool get canPay =>
+      isAccepted && invoiceId != null && invoiceStatus == 'payment_pending';
+  bool get hasActiveRefund =>
+      refundStatus == 'requested' || refundStatus == 'approved';
+  bool get isRefunded => refundStatus == 'succeeded';
+  bool get canRequestRefund =>
+      isPaid && (refundStatus == null || refundStatus == 'rejected');
+
+  static ServiceFinalPrice? tryFromJson(Object? value) {
+    if (value is! Map) return null;
+    final json = value.cast<String, dynamic>();
+    final id = (json['id'] as num?)?.toInt();
+    final sourceId = (json['source_id'] as num?)?.toInt();
+    final amount = _toDouble(json['amount']);
+    final status = json['status']?.toString();
+    if (id == null ||
+        id <= 0 ||
+        sourceId == null ||
+        sourceId <= 0 ||
+        amount == null ||
+        amount <= 0 ||
+        status == null ||
+        status.isEmpty) {
+      return null;
+    }
+    return ServiceFinalPrice.fromJson(json);
+  }
+
+  factory ServiceFinalPrice.fromJson(Map<String, dynamic> json) =>
+      ServiceFinalPrice(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        sourceId: (json['source_id'] as num?)?.toInt() ?? 0,
+        version: (json['version'] as num?)?.toInt() ?? 0,
+        amount: _toDouble(json['amount']) ?? 0,
+        currency: json['currency']?.toString() ?? 'TOMAN',
+        description: json['description']?.toString() ?? '',
+        status: json['status']?.toString() ?? '',
+        proposedAt: json['proposed_at']?.toString() ?? '',
+        decidedAt: json['decided_at']?.toString(),
+        invoiceId: (json['invoice_id'] as num?)?.toInt(),
+        invoiceStatus: json['invoice_status']?.toString(),
+        refundId: (json['refund_id'] as num?)?.toInt(),
+        refundStatus: json['refund_status']?.toString(),
+        refundReviewRequired: json['refund_review_required'] as bool?,
+      );
+}
+
+class ServiceBillingRefund {
+  const ServiceBillingRefund({
+    required this.id,
+    required this.sourceId,
+    required this.status,
+    required this.amount,
+    required this.currency,
+    required this.reason,
+    required this.reviewRequired,
+  });
+
+  final int id;
+  final int sourceId;
+  final String status;
+  final double amount;
+  final String currency;
+  final String reason;
+  final bool reviewRequired;
+
+  factory ServiceBillingRefund.fromJson(Map<String, dynamic> json) =>
+      ServiceBillingRefund(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        sourceId: (json['source_id'] as num?)?.toInt() ?? 0,
+        status: json['status']?.toString() ?? '',
+        amount: _toDouble(json['amount_toman']) ?? 0,
+        currency: json['currency']?.toString() ?? 'TOMAN',
+        reason: json['reason']?.toString() ?? '',
+        reviewRequired: json['review_required'] == true,
+      );
+}
+
+class BillingPaymentAttempt {
+  const BillingPaymentAttempt({
+    required this.id,
+    required this.invoiceId,
+    required this.sourceId,
+    required this.provider,
+    required this.status,
+    required this.amount,
+    required this.currency,
+    this.redirectUrl,
+  });
+
+  final int id;
+  final int invoiceId;
+  final int sourceId;
+  final String provider;
+  final String status;
+  final double amount;
+  final String currency;
+  final String? redirectUrl;
+
+  bool get isSucceeded => status == 'succeeded';
+
+  factory BillingPaymentAttempt.fromJson(Map<String, dynamic> json) =>
+      BillingPaymentAttempt(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        invoiceId: (json['invoice_id'] as num?)?.toInt() ?? 0,
+        sourceId: (json['source_id'] as num?)?.toInt() ?? 0,
+        provider: json['provider']?.toString() ?? '',
+        status: json['status']?.toString() ?? '',
+        amount: _toDouble(json['amount_toman']) ?? 0,
+        currency: json['currency']?.toString() ?? 'TOMAN',
+        redirectUrl: json['redirect_url']?.toString(),
+      );
 }
 
 class ServiceRequestInput {

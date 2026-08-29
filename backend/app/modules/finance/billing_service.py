@@ -36,11 +36,14 @@ class UniversalBillingService:
             return existing
         if legacy_invoice.currency != CurrencyCode.TOMAN.value:
             raise ValueError("Universal billing accepts TOMAN only")
-        if legacy_invoice.platform_amount + legacy_invoice.provider_amount != legacy_invoice.total_amount:
+        if (
+            legacy_invoice.platform_amount + legacy_invoice.provider_amount
+            != legacy_invoice.total_amount
+        ):
             raise ValueError("Invoice provider/platform split must equal total")
-        provider_id = self.db.query(Store.owner_user_id).filter(
-            Store.id == legacy_invoice.store_id
-        ).scalar()
+        provider_id = (
+            self.db.query(Store.owner_user_id).filter(Store.id == legacy_invoice.store_id).scalar()
+        )
         if provider_id is None:
             raise ValueError("Invoice store owner is missing")
         policy = self._policy(percent=legacy_snapshot.percent)
@@ -63,33 +66,44 @@ class UniversalBillingService:
         )
         self.db.add(row)
         self.db.flush()
-        items = self.db.query(FinancialInvoiceItem).filter(
-            FinancialInvoiceItem.invoice_id == legacy_invoice.id
-        ).order_by(FinancialInvoiceItem.id).all()
-        if not items or sum((item.line_total for item in items), Decimal("0")) != legacy_invoice.subtotal_amount:
+        items = (
+            self.db.query(FinancialInvoiceItem)
+            .filter(FinancialInvoiceItem.invoice_id == legacy_invoice.id)
+            .order_by(FinancialInvoiceItem.id)
+            .all()
+        )
+        if (
+            not items
+            or sum((item.line_total for item in items), Decimal("0"))
+            != legacy_invoice.subtotal_amount
+        ):
             raise ValueError("Invoice item snapshots do not match subtotal")
         for sequence, item in enumerate(items, 1):
-            self.db.add(BillingInvoiceItem(
+            self.db.add(
+                BillingInvoiceItem(
+                    invoice_id=row.id,
+                    sequence=sequence,
+                    source_item_type="product_order_item",
+                    source_item_id=item.order_item_id,
+                    title_snapshot=item.title_snapshot,
+                    quantity=Decimal(item.quantity),
+                    unit_snapshot=item.unit_snapshot,
+                    unit_price=item.unit_price,
+                    line_total=item.line_total,
+                )
+            )
+        self.db.add(
+            BillingCommissionSnapshot(
                 invoice_id=row.id,
-                sequence=sequence,
-                source_item_type="product_order_item",
-                source_item_id=item.order_item_id,
-                title_snapshot=item.title_snapshot,
-                quantity=Decimal(item.quantity),
-                unit_snapshot=item.unit_snapshot,
-                unit_price=item.unit_price,
-                line_total=item.line_total,
-            ))
-        self.db.add(BillingCommissionSnapshot(
-            invoice_id=row.id,
-            policy_id=policy.id,
-            legacy_snapshot_id=legacy_snapshot.id,
-            calculation_type=legacy_snapshot.calculation_type,
-            percent=legacy_snapshot.percent,
-            base_amount=legacy_snapshot.base_amount,
-            platform_amount=legacy_snapshot.platform_amount,
-            provider_amount=legacy_snapshot.provider_amount,
-        ))
+                policy_id=policy.id,
+                legacy_snapshot_id=legacy_snapshot.id,
+                calculation_type=legacy_snapshot.calculation_type,
+                percent=legacy_snapshot.percent,
+                base_amount=legacy_snapshot.base_amount,
+                platform_amount=legacy_snapshot.platform_amount,
+                provider_amount=legacy_snapshot.provider_amount,
+            )
+        )
         self.db.flush()
         return row
 
@@ -116,12 +130,16 @@ class UniversalBillingService:
         row = self._by_legacy(legacy_invoice_id)
         if row is not None:
             return row
-        legacy_invoice = self.db.query(FinancialInvoice).filter(
-            FinancialInvoice.id == legacy_invoice_id
-        ).one_or_none()
-        legacy_snapshot = self.db.query(CommissionSnapshot).filter(
-            CommissionSnapshot.invoice_id == legacy_invoice_id
-        ).one_or_none()
+        legacy_invoice = (
+            self.db.query(FinancialInvoice)
+            .filter(FinancialInvoice.id == legacy_invoice_id)
+            .one_or_none()
+        )
+        legacy_snapshot = (
+            self.db.query(CommissionSnapshot)
+            .filter(CommissionSnapshot.invoice_id == legacy_invoice_id)
+            .one_or_none()
+        )
         if legacy_invoice is None or legacy_snapshot is None:
             raise ValueError("Legacy invoice billing contract is incomplete")
         return self.create_from_order(
@@ -130,14 +148,19 @@ class UniversalBillingService:
         )
 
     def _by_legacy(self, legacy_invoice_id: int) -> BillingInvoice | None:
-        return self.db.query(BillingInvoice).filter(
-            BillingInvoice.legacy_invoice_id == legacy_invoice_id
-        ).one_or_none()
+        return (
+            self.db.query(BillingInvoice)
+            .filter(BillingInvoice.legacy_invoice_id == legacy_invoice_id)
+            .one_or_none()
+        )
 
     def _policy(self, *, percent) -> CommissionPolicy:
-        row = self.db.query(CommissionPolicy).filter(
-            CommissionPolicy.code == self.PRODUCT_POLICY_CODE
-        ).with_for_update().one_or_none()
+        row = (
+            self.db.query(CommissionPolicy)
+            .filter(CommissionPolicy.code == self.PRODUCT_POLICY_CODE)
+            .with_for_update()
+            .one_or_none()
+        )
         if row is None:
             try:
                 with self.db.begin_nested():
@@ -153,9 +176,12 @@ class UniversalBillingService:
                     self.db.add(row)
                     self.db.flush()
             except IntegrityError:
-                row = self.db.query(CommissionPolicy).filter(
-                    CommissionPolicy.code == self.PRODUCT_POLICY_CODE
-                ).with_for_update().one()
+                row = (
+                    self.db.query(CommissionPolicy)
+                    .filter(CommissionPolicy.code == self.PRODUCT_POLICY_CODE)
+                    .with_for_update()
+                    .one()
+                )
         if row.percent != percent:
             row.percent = percent
         return row

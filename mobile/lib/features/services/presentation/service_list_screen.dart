@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -31,6 +33,7 @@ class ServiceListScreen extends ConsumerStatefulWidget {
 
 class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
   final _search = TextEditingController();
+  Timer? _searchDebounce;
   bool _loaded = false;
 
   @override
@@ -45,6 +48,7 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _search.dispose();
     super.dispose();
   }
@@ -86,8 +90,30 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const _ServiceIntroCard(),
-                          SizedBox(height: r.v(18)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: FarmSearchField(
+                                  controller: _search,
+                                  hint: context.l10n.tr(
+                                    fa: 'جست‌وجوی خدمات',
+                                    en: 'Search services',
+                                  ),
+                                  onChanged: _onSearchChanged,
+                                ),
+                              ),
+                              SizedBox(width: r.s(10)),
+                              FarmCircularGlassButton(
+                                icon: Icons.tune_rounded,
+                                tooltip: context.l10n.tr(
+                                  fa: 'فیلترهای بیشتر',
+                                  en: 'More filters',
+                                ),
+                                onTap: () => _showFilters(context),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: r.v(10)),
                           _SectionTitle(
                             title: context.l10n.tr(
                               fa: 'دسته‌بندی خدمات',
@@ -109,39 +135,17 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
                                   categoryId: categoryId,
                                 ),
                           ),
-                          SizedBox(height: r.v(18)),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: FarmSearchField(
-                                  controller: _search,
-                                  hint: context.l10n.tr(
-                                    fa: 'جست‌وجوی خدمات',
-                                    en: 'Search services',
-                                  ),
-                                  onChanged:
-                                      (value) => controller.apply(query: value),
-                                ),
-                              ),
-                              SizedBox(width: r.s(10)),
-                              FarmCircularGlassButton(
-                                icon: Icons.tune_rounded,
-                                tooltip: context.l10n.tr(
-                                  fa: 'فیلترهای بیشتر',
-                                  en: 'More filters',
-                                ),
-                                onTap: () => _showFilters(context),
-                              ),
-                            ],
-                          ),
                           SizedBox(height: r.v(12)),
                           Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
+                            spacing: 8,
+                            runSpacing: 8,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               SegmentedButton<ServiceViewMode>(
                                 showSelectedIcon: false,
+                                style: const ButtonStyle(
+                                  visualDensity: VisualDensity.compact,
+                                ),
                                 segments: [
                                   ButtonSegment(
                                     value: ServiceViewMode.list,
@@ -163,65 +167,6 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
                                     (values) =>
                                         controller.setViewMode(values.first),
                               ),
-                              SizedBox(
-                                width: 210,
-                                child: DropdownButtonFormField<String>(
-                                  initialValue: state.sort,
-                                  decoration: InputDecoration(
-                                    labelText: context.l10n.tr(
-                                      fa: 'مرتب‌سازی',
-                                      en: 'Sort by',
-                                    ),
-                                  ),
-                                  items: [
-                                    _sortItem(
-                                      context,
-                                      'relevance',
-                                      'پیشنهادی',
-                                      'Recommended',
-                                    ),
-                                    _sortItem(
-                                      context,
-                                      'newest',
-                                      'جدیدترین',
-                                      'Newest',
-                                    ),
-                                    _sortItem(
-                                      context,
-                                      'rating',
-                                      'بیشترین امتیاز',
-                                      'Top rated',
-                                    ),
-                                    _sortItem(
-                                      context,
-                                      'price_asc',
-                                      'کمترین قیمت',
-                                      'Lowest price',
-                                    ),
-                                    _sortItem(
-                                      context,
-                                      'price_desc',
-                                      'بیشترین قیمت',
-                                      'Highest price',
-                                    ),
-                                    if (state.userLatitude != null)
-                                      _sortItem(
-                                        context,
-                                        'distance',
-                                        'نزدیک‌ترین',
-                                        'Nearest',
-                                      ),
-                                  ],
-                                  onChanged:
-                                      state.isFiltering
-                                          ? null
-                                          : (value) {
-                                            if (value != null) {
-                                              controller.setSort(value);
-                                            }
-                                          },
-                                ),
-                              ),
                               FilledButton.tonalIcon(
                                 onPressed:
                                     state.isLocating
@@ -240,43 +185,39 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
                                   context.l10n.tr(
                                     fa:
                                         state.userLatitude == null
-                                            ? 'خدمات نزدیک من'
-                                            : 'موقعیت من فعال است',
+                                            ? 'نزدیک من'
+                                            : 'موقعیت فعال',
                                     en:
                                         state.userLatitude == null
-                                            ? 'Services near me'
-                                            : 'My location is active',
+                                            ? 'Near me'
+                                            : 'Location active',
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                          if (state.hasFilters) ...[
-                            SizedBox(height: r.v(6)),
-                            Align(
-                              alignment: AlignmentDirectional.centerEnd,
-                              child: TextButton.icon(
-                                onPressed: () {
-                                  _search.clear();
-                                  controller.clear();
-                                },
-                                icon: const Icon(Icons.filter_alt_off_rounded),
-                                label: Text(
-                                  context.l10n.tr(
+                              if (state.hasFilters)
+                                IconButton.filledTonal(
+                                  tooltip: context.l10n.tr(
                                     fa: 'پاک‌کردن فیلترها',
                                     en: 'Clear filters',
                                   ),
+                                  onPressed: () {
+                                    _searchDebounce?.cancel();
+                                    _search.clear();
+                                    controller.clear();
+                                  },
+                                  icon: const Icon(
+                                    Icons.filter_alt_off_rounded,
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                           if (state.isFiltering) ...[
                             const SizedBox(height: 6),
                             const LinearProgressIndicator(minHeight: 2),
                           ],
-                          SizedBox(height: r.v(18)),
-                          _ResultsHeader(count: state.offers.length),
                           SizedBox(height: r.v(10)),
+                          _ResultsHeader(count: state.offers.length),
+                          SizedBox(height: r.v(8)),
                           if (state.errorMessage != null)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 12),
@@ -343,6 +284,16 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
     );
   }
 
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 320), () {
+      if (!mounted) return;
+      ref
+          .read(serviceDiscoveryControllerProvider.notifier)
+          .apply(query: value.trim());
+    });
+  }
+
   DropdownMenuItem<String> _sortItem(
     BuildContext context,
     String value,
@@ -360,6 +311,7 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
     var provinceId = state.provinceId;
     var cityId = state.cityId;
     var pricingType = state.pricingType;
+    var sort = state.sort;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -391,6 +343,53 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
                               ?.copyWith(fontWeight: FontWeight.w900),
                         ),
                         const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          initialValue: sort,
+                          decoration: InputDecoration(
+                            labelText: context.l10n.tr(
+                              fa: 'مرتب‌سازی نتایج',
+                              en: 'Sort results',
+                            ),
+                          ),
+                          items: [
+                            _sortItem(
+                              context,
+                              'relevance',
+                              'پیشنهادی',
+                              'Recommended',
+                            ),
+                            _sortItem(context, 'newest', 'جدیدترین', 'Newest'),
+                            _sortItem(
+                              context,
+                              'rating',
+                              'بیشترین امتیاز',
+                              'Top rated',
+                            ),
+                            _sortItem(
+                              context,
+                              'price_asc',
+                              'کمترین قیمت',
+                              'Lowest price',
+                            ),
+                            _sortItem(
+                              context,
+                              'price_desc',
+                              'بیشترین قیمت',
+                              'Highest price',
+                            ),
+                            if (state.userLatitude != null)
+                              _sortItem(
+                                context,
+                                'distance',
+                                'نزدیک‌ترین',
+                                'Nearest',
+                              ),
+                          ],
+                          onChanged:
+                              (value) =>
+                                  setModalState(() => sort = value ?? sort),
+                        ),
+                        const SizedBox(height: 12),
                         DropdownButtonFormField<int?>(
                           initialValue: categoryId,
                           decoration: InputDecoration(
@@ -527,6 +526,7 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
                               provinceId: provinceId,
                               cityId: cityId,
                               pricingType: pricingType,
+                              sort: sort,
                             );
                           },
                           icon: const Icon(Icons.filter_alt_rounded),
@@ -544,69 +544,6 @@ class _ServiceListScreenState extends ConsumerState<ServiceListScreen> {
               );
             },
           ),
-    );
-  }
-}
-
-class _ServiceIntroCard extends StatelessWidget {
-  const _ServiceIntroCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return FarmGlassCard(
-      borderRadius: 26,
-      padding: EdgeInsets.zero,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
-          gradient: LinearGradient(
-            begin: AlignmentDirectional.topStart,
-            end: AlignmentDirectional.bottomEnd,
-            colors: [
-              colors.primary.withValues(alpha: .92),
-              colors.tertiary.withValues(alpha: .72),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n.tr(
-                        fa: 'خدمت موردنیاز مزرعه را سریع پیدا کنید',
-                        en: 'Find the right farm service quickly',
-                      ),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: colors.onPrimary,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      context.l10n.tr(
-                        fa:
-                            'از بین خدمات تأییدشده، نزدیک‌ترین گزینه را انتخاب کنید.',
-                        en: 'Choose a nearby option from verified services.',
-                      ),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colors.onPrimary.withValues(alpha: .88),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 14),
-              Icon(Icons.handyman_rounded, size: 48, color: colors.onPrimary),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

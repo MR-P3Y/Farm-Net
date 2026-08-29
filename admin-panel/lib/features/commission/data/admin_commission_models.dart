@@ -50,3 +50,40 @@ num _numFromJson(dynamic value) {
   if (value is String) return num.tryParse(value) ?? 0;
   return 0;
 }
+
+class AdminCommissionPolicy {
+  const AdminCommissionPolicy({
+    required this.id,
+    required this.code,
+    required this.title,
+    required this.sourceType,
+    required this.percent,
+    required this.status,
+    required this.isDefault,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  final int id;
+  final String code;
+  final String title;
+  final String sourceType;
+  final num percent;
+  final String status;
+  final bool isDefault;
+  final String createdAt;
+  final String updatedAt;
+
+  factory AdminCommissionPolicy.fromJson(Map<String, dynamic> json) =>
+      AdminCommissionPolicy(
+        id: (json['id'] as num).toInt(),
+        code: json['code']?.toString() ?? '',
+        title: json['title']?.toString() ?? '',
+        sourceType: json['source_type']?.toString() ?? '',
+        percent: _numFromJson(json['percent']),
+        status: json['status']?.toString() ?? '',
+        isDefault: json['is_default'] == true,
+        createdAt: json['created_at']?.toString() ?? '',
+        updatedAt: json['updated_at']?.toString() ?? '',
+      );
+}

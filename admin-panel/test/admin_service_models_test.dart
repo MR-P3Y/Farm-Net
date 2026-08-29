@@ -44,6 +44,19 @@ void main() {
     expect(request.statusLogs.single.newStatus, 'accepted');
   });
 
+  test('request detail exposes completion confirmation', () {
+    final request = AdminServiceRequest.fromJson({
+      'id': 18,
+      'requester_user_id': 2,
+      'status': 'completed',
+      'created_at': '2026-08-10T10:00:00Z',
+      'completion_confirmed_at': '2026-08-10T11:00:00Z',
+      'completion_confirmed_by_user_id': 2,
+    });
+    expect(request.completionConfirmedAt, isNotNull);
+    expect(request.completionConfirmedByUserId, 2);
+  });
+
   test('paginated offer response stays typed', () {
     final page = AdminServicePage.fromJson({
       'data': [

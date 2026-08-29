@@ -13,6 +13,7 @@ class MediaStatus(StrEnum):
 
 
 class MediaPurpose(StrEnum):
+    PROFILE_IMAGE = "profile_image"
     PRODUCT_IMAGE = "product_image"
     SOCIAL_POST_IMAGE = "social_post_image"
     STORE_LOGO = "store_logo"

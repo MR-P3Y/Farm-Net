@@ -47,7 +47,8 @@ class ServiceDiscoveryState {
       categoryId != null ||
       provinceId != null ||
       cityId != null ||
-      pricingType != null;
+      pricingType != null ||
+      sort != 'relevance';
 
   ServiceDiscoveryState copyWith({
     bool? isLoading,

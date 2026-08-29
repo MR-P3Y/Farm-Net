@@ -12,10 +12,21 @@ from app.modules.auth.models import AuthUser
 from app.modules.auth.repository import AuthRepository
 from app.common.money import BillableSourceType
 from app.modules.finance.final_price_service import FinalPriceContractError, FinalPriceService
+from app.modules.finance.models import BillingInvoice, BillingRefund
+from app.modules.finance.refund_service import (
+    BillingRefundContractError,
+    BillingRefundService,
+)
 from app.modules.finance.schemas import (
+    BillingRefundCreateIn,
+    BillingRefundOut,
     FinalPriceDecisionIn,
     FinalPriceProposalIn,
     FinalPriceProposalOut,
+)
+from app.modules.finance.settlement_service import (
+    LedgerMovementService,
+    SettlementContractError,
 )
 from app.modules.media.enums import MediaStatus, MediaVisibility
 from app.modules.notifications.enums import NotificationEventType, NotificationPriority
@@ -121,6 +132,11 @@ class ServicesService:
             )
         except FinalPriceContractError as exc:
             raise ValidationAuthError(message=str(exc)) from exc
+        self._notify_final_price(
+            row=row,
+            proposal=proposal,
+            actor_user_id=user.id,
+        )
         self.repo.commit()
         return FinalPriceService(self.db).output(proposal)
 
@@ -146,6 +162,11 @@ class ServicesService:
             )
         except FinalPriceContractError as exc:
             raise ValidationAuthError(message=str(exc)) from exc
+        self._notify_final_price(
+            row=row,
+            proposal=proposal,
+            actor_user_id=user.id,
+        )
         self.repo.commit()
         return finance.output(proposal)
 
@@ -164,6 +185,139 @@ class ServicesService:
             source_type=BillableSourceType.SERVICE_REQUEST.value, source_id=row.id
         )
         return finance.output(proposal) if proposal is not None else None
+
+    def request_service_refund(
+        self,
+        *,
+        request_id: int,
+        user: AuthUser,
+        payload: BillingRefundCreateIn,
+    ) -> BillingRefundOut:
+        row = self._get_request(request_id)
+        if row.requester_user_id != user.id:
+            raise PermissionDeniedError()
+        if row.status not in {
+            ServiceRequestStatus.ACCEPTED.value,
+            ServiceRequestStatus.IN_PROGRESS.value,
+            ServiceRequestStatus.COMPLETED.value,
+        }:
+            raise ValidationAuthError(
+                message="Service request cannot enter refund flow in current status",
+                details={"current_status": row.status},
+            )
+        invoice = self._request_invoice(row, lock=True)
+        try:
+            refund = BillingRefundService(self.db).create(
+                invoice_id=invoice.id,
+                requester_user_id=user.id,
+                reason=payload.reason,
+                idempotency_key=payload.idempotency_key,
+                review_required=row.status != ServiceRequestStatus.ACCEPTED.value,
+            )
+        except BillingRefundContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
+        self.repo.commit()
+        self.repo.refresh(refund)
+        return BillingRefundService.output(refund)
+
+    def confirm_service_completion(
+        self,
+        *,
+        request_id: int,
+        actor_user: AuthUser,
+        admin_override: bool = False,
+        trace_id: str | None = None,
+    ) -> ServiceRequestDetailOut:
+        row = self._get_request(request_id)
+        if not admin_override and row.requester_user_id != actor_user.id:
+            raise PermissionDeniedError()
+        if row.status != ServiceRequestStatus.COMPLETED.value:
+            raise ValidationAuthError(
+                message="Only a completed service may be confirmed",
+                details={"current_status": row.status},
+            )
+        if row.completion_confirmed_at is not None:
+            return self._request_detail_out(row)
+        refund = BillingRefundService(self.db).by_source(
+            source_type=BillableSourceType.SERVICE_REQUEST.value,
+            source_id=row.id,
+        )
+        if refund is not None and refund.status != "rejected":
+            raise ValidationAuthError(
+                message="Completion cannot be confirmed while refund is active",
+                details={"refund_status": refund.status},
+            )
+        invoice = self._request_invoice(row, lock=True)
+        try:
+            LedgerMovementService(self.db).release_completed_billable_invoice(
+                invoice=invoice,
+                actor_user_id=actor_user.id,
+                trace_id=trace_id or f"service-completion-confirmation:{row.id}",
+            )
+        except SettlementContractError as exc:
+            raise ValidationAuthError(message=str(exc)) from exc
+        now = datetime.utcnow()
+        row.completion_confirmed_at = now
+        row.completion_confirmed_by_user_id = actor_user.id
+        if row.provider_profile is not None:
+            NotificationService(self.db).create_event_and_notify_user(
+                event_type=NotificationEventType.SERVICE_COMPLETION_CONFIRMED.value,
+                recipient_user_id=row.provider_profile.user_id,
+                title="Service completion confirmed",
+                body="The requester confirmed completion and your balance is now available.",
+                actor_user_id=actor_user.id,
+                source_type="service_request",
+                source_id=str(row.id),
+                payload_json={
+                    "request_id": row.id,
+                    "status": row.status,
+                    "completion_confirmed": True,
+                },
+                action_url=f"/services/workbench/requests/{row.id}",
+                event_key=f"service-request:{row.id}:completion-confirmed",
+                commit=False,
+            )
+        self.repo.commit()
+        self.repo.refresh(row)
+        return self._request_detail_out(row)
+
+    def finalize_refunded_service_request(
+        self, *, refund: BillingRefund, admin_user: AuthUser
+    ) -> ServiceRequestAdminDetailOut:
+        if (
+            refund.source_type != BillableSourceType.SERVICE_REQUEST.value
+            or refund.status != "succeeded"
+        ):
+            raise ValidationAuthError(message="Completed service refund is required")
+        row = self._get_request(refund.source_id)
+        if row.status != ServiceRequestStatus.CANCELLED.value:
+            old_status = row.status
+            self._set_request_status(
+                row,
+                ServiceRequestStatus.CANCELLED.value,
+                changed_by=admin_user.id,
+                note=refund.reason,
+            )
+            row.cancel_reason = refund.reason
+            self._notify_request_transition(
+                row,
+                old_status=old_status,
+                new_status=ServiceRequestStatus.CANCELLED.value,
+                actor_user_id=admin_user.id,
+                recipient_user_ids=[row.requester_user_id],
+                provider_action=False,
+            )
+            self._notify_request_transition(
+                row,
+                old_status=old_status,
+                new_status=ServiceRequestStatus.CANCELLED.value,
+                actor_user_id=admin_user.id,
+                recipient_user_ids=self._provider_recipient_ids(row),
+                provider_action=True,
+            )
+        self.repo.commit()
+        self.repo.refresh(row)
+        return self._request_admin_detail_out(row)
 
     def seed_default_categories(self) -> list[ServiceCategoryOut]:
         defaults = [
@@ -992,9 +1146,12 @@ class ServicesService:
         target = self._validate_request_status(payload.status)
         self._validate_request_transition(row.status, target, self.PROVIDER_REQUEST_TRANSITIONS)
         old_status = row.status
-        if target == ServiceRequestStatus.IN_PROGRESS.value:
+        if target in {
+            ServiceRequestStatus.IN_PROGRESS.value,
+            ServiceRequestStatus.COMPLETED.value,
+        }:
             try:
-                FinalPriceService(self.db).require_accepted(
+                FinalPriceService(self.db).require_paid(
                     source_type=BillableSourceType.SERVICE_REQUEST.value,
                     source_id=row.id,
                 )
@@ -1056,9 +1213,12 @@ class ServicesService:
         target = self._validate_request_status(payload.status)
         self._validate_request_transition(row.status, target, self.ADMIN_REQUEST_TRANSITIONS)
         old_status = row.status
-        if target == ServiceRequestStatus.IN_PROGRESS.value:
+        if target in {
+            ServiceRequestStatus.IN_PROGRESS.value,
+            ServiceRequestStatus.COMPLETED.value,
+        }:
             try:
-                FinalPriceService(self.db).require_accepted(
+                FinalPriceService(self.db).require_paid(
                     source_type=BillableSourceType.SERVICE_REQUEST.value,
                     source_id=row.id,
                 )
@@ -1255,6 +1415,8 @@ class ServicesService:
             "cancel_reason": row.cancel_reason,
             "accepted_at": row.accepted_at,
             "completed_at": row.completed_at,
+            "completion_confirmed_at": row.completion_confirmed_at,
+            "completion_confirmed_by_user_id": row.completion_confirmed_by_user_id,
             "cancelled_at": row.cancelled_at,
             "status_logs": [
                 ServiceRequestStatusLogOut(
@@ -1289,6 +1451,18 @@ class ServicesService:
         if row.provider_profile is None:
             return []
         return [row.provider_profile.user_id]
+
+    def _request_invoice(self, row: ServiceRequest, *, lock: bool) -> BillingInvoice:
+        query = self.db.query(BillingInvoice).filter(
+            BillingInvoice.source_type == BillableSourceType.SERVICE_REQUEST.value,
+            BillingInvoice.source_id == row.id,
+        )
+        if lock:
+            query = query.with_for_update()
+        invoice = query.one_or_none()
+        if invoice is None:
+            raise ValidationAuthError(message="Service invoice not found")
+        return invoice
 
     def _request_notification_payload(
         self,
@@ -1374,6 +1548,54 @@ class ServicesService:
                 else f"/services/requests/{row.id}"
             ),
             priority=NotificationPriority.NORMAL.value,
+            commit=False,
+        )
+
+    def _notify_final_price(
+        self,
+        *,
+        row: ServiceRequest,
+        proposal,
+        actor_user_id: int,
+    ) -> None:
+        if proposal.status == "proposed":
+            event_type = NotificationEventType.SERVICE_FINAL_PRICE_PROPOSED.value
+            recipient_user_id = row.requester_user_id
+            title = "Final price proposed"
+            body = "The service provider proposed a final price for your request."
+            action_url = f"/services/requests/{row.id}"
+        elif proposal.status == "accepted":
+            event_type = NotificationEventType.SERVICE_FINAL_PRICE_ACCEPTED.value
+            recipient_user_id = row.provider_profile.user_id
+            title = "Final price accepted"
+            body = "The requester accepted the final price. Payment is now pending."
+            action_url = f"/services/workbench/requests/{row.id}"
+        elif proposal.status == "rejected":
+            event_type = NotificationEventType.SERVICE_FINAL_PRICE_REJECTED.value
+            recipient_user_id = row.provider_profile.user_id
+            title = "Final price rejected"
+            body = "The requester rejected the proposed final price."
+            action_url = f"/services/workbench/requests/{row.id}"
+        else:
+            return
+        NotificationService(self.db).create_event_and_notify_user(
+            event_type=event_type,
+            recipient_user_id=recipient_user_id,
+            title=title,
+            body=body,
+            actor_user_id=actor_user_id,
+            source_type="service_request",
+            source_id=str(row.id),
+            payload_json={
+                "request_id": row.id,
+                "proposal_id": proposal.id,
+                "proposal_version": proposal.version,
+                "status": proposal.status,
+            },
+            action_url=action_url,
+            event_key=(
+                f"service-request:{row.id}:final-price:{proposal.version}:{proposal.status}"
+            ),
             commit=False,
         )
 

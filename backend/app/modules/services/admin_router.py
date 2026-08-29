@@ -245,6 +245,29 @@ def update_admin_service_request_status(
         meta={"trace_id": request.state.trace_id},
     )
 
+
+@router.post(
+    "/requests/{request_id}/confirm-completion",
+    response_model=ServiceRequestAdminDetailResponse,
+)
+def confirm_admin_service_completion(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage")),
+):
+    result = ServicesService(db).confirm_service_completion(
+        request_id=request_id,
+        actor_user=current_user,
+        admin_override=True,
+        trace_id=request.state.trace_id,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Service completion confirmed by admin and provider balance released",
+        meta={"trace_id": request.state.trace_id},
+    )
+
 @router.get("/provider-profiles")
 def list_admin_service_provider_profiles(
     request: Request,

@@ -184,12 +184,16 @@ class AdminServiceRequest {
     this.cityName,
     this.description,
     this.adminNote,
+    this.completionConfirmedAt,
+    this.completionConfirmedByUserId,
     this.statusLogs = const [],
   });
   final int id, requesterUserId;
   final int? providerUserId, offerId, categoryId;
   final String status, createdAt;
   final String? title, provinceName, cityName, description, adminNote;
+  final String? completionConfirmedAt;
+  final int? completionConfirmedByUserId;
   final List<AdminServiceStatusLog> statusLogs;
   factory AdminServiceRequest.fromJson(Map<String, dynamic> j) =>
       AdminServiceRequest(
@@ -206,6 +210,11 @@ class AdminServiceRequest {
         cityName: j['city_name']?.toString(),
         description: j['description']?.toString(),
         adminNote: j['admin_note']?.toString(),
+        completionConfirmedAt: j['completion_confirmed_at']?.toString(),
+        completionConfirmedByUserId:
+            j['completion_confirmed_by_user_id'] == null
+                ? null
+                : _id(j['completion_confirmed_by_user_id']),
         statusLogs:
             (j['status_logs'] as List? ?? const [])
                 .map((e) => AdminServiceStatusLog.fromJson((e as Map).cast()))

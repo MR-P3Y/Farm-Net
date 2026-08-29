@@ -1,8 +1,10 @@
 # Services API
 
 The Services module implements the operational-services marketplace request
-workflow. Phase 20.6 adds final-price agreement and universal invoice creation;
-payment execution, settlement, chat, and reviews remain outside this contract.
+workflow. Phase 26 connects the final-price agreement to universal invoice
+checkout, verified payment, ledger posting, the paid-before-start gate, full
+refund policy, and requester-confirmed provider-balance release. Disputes,
+chat, and real-gateway refund execution remain outside this contract.
 
 ## Request roles and privacy
 
@@ -30,16 +32,55 @@ All paths use the `/api/v1` prefix and the standard
 | Provider | `PATCH /services/requests/{request_id}/status` | Controlled assigned transition |
 | Provider | `POST/GET /services/requests/assigned/{request_id}/final-price` | Propose/read final price |
 | Requester | `GET/PATCH /services/requests/{request_id}/final-price` | Read and accept/reject final price |
+| Requester | `POST /services/requests/{request_id}/refund` | Request an idempotent full refund |
+| Requester | `POST /services/requests/{request_id}/confirm-completion` | Confirm completed work and release provider balance |
+| Invoice payer | `POST /finance/invoices/{invoice_id}/checkout` | Create/replay a payment attempt |
+| Invoice payer | `POST /finance/payments/verify` | Verify payment and post the ledger movement |
+| Gateway | `GET /finance/payments/callback/zarinpal` | Complete a Zarinpal payment callback |
 | Admin | `GET/POST /admin/services/categories` | List or create categories |
 | Admin | `PATCH /admin/services/categories/{category_id}` | Update category |
+| Admin | `POST /admin/services/requests/{request_id}/confirm-completion` | Explicit completion/release override |
+| Admin | `GET /admin/commission/policies` | List default domain commission policies |
+| Admin | `GET/PATCH /admin/commission/policies/{source_type}/default` | Read/update domain commission |
+| Admin | `GET /admin/finance/billing-refunds` | List service billing refunds |
+| Admin | `PATCH /admin/finance/billing-refunds/{refund_id}/decision` | Approve/reject a reviewed refund |
+| Admin | `POST /admin/finance/billing-refunds/{refund_id}/complete-mock` | Complete a Mock full refund |
 
 ## Final-price billing gate
 
 `budget_amount` is never billable. Final price requires an accepted operational
 request, an explicit provider proposal, and requester acceptance. Acceptance
 fails closed without an active default `service_request` commission policy and
-creates one exact-once universal Invoice. `in_progress` is blocked until this
-agreement exists. An unpaid cancellation cancels its pending Invoice.
+creates one exact-once universal Invoice. `in_progress` is blocked until that
+Invoice is paid. An unpaid cancellation cancels its pending Invoice.
+
+Checkout is owner-scoped and idempotent. Verification locks the attempt and
+Invoice, marks the Invoice paid, and posts one balanced ledger transaction:
+platform cash is debited while provider pending balance and platform revenue
+are credited. The provider share is deliberately pending; it is not available
+for settlement until the requester confirms a completed request or an Admin
+uses the explicit override. There is no automatic timeout release.
+
+## Commission, cancellation, refund, and release policy
+
+- The seeded default commission for `service_request` is `10.00%`. Admin may
+  change the active default for future invoices. Every accepted final price
+  stores an immutable commission snapshot, so later edits never rewrite an
+  existing Invoice.
+- A paid request cancelled before work enters `in_progress` receives a full
+  refund without review. The refund is created as `approved`, but money is not
+  claimed returned until Provider processing succeeds.
+- After work starts, a cancellation and full-refund request is created as
+  `requested` and requires an explicit Admin approval or rejection.
+- The current executable refund adapter is Mock-only and disabled in
+  production. Real Zarinpal refund execution is not claimed by this contract.
+- On successful refund, the original provider-pending and platform-commission
+  postings are reversed exactly once. If the provider share was already
+  released, its release is reversed first; processing fails closed when those
+  funds have already been reserved or settled.
+- Provider funds move from pending to available only after the request reaches
+  `completed` and the requester confirms completion. Admin may override this
+  confirmation explicitly; there is no automatic or time-based release.
 
 Category management preserves Admin-owned seed rows, rejects direct and
 indirect hierarchy cycles, and accepts `parent_id: null` to move a category to
@@ -72,8 +113,15 @@ and `created_at`.
 
 - Initial status: `open`.
 - Provider: `open -> accepted|rejected`, `accepted -> in_progress`,
-  `in_progress -> completed`.
+  `in_progress -> completed`. Entering `in_progress` additionally requires a
+  requester-accepted and paid final-price Invoice.
 - Requester cancel: only from `open` or `accepted`.
+- A paid accepted request uses the refund endpoint instead of the legacy
+  cancellation endpoint; after `in_progress`, cancellation/refund needs Admin
+  review.
+- Provider completion does not release funds. Requester completion confirmation
+  (or the explicit Admin override) performs one exact-once pending-to-available
+  ledger movement.
 - Admin: the explicit transition table enforced by the service layer.
 - Same-status, invalid, and terminal transitions are rejected before a status
   log or notification is written.
@@ -88,6 +136,15 @@ In-app events are emitted atomically with request changes:
 - `service_request.in_progress`
 - `service_request.completed`
 - `service_request.cancelled`
+- `service_request.final_price_proposed`
+- `service_request.final_price_accepted`
+- `service_request.final_price_rejected`
+- `finance.invoice_paid`
+- `finance.refund_requested`
+- `finance.refund_approved`
+- `finance.refund_rejected`
+- `finance.refund_completed`
+- `service_request.completion_confirmed`
 
 Stable event keys make each request transition idempotent. A recipient receives
 at most one in-app notification for an event, duplicate recipient IDs are

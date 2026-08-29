@@ -487,6 +487,14 @@ Future<void> _detailDialog(
             shrinkWrap: true,
             children: [
               Text(x.description ?? 'بدون توضیحات'),
+              if (x.status == 'completed') ...[
+                const SizedBox(height: 8),
+                Text(
+                  x.completionConfirmedAt == null
+                      ? 'تکمیل خدمت هنوز توسط درخواست‌کننده تأیید نشده و وجه در انتظار است.'
+                      : 'تکمیل تأیید شده و سهم خدمات‌دهنده آزاد شده است.',
+                ),
+              ],
               const Divider(),
               Text('تاریخچه وضعیت', style: Theme.of(c).textTheme.titleMedium),
               ...x.statusLogs.map(
@@ -502,6 +510,17 @@ Future<void> _detailDialog(
           ),
         ),
         actions: [
+          if (x.status == 'completed' && x.completionConfirmedAt == null)
+            FilledButton.icon(
+              onPressed: () async {
+                final ok = await r
+                    .read(adminServiceControllerProvider.notifier)
+                    .confirmCompletion(x.id);
+                if (ok && d.mounted) Navigator.pop(d);
+              },
+              icon: const Icon(Icons.verified_outlined),
+              label: const Text('تأیید اتمام و آزادسازی وجه'),
+            ),
           TextButton(
             onPressed: () => Navigator.pop(d),
             child: const Text('بستن'),

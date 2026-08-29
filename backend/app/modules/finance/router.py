@@ -7,7 +7,13 @@ from app.modules.auth.dependencies import require_permission
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
 from app.modules.finance.models import BillingInvoice, SettlementRequest
-from app.modules.finance.schemas import OwnInvoiceOut, SettlementCreateIn
+from app.modules.finance.payment_service import BillingInvoicePaymentService
+from app.modules.finance.schemas import (
+    InvoicePaymentCheckoutIn,
+    InvoicePaymentVerifyIn,
+    OwnInvoiceOut,
+    SettlementCreateIn,
+)
 from app.modules.finance.settlement_service import (
     LedgerMovementService,
     SettlementContractError,
@@ -19,12 +25,19 @@ router = APIRouter(prefix="/finance", tags=["Finance"])
 
 def _own_invoice(row: BillingInvoice) -> dict:
     return OwnInvoiceOut(
-        id=row.id, invoice_number=row.invoice_number,
-        source_type=row.source_type, source_id=row.source_id,
-        status=row.status, currency=row.currency,
-        subtotal_amount=row.subtotal_amount, discount_amount=row.discount_amount,
-        surcharge_amount=row.surcharge_amount, total_amount=row.total_amount,
-        issued_at=row.issued_at, paid_at=row.paid_at, refunded_at=row.refunded_at,
+        id=row.id,
+        invoice_number=row.invoice_number,
+        source_type=row.source_type,
+        source_id=row.source_id,
+        status=row.status,
+        currency=row.currency,
+        subtotal_amount=row.subtotal_amount,
+        discount_amount=row.discount_amount,
+        surcharge_amount=row.surcharge_amount,
+        total_amount=row.total_amount,
+        issued_at=row.issued_at,
+        paid_at=row.paid_at,
+        refunded_at=row.refunded_at,
     ).model_dump(mode="json")
 
 
@@ -38,13 +51,21 @@ def own_invoices(
 ):
     query = db.query(BillingInvoice).filter(BillingInvoice.payer_user_id == user.id)
     total = query.count()
-    rows = query.order_by(BillingInvoice.id.desc()).offset(
-        (page - 1) * page_size
-    ).limit(page_size).all()
+    rows = (
+        query.order_by(BillingInvoice.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
     return success_response(
-        data=[_own_invoice(row) for row in rows], message="OK",
-        meta={"page": page, "page_size": page_size, "total": total,
-              "trace_id": request.state.trace_id},
+        data=[_own_invoice(row) for row in rows],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "trace_id": request.state.trace_id,
+        },
     )
 
 
@@ -55,14 +76,77 @@ def own_invoice_detail(
     db: Session = Depends(get_db),
     user: AuthUser = Depends(require_permission("payments.read")),
 ):
-    row = db.query(BillingInvoice).filter(
-        BillingInvoice.id == invoice_id,
-        BillingInvoice.payer_user_id == user.id,
-    ).one_or_none()
+    row = (
+        db.query(BillingInvoice)
+        .filter(
+            BillingInvoice.id == invoice_id,
+            BillingInvoice.payer_user_id == user.id,
+        )
+        .one_or_none()
+    )
     if row is None:
         raise ValidationAuthError(message="Invoice not found")
     return success_response(
-        data=_own_invoice(row), message="OK",
+        data=_own_invoice(row),
+        message="OK",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/invoices/{invoice_id}/checkout")
+def checkout_invoice_payment(
+    invoice_id: int,
+    payload: InvoicePaymentCheckoutIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("payments.create")),
+):
+    result = BillingInvoicePaymentService(db).checkout(
+        invoice_id=invoice_id,
+        user_id=user.id,
+        provider=payload.provider,
+        idempotency_key=payload.idempotency_key,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Payment checkout created",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/payments/verify")
+def verify_invoice_payment(
+    payload: InvoicePaymentVerifyIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("payments.create")),
+):
+    result = BillingInvoicePaymentService(db).verify(
+        attempt_id=payload.payment_attempt_id,
+        user_id=user.id,
+        provider_token=payload.provider_token,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Payment verified",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.get("/payments/callback/zarinpal")
+def invoice_payment_callback(
+    request: Request,
+    Authority: str = Query(min_length=1, max_length=255),
+    Status: str = Query(pattern="^(OK|NOK)$"),
+    db: Session = Depends(get_db),
+):
+    result = BillingInvoicePaymentService(db).callback(
+        authority=Authority,
+        status=Status,
+    )
+    return success_response(
+        data={"status": result.status},
+        message="Payment callback processed",
         meta={"trace_id": request.state.trace_id},
     )
 

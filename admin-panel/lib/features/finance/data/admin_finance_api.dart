@@ -94,6 +94,39 @@ class AdminFinanceApi {
     }
   }
 
+  Future<void> decideBillingRefund(int id, String decision) async {
+    _client.setToken(await _tokens.getAccessToken());
+    try {
+      await _client.dio.patch(
+        '/admin/finance/billing-refunds/$id/decision',
+        data: {
+          'decision': decision,
+          'admin_note':
+              decision == 'approve'
+                  ? 'تأیید بازپرداخت کامل خدمت'
+                  : 'رد بازپرداخت خدمت پس از بررسی',
+        },
+      );
+    } on DioException catch (error) {
+      throw AdminFinanceApiException(_mapError(error));
+    }
+  }
+
+  Future<void> completeMockBillingRefund(int id) async {
+    _client.setToken(await _tokens.getAccessToken());
+    try {
+      await _client.dio.post(
+        '/admin/finance/billing-refunds/$id/complete-mock',
+        data: {
+          'provider_reference':
+              'ADMIN-MOCK-REFUND-$id-${DateTime.now().millisecondsSinceEpoch}',
+        },
+      );
+    } on DioException catch (error) {
+      throw AdminFinanceApiException(_mapError(error));
+    }
+  }
+
   AdminApiError _mapError(DioException error) {
     final data = error.response?.data;
     return data is Map

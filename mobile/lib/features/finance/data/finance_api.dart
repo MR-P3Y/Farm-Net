@@ -23,8 +23,10 @@ class FinanceApi {
   Future<WalletBalance> wallet() async {
     await _auth();
     try {
-      final response = await _client.get('finance/wallets/me');
-      return WalletBalance.fromJson(response.data?['data'] as Map<String, dynamic>);
+      final response = await _client.get('finance/wallet/me');
+      return WalletBalance.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw FinanceApiException(_error(e));
     }
@@ -33,9 +35,11 @@ class FinanceApi {
   Future<List<Settlement>> settlements() async {
     await _auth();
     try {
-      final response = await _client.get('finance/settlements');
+      final response = await _client.get('finance/settlements/me');
       final rows = response.data?['data'] as List? ?? [];
-      return rows.map((item) => Settlement.fromJson(item as Map<String, dynamic>)).toList();
+      return rows
+          .map((item) => Settlement.fromJson(item as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw FinanceApiException(_error(e));
     }
@@ -45,12 +49,18 @@ class FinanceApi {
     await _auth();
     final key = 'mobile-settlement-${DateTime.now().microsecondsSinceEpoch}';
     try {
-      final response = await _client.post('finance/settlements', data: {
-        'amount': amount,
-        'requester_note': note,
-        'idempotency_key': key,
-      });
-      return Settlement.fromJson(response.data?['data'] as Map<String, dynamic>);
+      final response = await _client.post(
+        'finance/settlements',
+        data: {
+          'amount': amount,
+          'note': note,
+          'currency': 'TOMAN',
+          'idempotency_key': key,
+        },
+      );
+      return Settlement.fromJson(
+        response.data?['data'] as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       throw FinanceApiException(_error(e));
     }
@@ -59,9 +69,11 @@ class FinanceApi {
   Future<List<FinanceInvoice>> invoices() async {
     await _auth();
     try {
-      final response = await _client.get('finance/invoices');
+      final response = await _client.get('finance/invoices/me');
       final rows = response.data?['data'] as List? ?? [];
-      return rows.map((item) => FinanceInvoice.fromJson(item as Map<String, dynamic>)).toList();
+      return rows
+          .map((item) => FinanceInvoice.fromJson(item as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw FinanceApiException(_error(e));
     }
@@ -74,6 +86,9 @@ class FinanceApi {
   ApiError _error(DioException error) {
     final data = error.response?.data;
     if (data is Map<String, dynamic>) return ApiError.fromJson(data);
-    return ApiError(code: 'NETWORK_ERROR', message: error.message ?? 'خطا در عملیات مالی');
+    return ApiError(
+      code: 'NETWORK_ERROR',
+      message: error.message ?? 'خطا در عملیات مالی',
+    );
   }
 }

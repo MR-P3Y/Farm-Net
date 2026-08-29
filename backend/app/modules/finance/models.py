@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -22,6 +23,8 @@ from app.db.base import Base
 from app.modules.finance.enums import AccountStatus, LedgerStatus
 from app.modules.finance.enums import (
     BillingInvoiceStatus,
+    BillingPaymentAttemptStatus,
+    BillingRefundStatus,
     CommissionPolicyStatus,
     FinalPriceProposalStatus,
     RentalFinancialTermsStatus,
@@ -290,6 +293,146 @@ class BillingInvoice(Base):
         ),
         Index("ix_billing_invoice_payer_status", "payer_user_id", "status"),
         Index("ix_billing_invoice_provider_status", "provider_user_id", "status"),
+    )
+
+
+class BillingPaymentAttempt(Base):
+    __tablename__ = "finance_billing_payment_attempts"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    invoice_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("finance_billing_invoices.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    provider: Mapped[str] = mapped_column(String(30), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(30),
+        default=BillingPaymentAttemptStatus.PENDING.value,
+        nullable=False,
+        index=True,
+    )
+    amount_toman: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(
+        String(10), default=CurrencyCode.TOMAN.value, nullable=False
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(180), nullable=False, unique=True)
+    provider_authority: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+    provider_reference: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+    redirect_url: Mapped[str | None] = mapped_column(Text)
+    failure_code: Mapped[str | None] = mapped_column(String(100))
+    failure_message: Mapped[str | None] = mapped_column(Text)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "provider IN ('mock', 'zarinpal')",
+            name="ck_billing_payment_attempt_provider",
+        ),
+        CheckConstraint(
+            "status IN ('pending', 'redirected', 'verifying', 'succeeded', 'failed', 'cancelled')",
+            name="ck_billing_payment_attempt_status",
+        ),
+        CheckConstraint("amount_toman > 0", name="ck_billing_payment_attempt_amount"),
+        CheckConstraint("currency = 'TOMAN'", name="ck_billing_payment_attempt_currency"),
+        Index("ix_billing_payment_attempt_user_status", "user_id", "status"),
+        Index("ix_billing_payment_attempt_invoice_status", "invoice_id", "status"),
+    )
+
+
+class BillingRefund(Base):
+    __tablename__ = "finance_billing_refunds"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    invoice_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("finance_billing_invoices.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    payment_attempt_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("finance_billing_payment_attempts.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    source_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    source_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+    payer_user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    provider_user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    status: Mapped[str] = mapped_column(
+        String(30),
+        default=BillingRefundStatus.REQUESTED.value,
+        nullable=False,
+        index=True,
+    )
+    amount_toman: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(
+        String(10), default=CurrencyCode.TOMAN.value, nullable=False
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(180), nullable=False, unique=True)
+    reason: Mapped[str] = mapped_column(String(1000), nullable=False)
+    review_required: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    provider_reference: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, unique=True
+    )
+    requested_by_user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    decided_by_user_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    admin_note: Mapped[str | None] = mapped_column(String(1000))
+    requested_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "source_type IN ('service_request', 'consultation_request')",
+            name="ck_billing_refund_source_type",
+        ),
+        CheckConstraint(
+            "status IN ('requested', 'approved', 'succeeded', 'rejected')",
+            name="ck_billing_refund_status",
+        ),
+        CheckConstraint("amount_toman > 0", name="ck_billing_refund_amount"),
+        CheckConstraint("currency = 'TOMAN'", name="ck_billing_refund_currency"),
+        Index("ix_billing_refund_source", "source_type", "source_id"),
+        Index("ix_billing_refund_status_requested", "status", "requested_at"),
     )
 
 

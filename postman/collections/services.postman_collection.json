@@ -12,7 +12,10 @@
     { "key": "category_id", "value": "1" },
     { "key": "provider_profile_id", "value": "1" },
     { "key": "offer_id", "value": "1" },
-    { "key": "service_request_id", "value": "1" }
+    { "key": "service_request_id", "value": "1" },
+    { "key": "billing_invoice_id", "value": "1" },
+    { "key": "billing_payment_attempt_id", "value": "1" },
+    { "key": "billing_refund_id", "value": "1" }
   ],
   "item": [
     {
@@ -117,6 +120,45 @@
             "url": "{{base_url}}/services/requests/{{service_request_id}}/final-price",
             "description": "Only the requester may accept or reject. Acceptance fails closed until an active default service_request commission policy exists."
           }
+        },
+        {
+          "name": "Checkout final-price invoice",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{requester_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"provider\": \"mock\",\n  \"idempotency_key\": \"postman-service-payment-1\"\n}" },
+            "url": "{{base_url}}/finance/invoices/{{billing_invoice_id}}/checkout",
+            "description": "Use mock only outside production. Copy id from the accepted final-price invoice_id field into billing_invoice_id."
+          }
+        },
+        {
+          "name": "Verify final-price invoice payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{requester_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"attempt_id\": {{billing_payment_attempt_id}},\n  \"provider_token\": \"postman-approved\"\n}" },
+            "url": "{{base_url}}/finance/payments/verify",
+            "description": "For local test flow, copy the checkout response id into billing_payment_attempt_id."
+          }
+        },
+        {
+          "name": "Request full service refund",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{requester_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Service cancellation requested\",\n  \"idempotency_key\": \"postman-service-refund-1\"\n}" },
+            "url": "{{base_url}}/services/requests/{{service_request_id}}/refund",
+            "description": "Before in_progress the full refund is pre-approved; after work starts it requires Admin review. Copy the returned id into billing_refund_id."
+          }
+        },
+        {
+          "name": "Confirm completed service and release funds",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{requester_token}}" }],
+            "url": "{{base_url}}/services/requests/{{service_request_id}}/confirm-completion",
+            "description": "Only after status completed. Releases provider pending balance exactly once; no automatic timeout release exists."
+          }
         }
       ]
     },
@@ -214,6 +256,54 @@
             "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"status\": \"cancelled\",\n  \"note\": \"Cancelled by admin\"\n}" },
             "url": "{{base_url}}/admin/services/requests/{{service_request_id}}/status"
+          }
+        },
+        {
+          "name": "Admin completion confirmation override",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/admin/services/requests/{{service_request_id}}/confirm-completion"
+          }
+        },
+        {
+          "name": "List domain commission policies",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/commission/policies" }
+        },
+        {
+          "name": "Get Services commission",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/commission/policies/service_request/default" }
+        },
+        {
+          "name": "Update Services commission",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"percent\": 10.00\n}" },
+            "url": "{{base_url}}/admin/commission/policies/service_request/default"
+          }
+        },
+        {
+          "name": "List billing refunds",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/admin/finance/billing-refunds?page=1&page_size=20" }
+        },
+        {
+          "name": "Approve reviewed billing refund",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"decision\": \"approve\",\n  \"admin_note\": \"Approved after service review\"\n}" },
+            "url": "{{base_url}}/admin/finance/billing-refunds/{{billing_refund_id}}/decision"
+          }
+        },
+        {
+          "name": "Complete Mock billing refund",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"provider_reference\": \"postman-service-refund-complete-1\"\n}" },
+            "url": "{{base_url}}/admin/finance/billing-refunds/{{billing_refund_id}}/complete-mock",
+            "description": "Non-production Mock flow only; no real gateway refund is performed."
           }
         }
       ]

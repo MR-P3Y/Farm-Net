@@ -11,9 +11,22 @@ from app.modules.auth.models import AuthUser
 from app.modules.orders.finance_service import AdminFinanceService
 from app.modules.finance.service import LedgerReconciliationService
 from app.modules.auth.exceptions import ValidationAuthError
-from app.modules.finance.models import LedgerTransaction, SettlementRequest, WalletAccount
+from app.modules.finance.models import (
+    BillingRefund,
+    LedgerTransaction,
+    SettlementRequest,
+    WalletAccount,
+)
+from app.modules.finance.refund_service import (
+    BillingRefundContractError,
+    BillingRefundService,
+)
 from app.modules.finance.schemas import (
-    AdjustmentCreateIn, AdminLedgerJournalOut, AdminWalletAccountOut,
+    AdjustmentCreateIn,
+    AdminLedgerJournalOut,
+    AdminWalletAccountOut,
+    BillingRefundCompleteIn,
+    BillingRefundDecisionIn,
     SettlementDecisionIn,
 )
 from app.modules.finance.settlement_service import (
@@ -22,6 +35,7 @@ from app.modules.finance.settlement_service import (
 from app.modules.orders.models import AdminAuditLog
 from app.modules.notifications.enums import NotificationEventType
 from app.modules.notifications.service import NotificationService
+from app.modules.services.service import ServicesService
 
 router = APIRouter(prefix="/admin/finance", tags=["Admin Finance"])
 
@@ -62,6 +76,135 @@ def transactions(request: Request, page: int = Query(1, ge=1), page_size: int = 
 @router.get("/refunds")
 def refunds(request: Request, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100), db: Session = Depends(get_db), _: AuthUser = Depends(require_permission("finance.refunds.create"))):
     return _list("refunds", request, page, page_size, db)
+
+
+@router.get("/billing-refunds")
+def billing_refunds(
+    request: Request,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    _: AuthUser = Depends(require_permission("finance.refunds.create")),
+):
+    query = db.query(BillingRefund)
+    total = query.count()
+    rows = (
+        query.order_by(BillingRefund.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return success_response(
+        data=[BillingRefundService.output(row).model_dump(mode="json") for row in rows],
+        message="OK",
+        meta={
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": ceil(total / page_size) if total else 0,
+            "trace_id": request.state.trace_id,
+        },
+    )
+
+
+@router.patch("/billing-refunds/{refund_id}/decision")
+def decide_billing_refund(
+    refund_id: int,
+    payload: BillingRefundDecisionIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("finance.refunds.create")),
+):
+    service = BillingRefundService(db)
+    try:
+        row = service.decide(
+            refund_id=refund_id,
+            approve=payload.decision == "approve",
+            admin_user_id=user.id,
+            admin_note=payload.admin_note,
+        )
+    except BillingRefundContractError as exc:
+        raise ValidationAuthError(message=str(exc)) from exc
+    _audit_billing_refund(
+        db=db,
+        request=request,
+        user=user,
+        row=row,
+        action="FINANCE_BILLING_REFUND_DECIDED",
+    )
+    db.commit()
+    db.refresh(row)
+    return success_response(
+        data=service.output(row).model_dump(mode="json"),
+        message="Billing refund decision recorded",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/billing-refunds/{refund_id}/complete-mock")
+def complete_mock_billing_refund(
+    refund_id: int,
+    payload: BillingRefundCompleteIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: AuthUser = Depends(require_permission("finance.refunds.create")),
+):
+    service = BillingRefundService(db)
+    try:
+        row = service.complete_mock(
+            refund_id=refund_id,
+            admin_user_id=user.id,
+            provider_reference=payload.provider_reference,
+            trace_id=request.state.trace_id,
+        )
+    except BillingRefundContractError as exc:
+        raise ValidationAuthError(message=str(exc)) from exc
+    _audit_billing_refund(
+        db=db,
+        request=request,
+        user=user,
+        row=row,
+        action="FINANCE_BILLING_REFUND_COMPLETED",
+    )
+    ServicesService(db).finalize_refunded_service_request(
+        refund=row,
+        admin_user=user,
+    )
+    return success_response(
+        data=service.output(row).model_dump(mode="json"),
+        message="Mock billing refund completed; no real gateway transfer occurred",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+def _audit_billing_refund(
+    *,
+    db: Session,
+    request: Request,
+    user: AuthUser,
+    row: BillingRefund,
+    action: str,
+) -> None:
+    exists = db.query(AdminAuditLog.id).filter(
+        AdminAuditLog.action == action,
+        AdminAuditLog.target_type == "finance_billing_refund",
+        AdminAuditLog.target_id == str(row.id),
+    ).scalar()
+    if exists is not None:
+        return
+    db.add(
+        AdminAuditLog(
+            admin_user_id=user.id,
+            action=action,
+            target_type="finance_billing_refund",
+            target_id=str(row.id),
+            old_value=None,
+            new_value=json.dumps({"status": row.status, "amount": str(row.amount_toman)}),
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            trace_id=request.state.trace_id,
+        )
+    )
 
 
 @router.get("/audit-logs")

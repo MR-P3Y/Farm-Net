@@ -20,6 +20,8 @@ final serviceOfferDetailProvider = FutureProvider.family(
   (ref, int id) => ref.watch(serviceRepositoryProvider).detail(id),
 );
 
+const _unchangedFilter = Object();
+
 class ServiceDiscoveryController extends StateNotifier<ServiceDiscoveryState> {
   ServiceDiscoveryController({
     required ServiceRepository repository,
@@ -61,19 +63,29 @@ class ServiceDiscoveryController extends StateNotifier<ServiceDiscoveryState> {
 
   Future<void> apply({
     String? query,
-    int? categoryId,
-    int? provinceId,
-    int? cityId,
-    String? pricingType,
+    Object? categoryId = _unchangedFilter,
+    Object? provinceId = _unchangedFilter,
+    Object? cityId = _unchangedFilter,
+    Object? pricingType = _unchangedFilter,
     String? sort,
   }) async {
     state = state.copyWith(
       isFiltering: true,
       query: query ?? state.query,
-      categoryId: categoryId,
-      provinceId: provinceId,
-      cityId: cityId,
-      pricingType: pricingType,
+      categoryId:
+          identical(categoryId, _unchangedFilter)
+              ? state.categoryId
+              : categoryId as int?,
+      provinceId:
+          identical(provinceId, _unchangedFilter)
+              ? state.provinceId
+              : provinceId as int?,
+      cityId:
+          identical(cityId, _unchangedFilter) ? state.cityId : cityId as int?,
+      pricingType:
+          identical(pricingType, _unchangedFilter)
+              ? state.pricingType
+              : pricingType as String?,
       sort: sort ?? state.sort,
       clearError: true,
     );

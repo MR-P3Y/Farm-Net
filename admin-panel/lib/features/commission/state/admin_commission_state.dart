@@ -6,6 +6,7 @@ class AdminCommissionState {
     this.isSaving = false,
     this.items = const [],
     this.setting,
+    this.servicePolicy,
     this.errorMessage,
   });
 
@@ -13,6 +14,7 @@ class AdminCommissionState {
   final bool isSaving;
   final List<AdminCommissionSetting> items;
   final AdminCommissionSetting? setting;
+  final AdminCommissionPolicy? servicePolicy;
   final String? errorMessage;
 
   factory AdminCommissionState.initial() {
@@ -24,6 +26,7 @@ class AdminCommissionState {
     bool? isSaving,
     List<AdminCommissionSetting>? items,
     AdminCommissionSetting? setting,
+    AdminCommissionPolicy? servicePolicy,
     String? errorMessage,
     bool clearError = false,
   }) {
@@ -32,6 +35,7 @@ class AdminCommissionState {
       isSaving: isSaving ?? this.isSaving,
       items: items ?? this.items,
       setting: setting ?? this.setting,
+      servicePolicy: servicePolicy ?? this.servicePolicy,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }

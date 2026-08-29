@@ -3,6 +3,7 @@ enum AdminFinanceResource {
   paymentAttempts,
   transactions,
   refunds,
+  billingRefunds,
   auditLogs,
   ledger,
   wallets,
@@ -15,6 +16,7 @@ extension AdminFinanceResourceX on AdminFinanceResource {
     AdminFinanceResource.paymentAttempts => 'payment-attempts',
     AdminFinanceResource.transactions => 'transactions',
     AdminFinanceResource.refunds => 'refunds',
+    AdminFinanceResource.billingRefunds => 'billing-refunds',
     AdminFinanceResource.auditLogs => 'audit-logs',
     AdminFinanceResource.ledger => 'ledger',
     AdminFinanceResource.wallets => 'wallets',
@@ -26,6 +28,7 @@ extension AdminFinanceResourceX on AdminFinanceResource {
     AdminFinanceResource.paymentAttempts => 'تلاش‌های پرداخت',
     AdminFinanceResource.transactions => 'تراکنش‌ها',
     AdminFinanceResource.refunds => 'بازپرداخت‌ها',
+    AdminFinanceResource.billingRefunds => 'بازپرداخت خدمات',
     AdminFinanceResource.auditLogs => 'گزارش ممیزی',
     AdminFinanceResource.ledger => 'دفتر کل',
     AdminFinanceResource.wallets => 'حساب‌های کیف پول',
@@ -41,6 +44,8 @@ class AdminFinanceRecord {
     required this.amount,
     required this.reference,
     required this.createdAt,
+    this.reviewRequired = false,
+    this.sourceId,
   });
 
   final int id;
@@ -49,6 +54,8 @@ class AdminFinanceRecord {
   final num? amount;
   final String? reference;
   final DateTime? createdAt;
+  final bool reviewRequired;
+  final int? sourceId;
 
   factory AdminFinanceRecord.fromJson(
     AdminFinanceResource resource,
@@ -62,6 +69,8 @@ class AdminFinanceRecord {
       AdminFinanceResource.transactions =>
         json['transaction_type']?.toString() ?? 'Transaction',
       AdminFinanceResource.refunds => json['reason']?.toString() ?? 'Refund',
+      AdminFinanceResource.billingRefunds =>
+        'خدمت #${json['source_id']} • ${json['reason'] ?? 'بازپرداخت'}',
       AdminFinanceResource.auditLogs => json['action']?.toString() ?? 'Audit',
       AdminFinanceResource.ledger =>
         json['journal_number']?.toString() ?? 'Journal',
@@ -77,7 +86,9 @@ class AdminFinanceRecord {
       amount:
           json['total_amount'] as num? ??
           json['total_debit'] as num? ??
-          json['amount'] as num?,
+          json['amount'] as num? ??
+          json['amount_toman'] as num? ??
+          num.tryParse(json['amount_toman']?.toString() ?? ''),
       reference:
           json['provider_reference']?.toString() ??
           json['trace_id']?.toString() ??
@@ -86,6 +97,8 @@ class AdminFinanceRecord {
         (json['created_at'] ?? json['issued_at'] ?? json['requested_at'] ?? '')
             .toString(),
       ),
+      reviewRequired: json['review_required'] == true,
+      sourceId: (json['source_id'] as num?)?.toInt(),
     );
   }
 }

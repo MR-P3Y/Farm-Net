@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.exceptions import ValidationAuthError
 from app.modules.auth.models import AuthUser
+from app.modules.finance.schemas import BillingRefundCreateIn
 from app.modules.services.schemas import (
     ServiceOfferCreateIn,
     ServiceOfferUpdateIn,
@@ -418,6 +419,48 @@ def decide_own_service_request_final_price(
     return success_response(
         data=result.model_dump(mode="json"),
         message="Final price decision recorded",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post("/requests/{request_id}/refund")
+def request_service_refund(
+    request_id: int,
+    payload: BillingRefundCreateIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage_own")),
+):
+    result = ServicesService(db).request_service_refund(
+        request_id=request_id,
+        user=current_user,
+        payload=payload,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Service refund requested",
+        meta={"trace_id": request.state.trace_id},
+    )
+
+
+@router.post(
+    "/requests/{request_id}/confirm-completion",
+    response_model=ServiceRequestDetailResponse,
+)
+def confirm_service_completion(
+    request_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: AuthUser = Depends(require_permission("service_requests.manage_own")),
+):
+    result = ServicesService(db).confirm_service_completion(
+        request_id=request_id,
+        actor_user=current_user,
+        trace_id=request.state.trace_id,
+    )
+    return success_response(
+        data=result.model_dump(mode="json"),
+        message="Service completion confirmed and provider balance released",
         meta={"trace_id": request.state.trace_id},
     )
 

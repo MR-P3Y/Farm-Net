@@ -426,6 +426,13 @@ class ServiceRequest(Base):
 
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    completion_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    completion_confirmed_by_user_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("auth_users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

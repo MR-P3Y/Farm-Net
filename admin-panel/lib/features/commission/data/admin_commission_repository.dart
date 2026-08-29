@@ -28,4 +28,9 @@ class AdminCommissionRepository {
   }) {
     return _api.updateDefault(percent: percent, description: description);
   }
+
+  Future<List<AdminCommissionPolicy>> listPolicies() => _api.listPolicies();
+
+  Future<AdminCommissionPolicy> updateServicePolicy({required num percent}) =>
+      _api.updateServicePolicy(percent: percent);
 }

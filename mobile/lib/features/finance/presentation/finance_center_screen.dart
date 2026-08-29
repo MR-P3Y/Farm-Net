@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/utils/dates.dart';
+import '../../../core/utils/digits.dart';
 import '../../../core/utils/money.dart';
 import '../../../core/widgets/farm_app_bar.dart';
 import '../state/finance_controller.dart';
@@ -21,7 +24,9 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(financeControllerProvider);
     return Scaffold(
-      appBar: const FarmAppBar(title: 'مرکز مالی من'),
+      appBar: FarmAppBar(
+        title: context.l10n.tr(fa: 'مرکز مالی من', en: 'My finance center'),
+      ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(financeControllerProvider.notifier).load(),
         child:
@@ -44,7 +49,10 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'درخواست‌های تسویه',
+                          context.l10n.tr(
+                            fa: 'درخواست‌های تسویه',
+                            en: 'Settlement requests',
+                          ),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         FilledButton.icon(
@@ -53,14 +61,21 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
                                   ? null
                                   : () => _settlementDialog(context),
                           icon: const Icon(Icons.add),
-                          label: const Text('درخواست'),
+                          label: Text(
+                            context.l10n.tr(fa: 'درخواست', en: 'Request'),
+                          ),
                         ),
                       ],
                     ),
                     if (state.settlements.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Text('درخواست تسویه‌ای ثبت نشده است.'),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          context.l10n.tr(
+                            fa: 'درخواست تسویه‌ای ثبت نشده است.',
+                            en: 'No settlement request has been submitted.',
+                          ),
+                        ),
                       )
                     else
                       ...state.settlements.map(
@@ -68,19 +83,28 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
                           child: ListTile(
                             leading: const Icon(Icons.account_balance_outlined),
                             title: Text(formatToman(context, row.amount)),
-                            subtitle: Text('وضعیت: ${row.status}'),
+                            subtitle: Text(
+                              '${context.l10n.tr(fa: 'وضعیت', en: 'Status')}: '
+                              '${_statusLabel(context, row.status)} • '
+                              '${formatDate(context, row.requestedAt.toLocal())}',
+                            ),
                           ),
                         ),
                       ),
                     const SizedBox(height: 16),
                     Text(
-                      'فاکتورهای من',
+                      context.l10n.tr(fa: 'فاکتورهای من', en: 'My invoices'),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     if (state.invoices.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Text('فاکتوری موجود نیست.'),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          context.l10n.tr(
+                            fa: 'فاکتوری موجود نیست.',
+                            en: 'No invoice is available.',
+                          ),
+                        ),
                       )
                     else
                       ...state.invoices.map(
@@ -88,7 +112,11 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
                           child: ListTile(
                             leading: const Icon(Icons.receipt_long_outlined),
                             title: Text(row.number),
-                            subtitle: Text('${row.sourceType} • ${row.status}'),
+                            subtitle: Text(
+                              '${_sourceLabel(context, row.sourceType)} • '
+                              '${_statusLabel(context, row.status)} • '
+                              '${formatDate(context, row.issuedAt.toLocal())}',
+                            ),
                             trailing: Text(formatToman(context, row.total)),
                           ),
                         ),
@@ -102,10 +130,15 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
   Widget _wallet(BuildContext context, FinanceState state) {
     final wallet = state.wallet;
     if (wallet == null) {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text('کیف پول برای این نقش در دسترس نیست.'),
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            this.context.l10n.tr(
+              fa: 'کیف پول برای این نقش در دسترس نیست.',
+              en: 'A wallet is not available for this role.',
+            ),
+          ),
         ),
       );
     }
@@ -116,15 +149,35 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'کیف پول ارائه‌دهنده',
+              context.l10n.tr(fa: 'کیف پول ارائه‌دهنده', en: 'Provider wallet'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            _amount(context, 'قابل تسویه', wallet.available),
-            _amount(context, 'در انتظار آزادسازی', wallet.pending),
-            _amount(context, 'رزروشده برای تسویه', wallet.reserved),
+            _amount(
+              context,
+              context.l10n.tr(fa: 'قابل تسویه', en: 'Available'),
+              wallet.available,
+            ),
+            _amount(
+              context,
+              context.l10n.tr(fa: 'در انتظار آزادسازی', en: 'Pending release'),
+              wallet.pending,
+            ),
+            _amount(
+              context,
+              context.l10n.tr(
+                fa: 'رزروشده برای تسویه',
+                en: 'Reserved for settlement',
+              ),
+              wallet.reserved,
+            ),
             const SizedBox(height: 8),
-            const Text('تمام مبالغ به تومان ایران هستند.'),
+            Text(
+              context.l10n.tr(
+                fa: 'تمام مبالغ به تومان ایران هستند.',
+                en: 'All amounts are in Iranian Toman.',
+              ),
+            ),
           ],
         ),
       ),
@@ -146,19 +199,29 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('درخواست تسویه'),
+            title: Text(
+              context.l10n.tr(fa: 'درخواست تسویه', en: 'Settlement request'),
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: amount,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'مبلغ به تومان'),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.tr(
+                      fa: 'مبلغ به تومان',
+                      en: 'Amount in Toman',
+                    ),
+                  ),
                 ),
                 TextField(
                   controller: note,
-                  decoration: const InputDecoration(
-                    labelText: 'یادداشت اختیاری',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.tr(
+                      fa: 'یادداشت اختیاری',
+                      en: 'Optional note',
+                    ),
                   ),
                 ),
               ],
@@ -166,11 +229,11 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('انصراف'),
+                child: Text(context.l10n.tr(fa: 'انصراف', en: 'Cancel')),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('ثبت'),
+                child: Text(context.l10n.tr(fa: 'ثبت', en: 'Submit')),
               ),
             ],
           ),
@@ -178,10 +241,19 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
     if (accepted != true || !mounted) {
       return;
     }
-    final value = double.tryParse(amount.text.replaceAll(',', ''));
+    final value = double.tryParse(
+      toEnglishDigits(amount.text).replaceAll(',', '').replaceAll('٬', ''),
+    );
     if (value == null || value <= 0 || value != value.roundToDouble()) {
       ScaffoldMessenger.of(this.context).showSnackBar(
-        const SnackBar(content: Text('مبلغ صحیح و به تومان کامل وارد کنید.')),
+        SnackBar(
+          content: Text(
+            this.context.l10n.tr(
+              fa: 'مبلغ صحیح و به تومان کامل وارد کنید.',
+              en: 'Enter a valid whole amount in Toman.',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -189,9 +261,48 @@ class _FinanceCenterState extends ConsumerState<FinanceCenterScreen> {
         .read(financeControllerProvider.notifier)
         .requestSettlement(value, note.text);
     if (ok && mounted) {
-      ScaffoldMessenger.of(
-        this.context,
-      ).showSnackBar(const SnackBar(content: Text('درخواست تسویه ثبت شد.')));
+      ScaffoldMessenger.of(this.context).showSnackBar(
+        SnackBar(
+          content: Text(
+            this.context.l10n.tr(
+              fa: 'درخواست تسویه ثبت شد.',
+              en: 'Settlement request submitted.',
+            ),
+          ),
+        ),
+      );
     }
+  }
+
+  String _statusLabel(BuildContext context, String status) {
+    final labels = <String, ({String fa, String en})>{
+      'payment_pending': (fa: 'در انتظار پرداخت', en: 'Payment pending'),
+      'paid': (fa: 'پرداخت‌شده', en: 'Paid'),
+      'cancelled': (fa: 'لغوشده', en: 'Cancelled'),
+      'requested': (fa: 'ثبت‌شده', en: 'Requested'),
+      'approved': (fa: 'تأییدشده', en: 'Approved'),
+      'processing': (fa: 'در حال پردازش', en: 'Processing'),
+      'completed': (fa: 'تکمیل‌شده', en: 'Completed'),
+      'rejected': (fa: 'ردشده', en: 'Rejected'),
+      'failed': (fa: 'ناموفق', en: 'Failed'),
+    };
+    final label = labels[status];
+    return label == null ? status : context.l10n.tr(fa: label.fa, en: label.en);
+  }
+
+  String _sourceLabel(BuildContext context, String sourceType) {
+    final labels = <String, ({String fa, String en})>{
+      'service_request': (fa: 'درخواست خدمت', en: 'Service request'),
+      'consultation_request': (
+        fa: 'درخواست مشاوره',
+        en: 'Consultation request',
+      ),
+      'order': (fa: 'سفارش', en: 'Order'),
+      'rental_request': (fa: 'درخواست اجاره', en: 'Rental request'),
+    };
+    final label = labels[sourceType];
+    return label == null
+        ? sourceType
+        : context.l10n.tr(fa: label.fa, en: label.en);
   }
 }

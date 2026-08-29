@@ -61,6 +61,23 @@ class _AdminFinancePageState extends State<AdminFinancePage>
     }
   }
 
+  Future<void> _billingRefundAction(
+    AdminFinanceRecord row,
+    String action,
+  ) async {
+    try {
+      if (action == 'complete') {
+        await _repository.completeMockBillingRefund(row.id);
+      } else {
+        await _repository.decideBillingRefund(row.id, action);
+      }
+      await _load(_result?.page ?? 1);
+      await _checkReconciliation();
+    } on AdminFinanceApiException catch (e) {
+      if (mounted) setState(() => _error = e.error.message);
+    }
+  }
+
   @override
   void dispose() {
     _tabs.dispose();
@@ -208,6 +225,29 @@ class _AdminFinancePageState extends State<AdminFinancePage>
   }
 
   Widget _actions(AdminFinanceRecord row) {
+    if (_resource == AdminFinanceResource.billingRefunds) {
+      if (row.status == 'requested') {
+        return Wrap(
+          children: [
+            TextButton(
+              onPressed: () => _billingRefundAction(row, 'approve'),
+              child: const Text('تأیید بازپرداخت'),
+            ),
+            TextButton(
+              onPressed: () => _billingRefundAction(row, 'reject'),
+              child: const Text('رد'),
+            ),
+          ],
+        );
+      }
+      if (row.status == 'approved') {
+        return TextButton(
+          onPressed: () => _billingRefundAction(row, 'complete'),
+          child: const Text('تکمیل Mock'),
+        );
+      }
+      return const Text('-');
+    }
     if (_resource != AdminFinanceResource.settlements) {
       return const Text('-');
     }

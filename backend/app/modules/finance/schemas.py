@@ -42,6 +42,117 @@ class FinalPriceProposalOut(BaseModel):
     proposed_at: datetime
     decided_at: datetime | None = None
     invoice_id: int | None = None
+    invoice_status: str | None = None
+    refund_id: int | None = None
+    refund_status: str | None = None
+    refund_review_required: bool | None = None
+
+
+class BillingRefundCreateIn(BaseModel):
+    reason: str = Field(min_length=3, max_length=1000)
+    idempotency_key: str = Field(min_length=8, max_length=180)
+
+    model_config = {"extra": "forbid"}
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def normalize_reason(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+
+class BillingRefundDecisionIn(BaseModel):
+    decision: str = Field(pattern="^(approve|reject)$")
+    admin_note: str | None = Field(default=None, max_length=1000)
+
+    model_config = {"extra": "forbid"}
+
+    @field_validator("admin_note", mode="before")
+    @classmethod
+    def normalize_admin_note(cls, value):
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
+
+
+class BillingRefundCompleteIn(BaseModel):
+    provider_reference: str = Field(min_length=3, max_length=255)
+
+    model_config = {"extra": "forbid"}
+
+
+class BillingRefundOut(BaseModel):
+    id: int
+    invoice_id: int
+    payment_attempt_id: int
+    source_type: str
+    source_id: int
+    payer_user_id: int
+    provider_user_id: int
+    status: str
+    amount_toman: Decimal
+    currency: str
+    reason: str
+    review_required: bool
+    provider_reference: str | None = None
+    requested_by_user_id: int
+    decided_by_user_id: int | None = None
+    admin_note: str | None = None
+    requested_at: datetime
+    decided_at: datetime | None = None
+    processed_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class CommissionPolicyUpdateIn(BaseModel):
+    percent: Decimal = Field(ge=0, lt=100, max_digits=5, decimal_places=2)
+
+    model_config = {"extra": "forbid"}
+
+
+class CommissionPolicyOut(BaseModel):
+    id: int
+    code: str
+    title: str
+    source_type: str
+    percent: Decimal
+    status: str
+    is_default: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class InvoicePaymentCheckoutIn(BaseModel):
+    provider: str = Field(pattern="^(mock|zarinpal)$")
+    idempotency_key: str = Field(min_length=8, max_length=180)
+
+    model_config = {"extra": "forbid"}
+
+
+class InvoicePaymentVerifyIn(BaseModel):
+    payment_attempt_id: int = Field(ge=1)
+    provider_token: str = Field(min_length=1, max_length=255)
+
+    model_config = {"extra": "forbid"}
+
+
+class BillingPaymentAttemptOut(BaseModel):
+    id: int
+    invoice_id: int
+    source_type: str
+    source_id: int
+    user_id: int
+    provider: str
+    status: str
+    amount_toman: Decimal
+    currency: str
+    redirect_url: str | None = None
+    failure_code: str | None = None
+    failure_message: str | None = None
+    expires_at: datetime
+    verified_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class LedgerReconciliationOut(BaseModel):

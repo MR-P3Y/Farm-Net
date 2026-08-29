@@ -170,6 +170,12 @@ class AdminServiceController extends StateNotifier<AdminServiceState> {
     }
   }
 
+  Future<bool> confirmCompletion(int id) => _action(() async {
+    await api.confirmRequestCompletion(id);
+    final r = await api.requests(page: state.requestPage);
+    state = state.copyWith(requests: r.items);
+  });
+
   Future<bool> _action(Future<void> Function() fn) async {
     state = state.copyWith(saving: true, clearError: true);
     try {

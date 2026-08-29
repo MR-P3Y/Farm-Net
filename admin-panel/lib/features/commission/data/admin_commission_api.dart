@@ -55,6 +55,31 @@ class AdminCommissionApi {
     return AdminCommissionSetting.fromJson((json['data'] as Map).cast());
   }
 
+  Future<List<AdminCommissionPolicy>> listPolicies() async {
+    await _setStoredToken();
+    final json = await _get('/admin/commission/policies');
+    return (json['data'] as List? ?? const [])
+        .map(
+          (item) => AdminCommissionPolicy.fromJson(
+            (item as Map).cast<String, dynamic>(),
+          ),
+        )
+        .toList();
+  }
+
+  Future<AdminCommissionPolicy> updateServicePolicy({
+    required num percent,
+  }) async {
+    await _setStoredToken();
+    final json = await _patch(
+      '/admin/commission/policies/service_request/default',
+      data: {'percent': percent},
+    );
+    return AdminCommissionPolicy.fromJson(
+      (json['data'] as Map).cast<String, dynamic>(),
+    );
+  }
+
   Future<void> _setStoredToken() async {
     final token = await _tokenStorage.getAccessToken();
     _client.setToken(token);

@@ -90,6 +90,16 @@ String serviceContactMethodLabel(BuildContext context, String? method) =>
       _ => '-',
     };
 
+String serviceStatusNoteLabel(BuildContext context, String note) {
+  return switch (note.trim()) {
+    'Service request created' => context.l10n.tr(
+      fa: 'درخواست خدمت ثبت شد',
+      en: 'Service request created',
+    ),
+    _ => note,
+  };
+}
+
 String serviceProviderName(
   BuildContext context,
   ServiceProviderSummary? provider,

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/admin_commission_api.dart';
+import '../data/admin_commission_models.dart';
 import '../data/admin_commission_repository.dart';
 import 'admin_commission_state.dart';
 
@@ -24,9 +25,21 @@ class AdminCommissionController extends StateNotifier<AdminCommissionState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      final items = await _repository.listSettings();
-      final setting = await _repository.getDefault();
-      state = state.copyWith(isLoading: false, items: items, setting: setting);
+      final result = await Future.wait([
+        _repository.listSettings(),
+        _repository.getDefault(),
+        _repository.listPolicies(),
+      ]);
+      final policies = result[2] as List<AdminCommissionPolicy>;
+      state = state.copyWith(
+        isLoading: false,
+        items: result[0] as List<AdminCommissionSetting>,
+        setting: result[1] as AdminCommissionSetting,
+        servicePolicy:
+            policies
+                .where((item) => item.sourceType == 'service_request')
+                .firstOrNull,
+      );
     } on AdminCommissionApiException catch (error) {
       state = state.copyWith(
         isLoading: false,
@@ -69,5 +82,25 @@ class AdminCommissionController extends StateNotifier<AdminCommissionState> {
       );
       return false;
     }
+  }
+
+  Future<bool> updateServicePolicy({required num percent}) async {
+    state = state.copyWith(isSaving: true, clearError: true);
+    try {
+      final policy = await _repository.updateServicePolicy(percent: percent);
+      state = state.copyWith(isSaving: false, servicePolicy: policy);
+      return true;
+    } on AdminCommissionApiException catch (error) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: error.error.message,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isSaving: false,
+        errorMessage: 'خطا در تغییر کمیسیون خدمات',
+      );
+    }
+    return false;
   }
 }
